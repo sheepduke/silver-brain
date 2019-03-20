@@ -17,7 +17,8 @@
                "rove")
   :components ((:module "tests"
                 :components
-                ((:file "main"))))
+                ((:file "concept")
+                 (:file "main"))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c) (symbol-call :rove :run c)))
