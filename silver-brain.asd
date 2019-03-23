@@ -2,10 +2,10 @@
   :version "0.1.0"
   :author "YUE Daian"
   :license "MIT"
-  :depends-on (:uuid :iterate)
+  :depends-on (#:alexandria #:uuid #:iterate #:ningle)
   :components ((:module "src"
                 :components
-                ((:file "concept")
+                ((:file "node")
                  (:file "main"))))
   :description "A Concept Map software that extends your brain storage"
   :in-order-to ((test-op (test-op "silver-brain/tests"))))
@@ -17,7 +17,7 @@
                "rove")
   :components ((:module "tests"
                 :components
-                ((:file "concept")
+                ((:file "node")
                  (:file "main"))))
   :description "Test system for silver-brain"
 
