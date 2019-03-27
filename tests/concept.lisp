@@ -1,14 +1,14 @@
-(defpackage silver-brain/tests/node
+(defpackage silver-brain/tests/concept
   (:use #:cl
-        #:silver-brain.node
+        #:silver-brain.concept
         #:rove))
-(in-package :silver-brain/tests/node)
+(in-package :silver-brain/tests/concept)
 
-(deftest test-node 
-  (let ((software (node:new "Software"))
-        (editor (node:new "Editor"))
-        (emacs (node:new "Emacs"))
-        (vim (node:new "Vim")))
+(deftest test-concept 
+  (let ((software (make-instance 'concept :name "Software"))
+        (editor (make-instance 'concept :name "Editor"))
+        (emacs (make-instance 'concept :name "Emacs"))
+        (vim (make-instance 'concept :name "Vim")))
     (testing "equals"
       (ok (string= (uuid software) (uuid software)))
       (ok (string-not-equal (uuid software) (uuid emacs))))
