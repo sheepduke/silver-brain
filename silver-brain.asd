@@ -5,7 +5,7 @@
   :depends-on (#:alexandria
                #:uuid
                #:iterate
-               #:ningle
+               #:caveman
                #:clack)
   :components ((:module "src"
                 :components

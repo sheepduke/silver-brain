@@ -4,7 +4,6 @@
   (:import-from :uuid
                 #:make-v4-uuid)
   (:export #:concept
-           #:new
            #:uuid
            #:name
            #:content

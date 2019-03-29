@@ -1,6 +1,9 @@
 (defpackage silver-brain.server
   (:use #:cl
-        #:alexandria)
+        #:alexandria
+        #:iterate)
+  (:import-from #:cl-json
+                #:encode-json-to-string)
   (:export #:start
            #:stop))
 (in-package silver-brain.server)
@@ -10,45 +13,52 @@
 
 (defvar *concept-map* (make-instance 'concept-map:concept-map))
 
-(setf (ningle:route *app* "/")
-      "Welcome to ningle!")
-
-;; (setf (ningle:route *app* "/login" :method :POST)
-;;       #'(lambda (params)
-;;           (if (authorize (cdr (assoc "username" params :test #'string=))
-;;                          (cdr (assoc "password" params :test #'string=)))
-;;               "Authorized!"
-;;               "Failed...Try again.")))
-
-(defmacro defroute (url method &rest body)
+(defmacro defroute (app url method &rest body)
   (with-gensyms (params-name)
-    `(setf (ningle:route *app* ,url :method ,method)
+    `(setf (ningle:route ,app ,url :method ,method)
            (lambda (,params-name)
-             (flet ((get-param (key)
+             (print ,params-name)
+             (labels ((get-param (key)
                       (assoc-value ,params-name key)))
                ,@body)))))
 
-(defroute "/concepts" :get
-  (format nil "All concepts"))
 
-(defroute "/concepts/:id" :get
-  (format nil "ID: ~a" (get-param :id)))
+(defun extract-params (url)
+  (multiple-value-bind (start end) (ppcre:scan ":[a-zA-Z_-]+" url)
+    (if start
+        (append (list (symbolicate (string-upcase (subseq url (1+ start) end))))
+                (extract-params (subseq url end))))))
 
-(dexador:get "http://localhost:5000/concepts/100")
+(defmacro defroute (app url method &body body)
+  (with-gensyms (params-sym param-list-sym param-sym)
+    `(setf (ningle:route ,app ,url :method ,method)
+           (lambda (,params-sym)
+             ,(let ((param-list-sym (extract-params url)))
+                `(let ,(mapcar (lambda (param-sym)
+                                 `(,(symbolicate param-sym)
+                                   (assoc-value ,params-sym ,(alexandria:make-keyword param-sym))))
+                        param-list-sym)
+                   ,@body))))))
 
-(let (((intern "ID")) 100)
-  id)
+(defroute *app* "/concepts/:id/children/:child-id" :get
+  (format nil "ID: ~a Child: ~a" id child-id))
 
+(defroute *app* "/" :get
+  "Hello")
 
-;; (setf (ningle:route *app* "/concepts" :method :get)
-;;       (lambda (params)
-;;         (declare (ignore params))
-;;         "True"))
+(defroute *app* "/concepts" :get
+  (encode-json-to-string 
+   (iter (for (key value) in-hashtable (concept-map:concepts *concept-map*))
+     (collect `((:uuid . ,(concept:uuid value))
+                (:name . ,(concept:name value)))))))
 
-;; (setf (ningle:route *app* "/concept/:id/children/:child-id" :method :get)
-;;       (lambda (params)
-;;         (format nil "I want ID: ~a" (alexandria:assoc-value params :id))))
+(defroute *app* "/concepts/:id" :get
+  "ID")
 
+;; (concept-map:add-concept *concept-map*
+;;                          (make-instance 'concept:concept :name "Software"))
+;; (concept-map:add-concept *concept-map*
+;;                          (make-instance 'concept:concept :name "Emacs"))
 
 (defun start ()
   "Start the server."
@@ -60,4 +70,3 @@
   (setf *server* nil))
 
 ;; (start)
-

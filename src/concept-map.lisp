@@ -5,7 +5,7 @@
            #:concepts
            #:concept-names
            #:add-concept
-           #:get-concept-by-uuid))
+           #:get-by-uuid))
 (in-package :silver-brain.concept-map)
 
 (defclass concept-map ()
@@ -19,6 +19,6 @@
   "Add `concept` into `map`."
   (setf (gethash (concept:uuid concept) (concepts map)) concept))
 
-(defun get-concept-by-uuid (map uuid)
+(defun get-by-id (map uuid)
   "Return corresponding `concept` from `map` with given `uuid`."
   (gethash uuid (concepts map)))
