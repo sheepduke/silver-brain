@@ -10,17 +10,17 @@
         (emacs (make-instance 'concept :name "Emacs"))
         (vim (make-instance 'concept :name "Vim")))
     (testing "equals"
-      (ok (string= (uuid software) (uuid software)))
-      (ok (string-not-equal (uuid software) (uuid emacs))))
+      (ok (string= (id software) (id software)))
+      (ok (string-not-equal (id software) (id emacs))))
     
     (testing "become-child"
-      (become-child editor software)
-      (become-child emacs editor)
+      (become-child software editor)
+      (become-child editor emacs)
       (ok (childp editor software))
       (ok (parentp editor emacs)))
 
     (testing "remove-child"
-      (become-child vim emacs)
+      (become-child emacs vim)
       (ok (parentp emacs vim))
       (remove-child vim emacs)
       (ok (not (childp vim emacs))))

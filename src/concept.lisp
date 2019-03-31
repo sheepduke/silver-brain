@@ -4,7 +4,7 @@
   (:import-from :uuid
                 #:make-v4-uuid)
   (:export #:concept
-           #:uuid
+           #:id
            #:name
            #:content
            #:parents
@@ -25,10 +25,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass concept ()
-  ((uuid :reader uuid
+  ((id :reader id
          :type string
-         :initform (format nil "~a" (uuid:make-v4-uuid))
-         :documentation "Randomly generated UUID. This is the unique identifier
+         :initform (format nil "~a" (make-v4-uuid))
+         :documentation "Randomly generated ID. This is the unique identifier
  for each concept.")
    (name :accessor name
          :type string
@@ -50,7 +50,7 @@
              :documentation "List of concepts this concept links to."))
   (:documentation "A single concept in a network."))
 
-(defun become-child (child concept)
+(defun become-child (concept child)
   "Make `child` a child of `concept`."
   (remove-child child concept)
   (setf (children concept)
@@ -92,7 +92,7 @@
 
 (defun equals (concept1 concept2)
   "Return `T` if `concept1` is same as `concept2`."
-  (string= (uuid concept1) (uuid concept2)))
+  (string= (id concept1) (id concept2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Methods                            ;;;;
