@@ -1,4 +1,5 @@
 (defsystem "silver-brain"
+  :class :package-inferred-system
   :version "0.1.0"
   :author "YUE Daian"
   :license "MIT"
@@ -8,11 +9,14 @@
                #:caveman2
                #:clack
                #:flexi-streams
-               #:cl-json)
+               #:cl-json
+               #:trivial-types
+               #:cl-annot)
   :components ((:module "src"
                 :components
                 ((:file "concept")
                  (:file "concept-map")
+                 (:file "server-util")
                  (:file "server")
                  (:file "main"))))
   :description "A Concept Map software that extends your brain storage"

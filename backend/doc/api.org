@@ -1,0 +1,38 @@
+* API
+
+** /concepts/
+
+*** [GET] /
+
+Returns all concepts.
+
+- Input: None
+- Output: ~Array<Object{id, name}>~
+
+*** [POST] /
+
+Create a new concept.
+
+- Input: ~Object{name, content}~
+- Output: None
+
+*** [GET] /:id
+
+Get detailed information of a concept.
+
+- Input: None
+- Output: ~Object{id, name, content}~
+
+*** [PUT] /:id
+
+Update an existing concept specified by ~:id~.
+
+- Input: ~Object{name, content}~
+- Output: None
+
+*** [DELETE] /:id
+
+Delete an existing concept specified by ~:id~.
+
+- Input: None
+- Output: None
