@@ -2,7 +2,8 @@
   (:use #:cl
         #:rove
         #:alexandria
-        #:iterate)
+        #:iterate
+        #:trivia)
   (:import-from #:cl-json
                 #:encode-json-to-string
                 #:decode-json-from-string))
@@ -56,20 +57,26 @@
                   :test #'string=)
           "Contains correct concept.")))
 
+  (testing "POST /concepts/"
+    (match (multiple-value-list
+            (dexador:post (url "/concepts/")
+                          :content (encode-json-to-string
+                                    '((:name . "Vim")
+                                      (:content . "Content Vim")))))
+      ((list _ code headers _ _)
+       (ok (= code 201)
+           "Returns 201.")
+       (ok (gethash "location" headers)
+           "Location header is set."))))
+
   (testing "GET /concepts/:id"
     (let ((result (decode-json-from-string
                    (dexador:get (url "/concepts/~a" (concept:id *software*))))))
       (ok (string= (assoc-value result :id) (concept:id *software*)))))
 
   )
-(setup-server)
-;; (server:start)
-(let ((*port* 5000))
-  (multiple-value-bind (code response headers)
-      (dexador:post "http://localhost:5000/concepts/"
-                    :content (encode-json-to-string
-                              '((:name . "Vim")
-                                (:content . "Content Vim"))))
-    (print code)
-    (iter (for (key value) in-hashtable headers)
-      (format t "~a => ~a~&" key value))))
+;; (setup-server)
+;; ;; (server:start)
+;; (let ((*port* 5000))
+;;   ;; (server:setup (make-instance 'concept-map:concept-map))
+;;   (dexador:get (url "/concepts/")))

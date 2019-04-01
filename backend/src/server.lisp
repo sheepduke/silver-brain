@@ -8,8 +8,6 @@
   (:import-from #:caveman2
                 #:defroute
                 #:throw-code)
-  (:import-from #:cl-json
-                #:encode-json-to-string)
   (:export #:server
            #:setup
            #:start
@@ -46,10 +44,12 @@
     "Hello")
 
   (defroute ("/concepts/" :method :get) ()
-    (encode-json-to-string 
-     (iter (for (key value) in-hashtable (concept-map:concepts concept-map))
-       (collect `((:id . ,(concept:id value))
-                  (:name . ,(concept:name value)))))))
+    (render-json-array
+     (concept-map:map-concept
+      concept-map
+      (lambda (concept)
+        `((:id . ,(concept:id concept))
+          (:name . ,(concept:name concept)))))))
 
   (defroute ("/concepts/" :method :post) ()
     (match (decode-request-json-alist '(:name :content) :strict nil)
@@ -59,25 +59,30 @@
                                      :name name
                                      :content content)))
          (concept-map:add-concept concept-map concept)
-         (set-response-header "Location"
-                              (format nil "/concepts/~a" (concept:id concept)))
-         (set-response-status 201)))))
-  
+         (set-response-location-header
+          (format nil "/concepts/~a" (concept:id concept)))
+         (set-response-status 201)
+         nil))))
+
   (defroute ("/concepts/:id" :method :get) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
-      (encode-json-to-string
+      (render-json
        `((:id . ,(concept:id concept))
          (:name . ,(concept:name concept))
          (:content . ,(concept:content concept))))))
 
+  (defroute ("/concepts/:id" :method :put) (&key id)
+    (let ((concept (concept-map:get-by-id concept-map id)))
+      ))
+
   (defroute ("/concepts/:id/children" :method :get) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
-      (encode-json-to-string
+      (render-json
        (mapcar #'concept-summary (concept:children concept)))))
 
   (defroute ("/concepts/:id/parents" :method :get) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
-      (encode-json-to-string
+      (render-json
        (mapcar #'concept-summary (concept:parents concept))))))
 
 (defun concept-summary (concept)

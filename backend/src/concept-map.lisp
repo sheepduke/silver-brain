@@ -1,11 +1,13 @@
 (defpackage silver-brain.concept-map
   (:nicknames #:concept-map #:map)
-  (:use #:cl)
+  (:use #:cl
+        #:iterate)
   (:export #:concept-map
            #:concepts
            #:concept-names
            #:add-concept
-           #:get-by-id))
+           #:get-by-id
+           #:map-concept))
 (in-package :silver-brain.concept-map)
 
 (defclass concept-map ()
@@ -22,3 +24,10 @@
 (defun get-by-id (map id)
   "Return corresponding `concept` from `map` with given `id`."
   (gethash id (concepts map)))
+
+(defun map-concept (concept-map fun)
+  "Works like `mapcar`. It traverses all concepts and apply `fun` to each
+concept and returns a list.
+Argument `fun` is a function taking one argument as the concept."
+  (iter (for (key value) in-hashtable (concepts concept-map))
+    (collect (funcall fun value))))
