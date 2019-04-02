@@ -43,6 +43,10 @@
   (defroute ("/" :method :get) ()
     "Hello")
 
+  (defroute ("/concepts" :method :get) ()
+    (render-json
+     `((:count . ,(concept-map:concept-count concept-map)))))
+
   (defroute ("/concepts/" :method :get) ()
     (render-json-array
      (concept-map:map-concept
@@ -66,6 +70,7 @@
 
   (defroute ("/concepts/:id" :method :get) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
+      (or concept (throw-code 404))
       (render-json
        `((:id . ,(concept:id concept))
          (:name . ,(concept:name concept))
@@ -73,7 +78,18 @@
 
   (defroute ("/concepts/:id" :method :put) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
-      ))
+      (or concept (throw-code 404))
+      (match (decode-request-json-alist '(:name :content))
+        (nil (throw-code 400))
+        ((list name content)
+         (setf (concept:name concept) name)
+         (setf (concept:content concept) content)))))
+
+  (defroute ("/concepts/:id" :method :delete) (&key id)
+    (let ((concept (concept-map:get-by-id concept-map id)))
+      (or concept (throw-code 404))
+      (concept-map:delete-by-id concept-map id)
+      nil))
 
   (defroute ("/concepts/:id/children" :method :get) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
@@ -83,7 +99,9 @@
   (defroute ("/concepts/:id/parents" :method :get) (&key id)
     (let ((concept (concept-map:get-by-id concept-map id)))
       (render-json
-       (mapcar #'concept-summary (concept:parents concept))))))
+       (mapcar #'concept-summary (concept:parents concept)))))
+
+  )
 
 (defun concept-summary (concept)
   "Return an alist representing summary information of given `concept`."

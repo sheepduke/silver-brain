@@ -37,29 +37,31 @@
     (server:setup concept-map)))
 
 (setup
-  (setup-server)
   (server:start :port *port* :debug t)
-  (format t "Waiting 1 second for server to start...~&")
-  (sleep 1))
+  (format t "Waiting 0.5 second for server to start...~&")
+  (sleep 0.5))
 
 (teardown
   (server:stop))
 
-(deftest server
-  
+(defhook :before
+  (setup-server))
+
+(deftest get-concepts
   (testing "GET /concepts/"
     (let ((result (decode-json-from-string
-                   (dexador:get (url "/concepts/")))))
+                   (dex:get (url "/concepts/")))))
       (ok (= (length result) 2)
           "Returns 2 results.")
       (ok (member (concept:id *software*)
                   (mapcar (lambda (alist) (assoc-value alist :id)) result)
                   :test #'string=)
-          "Contains correct concept.")))
+          "Contains correct concept."))))
 
+(deftest post-concepts
   (testing "POST /concepts/"
     (match (multiple-value-list
-            (dexador:post (url "/concepts/")
+            (dex:post (url "/concepts/")
                           :content (encode-json-to-string
                                     '((:name . "Vim")
                                       (:content . "Content Vim")))))
@@ -67,16 +69,43 @@
        (ok (= code 201)
            "Returns 201.")
        (ok (gethash "location" headers)
-           "Location header is set."))))
+           "Location header is set.")))))
 
+(deftest get-concept-id
   (testing "GET /concepts/:id"
     (let ((result (decode-json-from-string
-                   (dexador:get (url "/concepts/~a" (concept:id *software*))))))
-      (ok (string= (assoc-value result :id) (concept:id *software*)))))
+                   (dex:get (url "/concepts/~a" (concept:id *software*))))))
+      (ok (string= (assoc-value result :id) (concept:id *software*))))
+    (ok (signals
+            (dex:get (url "/concepts/1234"))
+            'dex:http-request-not-found)
+        "Returns 404 when :id is wrong.")))
 
-  )
-;; (setup-server)
-;; ;; (server:start)
-;; (let ((*port* 5000))
-;;   ;; (server:setup (make-instance 'concept-map:concept-map))
-;;   (dexador:get (url "/concepts/")))
+(deftest put-concept-id
+  (testing "PUT /concepts/:id"
+    (ok (signals
+            (dex:put (url "/concepts/1234"))
+            'dex:http-request-not-found)
+        "Returns 404 when :id is wrong.")
+    (ok (signals
+            (dex:put (url "/concepts/~a" (concept:id *software*)))
+            'dex:http-request-bad-request)
+        "Returns 400 when no content is given.")))
+
+(deftest delete-concept-id
+  (testing "DELETE /concepts/:id"
+    (ok (dex:delete (url "/concepts/~a" (concept:id *software*)))
+        "DELETE succeeded."))
+  (testing "Delete wrong concept"
+    (ok (signals
+            (dex:delete (url "/concepts/1234"))
+            'dex:http-request-not-found)
+        "Returns 404 when :id is invalid.")))
+
+;; (server:stop)
+(server:start)
+
+(let ((*port* 5000))
+  ;; (server:setup (make-instance 'concept-map:concept-map))
+  (setup-server)
+  (run-test 'delete-concept-id))

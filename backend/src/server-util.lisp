@@ -52,7 +52,8 @@ Argument `keys` is a list of keywords specifying keys to extract from the
 decoded list.
 Returns a list of values associated to `keys`.
 If `strict` is set to `T`, return `NIL` when any key is not present."
-  (let ((obj (decode-json-from-string (request-body))))
+  (let ((obj (handler-case (decode-json-from-string (request-body))
+               (error () nil))))
     (cond
       ((not (association-list-p obj)) nil)
       (t
