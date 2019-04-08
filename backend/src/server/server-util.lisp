@@ -1,23 +1,4 @@
-(defpackage silver-brain.server-util
-  (:nicknames :util)
-  (:use :cl :alexandria)
-  (:import-from #:caveman2
-                #:*request*
-                #:*response*
-                #:response-status
-                #:response-headers)
-  (:import-from #:cl-json
-                #:decode-json-from-string
-                #:encode-json-to-string)
-  (:import-from #:trivial-types
-                #:association-list-p)
-  (:export #:render-json
-           #:render-json-array
-           #:set-response-status
-           #:set-response-header
-           #:set-response-location-header
-           #:decode-request-json-alist))
-(in-package silver-brain.server-util)
+(in-package silver-brain.server)
 
 (defun request-body ()
   "Extract and return raw request body as string."

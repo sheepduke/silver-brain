@@ -1,8 +1,4 @@
-(defpackage silver-brain/tests/concept
-  (:use #:cl
-        #:silver-brain.concept
-        #:rove))
-(in-package :silver-brain/tests/concept)
+(in-package :silver-brain/tests.core)
 
 (deftest test-concept 
   (let ((software (make-instance 'concept :name "Software"))
@@ -10,8 +6,8 @@
         (emacs (make-instance 'concept :name "Emacs"))
         (vim (make-instance 'concept :name "Vim")))
     (testing "equals"
-      (ok (string= (id software) (id software)))
-      (ok (string-not-equal (id software) (id emacs))))
+      (ok (string= (concept-id software) (concept-id software)))
+      (ok (string-not-equal (concept-id software) (concept-id emacs))))
     
     (testing "become-child"
       (become-child software editor)

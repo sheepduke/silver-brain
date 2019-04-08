@@ -1,19 +1,10 @@
-(defpackage silver-brain/tests/server
-  (:use #:cl
-        #:rove
-        #:alexandria
-        #:iterate
-        #:trivia)
-  (:import-from #:cl-json
-                #:encode-json-to-string
-                #:decode-json-from-string))
-(in-package silver-brain/tests/server)
+(in-package silver-brain/tests.server)
 
-(defvar *software* (make-instance 'concept:concept
+(defvar *software* (make-instance 'concept
                                   :name "Software"
                                   :content "Software Content"))
 
-(defvar *emacs* (make-instance 'concept:concept
+(defvar *emacs* (make-instance 'concept
                                :name "Emacs"
                                :content "Emacs Content"))
 
@@ -29,31 +20,31 @@
                                  format-string))
           args)))
 
-(defun setup-server ()
-  (let* ((concept-map (make-instance 'concept-map:concept-map)))
-    (concept:become-child *software* *emacs*)
-    (concept-map:add-concept concept-map *software*)
-    (concept-map:add-concept concept-map *emacs*)
-    (server:setup concept-map)))
+(defun setup-test-server ()
+  (let* ((concept-map (make-instance 'concept-map)))
+    (become-child *software* *emacs*)
+    (add-concept concept-map *software*)
+    (add-concept concept-map *emacs*)
+    (setup-server concept-map)))
 
 (setup
-  (server:start :port *port* :debug t)
+  (start-server :port *port* :debug t)
   (format t "Waiting 0.5 second for server to start...~&")
   (sleep 0.5))
 
 (teardown
-  (server:stop))
+  (stop-server))
 
 (defhook :before
-  (setup-server))
+  (setup-test-server))
 
 (deftest get-concepts
   (testing "GET /concepts/"
     (let ((result (decode-json-from-string
-                   (dex:get (url "/concepts/")))))
+                   (dex:get (url "/concepts/") :keep-alive nil))))
       (ok (= (length result) 2)
           "Returns 2 results.")
-      (ok (member (concept:id *software*)
+      (ok (member (concept-id *software*)
                   (mapcar (lambda (alist) (assoc-value alist :id)) result)
                   :test #'string=)
           "Contains correct concept."))))
@@ -64,7 +55,8 @@
             (dex:post (url "/concepts/")
                           :content (encode-json-to-string
                                     '((:name . "Vim")
-                                      (:content . "Content Vim")))))
+                                      (:content . "Content Vim")))
+                          :keep-alive nil))
       ((list _ code headers _ _)
        (ok (= code 201)
            "Returns 201.")
@@ -74,8 +66,8 @@
 (deftest get-concept-id
   (testing "GET /concepts/:id"
     (let ((result (decode-json-from-string
-                   (dex:get (url "/concepts/~a" (concept:id *software*))))))
-      (ok (string= (assoc-value result :id) (concept:id *software*))))
+                   (dex:get (url "/concepts/~a" (concept-id *software*))))))
+      (ok (string= (assoc-value result :id) (concept-id *software*))))
     (ok (signals
             (dex:get (url "/concepts/1234"))
             'dex:http-request-not-found)
@@ -88,13 +80,13 @@
             'dex:http-request-not-found)
         "Returns 404 when :id is wrong.")
     (ok (signals
-            (dex:put (url "/concepts/~a" (concept:id *software*)))
+            (dex:put (url "/concepts/~a" (concept-id *software*)))
             'dex:http-request-bad-request)
         "Returns 400 when no content is given.")))
 
 (deftest delete-concept-id
   (testing "DELETE /concepts/:id"
-    (ok (dex:delete (url "/concepts/~a" (concept:id *software*)))
+    (ok (dex:delete (url "/concepts/~a" (concept-id *software*)))
         "DELETE succeeded."))
   (testing "Delete wrong concept"
     (ok (signals
@@ -102,10 +94,10 @@
             'dex:http-request-not-found)
         "Returns 404 when :id is invalid.")))
 
-;; (server:stop)
-(server:start)
+;; ;; (server:stop)
+;; (server:start)
 
-(let ((*port* 5000))
-  ;; (server:setup (make-instance 'concept-map:concept-map))
-  (setup-server)
-  (run-test 'delete-concept-id))
+;; (let ((*port* 5000))
+;;   ;; (server:setup (make-instance 'concept-map:concept-map))
+;;   (setup-server)
+;;   (run-test 'delete-concept-id))

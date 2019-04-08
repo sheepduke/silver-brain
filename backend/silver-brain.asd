@@ -14,10 +14,15 @@
                #:cl-annot)
   :components ((:module "src"
                 :components
-                ((:file "concept")
-                 (:file "concept-map")
-                 (:file "server-util")
-                 (:file "server")
+                ((:file "package")
+                 (:module "core"
+                  :components 
+                  ((:file "concept")
+                   (:file "concept-map")))
+                 (:module "server"
+                  :components
+                  ((:file "server-util")
+                   (:file "server")))
                  (:file "main"))))
   :description "A Concept Map software that extends your brain storage"
   :in-order-to ((test-op (test-op "silver-brain/tests"))))
@@ -30,10 +35,14 @@
                #:dexador)
   :components ((:module "tests"
                 :components
-                ((:file "concept")
-                 (:file "concept-map")
-                 (:file "server")
-                 (:file "main"))))
+                ((:file "package")
+                 (:module "core"
+                  :components
+                  ((:file "concept")
+                   (:file "concept-map")))
+                 (:module "server"
+                  :components
+                  ((:file "server"))))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c) (symbol-call :rove :run c)))
