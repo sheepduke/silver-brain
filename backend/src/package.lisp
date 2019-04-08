@@ -1,35 +1,42 @@
 (defpackage silver-brain.core
+  (:nicknames #:core)
   (:use #:cl
-        #:iterate)
+        #:iterate
+        #:trivia
+        #:mito)
   (:import-from :uuid
                 #:make-v4-uuid)
   (:export
    ;; concept
    #:concept
-   #:concept-id
+   #:concept-uuid
    #:concept-name
    #:concept-content
    #:concept-content-format
-   #:concept-parents
-   #:concept-children
-   #:concept=
-   #:become-child
-   #:become-friend
-   #:remove-child
-   #:remove-relationship
-   #:parentp
-   #:childp
-   #:friendp
-   ;; concept-map
-   #:concept-map
-   #:concept-names
+   ;; #:concept-parents
+   ;; #:concept-children
+   ;; #:concept-friends
+   ;; #:become-child
+   ;; #:become-friend
+   ;; #:remove-child
+   ;; #:remove-relationship
+   ;; #:parentp
+   ;; #:childp
+   ;; #:friendp
    #:add-concept
    #:concept-count
    #:get-concept-by-id
    #:delete-concept-by-id
-   #:map-concept))
+   #:get-all-concept-id-and-name
+   #:setup-db
+   ;; config
+   #:set-profile
+   #:get-config
+   #:get-database-spec
+   ))
 
 (defpackage silver-brain.server
+  (:nicknames :server)
   (:use #:cl
         #:alexandria
         #:iterate

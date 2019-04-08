@@ -1,0 +1,64 @@
+(in-package silver-brain.server)
+
+(caveman2:clear-routing-rules *server*)
+
+(defroute ("/concepts" :method :get) ()
+  (render-json
+   `((:count . ,(concept-count)))))
+
+(defroute ("/concepts/" :method :get) ()
+  (render-json-array
+   (get-all-concept-id-and-name)))
+
+(defroute ("/concepts/" :method :post) ()
+  (match (decode-request-json-alist '(:name :content :content-format))
+    (nil (throw-code 400))
+    ((list name content content-format)
+     (let ((concept (add-concept name content content-format)))
+       (set-response-location-header
+        (format nil "/concepts/~a" (concept-uuid concept)))
+       (set-response-status 201)
+       nil))))
+
+(defroute ("/concepts/:id" :method :get) (&key id)
+  (let ((concept (get-concept-by-id id)))
+    (or concept (throw-code 404))
+    (render-json
+     `((:uuid . ,(concept-uuid concept))
+       (:name . ,(concept-name concept))
+       (:content . ,(concept-content concept))
+       (:content-format . ,(concept-content-format concept))))))
+
+(defroute ("/concepts/:id" :method :put) (&key id)
+  (let ((concept (get-concept-by-id id)))
+    (or concept (throw-code 404))
+    (match (decode-request-json-alist '(:name :content :content-format))
+      (nil (throw-code 400))
+      ((list name content content-format)
+       (setf (concept-name concept) name)
+       (setf (concept-content concept) content)
+       (setf (concept-content-format concept) content-format)))))
+
+(defroute ("/concepts/:id" :method :delete) (&key id)
+  (let ((concept (get-concept-by-id id)))
+    (or concept (throw-code 404))
+    (delete-concept-by-id id)
+    nil))
+
+;; (defroute ("/concepts/:id/children/" :method :get) (&key id)
+;;   (let ((concept (get-concept-by-id id)))
+;;     (or concept (throw-code 404))
+;;     (render-json
+;;      (mapcar #'concept-summary (concept-children concept)))))
+
+;; (defroute ("/concepts/:id/parents/" :method :get) (&key id)
+;;   (let ((concept (get-concept-by-id concept-map id)))
+;;     (or concept (throw-code 404))
+;;     (render-json
+;;      (mapcar #'concept-summary (concept-parents concept)))))
+
+;; (defroute ("/concepts/:id/friends/" :method :get) (&key id)
+;;   (let ((concept (get-concept-by-id concept-map id)))
+;;     (or concept (throw-code 404))
+;;     (render-json
+;;      (mapcar #'concept-summary (concept-friends concept)))))
