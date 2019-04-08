@@ -26,9 +26,6 @@
 
   (caveman2:clear-routing-rules *server*)
 
-  (defroute ("/" :method :get) ()
-    "Hello")
-
   (defroute ("/concepts" :method :get) ()
     (render-json
      `((:count . ,(concept-count concept-map)))))
@@ -42,11 +39,13 @@
           (:name . ,(concept-name concept)))))))
 
   (defroute ("/concepts/" :method :post) ()
-    (match (decode-request-json-alist '(:name :content) :strict nil)
+    (match (decode-request-json-alist '(:name :content :content-format)
+                                      :strict nil)
       (nil (throw-code 400))
-      ((list name content)
+      ((list name content content-format)
        (let ((concept (make-instance 'concept
                                      :name name
+                                     :content-format content-format
                                      :content content)))
          (add-concept concept-map concept)
          (set-response-location-header
@@ -60,7 +59,8 @@
       (render-json
        `((:id . ,(concept-id concept))
          (:name . ,(concept-name concept))
-         (:content . ,(concept-content concept))))))
+         (:content . ,(concept-content concept))
+         (:content-format . ,(concept-content-format concept))))))
 
   (defroute ("/concepts/:id" :method :put) (&key id)
     (let ((concept (get-concept-by-id concept-map id)))

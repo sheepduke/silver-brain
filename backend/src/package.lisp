@@ -9,6 +9,7 @@
    #:concept-id
    #:concept-name
    #:concept-content
+   #:concept-content-format
    #:concept-parents
    #:concept-children
    #:concept=

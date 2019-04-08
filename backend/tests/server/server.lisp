@@ -38,7 +38,7 @@
 (defhook :before
   (setup-test-server))
 
-(deftest get-concepts
+(deftest test-get-concepts
   (testing "GET /concepts/"
     (let ((result (decode-json-from-string
                    (dex:get (url "/concepts/") :keep-alive nil))))
@@ -49,7 +49,7 @@
                   :test #'string=)
           "Contains correct concept."))))
 
-(deftest post-concepts
+(deftest test-post-concepts
   (testing "POST /concepts/"
     (match (multiple-value-list
             (dex:post (url "/concepts/")
@@ -63,7 +63,7 @@
        (ok (gethash "location" headers)
            "Location header is set.")))))
 
-(deftest get-concept-id
+(deftest test-get-concept-by-id
   (testing "GET /concepts/:id"
     (let ((result (decode-json-from-string
                    (dex:get (url "/concepts/~a" (concept-id *software*))))))
@@ -73,7 +73,7 @@
             'dex:http-request-not-found)
         "Returns 404 when :id is wrong.")))
 
-(deftest put-concept-id
+(deftest test-put-concept-by-id
   (testing "PUT /concepts/:id"
     (ok (signals
             (dex:put (url "/concepts/1234"))
@@ -84,7 +84,7 @@
             'dex:http-request-bad-request)
         "Returns 400 when no content is given.")))
 
-(deftest delete-concept-id
+(deftest test-delete-concept-id
   (testing "DELETE /concepts/:id"
     (ok (dex:delete (url "/concepts/~a" (concept-id *software*)))
         "DELETE succeeded."))
@@ -94,10 +94,8 @@
             'dex:http-request-not-found)
         "Returns 404 when :id is invalid.")))
 
-;; ;; (server:stop)
-;; (server:start)
-
+;; (start-server)
 ;; (let ((*port* 5000))
-;;   ;; (server:setup (make-instance 'concept-map:concept-map))
-;;   (setup-server)
-;;   (run-test 'delete-concept-id))
+;;   (setup-test-server)
+;;   (run-test 'test-get-concept-by-id)
+;;   )

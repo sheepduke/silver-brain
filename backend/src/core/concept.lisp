@@ -17,14 +17,15 @@
             :initform ""
             :documentation "Content of the concept.")
    (content-format :accessor concept-content-format
-                   :type string
-                   :initform ""
+                   :type (member :org :markdown :plain)
+                   :initarg :content-format
+                   :initform :org
                    :documentation "Format of content.")
-   (parents :accessor concept-parents
+   (parents :accessor parents
             :type list
             :initform '()
             :documentation "List of concepts this concept was linked.")
-   (children :accessor concept-children
+   (children :accessor children
              :type list
              :initform '()
              :documentation "List of concepts this concept links to."))
@@ -37,17 +38,17 @@
 (defun become-child (concept child)
   "Make `child` a child of `concept`."
   (remove-child child concept)
-  (setf (concept-children concept)
-        (adjoin child (concept-children concept)))
-  (setf (concept-parents child)
-        (adjoin concept (concept-parents child))))
+  (setf (children concept)
+        (adjoin child (children concept)))
+  (setf (parents child)
+        (adjoin concept (parents child))))
 
 (defun become-friend (concept friend)
   "Make `concept` and `friend` friends to each other."
-  (setf (concept-parents friend) (adjoin concept (concept-parents friend)))
-  (setf (concept-children friend) (adjoin concept (concept-children friend)))
-  (setf (concept-parents concept) (adjoin friend (concept-parents concept)))
-  (setf (concept-children concept) (adjoin friend (concept-children concept))))
+  (setf (parents friend) (adjoin concept (parents friend)))
+  (setf (children friend) (adjoin concept (children friend)))
+  (setf (parents concept) (adjoin friend (parents concept)))
+  (setf (children concept) (adjoin friend (children concept))))
 
 (defun remove-relationship  (concept1 concept2)
   "Remove any relationship between `concept1` and `concept2`."
@@ -56,27 +57,39 @@
 
 (defun remove-child (child concept)
   "Remove `child` from children of `concept`."
-  (setf (concept-children concept) (delete child (concept-children concept)))
-  (setf (concept-parents child) (delete concept (concept-parents child))))
+  (setf (children concept) (delete child (children concept)))
+  (setf (parents child) (delete concept (parents child))))
 
-(defun childp (child concept)
+(defun concept-children (concept)
+  "Return all children of `concept` as a list."
+  (remove-if-not (lambda (child)
+                   (childp concept child))
+                 (children concept)))
+
+(defun concept-parents (concept)
+  "Return all parents of `concept` as a list."
+  (remove-if-not (lambda (parent)
+                   (parentp concept parent))
+                 (parents concept)))
+
+(defun childp (concept child)
   "Return `T` if `concept` has a child `child`."
-  (and (member child (concept-children concept))
-       (not (member child (concept-parents concept)))))
+  (and (member child (children concept))
+       (not (member child (parents concept)))))
 
-(defun parentp (parent concept)
+(defun parentp (concept parent)
   "Return `T` if `concept` has a parent `parent`."
-  (and (member parent (concept-parents concept))
-       (not (member parent (concept-children concept)))))
+  (and (member parent (parents concept))
+       (not (member parent (children concept)))))
 
 (defun friendp (concept target)
   "Return `T` if `concept` and `target` are friends."
-  (and (member target (concept-parents concept))
-       (member target (concept-children concept))))
+  (and (member target (parents concept))
+       (member target (children concept))))
 
 (defmethod print-object ((concept concept) stream)
   (let ((concept-to-name (lambda (concept) (concept-name concept))))
     (format stream "Concept [~a] Parents {~a} Children {~a}"
             (concept-name concept)
-            (mapcar concept-to-name (concept-parents concept))
-            (mapcar concept-to-name (concept-children concept)))))
+            (mapcar concept-to-name (parents concept))
+            (mapcar concept-to-name (children concept)))))
