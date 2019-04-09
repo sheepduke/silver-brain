@@ -6,6 +6,7 @@
   :depends-on (#:alexandria
                #:uuid
                #:iterate
+               #:trivia
                #:str
                #:caveman2
                #:clack
