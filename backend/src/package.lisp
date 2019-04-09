@@ -1,3 +1,10 @@
+(defpackage silver-brain
+  (:use #:cl
+        #:alexandria
+        #:trivia
+        #:iter)
+  (:export #:main))
+
 (defpackage silver-brain.core
   (:nicknames #:core)
   (:use #:cl
@@ -38,6 +45,8 @@
    #:become-friends
    #:remove-relationships
    ;; config
+   #:*profile-env*
+   #:profiles
    #:set-profile
    #:get-config
    #:get-database-spec

@@ -6,12 +6,13 @@
   :depends-on (#:alexandria
                #:uuid
                #:iterate
+               #:str
                #:caveman2
                #:clack
                #:flexi-streams
                #:cl-json
                #:trivial-types
-               #:cl-annot
+               #:unix-opts
                #:envy
                #:mito)
   :components ((:module "src"

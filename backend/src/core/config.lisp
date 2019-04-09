@@ -8,22 +8,29 @@
 (setf (envy:config-env-var *config-package*) *profile-env*)
 
 (envy:defconfig product
-    `(:debug t))
+    `(:debug nil
+      :server (:port 5000)
+      :database (:driver-name :sqlite3
+                 :database-name "silver-brain.sqlite")))
 
 (envy:defconfig develop
-    `(:debug nil
+    `(:debug t
       :server (:port 5000)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-dev.sqlite")))
 
-(envy:defconfig test
+(envy:defconfig testing
     `(:debug t
       :server (:port 5000)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-test.sqlite")))
 
+(defun profiles ()
+  "Return a list of valid profiles."
+  '(:develop :product :testing))
+
 (defun set-profile (profile)
-  (check-type profile (member :develop :product :test))
+  (check-type profile (member :develop :product :testing))
   (setf (uiop:getenv *profile-env*)
         (format nil "~a" (string-upcase profile))))
 

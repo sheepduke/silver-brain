@@ -5,7 +5,7 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  ;;#+quicklisp(ql:quickload '() :silent t)
+  #+quicklisp(ql:quickload '(silver-brain) :silent t)
   )
 
 (defpackage :ros.script.silver-brain.3762670503
@@ -13,5 +13,5 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.silver-brain.3762670503)
 
 (defun main (&rest argv)
-  (declare (ignorable argv)))
+  (silver-brain:main argv))
 ;;; vim: set ft=lisp lisp:
