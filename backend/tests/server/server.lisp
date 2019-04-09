@@ -24,7 +24,8 @@
 (defun setup-test ()
   (delete-all-concepts)
   (setf *software* (add-concept "Software" "" ""))
-  (setf *emacs* (add-concept "Emacs" "" "")))
+  (setf *emacs* (add-concept "Emacs" "" ""))
+  (become-child *software* *emacs*))
 
 (setup
   (setup-environment)
@@ -39,36 +40,29 @@
 (defhook :before
   (setup-test))
 
-(deftest test-get-concept-meta
-  (let ((result (decode-json-from-string (dex:get (url "/concepts")))))
-    (ok (= (assoc-value result :count) 2)
-        "Returns 2 items.")))
-
 (deftest test-get-concepts
-  (testing "GET /concepts/"
-    (let ((result (decode-json-from-string
-                   (dex:get (url "/concepts/") :keep-alive nil))))
-      (ok (= (length result) 2)
-          "Returns 2 results.")
-      (ok (member (concept-uuid *software*)
-                  (mapcar (lambda (alist) (assoc-value alist :uuid)) result)
-                  :test #'string=)
-          "Contains correct concept."))))
+  (let ((result (decode-json-from-string
+                 (dex:get (url "/concepts") :keep-alive nil))))
+    (ok (= (length result) 2)
+        "Returns 2 results.")
+    (ok (member (concept-uuid *software*)
+                (mapcar (lambda (alist) (assoc-value alist :uuid)) result)
+                :test #'string=)
+        "Contains correct concept.")))
 
 (deftest test-post-concepts
-  (testing "POST /concepts/"
-    (match (multiple-value-list
-            (dex:post (url "/concepts/")
-                          :content (encode-json-to-string
-                                    '((:name . "Vim")
-                                      (:content . "Content Vim")
-                                      (:content-format . "plain")))
-                          :keep-alive nil))
-      ((list _ code headers _ _)
-       (ok (= code 201)
-           "Returns 201.")
-       (ok (gethash "location" headers)
-           "Location header is set.")))))
+  (match (multiple-value-list
+          (dex:post (url "/concepts")
+                    :content (encode-json-to-string
+                              '((:name . "Vim")
+                                (:content . "Content Vim")
+                                (:content-format . "plain")))
+                    :keep-alive nil))
+    ((list _ code headers _ _)
+     (ok (= code 201)
+         "Returns 201.")
+     (ok (gethash "location" headers)
+         "Location header is set."))))
 
 (deftest test-get-concept-by-id
   (testing "GET /concepts/:id"
@@ -95,11 +89,27 @@
   (testing "DELETE /concepts/:id"
     (ok (dex:delete (url "/concepts/~a" (concept-uuid *software*)))
         "DELETE succeeded.")
-    (ok (= (assoc-value (decode-json-from-string
-                         (dex:get (url "/concepts"))) :count) 1)
-        "Only 1 concept remains."))
+    (ok (signals
+         (dex:get (url "/concepts/~a" (concept-uuid *software*)))
+         'dex:http-request-not-found)
+        "Delete UUID does not exist anymore."))
   (testing "Delete wrong concept"
     (ok (signals
             (dex:delete (url "/concepts/1234"))
             'dex:http-request-not-found)
         "Returns 404 when :id is invalid.")))
+
+(deftest test-get-concept-parents
+  (let ((result (decode-json-from-string
+                 (dex:get (url "/concepts/~a/parents"
+                               (concept-uuid *emacs*))))))
+    (ok (= (length result) 1)
+        "Returns 1 result")))
+
+
+;; (set-profile :develop)
+;; (progn
+;;   (purge-db)
+;;   (setup-db)
+;;   (setup-test))
+;; (start-server)

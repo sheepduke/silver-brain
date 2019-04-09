@@ -22,8 +22,3 @@
   (when (handler *server*)
     (clack:stop (handler *server*))
     (setf (handler *server*) nil)))
-
-(defun concept-summary (concept)
-  "Return an alist representing summary information of given `concept`."
-  `((:uuid . ,(concept-uuid concept))
-    (:name . ,(concept-name concept))))

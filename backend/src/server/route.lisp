@@ -9,14 +9,12 @@
 (defroute ("/concepts" :method :get) (&key _parsed)
   (let ((search (assoc-value _parsed "search" :test #'string=)))
     (render-json-array
-     (mapcar (lambda (concept)
-               `((:uuid . ,(concept-uuid concept))
-                 (:name . ,(concept-name concept))))
+     (mapcar #'concept-summary
              (if search
                  (find-concepts-by-name search)
                  (get-all-concepts))))))
 
-(defroute ("/concepts/" :method :post) ()
+(defroute ("/concepts" :method :post) ()
   (match (decode-request-json-alist '(:name :content :content-format))
     (nil (throw-code 400))
     ((list name content content-format)
@@ -51,17 +49,13 @@
     (delete-concept-by-id id)
     nil))
 
-;; (defroute ("/concepts/:id/children/" :method :get) (&key id)
-;;   (let ((concept (get-concept-by-id id)))
-;;     (or concept (throw-code 404))
-;;     (render-json
-;;      (mapcar #'concept-summary (concept-children concept)))))
-
-;; (defroute ("/concepts/:id/parents/" :method :get) (&key id)
-;;   (let ((concept (get-concept-by-id concept-map id)))
-;;     (or concept (throw-code 404))
-;;     (render-json
-;;      (mapcar #'concept-summary (concept-parents concept)))))
+(defroute ("/concepts/:id/parents" :method :get) (&key id)
+  (let ((concept (get-concept-by-id id)))
+    (format t "~a" concept)
+    (or concept (throw-code 404))
+    (render-json-array
+     (mapcar #'concept-summary
+             (get-concept-parents id)))))
 
 ;; (defroute ("/concepts/:id/friends/" :method :get) (&key id)
 ;;   (let ((concept (get-concept-by-id concept-map id)))

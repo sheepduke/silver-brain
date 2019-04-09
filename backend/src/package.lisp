@@ -25,6 +25,7 @@
    ;; #:parentp
    ;; #:childp
    ;; #:friendp
+   #:setup-db
    #:add-concept
    #:concept-count
    #:get-concept-by-id
@@ -32,7 +33,10 @@
    #:find-concepts-by-name
    #:delete-concept-by-id
    #:delete-all-concepts
-   #:setup-db
+   #:get-concept-parents
+   #:become-child
+   #:become-friends
+   #:remove-relationships
    ;; config
    #:set-profile
    #:get-config

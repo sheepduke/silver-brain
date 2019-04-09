@@ -18,9 +18,11 @@
 
 (defclass concept-relationship ()
   ((source :col-type concept
-           :initarg :source)
+           :initarg :source
+           :accessor concept-relationship-source)
    (target :col-type concept
-           :initarg :target))
+           :initarg :target
+           :accessor concept-relationship-target))
   (:metaclass mito:dao-table-class))
 
 (defun setup-db ()
@@ -61,5 +63,20 @@ The keys of each alist is `(:id :name)`."
 (defun delete-all-concepts ()
   (mito:delete-by-values 'concept))
 
-(defun map-concept ()
-  (mito:select-dao 'concept))
+(defun become-child (concept child)
+  (remove-relationships concept child)
+  (mito:insert-dao
+   (make-instance 'concept-relationship
+                  :source concept
+                  :target child)))
+
+(defun remove-relationships (concept1 concept2)
+  (mito:delete-by-values 'concept-relationship
+                         :source concept1
+                         :target concept2))
+
+(defun get-concept-parents (uuid)
+  (mapcar (lambda (relationship)
+            (concept-relationship-source relationship))
+          (mito:select-dao 'concept-relationship
+            (where (:= :target (get-concept-by-id uuid))))))

@@ -42,3 +42,9 @@ If `strict` is set to `T`, return `NIL` when any key is not present."
          (if (and strict (some #'null result))
              nil
              result))))))
+
+(defun concept-summary (concept)
+  "Return an alist representing summary information of given `concept`."
+  `((:uuid . ,(concept-uuid concept))
+    (:name . ,(concept-name concept))))
+
