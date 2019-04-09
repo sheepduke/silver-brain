@@ -23,9 +23,11 @@
            :initarg :target))
   (:metaclass mito:dao-table-class))
 
-(defun setup-db (&key driver-name database-name)
+(defun setup-db ()
   "Connect to and setup database."
-  (mito:connect-toplevel driver-name :database-name database-name)
+  (match (core:get-config :database)
+    ((plist :driver-name :sqlite3 :database-name database-name)
+     (mito:connect-toplevel :sqlite3 :database-name database-name)))
   (mito:ensure-table-exists 'concept)
   (mito:ensure-table-exists 'concept-relationship))
 
@@ -44,18 +46,20 @@
 (defun concept-count ()
   (mito:count-dao 'concept))
 
-(defun get-all-concept-id-and-name ()
+(defun get-all-concepts ()
   "Return a list UUID and name of all concepts in a list of assoc list.
 The keys of each alist is `(:id :name)`."
-  (mapcar (lambda (concept)
-            `((:uuid . ,(concept-uuid concept))
-              (:name . ,(concept-name concept))))
-          (mito:select-dao 'concept)))
+  (mito:select-dao 'concept))
 
-(defun delete-concept-by-id (id)
-  )
+(defun find-concepts-by-name (search)
+  (mito:select-dao 'concept
+    (where (:like :name (format nil "%~a%" search)))))
+
+(defun delete-concept-by-id (uuid)
+  (mito:delete-by-values 'concept :uuid uuid))
+
+(defun delete-all-concepts ()
+  (mito:delete-by-values 'concept))
 
 (defun map-concept ()
   (mito:select-dao 'concept))
-
-;; (get-all-concept-name)

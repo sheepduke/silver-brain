@@ -14,11 +14,11 @@
     `(:debug nil
       :server (:port 5000)
       :database (:driver-name :sqlite3
-                 :database-name "silver-brain.sqlite")))
+                 :database-name "silver-brain-dev.sqlite")))
 
 (envy:defconfig test
     `(:debug t
-      :server (:port 15000)
+      :server (:port 5000)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-test.sqlite")))
 

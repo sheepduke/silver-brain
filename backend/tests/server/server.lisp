@@ -12,22 +12,22 @@
 (defvar *software* nil)
 (defvar *emacs* nil)
 
-(defun setup-test-server ()
+(defun setup-environment ()
+  (setf rove:*enable-colors* t)
   (setf mito:*trace-sql-hooks* nil)
   (core:set-profile :test)
-  (purge-db)
-  (apply 'core:setup-db
-         (core:get-config :database))
-  ;; (become-child *software* *emacs*)
-  (setf *software* (add-concept "Software" "" ""))
-  (setf *emacs* (add-concept "Emacs" "" "")))
+  (core:setup-db))
 
 (defun purge-db ()
   (uiop:delete-file-if-exists (get-config :database :database-name)))
 
+(defun setup-test ()
+  (delete-all-concepts)
+  (setf *software* (add-concept "Software" "" ""))
+  (setf *emacs* (add-concept "Emacs" "" "")))
+
 (setup
-  (setf rove:*enable-colors* t)
-  (setup-test-server)
+  (setup-environment)
   (start-server)
   (format t "Waiting 0.5 second for server to start...~&")
   (sleep 0.5))
@@ -37,7 +37,12 @@
   (purge-db))
 
 (defhook :before
-  (setup-test-server))
+  (setup-test))
+
+(deftest test-get-concept-meta
+  (let ((result (decode-json-from-string (dex:get (url "/concepts")))))
+    (ok (= (assoc-value result :count) 2)
+        "Returns 2 items.")))
 
 (deftest test-get-concepts
   (testing "GET /concepts/"
@@ -86,10 +91,13 @@
             'dex:http-request-bad-request)
         "Returns 400 when no content is given.")))
 
-(deftest test-delete-concept-id
+(deftest test-delete-concept-by-id
   (testing "DELETE /concepts/:id"
     (ok (dex:delete (url "/concepts/~a" (concept-uuid *software*)))
-        "DELETE succeeded."))
+        "DELETE succeeded.")
+    (ok (= (assoc-value (decode-json-from-string
+                         (dex:get (url "/concepts"))) :count) 1)
+        "Only 1 concept remains."))
   (testing "Delete wrong concept"
     (ok (signals
             (dex:delete (url "/concepts/1234"))

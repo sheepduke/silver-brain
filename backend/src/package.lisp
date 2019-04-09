@@ -6,6 +6,8 @@
         #:mito)
   (:import-from :uuid
                 #:make-v4-uuid)
+  (:import-from :sxql
+                :where)
   (:export
    ;; concept
    #:concept
@@ -26,8 +28,10 @@
    #:add-concept
    #:concept-count
    #:get-concept-by-id
+   #:get-all-concepts
+   #:find-concepts-by-name
    #:delete-concept-by-id
-   #:get-all-concept-id-and-name
+   #:delete-all-concepts
    #:setup-db
    ;; config
    #:set-profile
@@ -54,6 +58,5 @@
                 #:encode-json-to-string)
   (:import-from #:trivial-types
                 #:association-list-p)
-  (:export #:setup-server
-           #:start-server
+  (:export #:start-server
            #:stop-server))
