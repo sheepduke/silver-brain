@@ -2,17 +2,11 @@
 
 (caveman2:clear-routing-rules *server*)
 
-;; (defroute ("/concepts" :method :get) ()
-;;   (render-json
-;;    `((:count . ,(concept-count)))))
-
 (defroute ("/concepts" :method :get) (&key _parsed)
   (let ((search (assoc-value _parsed "search" :test #'string=)))
     (render-json-array
-     (mapcar #'concept-summary
-             (if search
-                 (find-concepts-by-name search)
-                 (get-all-concepts))))))
+     (-<>> (if search (find-concepts-by-name search) (get-all-concepts))
+       (mapcar #'concept-summary <>)))))
 
 (defroute ("/concepts" :method :post) ()
   (match (decode-request-json-alist '(:name :content :content-format))

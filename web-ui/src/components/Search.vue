@@ -37,6 +37,7 @@
             <v-card-text>
               <concept-list
                 v-bind:concepts="concepts"
+                @select="selectConcept"
               ></concept-list>
             </v-card-text>
 
@@ -86,6 +87,10 @@ export default {
         concept.parents = await ConceptApi.conceptParents(concept.uuid)
       }
       this.concepts = concepts
+    },
+    async selectConcept (uuid) {
+      let concept = await ConceptApi.getConceptByUuid(uuid)
+      console.log(concept)
     }
   }
 }

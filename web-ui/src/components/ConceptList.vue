@@ -4,6 +4,7 @@
       <v-list-tile
         v-for="concept in concepts"
         :key="concept.uuid"
+        @click="select(concept)"
       >
         <v-list-tile-content>
           <v-list-tile-title>
@@ -33,6 +34,9 @@ export default {
     },
     parentsToString (parents) {
       return parents.map(parent => parent.name).join(',')
+    },
+    select (concept) {
+      this.$emit('select', concept.uuid)
     }
   }
 }

@@ -58,6 +58,7 @@
         #:alexandria
         #:iterate
         #:trivia
+        #:arrow-macros
         #:silver-brain.core)
   (:import-from #:caveman2
                 #:*request*

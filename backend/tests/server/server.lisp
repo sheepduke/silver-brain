@@ -15,7 +15,7 @@
 (defun setup-environment ()
   (setf rove:*enable-colors* t)
   (setf mito:*trace-sql-hooks* nil)
-  (core:set-profile :test)
+  (core:set-profile :testing)
   (core:setup-db))
 
 (defun purge-db ()

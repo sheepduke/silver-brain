@@ -8,6 +8,7 @@
                #:iterate
                #:trivia
                #:str
+               #:arrow-macros
                #:caveman2
                #:clack
                #:flexi-streams
