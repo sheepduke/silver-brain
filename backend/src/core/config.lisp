@@ -1,6 +1,6 @@
-(in-package silver-brain.core)
+(in-package silver-brain)
 
-(defvar *config-package* :silver-brain.core
+(defvar *config-package* :silver-brain
   "The root package.")
 
 (defvar *profile-env* "SB_PROFILE")

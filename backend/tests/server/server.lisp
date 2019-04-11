@@ -1,4 +1,4 @@
-(in-package silver-brain/tests.server)
+(in-package silver-brain/tests)
 
 (defun url (format-string &rest args)
   (apply #'format
@@ -15,17 +15,17 @@
 (defun setup-environment ()
   (setf rove:*enable-colors* t)
   (setf mito:*trace-sql-hooks* nil)
-  (core:set-profile :testing)
-  (core:setup-db))
+  (set-profile :testing)
+  (setup-db))
 
 (defun purge-db ()
   (uiop:delete-file-if-exists (get-config :database :database-name)))
 
 (defun setup-test ()
-  (delete-all-concepts)
-  (setf *software* (add-concept "Software" "" ""))
-  (setf *emacs* (add-concept "Emacs" "" ""))
-  (become-child *software* *emacs*))
+  (brain::delete-all-concepts)
+  (setf *software* (brain::add-concept "Software" "" ""))
+  (setf *emacs* (brain::add-concept "Emacs" "" ""))
+  (brain::become-child *software* *emacs*))
 
 (setup
   (setup-environment)
@@ -41,11 +41,11 @@
   (setup-test))
 
 (deftest test-get-concepts
-  (let ((result (decode-json-from-string
+  (let ((result (json:decode-json-from-string
                  (dex:get (url "/concepts") :keep-alive nil))))
     (ok (= (length result) 2)
         "Returns 2 results.")
-    (ok (member (concept-uuid *software*)
+    (ok (member (brain::concept-uuid *software*)
                 (mapcar (lambda (alist) (assoc-value alist :uuid)) result)
                 :test #'string=)
         "Contains correct concept.")))
@@ -53,7 +53,7 @@
 (deftest test-post-concepts
   (match (multiple-value-list
           (dex:post (url "/concepts")
-                    :content (encode-json-to-string
+                    :content (json:encode-json-to-string
                               '((:name . "Vim")
                                 (:content . "Content Vim")
                                 (:content-format . "plain")))
@@ -66,9 +66,11 @@
 
 (deftest test-get-concept-by-id
   (testing "GET /concepts/:id"
-    (let ((result (decode-json-from-string
-                   (dex:get (url "/concepts/~a" (concept-uuid *software*))))))
-      (ok (string= (assoc-value result :uuid) (concept-uuid *software*))))
+    (let ((result (json:decode-json-from-string
+                   (dex:get (url "/concepts/~a"
+                                 (brain::concept-uuid *software*))))))
+      (ok (string= (assoc-value result :uuid)
+                   (brain::concept-uuid *software*))))
     (ok (signals
             (dex:get (url "/concepts/1234"))
             'dex:http-request-not-found)
@@ -81,16 +83,16 @@
             'dex:http-request-not-found)
         "Returns 404 when :id is wrong.")
     (ok (signals
-            (dex:put (url "/concepts/~a" (concept-uuid *software*)))
+            (dex:put (url "/concepts/~a" (brain::concept-uuid *software*)))
             'dex:http-request-bad-request)
         "Returns 400 when no content is given.")))
 
 (deftest test-delete-concept-by-id
   (testing "DELETE /concepts/:id"
-    (ok (dex:delete (url "/concepts/~a" (concept-uuid *software*)))
+    (ok (dex:delete (url "/concepts/~a" (brain::concept-uuid *software*)))
         "DELETE succeeded.")
     (ok (signals
-         (dex:get (url "/concepts/~a" (concept-uuid *software*)))
+         (dex:get (url "/concepts/~a" (brain::concept-uuid *software*)))
          'dex:http-request-not-found)
         "Delete UUID does not exist anymore."))
   (testing "Delete wrong concept"
@@ -100,12 +102,11 @@
         "Returns 404 when :id is invalid.")))
 
 (deftest test-get-concept-parents
-  (let ((result (decode-json-from-string
+  (let ((result (json:decode-json-from-string
                  (dex:get (url "/concepts/~a/parents"
-                               (concept-uuid *emacs*))))))
+                               (brain::concept-uuid *emacs*))))))
     (ok (= (length result) 1)
         "Returns 1 result")))
-
 
 ;; (set-profile :develop)
 ;; (progn

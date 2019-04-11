@@ -1,4 +1,4 @@
-(in-package silver-brain.server)
+(in-package silver-brain)
 
 (caveman2:clear-routing-rules *server*)
 
@@ -50,8 +50,16 @@
      (mapcar #'concept-summary
              (get-concept-parents id)))))
 
-;; (defroute ("/concepts/:id/friends/" :method :get) (&key id)
-;;   (let ((concept (get-concept-by-id concept-map id)))
-;;     (or concept (throw-code 404))
-;;     (render-json
-;;      (mapcar #'concept-summary (concept-friends concept)))))
+(defroute ("/concepts/:uuid/children" :method :get) (&key uuid)
+  (let ((concept (get-concept-by-id uuid)))
+    (or concept (throw-code 404))
+    (render-json-array
+     (mapcar #'concept-summary
+             (get-concept-parents uuid)))))
+
+(defroute ("/concepts/:uuid/children" :method :get) (&key uuid)
+  (let ((concept (get-concept-by-id uuid)))
+    (or concept (throw-code 404))
+    (render-json-array
+     (mapcar #'concept-summary
+             (get-concept-friends uuid)))))

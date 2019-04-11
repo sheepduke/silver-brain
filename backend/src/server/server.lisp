@@ -1,4 +1,4 @@
-(in-package silver-brain.server)
+(in-package silver-brain)
 
 (defclass server (caveman2:<app>)
   ((handler :accessor handler

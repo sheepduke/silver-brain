@@ -21,15 +21,15 @@
        (or (profile-set-p)
            (panic "Profile not set by argument or environment variable.")))
       (t
-       (if (member profile (core:profiles))
-           (progn (core:set-profile profile)
-                  (core:setup-db))
+       (if (member profile (profiles))
+           (progn (set-profile profile)
+                  (setup-db))
            (panic "Profile is not valid."))))
-    (server:start-server)
+    (start-server)
     (iter (while t))))
 
 (defun profile-set-p ()
-  (uiop:getenv core:*profile-env*))
+  (uiop:getenv *profile-env*))
 
 (defun panic (control-string &rest format-arguments)
   (apply #'format

@@ -1,76 +1,25 @@
 (defpackage silver-brain
+  (:nicknames :brain)
   (:use #:cl
         #:alexandria
-        #:trivia
-        #:iter)
-  (:export #:main))
-
-(defpackage silver-brain.core
-  (:nicknames #:core)
-  (:use #:cl
-        #:iterate
-        #:trivia
-        #:mito)
-  (:import-from :uuid
-                #:make-v4-uuid)
-  (:import-from :sxql
-                :where)
-  (:export
-   ;; concept
-   #:concept
-   #:concept-uuid
-   #:concept-name
-   #:concept-content
-   #:concept-content-format
-   ;; #:concept-parents
-   ;; #:concept-children
-   ;; #:concept-friends
-   ;; #:become-child
-   ;; #:become-friend
-   ;; #:remove-child
-   ;; #:remove-relationship
-   ;; #:parentp
-   ;; #:childp
-   ;; #:friendp
-   #:setup-db
-   #:add-concept
-   #:concept-count
-   #:get-concept-by-id
-   #:get-all-concepts
-   #:find-concepts-by-name
-   #:delete-concept-by-id
-   #:delete-all-concepts
-   #:get-concept-parents
-   #:become-child
-   #:become-friends
-   #:remove-relationships
-   ;; config
-   #:*profile-env*
-   #:profiles
-   #:set-profile
-   #:get-config
-   #:get-database-spec
-   ))
-
-(defpackage silver-brain.server
-  (:nicknames :server)
-  (:use #:cl
-        #:alexandria
-        #:iterate
-        #:trivia
-        #:arrow-macros
-        #:silver-brain.core)
-  (:import-from #:caveman2
-                #:*request*
-                #:*response*
-                #:response-status
-                #:response-headers
-                #:defroute
-                #:throw-code)
-  (:import-from #:cl-json
-                #:decode-json-from-string
-                #:encode-json-to-string)
+        #:iterate)
+  (:import-from #:sxql
+                #:where)
+  (:import-from #:trivia
+                #:match
+                #:plist)
+  (:import-from #:arrow-macros
+                #:-<>>
+                #:<>)
   (:import-from #:trivial-types
                 #:association-list-p)
-  (:export #:start-server
+  (:import-from #:caveman2
+                #:defroute
+                #:throw-code)
+  (:export #:main
+           #:set-profile
+           #:get-config
+           #:set-config
+           #:setup-db
+           #:start-server
            #:stop-server))

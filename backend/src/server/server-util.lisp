@@ -1,15 +1,16 @@
-(in-package silver-brain.server)
+(in-package silver-brain)
 
 (defun request-body ()
   "Extract and return raw request body as string."
   (flexi-streams:octets-to-string
-   (lack.request:request-content *request*) :external-format :utf-8))
+   (lack.request:request-content caveman2:*request*)
+   :external-format :utf-8))
 
 (defun render-json (thing)
   "Encode given `thing` to JSON string and set `Content-Type` header.
 Return corresponding JSON."
   (set-response-header "Content-Type" "application/json")
-  (encode-json-to-string thing))
+  (json:encode-json-to-string thing))
 
 (defun render-json-array (thing)
   "Works like `render-json`. When `thing` is empty, return an empty array."
@@ -17,11 +18,11 @@ Return corresponding JSON."
 
 (defun set-response-status (status-code)
   "Set response status to `status-code`."
-  (setf (response-status *response*) (format nil "~a" status-code)))
+  (setf (caveman2:response-status caveman2:*response*) (format nil "~a" status-code)))
 
 (defun set-response-header (header value)
   "Set `header` of current response to `value`."
-  (setf (getf (response-headers *response*) header) value))
+  (setf (getf (caveman2:response-headers caveman2:*response*) header) value))
 
 (defun set-response-location-header (value)
   "Set location header to given `value`."
@@ -33,7 +34,7 @@ Argument `keys` is a list of keywords specifying keys to extract from the
 decoded list.
 Returns a list of values associated to `keys`.
 If `strict` is set to `T`, return `NIL` when any key is not present."
-  (let ((obj (handler-case (decode-json-from-string (request-body))
+  (let ((obj (handler-case (json:decode-json-from-string (request-body))
                (error () nil))))
     (cond
       ((not (association-list-p obj)) nil)

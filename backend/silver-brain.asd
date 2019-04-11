@@ -42,9 +42,6 @@
   :components ((:module "tests"
                 :components
                 ((:file "package")
-                 (:module "core"
-                  :components
-                  ((:file "concept")))
                  (:module "server"
                   :components
                   ((:file "server"))))))

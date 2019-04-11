@@ -1,4 +1,4 @@
-(in-package silver-brain.core)
+(in-package silver-brain)
 
 (defclass concept ()
   ((uuid :col-type (:varchar 64)
@@ -27,7 +27,7 @@
 
 (defun setup-db ()
   "Connect to and setup database."
-  (match (core:get-config :database)
+  (match (get-config :database)
     ((plist :driver-name :sqlite3 :database-name database-name)
      (mito:connect-toplevel :sqlite3 :database-name database-name)))
   (mito:ensure-table-exists 'concept)
@@ -35,10 +35,11 @@
 
 (defun add-concept (name content content-format)
   "Add given `concept` to database."
-  (let ((concept (make-instance 'concept :uuid (format nil "~a" (make-v4-uuid))
-                                         :name name
-                                         :content content
-                                         :content-format content-format)))
+  (let ((concept (make-instance 'concept
+                                :uuid (format nil "~a" (uuid:make-v4-uuid))
+                                :name name
+                                :content content
+                                :content-format content-format)))
     (mito:save-dao concept)
     concept))
 
@@ -76,7 +77,33 @@ The keys of each alist is `(:id :name)`."
                          :target concept2))
 
 (defun get-concept-parents (uuid)
-  (mapcar (lambda (relationship)
-            (concept-relationship-source relationship))
-          (mito:select-dao 'concept-relationship
-            (where (:= :target (get-concept-by-id uuid))))))
+  (let ((concept (get-concept-by-id uuid)))
+    (mapcar (lambda (relationship)
+              (concept-relationship-source relationship))
+            (mito:select-dao 'concept-relationship
+              (where (:and (:= :target concept)
+                           (:!= :source concept)))))))
+
+(defun get-concept-children (uuid)
+  (let ((concept (get-concept-by-id uuid)))
+    (mapcar (lambda (relationship)
+              (concept-relationship-source relationship))
+            (mito:select-dao 'concept-relationship
+              (where (:and (:= :source concept)
+                           (:!= :target concept)))))))
+
+(defun get-concept-friends (uuid)
+  (let ((concept (get-concept-by-id uuid)))
+    (mapcar (lambda (relationship)
+              (concept-relationship-source relationship))
+            (mito:select-dao 'concept-relationship
+              (where (:and (:= :source concept)
+                           (:= :target concept)))))))
+
+(defun linkedp (source target)
+  "Return T if there is a link from `source` to `target`."
+  (if (mito:select-dao 'concept-relationship
+        (where (:and (:= :source source)
+                     (:= :target target))))
+      t
+      nil))
