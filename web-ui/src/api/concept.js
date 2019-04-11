@@ -18,6 +18,11 @@ export async function newConcept (name, content, contentFormat) {
   return response.headers.location.substr(10)
 }
 
+export async function getConceptByUuid (uuid) {
+  let response = await axios.get(`/concepts/${uuid}`)
+  return response.data
+}
+
 export async function searchConcept (search) {
   let response = await axios.get(`/concepts?search=${search}`)
   return response.data
@@ -36,7 +41,7 @@ export async function conceptChildren (uuid) {
   return response.data
 }
 
-export async function getConceptByUuid (uuid) {
-  let response = await axios.get(`/concepts/${uuid}`)
+export async function conceptFriends (uuid) {
+  let response = await axios.get(`/concepts/${uuid}/friends`)
   return response.data
 }

@@ -57,16 +57,18 @@ export default {
       this.concept = null
       this.ui.loading = true
 
-      let [concept, parents, children] = await Promise.all([
+      let [concept, parents, children, friends] = await Promise.all([
+        ConceptApi.getConceptByUuid(uuid),
         ConceptApi.conceptParents(uuid),
-        ConceptApi.conceptParents(uuid),
-        ConceptApi.conceptChildren(uuid)
+        ConceptApi.conceptChildren(uuid),
+        ConceptApi.conceptFriends(uuid)
       ])
 
       this.concept = await ({
         ...concept,
         parents: parents,
-        children: children
+        children: children,
+        friends: friends
       })
 
       this.ui.loading = false
