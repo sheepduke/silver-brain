@@ -11,6 +11,7 @@
 
 (defvar *software* nil)
 (defvar *emacs* nil)
+(defvar *vim* nil)
 
 (defun setup-environment ()
   (setf rove:*enable-colors* t)
@@ -23,9 +24,16 @@
 
 (defun setup-test ()
   (brain::delete-all-concepts)
-  (setf *software* (brain::add-concept "Software" "" ""))
-  (setf *emacs* (brain::add-concept "Emacs" "" ""))
-  (brain::become-child *software* *emacs*))
+  (setf *software* (brain::add-concept "Software" "Software content." ""))
+  (setf *emacs* (brain::add-concept "Emacs" "Emacs content." ""))
+  (setf *vim* (brain::add-concept "Vim" "Vim content." ""))
+  (brain::become-child *software* *emacs*)
+  (brain::become-child *software* *vim*)
+  (brain::become-friend *emacs* *vim*))
+
+(defun http-get (control-string &rest format-args)
+  (json:decode-json-from-string
+  (dex:get (apply #'url control-string format-args) :keep-alive nil)))
 
 (setup
   (setup-environment)
@@ -41,10 +49,9 @@
   (setup-test))
 
 (deftest test-get-concepts
-  (let ((result (json:decode-json-from-string
-                 (dex:get (url "/concepts") :keep-alive nil))))
-    (ok (= (length result) 2)
-        "Returns 2 results.")
+  (let ((result (http-get "/concepts")))
+    (ok (= (length result) 3)
+        "Returns 3 results.")
     (ok (member (brain::concept-uuid *software*)
                 (mapcar (lambda (alist) (assoc-value alist :uuid)) result)
                 :test #'string=)
@@ -65,16 +72,13 @@
          "Location header is set."))))
 
 (deftest test-get-concept-by-id
-  (testing "GET /concepts/:id"
-    (let ((result (json:decode-json-from-string
-                   (dex:get (url "/concepts/~a"
-                                 (brain::concept-uuid *software*))))))
-      (ok (string= (assoc-value result :uuid)
-                   (brain::concept-uuid *software*))))
-    (ok (signals
-            (dex:get (url "/concepts/1234"))
-            'dex:http-request-not-found)
-        "Returns 404 when :id is wrong.")))
+  (let ((result (http-get "/concepts/~a" (brain::concept-uuid *software*))))
+    (ok (string= (assoc-value result :uuid)
+                 (brain::concept-uuid *software*))))
+  (ok (signals
+          (dex:get (url "/concepts/1234"))
+          'dex:http-request-not-found)
+      "Returns 404 when :id is wrong."))
 
 (deftest test-put-concept-by-id
   (testing "PUT /concepts/:id"
@@ -102,11 +106,39 @@
         "Returns 404 when :id is invalid.")))
 
 (deftest test-get-concept-parents
-  (let ((result (json:decode-json-from-string
-                 (dex:get (url "/concepts/~a/parents"
-                               (brain::concept-uuid *emacs*))))))
+  (let ((result (http-get "/concepts/~a/parents"
+                          (brain::concept-uuid *emacs*))))
     (ok (= (length result) 1)
-        "Returns 1 result")))
+        "Returns 1 result.")
+    (ok (string= (assoc-value (first result) :uuid)
+                 (brain::concept-uuid *software*))
+        "Only Software is Emacs's parent.")))
+
+(deftest test-get-concept-children
+  (let ((result (http-get "/concepts/~a/children"
+                          (brain::concept-uuid *software*))))
+    (ok (= (length result) 2)
+        "Returns 2 result.")
+    (ok (not (member (brain::concept-uuid *software*)
+                     (mapcar (lambda (c) (assoc-value c :uuid)) result)
+                     :test #'string=))
+        "Emacs and Vim are Software's child.")))
+
+(deftest test-get-concept-friends
+  (let ((result (http-get "/concepts/~a/friends"
+                          (brain::concept-uuid *emacs*))))
+    (ok (= (length result) 1)
+        "Returns 1 result.")
+    (ok (string= (assoc-value (first result) :uuid)
+                 (brain::concept-uuid *vim*))
+        "Vim is a friend of Emacs."))
+  (let ((result (http-get "/concepts/~a/friends"
+                          (brain::concept-uuid *vim*))))
+    (ok (= (length result) 1)
+        "Returns 1 result.")
+    (ok (string= (assoc-value (first result) :uuid)
+                 (brain::concept-uuid *emacs*))
+        "Emasc is a friend of Vim.")))
 
 ;; (set-profile :develop)
 ;; (progn

@@ -71,34 +71,39 @@ The keys of each alist is `(:id :name)`."
                   :source concept
                   :target child)))
 
+(defun become-friend (concept1 concept2)
+  (remove-relationships concept1 concept2)
+  (mito:insert-dao
+   (make-instance 'concept-relationship
+                  :source concept1
+                  :target concept2))
+  (mito:insert-dao
+   (make-instance 'concept-relationship
+                  :source concept2
+                  :target concept1)))
+
 (defun remove-relationships (concept1 concept2)
   (mito:delete-by-values 'concept-relationship
                          :source concept1
                          :target concept2))
 
-(defun get-concept-parents (uuid)
-  (let ((concept (get-concept-by-id uuid)))
-    (mapcar (lambda (relationship)
-              (concept-relationship-source relationship))
-            (mito:select-dao 'concept-relationship
-              (where (:and (:= :target concept)
-                           (:!= :source concept)))))))
+(defun get-concept-parents (concept)
+  (-<>> (mito:select-dao 'concept-relationship
+          (where (:= :target concept)))
+    (remove-if (lambda (r) (linkedp concept (concept-relationship-source r))))
+    (mapcar (lambda (r) (concept-relationship-source r)))))
 
-(defun get-concept-children (uuid)
-  (let ((concept (get-concept-by-id uuid)))
-    (mapcar (lambda (relationship)
-              (concept-relationship-source relationship))
-            (mito:select-dao 'concept-relationship
-              (where (:and (:= :source concept)
-                           (:!= :target concept)))))))
+(defun get-concept-children (concept)
+  (-<>> (mito:select-dao 'concept-relationship
+          (where (:= :source concept)))
+    (remove-if (lambda (r) (linkedp (concept-relationship-target r) concept)))
+    (mapcar (lambda (r) (concept-relationship-target r)))))
 
-(defun get-concept-friends (uuid)
-  (let ((concept (get-concept-by-id uuid)))
-    (mapcar (lambda (relationship)
-              (concept-relationship-source relationship))
-            (mito:select-dao 'concept-relationship
-              (where (:and (:= :source concept)
-                           (:= :target concept)))))))
+(defun get-concept-friends (concept)
+  (-<>> (mito:select-dao 'concept-relationship
+          (where (:= :source concept)))
+    (remove-if-not (lambda (r) (linkedp (concept-relationship-target r) concept)))
+    (mapcar (lambda (r) (concept-relationship-target r)))))
 
 (defun linkedp (source target)
   "Return T if there is a link from `source` to `target`."

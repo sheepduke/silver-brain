@@ -48,18 +48,18 @@
     (or concept (throw-code 404))
     (render-json-array
      (mapcar #'concept-summary
-             (get-concept-parents id)))))
+             (get-concept-parents concept)))))
 
 (defroute ("/concepts/:uuid/children" :method :get) (&key uuid)
   (let ((concept (get-concept-by-id uuid)))
     (or concept (throw-code 404))
     (render-json-array
      (mapcar #'concept-summary
-             (get-concept-parents uuid)))))
+             (get-concept-children concept)))))
 
-(defroute ("/concepts/:uuid/children" :method :get) (&key uuid)
+(defroute ("/concepts/:uuid/friends" :method :get) (&key uuid)
   (let ((concept (get-concept-by-id uuid)))
     (or concept (throw-code 404))
     (render-json-array
      (mapcar #'concept-summary
-             (get-concept-friends uuid)))))
+             (get-concept-friends concept)))))
