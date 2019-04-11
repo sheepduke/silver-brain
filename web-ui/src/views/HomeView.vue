@@ -1,14 +1,8 @@
 <template>
   <div id="home-view">
-    <v-container>
-      <v-layout>
-        <v-flex md11>
-          <search-concept
-            @select="selectConcept"
-          ></search-concept>
-        </v-flex>
-      </v-layout>
-    </v-container>
+    <search-concept
+      @select="selectConcept"
+    ></search-concept>
   </div>
 </template>
 

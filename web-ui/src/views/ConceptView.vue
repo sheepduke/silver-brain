@@ -1,24 +1,18 @@
 <template>
   <div id="concept-view">
-    <v-container>
-      <v-layout>
-        <v-flex md11>
-          <search-concept
-            @select="switchConcept"
-          ></search-concept>
+    <search-concept
+      @select="switchConcept"
+    ></search-concept>
 
-          <v-progress-circular
-            v-if="!concept && ui.loading"
-            indeterminate
-          ></v-progress-circular>
+    <v-progress-circular
+      v-if="!concept && ui.loading"
+      indeterminate
+    ></v-progress-circular>
 
-          <single-concept
-            v-if="concept"
-            :concept="concept"
-          ></single-concept>
-        </v-flex>
-      </v-layout>
-    </v-container>
+    <single-concept
+      v-if="concept"
+      :concept="concept"
+    ></single-concept>
   </div>
 </template>
 

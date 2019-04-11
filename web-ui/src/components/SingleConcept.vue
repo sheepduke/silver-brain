@@ -9,81 +9,128 @@
   <div id="single-concept">
     <div v-if="concept">
       <v-card>
-        <v-card-title>{{ concept.name }}</v-card-title>
+        <v-card-title><h2>{{ concept.name }}</h2></v-card-title>
+
+        <v-divider></v-divider>
+
         <v-card-text>
-          <v-tabs
-            v-model="ui.activeTab"
-            fixed-tabs
-          >
-            <v-tab
-              :key="0"
-            >Relationship</v-tab>
+          <p>
+            <b>Parents:</b>
+            <span v-if="concept.parents.length === 0">None</span>
+            <concept-tag
+              v-for="(parent, index) in concept.parents"
+              :key="parent.uuid"
+              v-model="concept.parents[index]"
+              close
+              @close="removeConceptRelation(concept.parents, index)"
+            ></concept-tag>
+          </p>
 
-            <v-tab
-              :key="1"
-            >Detail</v-tab>
+          <p>
+            <b>Children:</b>
+            <span v-if="concept.children.length === 0">None</span>
 
-            <v-tab-item
-              :key="0"
-            >
-              <p>
-                <b>Parents:</b>
-                <span v-if="concept.parents.length === 0">None</span>
-                <v-chip
-                  v-for="parent in concept.parents"
-                  :key="parent.uuid"
-                  @click="switchConcept(parent.uuid)"
-                >{{ parent.name }}</v-chip>
-              </p>
+            <concept-tag
+              v-for="(child, index) in concept.children"
+              :key="child.uuid"
+              v-model="concept.children[index]"
+              close
+              @close="removeConceptRelation(concept.children, index)"
+            ></concept-tag>
+          </p>
 
-              <p>
-                <b>Children:</b>
-                <span v-if="concept.children.length === 0">None</span>
-                <v-chip
-                  v-for="child in concept.childs"
-                  :key="child.uuid"
-                  @click="switchConcept(child.uuid)"
-                >{{ child.name }}</v-chip>
-              </p>
-
-              <p>
-                <b>Friends</b>
-                <span v-if="concept.friends.length === 0">None</span>
-                <v-chip
-                  v-for="friend in concept.friends"
-                  :key="friend.uuid"
-                  @click="switchConcept(friend.uuid)"
-                >{{ friend.name }}</v-chip>
-              </p>
-            </v-tab-item>
-
-            <v-tab-item
-              :key="1"
-            >
-              <p>Name: {{ concept.name }}</p>
-              <p>Content: {{ concept.content }}</p>
-            </v-tab-item>
-          </v-tabs>
+          <p>
+            <b>Friends</b>
+            <span v-if="concept.friends.length === 0">None</span>
+            <concept-tag
+              v-for="(friend, index) in concept.friends"
+              :key="friend.uuid"
+              v-model="concept.friends[index]"
+              close
+              @close="removeConceptRelation(concept.friends, index)"
+            ></concept-tag>
+          </p>
         </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-text>
+          {{ concept.content }}
+        </v-card-text>
+
+        <alert-with-button
+          v-model="alert.show"
+          :message="alert.message"
+          :button-text="alert.buttonText"
+          button-color="primary"
+          @click="undoRemoveConceptRelation"
+          @close="alert.show = false"
+        ></alert-with-button>
       </v-card>
     </div>
   </div>
 </template>
 
 <script>
+import AlertWithButton from '@/components/AlertWithButton'
+import ConceptTag from '@/components/ConceptTag'
+
 export default {
   name: 'SingleConcept',
-  props: ['concept'],
+  components: {
+    AlertWithButton,
+    ConceptTag
+  },
+  props: {
+    concept: {
+      type: Object,
+      default: null
+    }
+  },
   data () {
     return {
-      ui: {
-        activeTab: 0
+      alert: {
+        show: false,
+        message: '',
+        buttonText: ''
+      },
+      removed: {
+        uuid: '',
+        name: '',
+        type: ''
       }
     }
   },
   methods: {
-    switchConcept (uuid) {
-      this.$emit('switch', uuid)
+    async removeConceptRelation (collection, index) {
+      let removedConcept = collection[index]
+      this.removed.uuid = removedConcept.uuid
+      this.removed.name = removedConcept.name
+
+      switch (collection) {
+        case this.concept.parents:
+          this.removed.type = 'parents'
+          break
+        case this.concept.children:
+          this.removed.type = 'children'
+          break
+        case this.concept.friends:
+          this.removed.type = 'friends'
+          break
+      }
+
+      // TODO call API
+
+      this.alert.message = `"${removedConcept.name}" removed from ${this.removed.type}`
+      this.alert.buttonText = 'Undo'
+      this.alert.show = true
+    },
+    async undoRemoveConceptRelation () {
+      // TODO call API
+
+      this.alert.message = 'Removal undone'
+      this.alert.buttonText = ''
+      this.alert.show = true
     }
   }
 }
