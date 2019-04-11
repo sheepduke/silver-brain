@@ -1,3 +1,13 @@
+<!--
+     This component shows a list of concepts and their parent information.
+
+     Props:
+     * concepts: concepts to show.
+
+     Events:
+     * select: triggered when an item is selected.
+-->
+
 <template>
   <div id="concept-list">
     <v-list two-line>

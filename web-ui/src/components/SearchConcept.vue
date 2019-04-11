@@ -1,9 +1,15 @@
+<!--
+     This component displays a single search box and its results.
+
+     Properties: none.
+
+     Events:
+     * selected: triggered when a search result is selected.
+-->
+
 <template>
   <div id="search">
-    <v-container>
-      <v-layout align-center justify-center fill-height>
-        <v-flex md11>
-          <v-card flat color="#eae7e1">
+    <v-card flat color="#eae7e1">
             <v-card-text>
               <v-text-field
                 v-model="search"
@@ -14,7 +20,7 @@
               ></v-text-field>
             </v-card-text>
 
-            <v-dialog max-width="80%" v-model="newConcept.showDialog">
+            <v-dialog max-width="50%" v-model="newConcept.showDialog">
               <template v-slot:activator="{ on }">
                 <v-card-text class="float-btn-wrapper">
                   <v-btn absolute top right round
@@ -34,7 +40,7 @@
               ></new-concept>
             </v-dialog>
 
-            <v-card-text>
+            <v-card-text ref="searchResultBox" hidden>
               <concept-list
                 v-bind:concepts="concepts"
                 @select="selectConcept"
@@ -42,9 +48,6 @@
             </v-card-text>
 
           </v-card>
-        </v-flex>
-      </v-layout>
-    </v-container>
   </div>
 </template>
 
@@ -54,7 +57,7 @@ import NewConcept from '@/components/NewConcept'
 import ConceptList from '@/components/ConceptList'
 
 export default {
-  name: 'Search',
+  name: 'SearchConcept',
   components: {
     NewConcept,
     ConceptList
@@ -70,6 +73,15 @@ export default {
     }
   },
   methods: {
+    reset () {
+      this.search = ''
+      this.concepts = []
+      this.newConcept = {
+        buttonLoading: false,
+        showDialog: false
+      }
+      this.setSearchResultBoxHidden(true)
+    },
     async createNewConcept (name, content, contentFormat) {
       this.newConcept.showDialog = false
       this.newConcept.buttonLoading = true
@@ -81,6 +93,7 @@ export default {
       this.newConcept.buttonLoading = false
     },
     async searchConcept () {
+      this.setSearchResultBoxHidden(false)
       let concepts = await ConceptApi.searchConcept(this.search)
       for (let index in concepts) {
         let concept = concepts[index]
@@ -89,8 +102,11 @@ export default {
       this.concepts = concepts
     },
     async selectConcept (uuid) {
-      let concept = await ConceptApi.getConceptByUuid(uuid)
-      console.log(concept)
+      this.reset()
+      this.$emit('select', uuid)
+    },
+    setSearchResultBoxHidden (statusFlag) {
+      this.$refs.searchResultBox.hidden = statusFlag
     }
   }
 }

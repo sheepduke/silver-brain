@@ -31,6 +31,11 @@ export async function conceptParents (uuid) {
   return response.data
 }
 
+export async function conceptChildren (uuid) {
+  let response = await axios.get(`/concepts/${uuid}/children`)
+  return response.data
+}
+
 export async function getConceptByUuid (uuid) {
   let response = await axios.get(`/concepts/${uuid}`)
   return response.data
