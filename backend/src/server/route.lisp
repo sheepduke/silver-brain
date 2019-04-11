@@ -45,7 +45,6 @@
 
 (defroute ("/concepts/:id/parents" :method :get) (&key id)
   (let ((concept (get-concept-by-id id)))
-    (format t "~a" concept)
     (or concept (throw-code 404))
     (render-json-array
      (mapcar #'concept-summary
