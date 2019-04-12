@@ -11,7 +11,7 @@
 
     <single-concept
       v-if="concept"
-      :concept="concept"
+      v-model="concept"
     ></single-concept>
   </div>
 </template>

@@ -45,3 +45,11 @@ export async function conceptFriends (uuid) {
   let response = await axios.get(`/concepts/${uuid}/friends`)
   return response.data
 }
+
+export async function removeRelation (relation, uuid, targetUuid) {
+  await axios.delete(`/concepts/${uuid}/${relation}/${targetUuid}`)
+}
+
+export async function addRelation (relation, uuid, targetUuid) {
+  await axios.put(`/concepts/${uuid}/${relation}/${targetUuid}`)
+}

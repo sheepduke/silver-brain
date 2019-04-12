@@ -18,18 +18,16 @@
        (set-response-status 201)
        nil))))
 
-(defroute ("/concepts/:id" :method :get) (&key id)
-  (let ((concept (get-concept-by-id id)))
-    (or concept (throw-code 404))
+(defroute ("/concepts/:uuid" :method :get) (&key uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (render-json
      `((:uuid . ,(concept-uuid concept))
        (:name . ,(concept-name concept))
        (:content . ,(concept-content concept))
        (:content-format . ,(concept-content-format concept))))))
 
-(defroute ("/concepts/:id" :method :put) (&key id)
-  (let ((concept (get-concept-by-id id)))
-    (or concept (throw-code 404))
+(defroute ("/concepts/:uuid" :method :put) (&key uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (match (decode-request-json-alist '(:name :content :content-format))
       (nil (throw-code 400))
       ((list name content content-format)
@@ -37,29 +35,70 @@
        (setf (concept-content concept) content)
        (setf (concept-content-format concept) content-format)))))
 
-(defroute ("/concepts/:id" :method :delete) (&key id)
-  (let ((concept (get-concept-by-id id)))
-    (or concept (throw-code 404))
-    (delete-concept-by-id id)
+(defroute ("/concepts/:uuid" :method :delete) (&key uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
+    (delete-concept concept)
     nil))
 
-(defroute ("/concepts/:id/parents" :method :get) (&key id)
-  (let ((concept (get-concept-by-id id)))
-    (or concept (throw-code 404))
+(defroute ("/concepts/:uuid/parents" :method :get) (&key uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (render-json-array
      (mapcar #'concept-summary
              (get-concept-parents concept)))))
 
+(defroute ("/concepts/:uuid/parents/:parent-uuid" :method :put)
+    (&key uuid parent-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (parent (get-concept-by-uuid-or-404 parent-uuid)))
+    (become-child parent concept)
+    nil))
+
+(defroute ("/concepts/:uuid/parents/:parent-uuid" :method :delete)
+    (&key uuid parent-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (parent (get-concept-by-uuid-or-404 parent-uuid)))
+    (remove-child parent concept)
+    nil))
+
 (defroute ("/concepts/:uuid/children" :method :get) (&key uuid)
-  (let ((concept (get-concept-by-id uuid)))
-    (or concept (throw-code 404))
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (render-json-array
      (mapcar #'concept-summary
              (get-concept-children concept)))))
 
+(defroute ("/concepts/:uuid/children/:child-uuid" :method :put)
+    (&key uuid child-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (child (get-concept-by-uuid-or-404 child-uuid)))
+    (become-child concept child)
+    nil))
+
+(defroute ("/concepts/:uuid/children/:child-uuid" :method :delete) (&key uuid child-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (child (get-concept-by-uuid-or-404 child-uuid)))
+    (remove-child concept child)
+    nil))
+
+(defroute ("/concepts/:uuid/children/:child-uuid" :method :delete) (&key uuid child-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (child (get-concept-by-uuid-or-404 child-uuid)))
+    (remove-relations concept child)
+    nil))
+
 (defroute ("/concepts/:uuid/friends" :method :get) (&key uuid)
-  (let ((concept (get-concept-by-id uuid)))
-    (or concept (throw-code 404))
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (render-json-array
      (mapcar #'concept-summary
              (get-concept-friends concept)))))
+
+(defroute ("/concepts/:uuid/friends/:friend-uuid" :method :put) (&key uuid friend-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (friend (get-concept-by-uuid-or-404 friend-uuid)))
+    (become-friend concept friend)
+    nil))
+
+(defroute ("/concepts/:uuid/friends/:friend-uuid" :method :delete) (&key uuid friend-uuid)
+  (let ((concept (get-concept-by-uuid-or-404 uuid))
+        (friend (get-concept-by-uuid-or-404 friend-uuid)))
+    (remove-friend concept friend)
+    nil))

@@ -23,6 +23,7 @@
                  (:module "core"
                   :components 
                   ((:file "concept")
+                   (:file "concept-relation")
                    (:file "config")))
                  (:module "server"
                   :components

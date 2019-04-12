@@ -2,135 +2,161 @@
      This component shows detailed information for a single concept.
 
      Props:
-     * concept: Object{uuid, name, content, parents, children, friends}
+     * value: Object{uuid, name, content, parents, children, friends}
 -->
 
 <template>
   <div id="single-concept">
-    <div v-if="concept">
+    <div v-if="value">
       <v-card>
-        <v-card-title><h2>{{ concept.name }}</h2></v-card-title>
+        <v-card-title><h2>{{ value.name }}</h2></v-card-title>
 
         <v-divider></v-divider>
 
         <v-card-text>
           <p>
             <b>Parents:</b>
-            <span v-if="concept.parents.length === 0">None</span>
             <concept-tag
-              v-for="(parent, index) in concept.parents"
+              v-for="(parent, index) in value.parents"
               :key="parent.uuid"
-              v-model="concept.parents[index]"
+              v-model="value.parents[index]"
               close
-              @close="removeConceptRelation(concept.parents, index)"
+              @close="removeConceptRelation(Enum.Relation.PARENT, index)"
             ></concept-tag>
+            <v-btn
+              small round
+              color="success"
+              @click="addConceptRelation(Enum.Relation.PARENT)"
+            >
+              Add<v-icon right>add</v-icon>
+            </v-btn>
           </p>
 
           <p>
             <b>Children:</b>
-            <span v-if="concept.children.length === 0">None</span>
-
             <concept-tag
-              v-for="(child, index) in concept.children"
+              v-for="(child, index) in value.children"
               :key="child.uuid"
-              v-model="concept.children[index]"
+              v-model="value.children[index]"
               close
-              @close="removeConceptRelation(concept.children, index)"
+              @close="removeConceptRelation(Enum.Relation.CHILD, index)"
             ></concept-tag>
+            <v-btn
+              small round
+              color="success"
+              @click="addConceptRelation(Enum.Relation.CHILD)"
+            >
+              Add<v-icon right>add</v-icon>
+            </v-btn>
           </p>
 
           <p>
             <b>Friends</b>
-            <span v-if="concept.friends.length === 0">None</span>
             <concept-tag
-              v-for="(friend, index) in concept.friends"
+              v-for="(friend, index) in value.friends"
               :key="friend.uuid"
-              v-model="concept.friends[index]"
+              v-model="value.friends[index]"
               close
-              @close="removeConceptRelation(concept.friends, index)"
+              @close="removeConceptRelation(Enum.Relation.FRIEND, index)"
             ></concept-tag>
+            <v-btn
+              small round
+              color="success"
+              @click="addConceptRelation(Enum.Relation.FRIEND)"
+            >
+              Add<v-icon right>add</v-icon>
+            </v-btn>
           </p>
         </v-card-text>
 
         <v-divider></v-divider>
 
         <v-card-text>
-          {{ concept.content }}
+          {{ value.content }}
         </v-card-text>
 
-        <alert-with-button
-          v-model="alert.show"
-          :message="alert.message"
-          :button-text="alert.buttonText"
-          button-color="primary"
-          @click="undoRemoveConceptRelation"
-          @close="alert.show = false"
-        ></alert-with-button>
+        <!-- <alert-with-button
+             v-model="alert.show"
+             :message="alert.message"
+             :color="alert.color"
+             :button-text="alert.buttonText"
+             button-color="primary"
+             @click="undoRemoveConceptRelation"
+             @close="alert.show = false"
+             ></alert-with-button> -->
       </v-card>
     </div>
   </div>
 </template>
 
 <script>
-import AlertWithButton from '@/components/AlertWithButton'
 import ConceptTag from '@/components/ConceptTag'
+import * as ConceptApi from '@/api/concept'
+import * as Enum from '@/util/enum'
+import * as Global from '@/util/global'
 
 export default {
   name: 'SingleConcept',
   components: {
-    AlertWithButton,
     ConceptTag
   },
   props: {
-    concept: {
+    value: {
       type: Object,
       default: null
     }
   },
   data () {
     return {
-      alert: {
-        show: false,
-        message: '',
-        buttonText: ''
-      },
       removed: {
-        uuid: '',
-        name: '',
-        type: ''
-      }
+        concept: null,
+        type: null,
+        index: null
+      },
+      Enum: Enum
     }
   },
   methods: {
-    async removeConceptRelation (collection, index) {
+    async removeConceptRelation (type, index) {
+      let collection = this.value[type]
       let removedConcept = collection[index]
-      this.removed.uuid = removedConcept.uuid
-      this.removed.name = removedConcept.name
+      this.removed.concept = removedConcept
+      this.removed.type = type
+      this.removed.index = index
 
-      switch (collection) {
-        case this.concept.parents:
-          this.removed.type = 'parents'
-          break
-        case this.concept.children:
-          this.removed.type = 'children'
-          break
-        case this.concept.friends:
-          this.removed.type = 'friends'
-          break
+      try {
+        await ConceptApi.removeRelation(type, this.value.uuid, removedConcept.uuid)
+        Global.alert({
+          message: `"${removedConcept.name}" removed from ${this.removed.type}`,
+          buttonText: 'Undo',
+          buttonColor: 'primary',
+          buttonCallback: this.undoRemoveConceptRelation
+        })
+        collection.splice(index, 1)
+      } catch (err) {
+        Global.alert({
+          message: 'Deletion failed'
+        })
       }
-
-      // TODO call API
-
-      this.alert.message = `"${removedConcept.name}" removed from ${this.removed.type}`
-      this.alert.buttonText = 'Undo'
-      this.alert.show = true
     },
     async undoRemoveConceptRelation () {
-      // TODO call API
-
-      this.alert.message = 'Removal undone'
-      this.alert.buttonText = ''
-      this.alert.show = true
+      if (!this.removed.concept) {
+        return
+      }
+      try {
+        await ConceptApi.addRelation(
+          this.removed.type, this.value.uuid, this.removed.concept.uuid)
+        this.value[this.removed.type].splice(this.removed.index, 0, this.removed.concept)
+        Global.alert({
+          message: 'Removal undone'
+        })
+      } catch (err) {
+        Global.alert({
+          messaeg: 'Undo failed'
+        })
+      }
+    },
+    async addConceptRelation (type) {
     }
   }
 }

@@ -16,14 +16,8 @@
                    :accessor concept-content-format))
   (:metaclass mito:dao-table-class))
 
-(defclass concept-relation ()
-  ((source :col-type concept
-           :initarg :source
-           :accessor concept-relation-source)
-   (target :col-type concept
-           :initarg :target
-           :accessor concept-relation-target))
-  (:metaclass mito:dao-table-class))
+(defmethod print-object ((concept concept) stream)
+  (format stream "#<Concept ~a>" (concept-name concept)))
 
 (defun setup-db ()
   "Connect to and setup database."
@@ -43,7 +37,7 @@
     (mito:save-dao concept)
     concept))
 
-(defun get-concept-by-id (uuid)
+(defun get-concept-by-uuid (uuid)
   (mito:find-dao 'concept :uuid uuid))
 
 (defun concept-count ()
@@ -58,57 +52,9 @@ The keys of each alist is `(:id :name)`."
   (mito:select-dao 'concept
     (where (:like :name (format nil "%~a%" search)))))
 
-(defun delete-concept-by-id (uuid)
-  (mito:delete-by-values 'concept :uuid uuid))
+(defun delete-concept (concept)
+  (mito:delete-dao concept))
 
 (defun delete-all-concepts ()
   (mito:delete-by-values 'concept))
 
-(defun become-child (concept child)
-  (remove-relations concept child)
-  (mito:insert-dao
-   (make-instance 'concept-relation
-                  :source concept
-                  :target child)))
-
-(defun become-friend (concept1 concept2)
-  (remove-relations concept1 concept2)
-  (mito:insert-dao
-   (make-instance 'concept-relation
-                  :source concept1
-                  :target concept2))
-  (mito:insert-dao
-   (make-instance 'concept-relation
-                  :source concept2
-                  :target concept1)))
-
-(defun remove-relations (concept1 concept2)
-  (mito:delete-by-values 'concept-relation
-                         :source concept1
-                         :target concept2))
-
-(defun get-concept-parents (concept)
-  (-<>> (mito:select-dao 'concept-relation
-          (where (:= :target concept)))
-    (remove-if (lambda (r) (linkedp concept (concept-relation-source r))))
-    (mapcar (lambda (r) (concept-relation-source r)))))
-
-(defun get-concept-children (concept)
-  (-<>> (mito:select-dao 'concept-relation
-          (where (:= :source concept)))
-    (remove-if (lambda (r) (linkedp (concept-relation-target r) concept)))
-    (mapcar (lambda (r) (concept-relation-target r)))))
-
-(defun get-concept-friends (concept)
-  (-<>> (mito:select-dao 'concept-relation
-          (where (:= :source concept)))
-    (remove-if-not (lambda (r) (linkedp (concept-relation-target r) concept)))
-    (mapcar (lambda (r) (concept-relation-target r)))))
-
-(defun linkedp (source target)
-  "Return T if there is a link from `source` to `target`."
-  (if (mito:select-dao 'concept-relation
-        (where (:and (:= :source source)
-                     (:= :target target))))
-      t
-      nil))

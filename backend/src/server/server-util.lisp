@@ -49,3 +49,8 @@ If `strict` is set to `T`, return `NIL` when any key is not present."
   `((:uuid . ,(concept-uuid concept))
     (:name . ,(concept-name concept))))
 
+(defun get-concept-by-uuid-or-404 (uuid)
+  (let ((concept (get-concept-by-uuid uuid)))
+    (or concept
+        (throw-code 404))
+    concept))
