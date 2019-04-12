@@ -1,8 +1,30 @@
 <template>
   <div id="home-view">
-    <search-concept
-      @select="selectConcept"
-    ></search-concept>
+    <v-card>
+      <v-card-text>
+        <v-layout>
+
+          <v-flex md12>
+          <search-concept
+            @select="selectConcept"
+          ></search-concept>
+          </v-flex>
+
+          <v-btn fab>
+            <v-icon
+              large
+              color="success"
+            >
+              add
+            </v-icon>
+          </v-btn>
+        </v-layout>
+      </v-card-text>
+
+      <v-card-text>
+        
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 
