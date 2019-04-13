@@ -20,26 +20,6 @@
               ></v-text-field>
             </v-card-text>
 
-            <!-- <v-dialog max-width="50%" v-model="newConcept.showDialog">
-                 <template v-slot:activator="{ on }">
-                 <v-card-text class="float-btn-wrapper">
-                 <v-btn absolute top right round
-                 :loading="newConcept.buttonLoading"
-                 :disabled="newConcept.buttonLoading"
-                 v-on="on"
-                 color="success">
-                 New Concept
-                 <v-icon right dark>add</v-icon>
-                 </v-btn>
-                 </v-card-text>
-                 </template>
-
-                 <new-concept
-                 @close="newConcept.showDialog = false"
-                 @submit="createNewConcept"
-                 ></new-concept>
-                 </v-dialog> -->
-
             <v-card-text ref="searchResultBox" hidden>
               <concept-list
                 v-bind:concepts="concepts"

@@ -1,12 +1,22 @@
+<!--
+     A card that contains form for creating a concept.
+
+     Emits:
+     * success (url): when the new concept has been created
+     * fail: when the creation of new concept failed
+     * close: when close button is clicked.
+-->
+
 <template>
   <div id="new-concept">
     <v-card>
+
+      <v-card-title>New Concept</v-card-title>
 
       <v-card-text>
         <v-text-field
           v-model="name"
           label="Concept Name"
-          @input="alert.show = false"
         ></v-text-field>
       </v-card-text>
 
@@ -27,11 +37,6 @@
       </v-card-text>
 
       <v-card-text>
-        <v-alert
-          v-model="alert.show"
-          dismissible
-          type="warning"
-        >{{ alert.text }}</v-alert>
         <v-btn
           flat
           color="success"
@@ -47,6 +52,9 @@
 </template>
 
 <script>
+import * as ConceptApi from '@/api/concept'
+import * as Global from '@/util/global'
+
 export default {
   name: 'NewConcept',
   data () {
@@ -54,11 +62,7 @@ export default {
       name: '',
       content: '',
       contentFormatList: ['plain', 'org', 'markdown'],
-      contentFormat: 'plain',
-      alert: {
-        show: false,
-        text: ''
-      }
+      contentFormat: 'plain'
     }
   },
   methods: {
@@ -66,15 +70,28 @@ export default {
       this.name = ''
       this.content = ''
       this.contentFormat = 'plain'
-      this.alert.show = false
-      this.alert.text = ''
     },
-    submit () {
+    async submit () {
       if (this.name.length === 0) {
-        this.alert.text = 'Concept name cannot be empty'
-        this.alert.show = true
+        Global.alert({
+          message: 'Concept name cannot be empty',
+          color: 'warning'
+        })
       } else {
-        this.$emit('submit', this.name, this.content, this.contentFormat)
+        try {
+          let url = await ConceptApi.newConcept(this.name, this.content, this.contentFormat)
+          Global.alert({
+            message: `New concept "${this.name}" created`,
+            color: 'success'
+          })
+          this.$emit('success', url)
+        } catch (err) {
+          Global.alert({
+            message: `Failed to create concept "${name}"`,
+            color: 'error'
+          })
+          this.$emit('fail')
+        }
         this.reset()
       }
     },

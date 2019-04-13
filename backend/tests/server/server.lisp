@@ -186,12 +186,12 @@
   (dex:delete (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *vim*)))
   (ok (= (length (brain::get-concept-friends *emacs*)) 0)
       "Emacs has no friend now.")
-  (ok (= (length ( *vim*)) 0)
+  (ok (= (length (brain::get-concept-friends *vim*)) 0)
       "Vim has no friend now."))
 
-;; (set-profile :develop)
-;; (progn
-;;   (purge-db)
-;;   (setup-db)
-;;   (setup-test))
-;; (start-server)
+(set-profile :develop)
+(progn
+  (purge-db)
+  (setup-db)
+  (setup-test))
+(start-server)

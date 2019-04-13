@@ -5,6 +5,11 @@ export async function getAllConcepts () {
   return response.data
 }
 
+/**
+ * Create a concept.
+ *
+ * Return: UUID of newly created concept.
+ */
 export async function newConcept (name, content, contentFormat) {
   let data = {
     name: name,
@@ -15,7 +20,7 @@ export async function newConcept (name, content, contentFormat) {
   if (response.status !== 201) {
     throw Error('Failed to add new concept')
   }
-  return response.headers.location.substr(10)
+  return response.headers.location
 }
 
 export async function getConceptByUuid (uuid) {

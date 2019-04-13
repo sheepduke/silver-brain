@@ -1,8 +1,18 @@
 <template>
   <div id="concept-view">
-    <search-concept
-      @select="switchConcept"
-    ></search-concept>
+    <v-layout>
+      <v-flex md12>
+        <search-concept @select="switchConcept"></search-concept>
+      </v-flex>
+
+      <v-flex>
+        <v-btn round fab
+               color="success"
+               @click.stop="ui.showDialog = true">
+          <v-icon dark large>add</v-icon>
+        </v-btn>
+      </v-flex>
+    </v-layout>
 
     <v-progress-circular
       v-if="!concept && ui.loading"
@@ -13,25 +23,33 @@
       v-if="concept"
       v-model="concept"
     ></single-concept>
+
+    <v-dialog max-width="50%" v-model="ui.showDialog">
+      <new-concept @success="ui.showDialog = false" @close="ui.showDialog=false">
+      </new-concept>
+    </v-dialog>
   </div>
 </template>
 
 <script>
 import SearchConcept from '@/components/SearchConcept'
 import SingleConcept from '@/components/SingleConcept'
+import NewConcept from '@/components/NewConcept'
 import * as ConceptApi from '@/api/concept.js'
 
 export default {
   name: 'ConceptView',
   components: {
     SearchConcept,
-    SingleConcept
+    SingleConcept,
+    NewConcept
   },
   data () {
     return {
       concept: null,
       ui: {
-        loading: false
+        loading: false,
+        showDialog: false
       }
     }
   },

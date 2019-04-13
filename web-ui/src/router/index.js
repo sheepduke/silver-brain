@@ -13,8 +13,8 @@ export default new Router({
       component: HomeView
     },
     {
-      path: '/concept/:uuid',
-      name: 'concept',
+      path: '/concepts/:uuid',
+      name: 'concepts',
       component: ConceptView
     }
   ]
