@@ -3,7 +3,7 @@
     :close="close"
     @input="$emit('close')"
   >
-    <a :href="`#/concept/${value.uuid}`">{{ value.name }}</a>
+    <a :href="`#/concepts/${value.uuid}`">{{ value.name }}</a>
   </v-chip>
 </template>
 

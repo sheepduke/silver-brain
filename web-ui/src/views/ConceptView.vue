@@ -86,7 +86,7 @@ export default {
       this.ui.loading = false
     },
     async switchConcept (uuid) {
-      this.$router.push(`/concept/${uuid}`)
+      this.$router.push(`/concepts/${uuid}`)
     }
   }
 }
