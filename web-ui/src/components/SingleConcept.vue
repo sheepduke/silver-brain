@@ -160,9 +160,14 @@ export default {
       this.newRelation.type = type
     },
     async addConceptRelation (uuid) {
-      console.log('In')
+      if (uuid === this.value.uuid) {
+        Global.alert({
+          message: 'Cannot add itself',
+          color: 'warning'
+        })
+        return
+      }
       try {
-        let concept = await ConceptApi.getConceptByUuid(uuid)
         let type = this.newRelation.type
 
         if (this.value[type].find(c => c.uuid === uuid)) {
@@ -172,6 +177,7 @@ export default {
           })
         } else {
           await ConceptApi.addRelation(type, this.value.uuid, uuid)
+          let concept = await ConceptApi.getConceptByUuid(uuid)
           Global.alert({
             message: `Concept added to ${type}`,
             color: 'success'
