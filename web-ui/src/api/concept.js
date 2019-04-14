@@ -20,7 +20,7 @@ export async function newConcept (name, content, contentFormat) {
   if (response.status !== 201) {
     throw Error('Failed to add new concept')
   }
-  return response.headers.location
+  return response.headers.location.substr(10)
 }
 
 export async function getConceptByUuid (uuid) {

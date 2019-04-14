@@ -23,9 +23,9 @@
     </v-card>
 
     <v-dialog max-width="50%" v-model="showDialog">
-      <new-concept
-        @success="redirectToNewConcept"
-        @close="showDialog = false"
+      <new-concept title="New Concept"
+                   @success="redirectToNewConcept"
+                   @close="showDialog = false"
       ></new-concept>
     </v-dialog>
   </div>
@@ -50,8 +50,8 @@ export default {
     selectConcept (uuid) {
       this.$router.push(`/concepts/${uuid}`)
     },
-    redirectToNewConcept (url) {
-      this.$router.push(url)
+    redirectToNewConcept (uuid) {
+      this.$router.push(`/concepts/${uuid}`)
     }
   }
 }

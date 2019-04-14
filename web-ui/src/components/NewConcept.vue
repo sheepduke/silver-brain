@@ -2,8 +2,8 @@
      A card that contains form for creating a concept.
 
      Emits:
-     * success (url): when the new concept has been created
-     * fail: when the creation of new concept failed
+     * success (uuid): when the UUID of the new concept has been created.
+     * fail: when the creation of new concept failed.
      * close: when close button is clicked.
 -->
 
@@ -11,7 +11,7 @@
   <div id="new-concept">
     <v-card>
 
-      <v-card-title>New Concept</v-card-title>
+      <v-card-title v-if="title && title.length > 0">{{ title }}</v-card-title>
 
       <v-card-text>
         <v-text-field
@@ -63,6 +63,12 @@ export default {
       content: '',
       contentFormatList: ['plain', 'org', 'markdown'],
       contentFormat: 'plain'
+    }
+  },
+  props: {
+    title: {
+      type: String,
+      default: ''
     }
   },
   methods: {

@@ -8,7 +8,7 @@
       <v-flex>
         <v-btn round fab
                color="success"
-               @click.stop="ui.showDialog = true">
+               @click.stop="newConcept.showDialog = true">
           <v-icon dark large>add</v-icon>
         </v-btn>
       </v-flex>
@@ -24,8 +24,10 @@
       v-model="concept"
     ></single-concept>
 
-    <v-dialog max-width="50%" v-model="ui.showDialog">
-      <new-concept @success="ui.showDialog = false" @close="ui.showDialog=false">
+    <v-dialog max-width="50%" v-model="newConcept.showDialog">
+      <new-concept title="New Concept"
+                   @success="newConcept.showDialog = false"
+                   @close="newConcept.showDialog = false">
       </new-concept>
     </v-dialog>
   </div>
@@ -35,6 +37,7 @@
 import SearchConcept from '@/components/SearchConcept'
 import SingleConcept from '@/components/SingleConcept'
 import NewConcept from '@/components/NewConcept'
+import SearchOrNewConcept from '@/components/SearchOrNewConcept'
 import * as ConceptApi from '@/api/concept.js'
 
 export default {
@@ -42,13 +45,19 @@ export default {
   components: {
     SearchConcept,
     SingleConcept,
-    NewConcept
+    NewConcept,
+    SearchOrNewConcept
   },
   data () {
     return {
       concept: null,
       ui: {
-        loading: false,
+        loading: false
+      },
+      newConcept: {
+        showDialog: false
+      },
+      newRelation: {
         showDialog: false
       }
     }

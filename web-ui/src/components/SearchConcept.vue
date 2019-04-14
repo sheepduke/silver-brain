@@ -4,7 +4,7 @@
      Properties: none.
 
      Events:
-     * selected: triggered when a search result is selected.
+     * select (uuid): triggered when a search result is selected.
 -->
 
 <template>
