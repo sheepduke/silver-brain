@@ -3,7 +3,7 @@
 (caveman2:clear-routing-rules *server*)
 
 (defroute ("/" :method :get) ()
-  (merge-pathnames "index.html" (get-config :app-root)))
+  #P"index.html")
 
 (defroute ("/concepts" :method :get) (&key _parsed)
   (let ((search (assoc-value _parsed "search" :test #'string=)))

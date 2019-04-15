@@ -15,7 +15,7 @@
     (setf (handler *server*)
           (clack:clackup (lack.builder:builder
                           (:static :path "/static/"
-                                   :root (merge-pathnames "static/" (get-config :app-root)))
+                                   :root "static/")
                           *server*)
                          :port (get-config :server :port)
                          :debug (get-config :debug)))))

@@ -20,11 +20,11 @@
       ((null profile)
        (or (profile-set-p)
            (panic "Profile not set by argument or environment variable.")))
-      (t
-       (if (member profile (profiles))
-           (progn (set-profile profile)
-                  (setup-db))
-           (panic "Profile is not valid."))))
+      ((not (member profile (profiles)))
+       (panic "Profile is not valid.")))
+    (set-profile profile)
+    (uiop:chdir (get-config :app-root))
+    (setup-db)
     (start-server)
     (iter (while t))))
 
