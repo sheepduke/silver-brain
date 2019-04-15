@@ -33,6 +33,14 @@ export async function searchConcept (search) {
   return response.data
 }
 
+export async function updateConcept (concept) {
+  await axios.put(`/concepts/${concept.uuid}`, concept)
+}
+
+export async function deleteConcept (uuid) {
+  await axios.delete(`/concepts/${uuid}`)
+}
+
 /**
  * Return Array<Object{uuid, name}>
  */

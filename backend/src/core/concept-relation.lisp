@@ -81,3 +81,7 @@
 (defun remove-friend (concept1 concept2)
   (when (friendp concept1 concept2)
     (remove-relations concept1 concept2)))
+
+(defun delete-all-concept-relations (concept)
+  (mito:delete-by-values 'concept-relation :source concept)
+  (mito:delete-by-values 'concept-relation :target concept))

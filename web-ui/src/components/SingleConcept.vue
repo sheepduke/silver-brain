@@ -69,7 +69,33 @@
         <v-divider></v-divider>
 
         <v-card-text>
-          {{ value.content }}
+          <v-card flat>
+            <v-card-title>
+              <h3>Content</h3>
+              <v-btn v-if="!editConcept.enabled"
+                     color="primary"
+                     @click="editConcept.enabled = true">
+                <v-icon>edit</v-icon>
+              </v-btn>
+              <v-btn v-else
+                     color="success"
+                     @click="updateConcept">
+                <v-icon>save</v-icon>
+              </v-btn>
+
+              <v-btn color="error"
+                     @click="deleteConcept.showDialog = true">
+                <v-icon>delete</v-icon>
+              </v-btn>
+            </v-card-title>
+
+            <v-card-text>
+              <v-textarea v-model="value.content"
+                          auto-grow autofocus
+                          :readonly="!editConcept.enabled"></v-textarea>
+            </v-card-text>
+
+          </v-card>
         </v-card-text>
       </v-card>
 
@@ -77,6 +103,23 @@
         <search-or-new-concept @select="addConceptRelation"
                                @close="newRelation.showDialog = false"
         ></search-or-new-concept>
+      </v-dialog>
+
+      <v-dialog max-width="50%" v-model="deleteConcept.showDialog">
+        <v-card>
+          <v-card-title>Confirmation</v-card-title>
+          <v-card-text>
+            <p>
+              <v-icon>error</v-icon>
+              This will delete this concept and all its relations.
+            </p>
+            <p>It cannot be undone. Do you confirm?</p>
+            <v-btn color="error"
+                   @click="doDeleteConcept">
+              Confirm</v-btn>
+            <v-btn @click="deleteConcept.showDialog = false">Cancel</v-btn>
+          </v-card-text>
+        </v-card>
       </v-dialog>
     </div>
   </div>
@@ -111,6 +154,12 @@ export default {
       newRelation: {
         showDialog: false,
         type: ''
+      },
+      editConcept: {
+        enabled: false
+      },
+      deleteConcept: {
+        showDialog: false
       },
       Enum: Enum
     }
@@ -189,6 +238,36 @@ export default {
         Global.alert({
           message: 'Failed to add relation',
           color: 'error'
+        })
+      }
+    },
+    async updateConcept () {
+      try {
+        await ConceptApi.updateConcept(this.value)
+        this.editConcept.enabled = false
+        Global.alert({
+          message: 'Concept updated',
+          color: 'success'
+        })
+      } catch (err) {
+        Global.alert({
+          messaeg: 'Failed to update concept',
+          color: 'error'
+        })
+      }
+    },
+    async doDeleteConcept () {
+      try {
+        await ConceptApi.deleteConcept(this.value.uuid)
+        Global.alert({
+          message: 'Concept deleted',
+          color: 'success'
+        })
+        this.$router.push('/#/')
+      } catch (err) {
+        Global.alert({
+          message: 'Failed to delete concept',
+          color: 'alert'
         })
       }
     }

@@ -33,7 +33,8 @@
       ((list name content content-format)
        (setf (concept-name concept) name)
        (setf (concept-content concept) content)
-       (setf (concept-content-format concept) content-format)))))
+       (setf (concept-content-format concept) content-format)
+       (save-concept concept)))))
 
 (defroute ("/concepts/:uuid" :method :delete) (&key uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))

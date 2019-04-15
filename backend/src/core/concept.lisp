@@ -37,6 +37,10 @@
     (mito:save-dao concept)
     concept))
 
+(defun save-concept (concept)
+  "Save `concept` to database."
+  (mito:save-dao concept))
+
 (defun get-concept-by-uuid (uuid)
   (mito:find-dao 'concept :uuid uuid))
 
@@ -53,8 +57,5 @@ The keys of each alist is `(:id :name)`."
     (where (:like :name (format nil "%~a%" search)))))
 
 (defun delete-concept (concept)
-  (mito:delete-dao concept))
-
-(defun delete-all-concepts ()
-  (mito:delete-by-values 'concept))
-
+  (mito:delete-dao concept)
+  (delete-all-concept-relations concept))
