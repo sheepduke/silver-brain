@@ -263,11 +263,11 @@ export default {
           message: 'Concept deleted',
           color: 'success'
         })
-        this.$router.push('/#/')
+        this.$router.push('/')
       } catch (err) {
         Global.alert({
           message: 'Failed to delete concept',
-          color: 'alert'
+          color: 'error'
         })
       }
     }
