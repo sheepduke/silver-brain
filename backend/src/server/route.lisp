@@ -2,6 +2,9 @@
 
 (caveman2:clear-routing-rules *server*)
 
+(defroute ("/" :method :get) ()
+  (merge-pathnames "index.html" (get-config :app-root)))
+
 (defroute ("/concepts" :method :get) (&key _parsed)
   (let ((search (assoc-value _parsed "search" :test #'string=)))
     (render-json-array

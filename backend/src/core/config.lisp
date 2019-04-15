@@ -8,19 +8,22 @@
 (setf (envy:config-env-var *config-package*) *profile-env*)
 
 (envy:defconfig product
-    `(:debug nil
+    `(:app-root "~/.silver-brain/"
+      :debug nil
       :server (:port 5000)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain.sqlite")))
 
 (envy:defconfig develop
-    `(:debug t
+    `(:app-root "~/.silver-brain/"
+      :debug t
       :server (:port 5000)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-dev.sqlite")))
 
 (envy:defconfig testing
-    `(:debug t
+    `(:app-root "~/.silver-brain/"
+      :debug t
       :server (:port 5000)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-test.sqlite")))
