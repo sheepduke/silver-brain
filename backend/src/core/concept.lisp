@@ -59,3 +59,7 @@ The keys of each alist is `(:id :name)`."
 (defun delete-concept (concept)
   (mito:delete-dao concept)
   (delete-all-concept-relations concept))
+
+(defun delete-all-concepts ()
+  (mito:delete-by-values 'concept)
+  (mito:delete-by-values 'concept-relation))
