@@ -5,6 +5,8 @@
 
 (defvar *profile-env* "SB_PROFILE")
 
+(defvar *profile* nil)
+
 (setf (envy:config-env-var *config-package*) *profile-env*)
 
 (envy:defconfig product
@@ -35,7 +37,11 @@
 (defun set-profile (profile)
   (check-type profile (member :develop :product :testing))
   (setf (uiop:getenv *profile-env*)
-        (format nil "~a" (string-upcase profile))))
+        (format nil "~a" (string-upcase profile)))
+  (setf *profile* profile))
+
+(defun get-profile ()
+  *profile*)
 
 (defun get-config (&rest keys)
   "Return corresponding config.

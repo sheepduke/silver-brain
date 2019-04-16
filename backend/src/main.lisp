@@ -2,11 +2,6 @@
 
 (defun main (&optional args)
   (opts:define-opts
-    (:name :profile
-     :description "profile of program selected from: develop, product, testing"
-     :short #\p
-     :long "profile"
-     :arg-parser (lambda (arg) (make-keyword (string-upcase arg))))
     (:name :help
      :description "print this help text"
      :short #\h
@@ -16,20 +11,11 @@
          (profile (getf options :profile)))
     (when help
       (print-help-and-quit))
-    (cond
-      ((null profile)
-       (or (profile-set-p)
-           (panic "Profile not set by argument or environment variable.")))
-      ((not (member profile (profiles)))
-       (panic "Profile is not valid.")))
-    (set-profile profile)
+    (set-profile :product)
     (uiop:chdir (get-config :app-root))
+    (setf *default-pathname-defaults* (uiop:getcwd))
     (setup-db)
-    (start-server)
-    (iter (while t))))
-
-(defun profile-set-p ()
-  (uiop:getenv *profile-env*))
+    (start-server)))
 
 (defun panic (control-string &rest format-arguments)
   (apply #'format

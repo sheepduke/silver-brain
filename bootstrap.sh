@@ -6,7 +6,7 @@ function panic() {
 }
 
 mkdir build
-cd build || panic "Cannot enter to build directory"
+cd build || panic "Cannot enter to build directory."
 
 if [ -d roswell ]; then
     echo "Roswell source exists. Skip git command."
@@ -17,5 +17,9 @@ fi
 cd roswell && ./bootstrap && ./configure --prefix ${HOME}/.local/
 make && make install
 ~/.local/bin/ros
+
+echo "Clean up build directory."
+rm -r build/
+
 echo "----------------------------------------------------------------------"
 echo "Installation finished."

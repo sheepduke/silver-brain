@@ -18,7 +18,8 @@
                                    :root "static/")
                           *server*)
                          :port (get-config :server :port)
-                         :debug (get-config :debug)))))
+                         :debug (get-config :debug)
+                         :use-thread (not (equal (get-profile) :product))))))
 
 (defun stop-server ()
   "Stop the server."
