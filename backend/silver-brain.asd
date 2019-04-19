@@ -3,18 +3,23 @@
   :version "0.1.0"
   :author "YUE Daian"
   :license "MIT"
-  :depends-on (#:alexandria
+  :depends-on (;; Utility.
+               #:alexandria
                #:uuid
                #:iterate
                #:trivia
                #:str
                #:arrow-macros
+               #:trivial-types
+               #:unix-opts
+               ;; Logging.
+               #:log4cl
+               ;; Web related.
+               #:find-port
                #:caveman2
                #:clack
                #:flexi-streams
                #:cl-json
-               #:trivial-types
-               #:unix-opts
                #:envy
                #:mito)
   :components ((:module "src"

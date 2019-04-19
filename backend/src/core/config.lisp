@@ -12,21 +12,24 @@
 (envy:defconfig product
     `(:app-root "~/.silver-brain/"
       :debug nil
-      :server (:port 5000)
+      :server (:port 5000
+               :access-log nil)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain.sqlite")))
 
 (envy:defconfig develop
     `(:app-root "~/.silver-brain/"
       :debug t
-      :server (:port 5000)
+      :server (:port 15000
+               :access-log t)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-dev.sqlite")))
 
 (envy:defconfig testing
     `(:app-root "~/.silver-brain/"
       :debug t
-      :server (:port 5000)
+      :server (:port ,(find-port:find-port)
+               :access-log nil)
       :database (:driver-name :sqlite3
                  :database-name "silver-brain-test.sqlite")))
 
@@ -38,7 +41,9 @@
   (check-type profile (member :develop :product :testing))
   (setf (uiop:getenv *profile-env*)
         (format nil "~a" (string-upcase profile)))
-  (setf *profile* profile))
+  (setf *profile* profile)
+  (uiop:chdir (get-config :app-root))
+  (setf *default-pathname-defaults* (uiop:getcwd)))
 
 (defun get-profile ()
   *profile*)
