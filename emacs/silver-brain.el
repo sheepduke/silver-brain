@@ -21,10 +21,10 @@ Supported values are: plain, markdown, org")
 (defvar silver-brain-buffer-name "*Silver Brain*"
   "Buffer name of silver-brain.")
 
-(defvar-local silver-brain--concept nil
-  "The concept of current buffer.")
+(defvar silver-brain--concept nil
+  "The current concept.")
 
-(defvar-local silver-brain--head-end-point nil
+(defvar silver-brain--head-end-point nil
   "The end point of header part, including the separator line.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -53,6 +53,8 @@ Supported values are: plain, markdown, org")
 (define-key silver-brain-mode-map (kbd "q") 'bury-buffer)
 
 (add-hook 'silver-brain-mode-hook 'silver-brain--poly-mode)
+
+(run-with-idle-timer 1 t 'silver-brain--auto-save)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                              UI                              ;;;;
@@ -83,12 +85,15 @@ Supported values are: plain, markdown, org")
       (silver-brain--draw-relations concept parents children friends))
   (insert "\n" (silver-brain--make-separator))
   ;; Make head part read-only.
-  (setq-local silver-brain--head-end-point (point-max))
+  (setq silver-brain--head-end-point (point-max))
   (insert "\n")
   (add-text-properties (point-min) silver-brain--head-end-point
                        '(read-only t silver-brain-relation t))
   (insert (silver-brain-concept-content concept))
-  (goto-char (point-min)))
+  (goto-char (point-min))
+  (forward-line)
+  (add-hook 'kill-buffer-hook 'silver-brain-confirm-save nil t)
+  (set-buffer-modified-p nil))
 
 (defun silver-brain--draw-relations (concept parents children friends)
   "Insert PARENTS, CHILDREN and FRIENDS relations of given CONCEPT."
@@ -129,6 +134,12 @@ Supported values are: plain, markdown, org")
       (insert " ")
       (put-text-property start end 'uuid (silver-brain-concept-uuid concept)))))
 
+(defun silver-brain-confirm-save ()
+  "Confirm to save silver-brain concept."
+  (and (buffer-modified-p)
+       (y-or-n-p "Current concept is modified; save it? ")
+       (silver-brain-save)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Commands                           ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,15 +158,23 @@ Supported values are: plain, markdown, org")
   (interactive)
   (silver-brain--open-concept (silver-brain-concept-uuid silver-brain--concept)))
 
+(defun silver-brain--auto-save ()
+  "Save silver-brain buffer automatically."
+  (when (get-buffer silver-brain-buffer-name)
+    (with-current-buffer silver-brain-buffer-name
+      (silver-brain-save))))
+
 ;;;###autoload
 (defun silver-brain-save ()
   "Save silver-brain buffer.
 Should be called in a silver-brain-mode buffer."
   (interactive)
-  (setf (silver-brain-concept-content silver-brain--concept)
-        (buffer-substring (1+ silver-brain--head-end-point) (point-max)))
-  (silver-brain-api--update-concept silver-brain--concept)
-  (message "Buffer saved."))
+  (when (buffer-modified-p)
+    (setf (silver-brain-concept-content silver-brain--concept)
+          (buffer-substring (1+ silver-brain--head-end-point) (point-max)))
+    (silver-brain-api--update-concept silver-brain--concept)
+    (set-buffer-modified-p nil)
+    (message "Concept updated.")))
 
 ;;;###autoload
 (defun silver-brain-new-concept ()
