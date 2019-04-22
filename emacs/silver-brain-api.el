@@ -50,24 +50,34 @@ Returns a list of concepts."
   (silver-brain-api--delete
    (concat "/concepts/" (silver-brain-concept-uuid concept))))
 
-(defun silver-brain-api--get-parents (uuid)
-  "Return a list of parents of concept UUID."
+(defun silver-brain-api--get-relation (relation uuid)
+  "Return a list of concepts that are RELATION of concept UUID."
   (mapcar #'silver-brain-api--plist-to-concept
-          (silver-brain-api--get (concat "/concepts/" uuid "/parents"))))
+          (silver-brain-api--get
+           (concat "/concepts/" uuid "/"
+                   (silver-brain-api--relation-to-url relation)))))
 
-(defun silver-brain-api--add-parent (uuid parent-uuid)
-  "Add PARENT-UUID as a parent of UUID."
-  (silver-brain-api--put (concat "/concepts/" uuid "/parents/" parent-uuid)))
+(defun silver-brain-api--add-relation (relation uuid target-uuid)
+  "Add TARGET-UUID as a relation of UUID by given RELATION."
+  (silver-brain-api--put
+   (concat "/concepts/" uuid
+           "/" (silver-brain-api--relation-to-url relation)
+           "/" target-uuid)))
 
-(defun silver-brain-api--get-children (uuid)
-  "Return a list of children of concept UUID."
-  (mapcar #'silver-brain-api--plist-to-concept
-   (silver-brain-api--get (concat "/concepts/" uuid "/children"))))
+(defun silver-brain-api--remove-relation (relation uuid target-uuid)
+  "Remove TARGET-UUID from relation of UUID by RELATION."
+  (silver-brain-api--delete
+   (concat "/concepts/" uuid
+           "/" (silver-brain-api--relation-to-url relation)
+           "/" target-uuid)))
 
-(defun silver-brain-api--get-friends (uuid)
-  "Return a list of friends of concept UUID."
-  (mapcar #'silver-brain-api--plist-to-concept
-          (silver-brain-api--get (concat "/concepts/" uuid "/friends"))))
+(defun silver-brain-api--relation-to-url (relation)
+  "Convert RELATION to corresponding URL."
+  (case relation
+                ('parent "parents")
+                ('child "children")
+                ('friend "friends")
+                (t (error "Invalid relation: %s" relation))))
 
 (defun silver-brain-api--get (url &optional params)
   "Send GET request to server with given URI.

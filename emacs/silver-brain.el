@@ -8,6 +8,7 @@
 (require 'cl-lib)
 (require 'polymode)
 (require 'silver-brain-api)
+(require 'silver-brain-search)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Util                             ;;;;
@@ -23,6 +24,9 @@ Supported values are: plain, markdown, org")
 (defvar-local silver-brain--concept nil
   "The concept of current buffer.")
 
+(defvar-local silver-brain--head-end-point nil
+  "The end point of header part, including the separator line.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Modes                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,9 +38,10 @@ Supported values are: plain, markdown, org")
 (define-key silver-brain-mode-map (kbd "<tab>") 'silver-brain-jump-to-next-link)
 (define-key silver-brain-mode-map (kbd "<backtab>") 'silver-brain-jump-to-previous-link)
 (define-key silver-brain-mode-map (kbd "C-x C-s") 'silver-brain-save)
+(define-key silver-brain-mode-map (kbd "g") 'silver-brain-refresh)
 (define-key silver-brain-mode-map (kbd "r") 'silver-brain-rename)
-(define-key silver-brain-mode-map (kbd "w") 'silver-brain-save)
-(define-key silver-brain-mode-map (kbd "s") 'silver-brain-search)
+(define-key silver-brain-mode-map (kbd "s") 'silver-brain-save)
+(define-key silver-brain-mode-map (kbd "o") 'silver-brain)
 (define-key silver-brain-mode-map (kbd "d") 'silver-brain-delete)
 (define-key silver-brain-mode-map (kbd "p") 'silver-brain-add-parent)
 (define-key silver-brain-mode-map (kbd "P") 'silver-brain-remove-parent)
@@ -78,10 +83,10 @@ Supported values are: plain, markdown, org")
       (silver-brain--draw-relations concept parents children friends))
   (insert "\n" (silver-brain--make-separator))
   ;; Make head part read-only.
-  (let ((relation-end-point (point-max)))
-    (insert "\n")
-    (add-text-properties (point-min) relation-end-point
-                         '(read-only t silver-brain-relation t)))
+  (setq-local silver-brain--head-end-point (point-max))
+  (insert "\n")
+  (add-text-properties (point-min) silver-brain--head-end-point
+                       '(read-only t silver-brain-relation t))
   (insert (silver-brain-concept-content concept))
   (goto-char (point-min)))
 
@@ -128,12 +133,31 @@ Supported values are: plain, markdown, org")
 ;;;;                           Commands                           ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;###autoload
+(defun silver-brain ()
+  "The entry point of Silver Brain functions."
+  (interactive)
+  (let* ((uuid (silver-brain-search)))
+    (when uuid
+      (silver-brain--open-concept uuid))))
+
+;;;###autoload
+(defun silver-brain-refresh ()
+  "Refresh concept buffer."
+  (interactive)
+  (silver-brain--open-concept (silver-brain-concept-uuid silver-brain--concept)))
+
+;;;###autoload
 (defun silver-brain-save ()
   "Save silver-brain buffer.
 Should be called in a silver-brain-mode buffer."
   (interactive)
+  (setf (silver-brain-concept-content silver-brain--concept)
+        (buffer-substring (1+ silver-brain--head-end-point) (point-max)))
+  (silver-brain-api--update-concept silver-brain--concept)
   (message "Buffer saved."))
 
+;;;###autoload
 (defun silver-brain-new-concept ()
   "Create a new concept interactively and open it."
   (interactive)
@@ -142,6 +166,7 @@ Should be called in a silver-brain-mode buffer."
          (concept (silver-brain-api--create-concept name content-format)))
     (silver-brain--open-concept (silver-brain-concept-uuid concept))))
 
+;;;###autoload
 (defun silver-brain-rename ()
   "Rename current concept.
 Should be called in silver-brain-mode buffers."
@@ -152,56 +177,72 @@ Should be called in silver-brain-mode buffers."
     (silver-brain-api--update-concept silver-brain--concept)
     (silver-brain--open-concept uuid)))
 
+;;;###autoload
 (defun silver-brain-delete ()
   "Delete current concept and all its relations."
   (interactive)
-  (when (y-or-n-p "This will delete this concept. Confirm?")
+  (when (y-or-n-p "This will delete this concept; confirm? ")
     (silver-brain-api--delete-concept silver-brain--concept)
     (when (get-buffer silver-brain-buffer-name)
       (kill-buffer silver-brain-buffer-name))))
 
+;;;###autoload
 (defun silver-brain-add-parent ()
   "Add a parent."
   (interactive)
-  ;; (let* ((query (read-string "Search parent: "))
-  ;;        (uuid (silver-brain-concept-uuid silver-brain--concept)))
-  ;;   (silver-brain-search--find-concept-and-return query)
-  ;;   (message "UUID: %s Parent: %s" uuid silver-brain-search--selected-uuid)
-  ;;   (when silver-brain-search--selected-uuid
-  ;;     (silver-brain-api--add-parent uuid silver-brain-search--selected-uuid)))
-  )
+  (silver-brain--add-relation 'parent))
 
-;; (silver-brain-api--get-all-concepts)
-
-;; (silver-brain-api--add-parent "A14E8F91-FD89-44BD-8336-7FC7CA62B14B"
-;;                               "2DB3F8B0-F572-476C-80E3-E01825D02C88")
-
-
-
+;;;###autoload
 (defun silver-brain-remove-parent ()
   "Remove a parent."
   (interactive)
-  (message "TODO"))
+  (silver-brain--remove-relation 'parent))
 
+;;;###autoload
 (defun silver-brain-add-child ()
   "Add a child."
   (interactive)
-  (message "TODO"))
+  (silver-brain--add-relation 'child))
 
+;;;###autoload
 (defun silver-brain-remove-child ()
   "Remove a child."
   (interactive)
-  (message "TODO"))
+  (silver-brain--remove-relation 'child))
 
+;;;###autoload
 (defun silver-brain-add-friend ()
   "Add a friend."
   (interactive)
-  (message "TODO"))
+  (silver-brain--add-relation 'friend))
 
+;;;###autoload
 (defun silver-brain-remove-friend ()
   "Remove a friend."
   (interactive)
-  (message "TODO"))
+  (silver-brain--remove-relation 'friend))
+
+(defun silver-brain--add-relation (relation)
+  "Add relation given by RELATION.
+RELATION should be a symbol one of: '(parent child friend)."
+  (let* ((target-uuid (silver-brain-search))
+         (uuid (silver-brain-concept-uuid silver-brain--concept)))
+    (when target-uuid
+      (silver-brain-api--add-relation relation uuid target-uuid)
+      (silver-brain-refresh))))
+
+(defun silver-brain--remove-relation (relation)
+  "Remove relation given by RELATION."
+  (let* ((uuid (silver-brain-concept-uuid silver-brain--concept))
+         (concepts (silver-brain-api--get-relation relation uuid))
+         (candidates (mapcar #'silver-brain-search--concept-to-candidate concepts))
+         (selection (completing-read "Select: " candidates))
+         (target-uuid (if selection
+                          (silver-brain-search--candidate-to-uuid selection)
+                        nil)))
+    (when target-uuid
+      (silver-brain-api--remove-relation relation uuid target-uuid)
+      (silver-brain-refresh))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                          Multi Mode                          ;;;;
@@ -225,3 +266,5 @@ Should be called in silver-brain-mode buffers."
 
 ;;; silver-brain.el ends here
 
+;; (setq silver-brain-server-port 15000)
+;; (global-set-key (kbd "C-c b s") 'silver-brain)

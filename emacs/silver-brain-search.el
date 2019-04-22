@@ -8,18 +8,16 @@
 
 (require 'silver-brain-util)
 
-(defvar silver-brain-search-buffer-name "*Silver Brain - Search*"
-  "Buffer name used for searching concepts.")
-
 (defvar silver-brain-search-function 'silver-brain-search
   "The function used to search concepts.")
 
-(defun silver-brain-search (query)
-  "Search concept."
-  (let* ((concepts (silver-brain-api--search-concept query))
+;;;###autoload
+(cl-defun silver-brain-search (&key (prompt "Search: "))
+  "Search concept from QUERY and return UUID."
+  (let* ((concepts (silver-brain-api--get-all-concepts))
          (candidates (mapcar 'silver-brain-search--concept-to-candidate concepts)))
     (cond
-     ((null candidates) (message "No concept found."))
+     ((null candidates) (message "No concept found.") nil)
      (t (let* ((candidate (completing-read "Select: " candidates)))
           (silver-brain-search--candidate-to-uuid candidate))))))
 
