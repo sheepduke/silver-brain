@@ -42,6 +42,7 @@
   (setf (uiop:getenv *profile-env*)
         (format nil "~a" (string-upcase profile)))
   (setf *profile* profile)
+  (ensure-directories-exist (get-config :app-root))
   (uiop:chdir (get-config :app-root))
   (setf *default-pathname-defaults* (uiop:getcwd)))
 
