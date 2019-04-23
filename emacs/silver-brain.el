@@ -79,9 +79,9 @@ Supported values are: plain, markdown, org")
       (add-face-text-property start-point end-point 'bold)))
   ;; Draw relations.
   (let* ((uuid (silver-brain-concept-uuid concept))
-         (parents (silver-brain-api--get-parents uuid))
-         (children (silver-brain-api--get-children uuid))
-         (friends (silver-brain-api--get-friends uuid)))
+         (parents (silver-brain-api--get-relation 'parent uuid))
+         (children (silver-brain-api--get-relation 'child uuid))
+         (friends (silver-brain-api--get-relation 'friend uuid)))
       (silver-brain--draw-relations concept parents children friends))
   (insert "\n" (silver-brain--make-separator))
   ;; Make head part read-only.
