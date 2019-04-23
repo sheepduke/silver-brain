@@ -99,7 +99,7 @@ Return the result as property list with following conversion rules:
 Returns the value of Location header."
   (request-response-header (request (silver-brain-api--url url)
                                     :type "POST"
-                                    :data data
+                                    :data (encode-coding-string data 'utf-8)
                                     :sync t)
                            "Location"))
 
