@@ -12,13 +12,13 @@ ros install ./silver-brain.asd || panic "Cannot install system."
 ros install ./roswell/silver-brain.ros || panic "Cannot install executable."
 cd ..
 
-cp -rv emacs $APP_ROOT || panic "Cannot copy Emacs client"
-cd ..
-
 cd web-ui/ || panic "Cannot enter web-ui directory"
 npm install && npm run build || panic "Failed to package Web UI."
 mkdir $APP_ROOT
 cp -r dist/* $APP_ROOT
+cd ..
+
+cp -rv emacs $APP_ROOT || panic "Cannot copy Emacs client"
 cd ..
 
 echo "----------------------------------------------------------------------"

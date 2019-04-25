@@ -15,7 +15,7 @@
       :server (:port 5000
                :access-log nil)
       :database (:driver-name :sqlite3
-                 :database-name "data/silver-brain.sqlite")))
+                 :database-name "silver-brain.sqlite")))
 
 (envy:defconfig develop
     `(:app-root "~/.silver-brain/"
