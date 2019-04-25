@@ -23,6 +23,7 @@
   "Connect to and setup database."
   (match (get-config :database)
     ((plist :driver-name :sqlite3 :database-name database-name)
+     (ensure-directories-exist (get-config :database :database-name))
      (mito:connect-toplevel :sqlite3 :database-name database-name)))
   (mito:ensure-table-exists 'concept)
   (mito:ensure-table-exists 'concept-relation))
