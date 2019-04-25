@@ -97,17 +97,18 @@ Return the result as property list with following conversion rules:
 (defun silver-brain-api--post (url &optional data)
   "Send POST request to the server with given URL and DATA.
 Returns the value of Location header."
-  (request-response-header (request (silver-brain-api--url url)
-                                    :type "POST"
-                                    :data (encode-coding-string data 'utf-8)
-                                    :sync t)
-                           "Location"))
+  (request-response-header
+   (request (silver-brain-api--url url)
+            :type "POST"
+            :data (if data (encode-coding-string data 'utf-8) nil)
+            :sync t)
+   "Location"))
 
 (defun silver-brain-api--put (url &optional data)
   "Send PUT request to the server with given URL and DATA."
   (request (silver-brain-api--url url)
            :type "PUT"
-           :data (encode-coding-string data 'utf-8)
+           :data (if data (encode-coding-string data 'utf-8) nil)
            :sync t))
 
 (defun silver-brain-api--delete (url)
