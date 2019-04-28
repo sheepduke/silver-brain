@@ -1,70 +1,77 @@
 (in-package :silver-brain)
 
 (defclass concept-relation ()
-  ((source :col-type concept
+  ((source :col-type (:varchar 64)
            :initarg :source
            :accessor concept-relation-source)
-   (target :col-type concept
+   (target :col-type (:varchar 64)
            :initarg :target
            :accessor concept-relation-target))
   (:metaclass mito:dao-table-class))
 
 (defmethod print-object ((relation concept-relation) stream)
   (format stream "#<Relation ~a => ~a>"
-          (concept-name (concept-relation-source relation))
-          (concept-name (concept-relation-target relation))))
+          (concept-relation-source relation)
+          (concept-relation-target relation)))
 
 (defun linkedp (source target)
   "Return T if there is a link from `source` to `target`."
+  (uuid-linkedp (concept-uuid source) (concept-uuid target)))
+
+(defun uuid-linkedp (source-uuid target-uuid)
+  "Return T if concepts denoted by given UUID are linked."
   (if (mito:select-dao 'concept-relation
-        (where (:and (:= :source source)
-                     (:= :target target))))
+        (where (:and (:= :source source-uuid)
+                     (:= :target target-uuid))))
       t
       nil))
 
 (defun get-concept-parents (concept)
   (-<>> (mito:select-dao 'concept-relation
-          (where (:= :target concept)))
-    (remove-if (lambda (r) (linkedp concept (concept-relation-source r))))
-    (mapcar (lambda (r) (concept-relation-source r)))))
+          (where (:= :target (concept-uuid concept))))
+    (mapcar #'concept-relation-source)
+    (remove-if (lambda (uuid) (uuid-linkedp (concept-uuid concept) uuid)))
+    (mapcar #'get-concept-by-uuid)))
 
 (defun get-concept-children (concept)
   (-<>> (mito:select-dao 'concept-relation
-          (where (:= :source concept)))
-    (remove-if (lambda (r) (linkedp (concept-relation-target r) concept)))
-    (mapcar (lambda (r) (concept-relation-target r)))))
+          (where (:= :source (concept-uuid concept))))
+    (mapcar #'concept-relation-target)
+    (remove-if (lambda (uuid) (uuid-linkedp uuid (concept-uuid concept))))
+    (mapcar #'get-concept-by-uuid)))
 
 (defun get-concept-friends (concept)
   (-<>> (mito:select-dao 'concept-relation
-          (where (:= :source concept)))
-    (remove-if-not (lambda (r) (linkedp (concept-relation-target r) concept)))
-    (mapcar (lambda (r) (concept-relation-target r)))))
+          (where (:= :source (concept-uuid concept))))
+    (mapcar #'concept-relation-target)
+    (remove-if-not (lambda (uuid) (uuid-linkedp uuid (concept-uuid concept))))
+    (mapcar #'get-concept-by-uuid)))
 
 (defun remove-relations (concept1 concept2)
   (mito:delete-by-values 'concept-relation
-                         :source concept1
-                         :target concept2)
+                         :source (concept-uuid concept1)
+                         :target (concept-uuid concept2))
   (mito:delete-by-values 'concept-relation
-                         :source concept2
-                         :target concept1))
+                         :source (concept-uuid concept2)
+                         :target (concept-uuid concept1)))
 
 (defun become-child (concept child)
   (remove-relations concept child)
   (mito:insert-dao
    (make-instance 'concept-relation
-                  :source concept
-                  :target child)))
+                  :source (concept-uuid concept)
+                  :target (concept-uuid child))))
 
 (defun become-friend (concept1 concept2)
   (remove-relations concept1 concept2)
   (mito:insert-dao
    (make-instance 'concept-relation
-                  :source concept1
-                  :target concept2))
+                  :source (concept-uuid concept1)
+                  :target (concept-uuid concept2)))
   (mito:insert-dao
    (make-instance 'concept-relation
-                  :source concept2
-                  :target concept1)))
+                  :source (concept-uuid concept2)
+                  :target (concept-uuid concept1))))
 
 (defun childp (concept child)
   (and (linkedp concept child)
@@ -83,5 +90,5 @@
     (remove-relations concept1 concept2)))
 
 (defun delete-all-concept-relations (concept)
-  (mito:delete-by-values 'concept-relation :source concept)
-  (mito:delete-by-values 'concept-relation :target concept))
+  (mito:delete-by-values 'concept-relation :source (concept-uuid concept))
+  (mito:delete-by-values 'concept-relation :target (concept-uuid concept)))
