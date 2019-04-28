@@ -44,11 +44,9 @@ Supported values are: plain, markdown, org")
 (define-key silver-brain-mode-map (kbd "o") 'silver-brain)
 (define-key silver-brain-mode-map (kbd "d") 'silver-brain-delete)
 (define-key silver-brain-mode-map (kbd "p") 'silver-brain-add-parent)
-(define-key silver-brain-mode-map (kbd "P") 'silver-brain-remove-parent)
 (define-key silver-brain-mode-map (kbd "c") 'silver-brain-add-child)
-(define-key silver-brain-mode-map (kbd "C") 'silver-brain-remove-child)
 (define-key silver-brain-mode-map (kbd "f") 'silver-brain-add-friend)
-(define-key silver-brain-mode-map (kbd "F") 'silver-brain-remove-friend)
+(define-key silver-brain-mode-map (kbd "R") 'silver-brain-remove-relation)
 (define-key silver-brain-mode-map (kbd "n") 'silver-brain-new-concept)
 (define-key silver-brain-mode-map (kbd "q") 'bury-buffer)
 
@@ -211,23 +209,10 @@ Should be called in silver-brain-mode buffers."
   (interactive)
   (silver-brain--add-relation 'parent))
 
-;;;###autoload
-(defun silver-brain-remove-parent ()
-  "Remove a parent."
-  (interactive)
-  (silver-brain--remove-relation 'parent))
-
-;;;###autoload
 (defun silver-brain-add-child ()
   "Add a child."
   (interactive)
   (silver-brain--add-relation 'child))
-
-;;;###autoload
-(defun silver-brain-remove-child ()
-  "Remove a child."
-  (interactive)
-  (silver-brain--remove-relation 'child))
 
 ;;;###autoload
 (defun silver-brain-add-friend ()
@@ -236,10 +221,27 @@ Should be called in silver-brain-mode buffers."
   (silver-brain--add-relation 'friend))
 
 ;;;###autoload
-(defun silver-brain-remove-friend ()
-  "Remove a friend."
+(defun silver-brain-remove-relation ()
+  "Search and remove relation."
   (interactive)
-  (silver-brain--remove-relation 'friend))
+  (let* ((uuid (silver-brain-concept-uuid silver-brain--concept))
+         (parents (silver-brain-api--get-relation 'parent uuid))
+         (children (silver-brain-api--get-relation 'child uuid))
+         (friends (silver-brain-api--get-relation 'friend uuid))
+         (candidates (mapcar #'silver-brain-search--concept-to-candidate
+                             (append parents children friends)))
+         (selection (completing-read "Select: " candidates))
+         (target-uuid (if selection
+                          (silver-brain-search--candidate-to-uuid selection)
+                        nil)))
+    (when target-uuid
+      (silver-brain-api--remove-relation
+       (cond
+        ((member target-uuid (mapcar 'silver-brain-concept-uuid parents)) 'parent)
+        ((member target-uuid (mapcar 'silver-brain-concept-uuid children)) 'child)
+        ((member target-uuid (mapcar 'silver-brain-concept-uuid friends)) 'friend))
+       uuid target-uuid)
+      (silver-brain-refresh))))
 
 (defun silver-brain--add-relation (relation)
   "Add relation given by RELATION.
@@ -248,19 +250,6 @@ RELATION should be a symbol one of: '(parent child friend)."
          (uuid (silver-brain-concept-uuid silver-brain--concept)))
     (when target-uuid
       (silver-brain-api--add-relation relation uuid target-uuid)
-      (silver-brain-refresh))))
-
-(defun silver-brain--remove-relation (relation)
-  "Remove relation given by RELATION."
-  (let* ((uuid (silver-brain-concept-uuid silver-brain--concept))
-         (concepts (silver-brain-api--get-relation relation uuid))
-         (candidates (mapcar #'silver-brain-search--concept-to-candidate concepts))
-         (selection (completing-read "Select: " candidates))
-         (target-uuid (if selection
-                          (silver-brain-search--candidate-to-uuid selection)
-                        nil)))
-    (when target-uuid
-      (silver-brain-api--remove-relation relation uuid target-uuid)
       (silver-brain-refresh))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
