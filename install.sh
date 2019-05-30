@@ -7,16 +7,16 @@ function panic() {
     exit 1
 }
 
-cd backend/ || panic "Cannot enter backend directory."
-ros install ./silver-brain.asd || panic "Cannot install system."
-ros install ./roswell/silver-brain.ros || panic "Cannot install executable."
+cd backend/ || panic "Cannot enter backend directory"
+ros build ./roswell/silver-brain.ros || panic "Cannot build system"
+mv ./roswell/silver-brain ~/.roswell/bin/ || panic "Cannot install executable"
 cd ..
 
-cd web-ui/ || panic "Cannot enter web-ui directory"
-npm install && npm run build || panic "Failed to package Web UI."
-mkdir $APP_ROOT
-cp -r dist/* $APP_ROOT
-cd ..
+# cd web-ui/ || panic "Cannot enter web-ui directory"
+# npm install && npm run build || panic "Failed to package Web UI."
+# mkdir $APP_ROOT
+# cp -r dist/* $APP_ROOT
+# cd ..
 
 cp -rv emacs $APP_ROOT || panic "Cannot copy Emacs client"
 cd ..
