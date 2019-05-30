@@ -74,7 +74,7 @@ Supported values are: plain, markdown, org")
   (let ((start-point (point)))
     (insert "Concept - " (silver-brain-concept-name concept) "\n")
     (let ((end-point (point)))
-      (add-face-text-property start-point end-point 'bold)))
+      (put-text-property start-point end-point 'font-lock-face 'bold)))
   ;; Draw relations.
   (let* ((uuid (silver-brain-concept-uuid concept))
          (parents (silver-brain-api--get-relation 'parent uuid))
