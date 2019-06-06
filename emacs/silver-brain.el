@@ -124,7 +124,10 @@ Supported values are: plain, markdown, org")
 
 (defun silver-brain--insert-link (concept)
   "Insert a link according to given CONCEPT into current buffer."
-  (let ((start (point)))
+  (let ((name (silver-brain-concept-name concept))
+        (start (point)))
+    (when (> (length name) (- (window-width) (current-column)))
+      (insert "\n"))
     (insert-button (silver-brain-concept-name concept)
                    'help-echo "Open this concept."
                    'action 'silver-brain-follow-link)
