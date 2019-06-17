@@ -48,7 +48,8 @@ Supported values are: plain, markdown, org")
 (define-key silver-brain-mode-map (kbd "f") 'silver-brain-add-friend)
 (define-key silver-brain-mode-map (kbd "R") 'silver-brain-remove-relation)
 (define-key silver-brain-mode-map (kbd "n") 'silver-brain-new-concept)
-(define-key silver-brain-mode-map (kbd "q") 'bury-buffer)
+(define-key silver-brain-mode-map (kbd "q") 'silver-brain-kill-concept)
+
 
 (add-hook 'silver-brain-mode-hook 'silver-brain--poly-mode)
 
@@ -62,8 +63,7 @@ Supported values are: plain, markdown, org")
 (defun silver-brain--open-concept (uuid)
   "Retrieve given UUID from the server, create and setup the buffer."
   (let ((concept (silver-brain-api--get-concept uuid)))
-    (when (get-buffer silver-brain-buffer-name)
-      (kill-buffer silver-brain-buffer-name))
+    (silver-brain-kill-concept)
     (switch-to-buffer silver-brain-buffer-name)
     (silver-brain-mode)
     (silver-brain--setup-buffer concept)))
@@ -141,6 +141,17 @@ Supported values are: plain, markdown, org")
        (y-or-n-p "Current concept is modified; save it? ")
        (silver-brain-save)))
 
+(defun silver-brain--find-concept-buffers ()
+  "Return a list of all opened buffers for current concept."
+  (remove-if-not (lambda (buffer)
+                   (string-match silver-brain-buffer-name (buffer-name buffer)))
+                 (buffer-list)))
+
+(defun silver-brain-kill-concept ()
+  "Kill buffers of current Silver Brain concept."
+  (interactive)
+  (mapcar 'kill-buffer (silver-brain--find-buffers)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Commands                           ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -203,8 +214,7 @@ Should be called in silver-brain-mode buffers."
   (interactive)
   (when (y-or-n-p "This will delete this concept; confirm? ")
     (silver-brain-api--delete-concept silver-brain--concept)
-    (when (get-buffer silver-brain-buffer-name)
-      (kill-buffer silver-brain-buffer-name))))
+    (silver-brain-kill-concept)))
 
 ;;;###autoload
 (defun silver-brain-add-parent ()
