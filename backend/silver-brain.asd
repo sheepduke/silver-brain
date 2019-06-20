@@ -1,5 +1,4 @@
 (defsystem "silver-brain"
-  :class :package-inferred-system
   :version "0.1.0"
   :author "YUE Daian"
   :license "MIT"
