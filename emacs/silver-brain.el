@@ -147,11 +147,6 @@ Supported values are: plain, markdown, org")
                    (string-match silver-brain-buffer-name (buffer-name buffer)))
                  (buffer-list)))
 
-(defun silver-brain-kill-concept ()
-  "Kill buffers of current Silver Brain concept."
-  (interactive)
-  (mapcar 'kill-buffer (silver-brain--find-buffers)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Commands                           ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -196,6 +191,12 @@ Should be called in a silver-brain-mode buffer."
          (content-format silver-brain-default-content-format)
          (concept (silver-brain-api--create-concept name content-format)))
     (silver-brain--open-concept (silver-brain-concept-uuid concept))))
+
+;;;###autoload
+(defun silver-brain-kill-concept ()
+  "Kill buffers of current Silver Brain concept."
+  (interactive)
+  (mapcar 'kill-buffer (silver-brain--find-concept-buffers)))
 
 ;;;###autoload
 (defun silver-brain-rename ()
