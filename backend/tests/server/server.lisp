@@ -189,10 +189,10 @@
   (ok (= (length (brain::get-concept-friends *vim*)) 0)
       "Vim has no friend now."))
 
-(set-profile :develop)
-(progn
-  (purge-db)
-  (setup-db)
-  (setup-test))
-(stop-server)
-(start-server)
+;; (set-profile :develop)
+;; (progn
+;;   (purge-db)
+;;   (setup-db)
+;;   (setup-test))
+;; (stop-server)
+;; (start-server)
