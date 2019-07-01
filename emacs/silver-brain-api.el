@@ -100,7 +100,7 @@ Returns the value of Location header."
   (request-response-header
    (request (silver-brain-api--url url)
             :type "POST"
-            :data (if data (encode-coding-string data 'utf-8) nil)
+            :data data
             :sync t)
    "Location"))
 
@@ -108,7 +108,7 @@ Returns the value of Location header."
   "Send PUT request to the server with given URL and DATA."
   (request (silver-brain-api--url url)
            :type "PUT"
-           :data (if data (encode-coding-string data 'utf-8) nil)
+           :data data
            :sync t))
 
 (defun silver-brain-api--delete (url)
