@@ -1,17 +1,47 @@
 * Silver-Brain 
 
+** Overview
+
+*** Prologue
+
+Back to the time when I was preparing the final examinations as a bachelor student. I wrote down all the concepts to a big white paper in a structured way in order to review what I have learned. I draw lines between concepts and labeled the relationship. For each concept, I wrote some text describing it (usually the paper was too small for it).
+
+After Emacs and its decent Org Mode became best partner for my electronic life, I always wanted a software that helps me record everything in a structured way, like described above.
+
+I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that made me stop using it:
+- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text 
+
+*** Introduction
+
+Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is directly inspired by [[https://github.com/Kungsgeten/org-brain][org-brain]]. It helps you build your very own personal knowledge center. 
+
+It has the following features:
+
+- Edit concepts using Org Mode. This might be extended to allow other editing modes.
+- Concepts are stored in a single SQLite file. Easy to maintain and synchronize.
+- Separation between back-end and front-end. This makes it possible to develop another UI. The directory ~web-ui/~ contains a proof-of-concept demonstration.
+
+*** Screenshots
+
+[[screenshots/concept.jpg]]
+
 ** Usage
 
-** Installation
+*** Installation
 
-** Author
+**** External Dependencies
 
-+ YUE Daian (sheepduke@gmail.com)
+You may need to first install the following software in your system:
 
-** Copyright
+- SQLite 3
+
+** Misc
+
+*** Author
+
+- YUE Daian (sheepduke@gmail.com)
+
+*** Copyright
 
 Copyright (c) 2019 YUE Daian (sheepduke@gmail.com)
 
-** License
-
-Licensed under the MIT License.
