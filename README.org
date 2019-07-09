@@ -1,15 +1,18 @@
+
+
 * Silver-Brain 
 
 ** Overview
 
 *** Prologue
 
-Back to the time when I was preparing the final examinations as a bachelor student. I wrote down all the concepts to a big white paper in a structured way in order to review what I have learned. I draw lines between concepts and labeled the relationship. For each concept, I wrote some text describing it (usually the paper was too small for it).
+Back to the time when I was preparing the final examinations as a bachelor student. I wrote down all the concepts to a big white paper in a structured way in order to review what I have learned. I draw lines between concepts and labeled the relationship. For each concept, I wrote some text describing it (usually the paper was too small for large trunk of text).
 
 After Emacs and its decent Org Mode became best partner for my electronic life, I always wanted a software that helps me record everything in a structured way, like described above.
 
 I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that made me stop using it:
-- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text 
+- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text in it really made me sad.
+- Although it is doable via ~org-brain-rename-file~, but the inconsistency between file name and concept name made me uncomfortable, really.
 
 *** Introduction
 
@@ -17,9 +20,10 @@ Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is dire
 
 It has the following features:
 
-- Edit concepts using Org Mode. This might be extended to allow other editing modes.
+- Edit concepts using Org Mode (or probably other major modes in future).
 - Concepts are stored in a single SQLite file. Easy to maintain and synchronize.
 - Separation between back-end and front-end. This makes it possible to develop another UI. The directory ~web-ui/~ contains a proof-of-concept demonstration.
+- Back-end code was written in Common Lisp (a bless or a curse).
 
 *** Screenshots
 
