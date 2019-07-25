@@ -1,5 +1,4 @@
 
-
 * Silver-Brain 
 
 ** Overview
@@ -20,7 +19,11 @@ Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is dire
 
 It has the following features:
 
-- Edit concepts using Org Mode (or probably other major modes in future).
+- Edit concepts using Emacs Org Mode (or probably other major modes in future).
+- Maintain the relationship between concepts, including paternity and friendship.
+
+The following technical decisions were made:
+
 - Concepts are stored in a single SQLite file. Easy to maintain and synchronize.
 - Separation between back-end and front-end. This makes it possible to develop another UI. The directory ~web-ui/~ contains a proof-of-concept demonstration.
 - Back-end code was written in Common Lisp (a bless or a curse).
@@ -35,17 +38,14 @@ It has the following features:
 
 **** External Dependencies
 
-You may need to first install the following software in your system:
+~SQLite 3~ is the only external software it depends on.
 
-- SQLite 3
+**** Installing Back-End Server
 
-** Misc
+***** Roswell Way
 
-*** Author
+It is highly recommended to use Roswell to build and install Lisp systems for its simplicity.
 
-- YUE Daian (sheepduke@gmail.com)
+*** Manual
 
-*** Copyright
-
-Copyright (c) 2019 YUE Daian (sheepduke@gmail.com)
-
+** Known Issues
