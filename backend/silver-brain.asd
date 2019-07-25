@@ -8,7 +8,7 @@
                #:iterate
                #:trivia
                #:str
-               #:arrow-macros
+               #:cl-arrows
                #:trivial-types
                #:unix-opts
                ;; Logging.

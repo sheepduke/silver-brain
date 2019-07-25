@@ -8,9 +8,8 @@
   (:import-from #:trivia
                 #:match
                 #:plist)
-  (:import-from #:arrow-macros
-                #:-<>>
-                #:<>)
+  (:import-from #:cl-arrows
+                #:-<>>)
   (:import-from #:trivial-types
                 #:association-list-p)
   (:import-from #:caveman2

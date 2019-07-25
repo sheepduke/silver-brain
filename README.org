@@ -40,12 +40,105 @@ The following technical decisions were made:
 
 ~SQLite 3~ is the only external software it depends on.
 
-**** Installing Back-End Server
+**** Using Installation Script
 
-***** Roswell Way
+An installation script is provided for the sake of quick installation. Before running it, you need to put Silver Brain project under a directory that your local ASDF can find, i.e. ~(ql:quickload :silver-brain)~ does work.
+
+#+BEGIN_SRC sh
+cd /path/to/silver-brain/
+./install.sh
+#+END_SRC
+
+It mainly does the following things:
+1. Build back-end server using Roswell.
+2. Install the generated binary to =~/.roswell/bin/= directory.
+3. Copy Emacs Lisp files to =~/.silver-brain/= directory.
+
+You may need to add =~/.roswell/bin/= to your ~PATH~ in order to use ~silver-brain~ anywhere.
+
+**** Installing Manually
+
+***** Installing Back-End Server
+
+****** Roswell Way
 
 It is highly recommended to use Roswell to build and install Lisp systems for its simplicity.
 
+#+BEGIN_SRC sh
+cd /path/to/silver-brain/backend/
+ros build silver-brain.ros
+#+END_SRC
+
+****** Legacy Way
+
+It is a little bit complicated not to use Roswell. You may load Silver Brain into an image and dump it.
+
+See [[https://lispcookbook.github.io/cl-cookbook/scripting.html][The Common Lisp Cookbook]] for more details.
+
+***** Installing Emacs UI Code
+
+Copy the ~emacs/~ directory to somewhere Emacs can find.
+
+**** Configuration
+
+The server uses ~5000~ as the port. Currently this cannot be changed unless modifying the source code.
+
+For Emacs UI to work, the following snippet needs to be added into the Emacs configuration file:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "~/.silver-brain/emacs/")
+(use-package silver-brain
+  :init
+  ;; The port of back-end server. Does NOT affect server side.
+  (setq silver-brain-server-port 5000)
+
+  :bind
+  ("C-c b" . silver-brain))
+#+END_SRC
+
 *** Manual
 
+**** Concepts
+
+The core concept of Silver Brain is /concept/. A concept a node in your knowledge network. It contains title, content etc.
+
+Concepts are connected via /relations/. A concept can be either parent, child or friend of another one. You may think of parent/child as a single directional link, while friend is a bi-directional link. 
+
+Practically, parent/child can be used to connect concepts with logical precedence, e.g. ~Editor~ and ~Emacs~. And friend can be used to connect concepts with slightly weak relations, e.g. ~Emacs~ and ~Vim~, hopefully ;-)
+
+**** Software
+
+The back-end server accepts ~-h~ or ~--help~ argument. Please refer to the help.
+
+For Emacs side, the command ~silver-brain~ is the entry point of the software.
+
+The following is a list of commands defined for ~silver-brain-mode~:
+
+|------------------------------+---------+---------------------------------|
+| Command                      | Binding | Description                     |
+|------------------------------+---------+---------------------------------|
+| silver-brain-refresh         | g       | Refresh current concept         |
+| silver-brain-new-concept     | n       | Create a new concept            |
+| silver-brain-rename          | r       | Rename current concept          |
+| silver-brain-save            | s       | Save changes of current concept |
+| silver-brain-delete          | d       | Delete current concept          |
+| silver-brain-add-parent      | p       | Add a parent of current concept |
+| silver-brain-add-child       | c       | Add a child of current concept  |
+| silver-brain-add-friend      | f       | Add a friend of current concept |
+| silver-brain-remove-relation | R       | Remove a relational concept     |
+| silver-brain-kill-concept    | q       | Kill the concept window         |
+|------------------------------+---------+---------------------------------|
+
+*** Implementation
+
+Silver Brain was designed as a traditional Web application that back-end and front-end code communicates via HTTP requests. The concepts and relations are stored in a local SQLite file.
+
+The ~web-ui~ directory contains browser UI code written using Vuetify.
+
 ** Known Issues
+
+*** The Software Needs to Be Restarted If DB file is Changed Externally
+
+If you use a synchronization software, such as Syncthing, you may need to restart the software after the DB file got synchronized.
+
+This is because the database needs to be re-connected while the current version of Silver Brain cannot handle it well.
