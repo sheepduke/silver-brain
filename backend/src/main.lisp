@@ -24,8 +24,6 @@
     (setup-db)
     (start-server)))
 
-(set-profile :develop)
-
 (defun panic (control-string &rest format-arguments)
   (apply #'format
          (append (list *error-output*
