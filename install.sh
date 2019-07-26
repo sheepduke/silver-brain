@@ -8,7 +8,7 @@ function panic() {
 }
 
 cd backend/ || panic "Cannot enter backend directory"
-ros build ./roswell/silver-brain.ros || panic "Cannot build system"
+ros build ./silver-brain.ros || panic "Cannot build system"
 mv ./roswell/silver-brain ~/.roswell/bin/ || panic "Cannot install executable"
 cd ..
 
