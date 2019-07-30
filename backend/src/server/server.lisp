@@ -16,11 +16,11 @@
           (clack:clackup (lack.builder:builder
                           (:static :path "/static/"
                                    :root "static/")
-                          (if (get-config :server :access-log) :accesslog nil)
+                          (if (conf:server-access-log) :accesslog nil)
                           *server*)
-                         :port (get-config :server :port)
-                         :debug (get-config :debug)
-                         :use-thread (not (equal (get-profile) :product))))))
+                         :port (conf:server-port)
+                         :debug (conf:debugp)
+                         :use-thread (not (eq (conf:active-profile) :product))))))
 
 (defun stop-server ()
   "Stop the server."

@@ -16,11 +16,8 @@
          (profile (if-let (custom-profile (getf options :profile))
                     custom-profile
                     :product)))
-    (when help
-      (print-help-and-quit))
-    (set-profile profile)
-    (uiop:chdir (get-config :app-root))
-    (setf *default-pathname-defaults* (uiop:getcwd))
+    (when help (print-help-and-quit))
+    (conf:set-profile profile)
     (setup-db)
     (start-server)))
 

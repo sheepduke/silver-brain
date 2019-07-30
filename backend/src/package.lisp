@@ -16,9 +16,21 @@
                 #:defroute
                 #:throw-code)
   (:export #:main
-           #:set-profile
-           #:get-config
-           #:set-config
            #:setup-db
            #:start-server
            #:stop-server))
+
+(defpackage silver-brain.config
+  (:nicknames config conf)
+  (:use #:cl
+        #:chameleon)
+  (:import-from #:find-port
+                #:find-port)
+  (:export #:app-root
+           #:debugp
+           #:server-port
+           #:server-access-log
+           #:database-driver-name
+           #:database-file-name
+           #:active-profile
+           #:set-profile))

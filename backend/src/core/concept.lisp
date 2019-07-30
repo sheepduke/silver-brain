@@ -19,14 +19,6 @@
 (defmethod print-object ((concept concept) stream)
   (format stream "#<Concept ~a>" (concept-name concept)))
 
-(defun setup-db ()
-  "Connect to and setup database."
-  (match (get-config :database)
-    ((plist :driver-name :sqlite3 :database-name database-name)
-     (mito:connect-toplevel :sqlite3 :database-name database-name)))
-  (mito:ensure-table-exists 'concept)
-  (mito:ensure-table-exists 'concept-relation))
-
 (defun add-concept (name content content-format)
   "Add given `concept` to database."
   (let ((concept (make-instance 'concept

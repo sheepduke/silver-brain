@@ -11,6 +11,7 @@
                #:cl-arrows
                #:trivial-types
                #:unix-opts
+               #:chameleon
                ;; Logging.
                #:log4cl
                ;; Web related.
@@ -19,14 +20,14 @@
                #:clack
                #:flexi-streams
                #:cl-json
-               #:envy
                #:mito)
   :components ((:module "src"
                 :components
                 ((:file "package")
                  (:module "core"
                   :components 
-                  ((:file "concept")
+                  ((:file "db")
+                   (:file "concept")
                    (:file "concept-relation")
                    (:file "config")))
                  (:module "server"

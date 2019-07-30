@@ -5,7 +5,7 @@
          (append
           (list nil (concatenate 'string
                                  "http://localhost:"
-                                 (format nil "~a" (get-config :server :port))
+                                 (format nil "~a" (conf:server-port))
                                  format-string))
           args)))
 
@@ -14,14 +14,8 @@
 (defvar *vim* nil)
 (defvar *nano* nil)
 
-(defun setup-environment ()
-  (setf rove:*enable-colors* t)
-  (setf mito:*trace-sql-hooks* nil)
-  (set-profile :testing)
-  (setup-db))
-
 (defun purge-db ()
-  (uiop:delete-file-if-exists (get-config :database :database-name)))
+  (uiop:delete-file-if-exists (conf:database-file-name)))
 
 (defun setup-test ()
   (brain::delete-all-concepts)
@@ -41,7 +35,8 @@
   (brain::concept-uuid concept))
 
 (setup
-  (setup-environment)
+  (conf:set-profile :test)
+  (setup-db)
   (start-server))
 
 (teardown
