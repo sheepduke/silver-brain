@@ -29,7 +29,8 @@
   (:export #:app-root
            #:debugp
            #:server-port
-           #:server-access-log
+           #:server-use-thread-p
+           #:server-access-log-p
            #:database-driver-name
            #:database-file-name
            #:active-profile

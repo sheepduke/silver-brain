@@ -18,6 +18,7 @@
                     :product)))
     (when help (print-help-and-quit))
     (conf:set-profile profile)
+    (setf (conf:server-use-thread-p) nil)
     (setup-db)
     (start-server)))
 
