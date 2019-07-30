@@ -13,9 +13,7 @@
      :arg-parser (lambda (x) (make-keyword (string-upcase x)))))
   (let* ((options (unix-opts:get-opts args))
          (help (getf options :help))
-         (profile (if-let (custom-profile (getf options :profile))
-                    custom-profile
-                    :product)))
+         (profile (getf options :profile :product))
     (when help (print-help-and-quit))
     (conf:set-profile profile)
     (setf (conf:server-use-thread-p) nil)
