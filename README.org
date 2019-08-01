@@ -142,3 +142,9 @@ The ~web-ui~ directory contains browser UI code written using Vuetify.
 If you use a synchronization software, such as Syncthing, you may need to restart the software after the DB file got synchronized.
 
 This is because the database needs to be re-connected while the current version of Silver Brain cannot handle it well.
+
+*** Auto Save Does Not Work When Cursor Is In Content Field
+
+If the cursor is left in the content field, the auto-save feature will not work.
+
+This is because in this case, the auto-save timer is not added to corresponding ~poly-mode~ buffer.

@@ -18,7 +18,7 @@
   "The default format for concept contents.
 Supported values are: plain, markdown, org")
 
-(defvar silver-brain-buffer-name "*Silver Brain*"
+(defvar silver-brain-buffer-base-name "Silver Brain"
   "Buffer name of silver-brain.")
 
 (defvar silver-brain--concept nil
@@ -64,9 +64,15 @@ Supported values are: plain, markdown, org")
   "Retrieve given UUID from the server, create and setup the buffer."
   (let ((concept (silver-brain-api--get-concept uuid)))
     (silver-brain-kill-concept)
-    (switch-to-buffer silver-brain-buffer-name)
+    (switch-to-buffer (silver-brain--make-concept-buffer-name concept))
     (silver-brain-mode)
     (silver-brain--setup-buffer concept)))
+
+(defun silver-brain--make-concept-buffer-name (concept)
+  "Return a string as the buffer name for given CONCEPT."
+  (concat "*" silver-brain-buffer-base-name " - "
+          (silver-brain-concept-name concept)
+          "*"))
 
 (defun silver-brain--setup-buffer (concept)
   "Setup buffer with given CONCEPT."
@@ -144,7 +150,7 @@ Supported values are: plain, markdown, org")
 (defun silver-brain--find-concept-buffers ()
   "Return a list of all opened buffers for current concept."
   (remove-if-not (lambda (buffer)
-                   (string-match silver-brain-buffer-name (buffer-name buffer)))
+                   (string-match silver-brain-buffer-base-name (buffer-name buffer)))
                  (buffer-list)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -167,8 +173,8 @@ Supported values are: plain, markdown, org")
 
 (defun silver-brain--auto-save ()
   "Save silver-brain buffer automatically."
-  (when (get-buffer silver-brain-buffer-name)
-    (with-current-buffer silver-brain-buffer-name
+  (cl-dolist (buffer (silver-brain--find-concept-buffers))
+    (with-current-buffer buffer
       (silver-brain-save))))
 
 ;;;###autoload
@@ -287,6 +293,3 @@ RELATION should be a symbol one of: '(parent child friend)."
 (provide 'silver-brain)
 
 ;;; silver-brain.el ends here
-
-;; (setq silver-brain-server-port 15000)
-;; (global-set-key (kbd "C-c b s") 'silver-brain)
