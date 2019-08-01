@@ -4,4 +4,6 @@
         #:alexandria
         #:iterate
         #:trivia
-        #:silver-brain))
+        #:silver-brain)
+  (:import-from #:drakma
+                #:http-request))

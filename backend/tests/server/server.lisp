@@ -29,7 +29,7 @@
 
 (defun http-get (control-string &rest format-args)
   (json:decode-json-from-string
-   (dex:get (apply #'url control-string format-args) :keep-alive nil)))
+   (http-request (apply #'url control-string format-args) :keep-alive nil)))
 
 (defun uuid (concept)
   (brain::concept-uuid concept))
@@ -55,53 +55,59 @@
                 :test #'string=)
         "Contains correct concept.")))
 
+
+
 (deftest test-post-concepts
-  (match (multiple-value-list
-          (dex:post (url "/concepts")
-                    :content (json:encode-json-to-string
-                              '((:name . "Vim")
-                                (:content . "Content Vim")
-                                (:content-format . "plain")))
-                    :keep-alive nil))
-    ((list _ code headers _ _)
+  (multiple-value-match (http-request (url "/concepts")
+                                      :method :post
+                                      :content (json:encode-json-to-string
+                                                '((:name . "Vim")
+                                                  (:content . "Content Vim")
+                                                  (:content-format . "plain"))))
+    ((_ code headers _ _ _ _)
      (ok (= code 201)
          "Returns 201.")
-     (ok (gethash "location" headers)
-         "Location header is set."))))
+     (ok (str:containsp "/concepts/" (assoc-value headers :location))
+         "Location header contains UUID."))))
 
 (deftest test-get-concept-by-id
   (let ((result (http-get "/concepts/~a" (uuid *software*))))
     (ok (string= (assoc-value result :uuid)
                  (uuid *software*))))
-  (ok (signals
-          (dex:get (url "/concepts/1234"))
-          'dex:http-request-not-found)
-      "Returns 404 when :id is wrong."))
+  (multiple-value-match (http-request (url "/concepts/1234"))
+    ((_ code _ _ _ _ _)
+     (ok (= code 404)
+         "Returns 404 when :id is wrong."))))
 
 (deftest test-put-concept-by-id
   (testing "PUT /concepts/:id"
-    (ok (signals
-            (dex:put (url "/concepts/1234"))
-            'dex:http-request-not-found)
-        "Returns 404 when :id is wrong.")
-    (ok (signals
-            (dex:put (url "/concepts/~a" (uuid *software*)))
-            'dex:http-request-bad-request)
-        "Returns 400 when no content is given.")))
+    (multiple-value-match (http-request (url "/concepts/1234") :method :put)
+      ((_ code _ _ _ _ _)
+       (ok (= code 404)
+           "Returns 404 when :id is wrong.")))
+    (multiple-value-match (http-request (url "/concepts/~a" (uuid *software*))
+                                        :method :put)
+      ((_ code _ _ _ _ _)
+       (ok (= code 400)
+           "Returns 400 when no content is given.")))))
 
 (deftest test-delete-concept-by-id
   (testing "DELETE /concepts/:id"
-    (ok (dex:delete (url "/concepts/~a" (uuid *software*)))
-        "DELETE succeeded.")
-    (ok (signals
-         (dex:get (url "/concepts/~a" (uuid *software*)))
-         'dex:http-request-not-found)
-        "Delete UUID does not exist anymore."))
+    (multiple-value-match (http-request (url "/concepts/~a" (uuid *software*))
+                                        :method :delete)
+      ((_ code)
+       (ok (= code 200)
+           "DELETE succeeded.")))
+    (multiple-value-match (http-request (url "/concepts/~a" (uuid *software*)))
+      ((_ code)
+       (ok (= code 404)
+           "Delete UUID does not exist anymore."))))
   (testing "Delete wrong concept"
-    (ok (signals
-            (dex:delete (url "/concepts/1234"))
-            'dex:http-request-not-found)
-        "Returns 404 when :id is invalid.")))
+    (multiple-value-match (http-request (url "/concepts/1234")
+                                        :method :delete)
+      ((_ code)
+       (ok (= code 404)
+           "Returns 404 when :id is invalid.")))))
 
 (deftest test-get-concept-parents
   (let ((result (http-get "/concepts/~a/parents"
@@ -113,18 +119,21 @@
         "Only Software is Emacs's parent.")))
 
 (deftest test-add-parent
-  (dex:put (url "/concepts/~a/parents/~a"
-                (uuid *emacs*)
-                (uuid *nano*)))
+  (http-request (url "/concepts/~a/parents/~a"
+                     (uuid *emacs*)
+                     (uuid *nano*))
+                :method :put)
   (ok (= (length (brain::get-concept-parents *emacs*)) 2)
       "Emacs now has 2 parents.")
+  
   (ok (brain::linkedp *nano* *emacs*)
       "Nano is now a parent of Emacs"))
 
 (deftest test-delete-parent
-  (dex:delete (url "/concepts/~a/parents/~a"
-                   (uuid *emacs*)
-                   (uuid *software*)))
+  (http-request (url "/concepts/~a/parents/~a"
+                     (uuid *emacs*)
+                     (uuid *software*))
+                :method :delete)
   (ok (= (length (brain::get-concept-parents *emacs*)) 0)
       "Emacs now has no parent."))
 
@@ -139,12 +148,14 @@
         "Emacs and Vim are Software's child.")))
 
 (deftest test-add-child
-  (dex:put (url "/concepts/~a/children/~a" (uuid *software*) (uuid *nano*)))
+  (http-request (url "/concepts/~a/children/~a" (uuid *software*) (uuid *nano*))
+                :method :put)
   (ok (= (length (brain::get-concept-parents *nano*)) 1)
       "Nano has 1 parent."))
 
 (deftest test-delete-child
-  (dex:delete (url "/concepts/~a/children/~a" (uuid *software*) (uuid *emacs*)))
+  (http-request (url "/concepts/~a/children/~a" (uuid *software*) (uuid *emacs*))
+                :method :delete)
   (ok (= (length (brain::get-concept-children *software*)) 1)
       "Software has 1 child now.")
   (ok (= (length (brain::get-concept-parents *emacs*)) 0)
@@ -167,7 +178,8 @@
         "Emasc is a friend of Vim.")))
 
 (deftest test-add-concept-friend
-  (dex:put (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *software*)))
+  (http-request (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *software*))
+                :method :put)
   (ok (= (length (brain::get-concept-friends *emacs*)) 2)
       "Emacs now has 2 friends.")
   (ok (= (length (brain::get-concept-parents *emacs*)) 0)
@@ -178,16 +190,19 @@
       "Software now has 1 child."))
 
 (deftest test-delete-concept-friend
-  (dex:delete (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *vim*)))
+  (http-request (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *vim*))
+                :method :delete)
   (ok (= (length (brain::get-concept-friends *emacs*)) 0)
       "Emacs has no friend now.")
   (ok (= (length (brain::get-concept-friends *vim*)) 0)
       "Vim has no friend now."))
 
-;; (set-profile :develop)
 ;; (progn
+;;   (conf:set-profile :dev)
 ;;   (purge-db)
 ;;   (setup-db)
-;;   (setup-test))
-;; (stop-server)
-;; (start-server)
+;;   (setup-test)
+;;   (stop-server)
+;;   (start-server))
+
+;; (asdf:test-system :silver-brain)

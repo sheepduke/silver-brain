@@ -44,7 +44,7 @@
   :license "MIT"
   :depends-on (#:silver-brain
                #:rove
-               #:dexador)
+               #:drakma)
   :components ((:module "tests"
                 :components
                 ((:file "package")
