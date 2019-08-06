@@ -25,7 +25,7 @@ If not, the application hangs after starting the web server.")
   (database-file-name "silver-brain.sqlite"))
 
 (defun set-profile (profile)
-  "Set the current profile to PROFILE."
+  "Set the current profile to PROFILE and set work directory."
   (setf (active-profile) profile)
   (ensure-directories-exist (app-root))
   (uiop:chdir (app-root))

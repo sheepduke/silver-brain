@@ -3,17 +3,23 @@
 (defclass concept ()
   ((uuid :col-type (:varchar 64)
          :initarg :uuid
-         :reader concept-uuid)
+         :reader concept-uuid
+         :documentation "The global unique ID of concept. It is a randomly
+generated UUID version 4.")
    (name :col-type (:varchar 1024)
          :initarg :name
-         :accessor concept-name)
+         :accessor concept-name
+         :documentation "The name of concept. Can be any string.")
    (content :col-type (:varchar 1024)
             :initarg :content
             :initform ""
-            :accessor concept-content)
+            :accessor concept-content
+            :documentation "The content of concept. Imagine it as a Wiki
+page.")
    (content-format :col-type (:varchar 16)
                    :initarg :content-format
-                   :accessor concept-content-format))
+                   :accessor concept-content-format
+                   :documentation "The format of content used by UI."))
   (:metaclass mito:dao-table-class))
 
 (defmethod print-object ((concept concept) stream)
