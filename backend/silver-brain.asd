@@ -23,7 +23,7 @@
                #:mito)
   :components ((:module "src"
                 :components
-                ((:file "package")
+                ((:file "packages")
                  (:module "core"
                   :components 
                   ((:file "db")
@@ -47,7 +47,7 @@
                #:drakma)
   :components ((:module "tests"
                 :components
-                ((:file "package")
+                ((:file "packages")
                  (:module "server"
                   :components
                   ((:file "server"))))))

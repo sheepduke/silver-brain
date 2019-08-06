@@ -205,4 +205,4 @@
 ;;   (stop-server)
 ;;   (start-server))
 
-;; (asdf:test-system :silver-brain)
+;; (time (asdf:test-system :silver-brain))
