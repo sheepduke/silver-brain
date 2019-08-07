@@ -38,7 +38,8 @@ The following technical decisions were made:
 
 **** External Dependencies
 
-~SQLite 3~ is the only external software it depends on.
+1. Make sure ~SQLite 3~ is installed on your system.
+2. Install [[https://github.com/sheepduke/chameleon][Chameleon]] according to its instructions. Please note that this is required because Chameleon is currently not in the Quicklisp. I am working on it.
 
 **** Using Installation Script
 
