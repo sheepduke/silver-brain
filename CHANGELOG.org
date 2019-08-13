@@ -1,0 +1,12 @@
+* CHANGELOG
+
+** v1.2
+
+- Put Chameleon into Quicklisp so that it can be installed automatically.
+
+** v1.1
+
+- Switch configuration library from [[https://github.com/fukamachi/envy][Envy]] to [[https://github.com/sheepduke/chameleon.git][Chameleon]].
+- Add support for opening multiple concepts simultaneously.
+- Improve the stability of unit tests.
+- Enhance the way to set profile.
