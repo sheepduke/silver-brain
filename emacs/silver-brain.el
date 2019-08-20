@@ -8,6 +8,7 @@
 (require 'cl-lib)
 (require 'polymode)
 (require 'silver-brain-api)
+(require 'silver-brain-buffer)
 (require 'silver-brain-search)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -21,10 +22,10 @@ Supported values are: plain, markdown, org")
 (defvar silver-brain-buffer-base-name "Silver Brain"
   "Buffer name of silver-brain.")
 
-(defvar silver-brain--concept nil
+(defvar-local silver-brain--concept nil
   "The current concept.")
 
-(defvar silver-brain--head-end-point nil
+(defvar-local silver-brain--head-end-point nil
   "The end point of header part, including the separator line.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,78 +50,16 @@ Supported values are: plain, markdown, org")
 (define-key silver-brain-mode-map (kbd "R") 'silver-brain-remove-relation)
 (define-key silver-brain-mode-map (kbd "n") 'silver-brain-new-concept)
 (define-key silver-brain-mode-map (kbd "q") 'silver-brain-kill-concept)
+(define-key silver-brain-mode-map (kbd "Q") 'silver-brain-kill-all-concept)
 
 
 (add-hook 'silver-brain-mode-hook 'silver-brain--poly-mode)
 
-(run-with-idle-timer 1 t 'silver-brain--auto-save)
+(run-with-idle-timer 1 t 'silver-brain-save-all)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                              UI                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;###autoload
-(defun silver-brain--open-concept (uuid)
-  "Retrieve given UUID from the server, create and setup the buffer."
-  (let ((concept (silver-brain-api--get-concept uuid)))
-    (silver-brain-kill-concept)
-    (switch-to-buffer (silver-brain--make-concept-buffer-name concept))
-    (silver-brain-mode)
-    (silver-brain--setup-buffer concept)))
-
-(defun silver-brain--make-concept-buffer-name (concept)
-  "Return a string as the buffer name for given CONCEPT."
-  (concat "*" silver-brain-buffer-base-name " - "
-          (silver-brain-concept-name concept)
-          "*"))
-
-(defun silver-brain--setup-buffer (concept)
-  "Setup buffer with given CONCEPT."
-  (setq silver-brain--concept concept)
-  (let ((start-point (point)))
-    (insert "Concept - " (silver-brain-concept-name concept) "\n")
-    (let ((end-point (point)))
-      (put-text-property start-point end-point 'font-lock-face 'bold)))
-  ;; Draw relations.
-  (let* ((uuid (silver-brain-concept-uuid concept))
-         (parents (silver-brain-api--get-relation 'parent uuid))
-         (children (silver-brain-api--get-relation 'child uuid))
-         (friends (silver-brain-api--get-relation 'friend uuid)))
-      (silver-brain--draw-relations concept parents children friends))
-  (insert "\n" (silver-brain--make-separator))
-  ;; Make head part read-only.
-  (setq silver-brain--head-end-point (point-max))
-  (insert "\n")
-  (add-text-properties (point-min) silver-brain--head-end-point
-                       '(read-only t silver-brain-relation t))
-  (insert (silver-brain-concept-content concept))
-  (goto-char (point-min))
-  (forward-line)
-  (add-hook 'kill-buffer-hook 'silver-brain-confirm-save nil t)
-  (set-buffer-modified-p nil))
-
-(defun silver-brain--draw-relations (concept parents children friends)
-  "Insert PARENTS, CHILDREN and FRIENDS relations of given CONCEPT."
-  (insert "\nParents: ")
-  (dolist (parent parents) (silver-brain--insert-link parent))
-  (insert "\n\nChildren: ")
-  (dolist (child children) (silver-brain--insert-link child))
-  (insert "\n\nFriends: ")
-  (dolist (friend friends) (silver-brain--insert-link friend)))
-
-(defun silver-brain--make-separator ()
-  "Return a string representing the separator between head and body."
-  (make-string (window-width) ?-))
-
-(defun silver-brain--make-impossible-matcher ()
-  "Return a random string that will never be matched."
-  (let ((source "qwertyuiopasdfghjkl;zxcvbnm,./1234567890-=QWERTYUIOPASDFGHJKLZXCVBNM")
-        (result ""))
-    (dotimes (i 128)
-      (setq result
-            (concat result
-                    (make-string 1 (elt source (random (length source)))))))
-    result))
 
 ;;;###autoload
 (defun silver-brain-follow-link (&optional event)
@@ -128,30 +67,11 @@ Supported values are: plain, markdown, org")
   (interactive)
   (silver-brain--open-concept (get-text-property (point) 'uuid)))
 
-(defun silver-brain--insert-link (concept)
-  "Insert a link according to given CONCEPT into current buffer."
-  (let ((name (silver-brain-concept-name concept))
-        (start (point)))
-    (when (> (length name) (- (window-width) (current-column)))
-      (insert "\n"))
-    (insert-button (silver-brain-concept-name concept)
-                   'help-echo "Open this concept."
-                   'action 'silver-brain-follow-link)
-    (let ((end (point)))
-      (insert " ")
-      (put-text-property start end 'uuid (silver-brain-concept-uuid concept)))))
-
 (defun silver-brain-confirm-save ()
   "Confirm to save silver-brain concept."
   (and (buffer-modified-p)
        (y-or-n-p "Current concept is modified; save it? ")
        (silver-brain-save)))
-
-(defun silver-brain--find-concept-buffers ()
-  "Return a list of all opened buffers for current concept."
-  (remove-if-not (lambda (buffer)
-                   (string-match silver-brain-buffer-base-name (buffer-name buffer)))
-                 (buffer-list)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Commands                           ;;;;
@@ -163,7 +83,7 @@ Supported values are: plain, markdown, org")
   (interactive)
   (let* ((uuid (silver-brain-search)))
     (when uuid
-      (silver-brain--open-concept uuid))))
+      (silver-brain--open-new-concept uuid))))
 
 ;;;###autoload
 (defun silver-brain-refresh ()
@@ -171,9 +91,12 @@ Supported values are: plain, markdown, org")
   (interactive)
   (silver-brain--open-concept (silver-brain-concept-uuid silver-brain--concept)))
 
-(defun silver-brain--auto-save ()
-  "Save silver-brain buffer automatically."
-  (cl-dolist (buffer (silver-brain--find-concept-buffers))
+;;;###autoload
+(defun silver-brain-save-all ()
+  "Save all silver-brain buffer.
+Note that if silver-brain-save will not work when called in a
+poly-inner-mode buffer."
+  (cl-dolist (buffer (silver-brain--find-concept-buffers :no-editor-p t))
     (with-current-buffer buffer
       (silver-brain-save))))
 
@@ -196,11 +119,18 @@ Should be called in a silver-brain-mode buffer."
   (let* ((name (read-string "Concept name: "))
          (content-format silver-brain-default-content-format)
          (concept (silver-brain-api--create-concept name content-format)))
-    (silver-brain--open-concept (silver-brain-concept-uuid concept))))
+    (silver-brain--open-new-concept (silver-brain-concept-uuid concept))))
 
 ;;;###autoload
 (defun silver-brain-kill-concept ()
-  "Kill buffers of current Silver Brain concept."
+  "Kill current concept buffer."
+  (interactive)
+  (when (silver-brain--concept-buffer-p)
+    (kill-buffer)))
+
+;;;###autoload
+(defun silver-brain-kill-all-concept ()
+  "Kill all buffers of current Silver Brain concept."
   (interactive)
   (mapcar 'kill-buffer (silver-brain--find-concept-buffers)))
 
