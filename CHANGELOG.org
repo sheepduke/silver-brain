@@ -1,5 +1,10 @@
 * CHANGELOG
 
+** v1.3
+
+- Add support for opening multiple concepts simultaneously.
+- Remove auto save function because it may cause data loss.
+
 ** v1.2
 
 - Put Chameleon into Quicklisp so that it can be installed automatically.
