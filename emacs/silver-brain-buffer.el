@@ -45,12 +45,14 @@ If NO-EDITOR-P is T, exclude the side buffers used by poly-mode."
   "Retrieve given UUID from the server, create and setup the buffer."
   (let ((concept (silver-brain-api--get-concept uuid)))
     (silver-brain-kill-concept)
-    (silver-brain--open-new-concept uuid)))
+    (switch-to-buffer (silver-brain--make-concept-buffer-name concept))
+    (silver-brain-mode)
+    (silver-brain--setup-buffer concept)))
 
-(defun silver-brain--open-new-concept (uuid)
+(defun silver-brain--open-concept-new-window (uuid)
   "Retrieve given UUID from the server, create and setup the buffer."
   (let ((concept (silver-brain-api--get-concept uuid)))
-    (switch-to-buffer (silver-brain--make-concept-buffer-name concept))
+    (switch-to-buffer-other-window (silver-brain--make-concept-buffer-name concept))
     (silver-brain-mode)
     (silver-brain--setup-buffer concept)))
 

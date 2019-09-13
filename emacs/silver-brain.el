@@ -38,11 +38,14 @@ Supported values are: plain, markdown, org")
 
 (define-key silver-brain-mode-map (kbd "<tab>") 'silver-brain-jump-to-next-link)
 (define-key silver-brain-mode-map (kbd "<backtab>") 'silver-brain-jump-to-previous-link)
+(define-key silver-brain-mode-map (kbd "<return>") 'silver-brain-follow-link)
+(define-key silver-brain-mode-map (kbd "C-<return>") 'silver-brain-follow-link-new-window)
 (define-key silver-brain-mode-map (kbd "C-x C-s") 'silver-brain-save)
 (define-key silver-brain-mode-map (kbd "g") 'silver-brain-refresh)
 (define-key silver-brain-mode-map (kbd "r") 'silver-brain-rename)
 (define-key silver-brain-mode-map (kbd "s") 'silver-brain-save)
 (define-key silver-brain-mode-map (kbd "o") 'silver-brain)
+(define-key silver-brain-mode-map (kbd "O") 'silver-brain-new-window)
 (define-key silver-brain-mode-map (kbd "d") 'silver-brain-delete)
 (define-key silver-brain-mode-map (kbd "p") 'silver-brain-add-parent)
 (define-key silver-brain-mode-map (kbd "c") 'silver-brain-add-child)
@@ -55,8 +58,6 @@ Supported values are: plain, markdown, org")
 
 (add-hook 'silver-brain-mode-hook 'silver-brain--poly-mode)
 
-(run-with-idle-timer 1 t 'silver-brain-save-all)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                              UI                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -66,6 +67,12 @@ Supported values are: plain, markdown, org")
   "Follow a link under current point, EVENT is not used."
   (interactive)
   (silver-brain--open-concept (get-text-property (point) 'uuid)))
+
+;;;###autoload
+(defun silver-brain-follow-link-new-window (&optional event)
+  "Follow a link under current point in a new window, EVENT is not used."
+  (interactive)
+  (silver-brain--open-concept-new-window (get-text-property (point) 'uuid)))
 
 (defun silver-brain-confirm-save ()
   "Confirm to save silver-brain concept."
@@ -83,7 +90,16 @@ Supported values are: plain, markdown, org")
   (interactive)
   (let* ((uuid (silver-brain-search)))
     (when uuid
-      (silver-brain--open-new-concept uuid))))
+      (silver-brain-kill-concept)
+      (silver-brain--open-concept uuid))))
+
+;;;###autoload
+(defun silver-brain-new-window ()
+  "The entry point of Silver Brain functions."
+  (interactive)
+  (let* ((uuid (silver-brain-search)))
+    (when uuid
+      (silver-brain--open-concept-new-window uuid))))
 
 ;;;###autoload
 (defun silver-brain-refresh ()
@@ -119,7 +135,7 @@ Should be called in a silver-brain-mode buffer."
   (let* ((name (read-string "Concept name: "))
          (content-format silver-brain-default-content-format)
          (concept (silver-brain-api--create-concept name content-format)))
-    (silver-brain--open-new-concept (silver-brain-concept-uuid concept))))
+    (silver-brain--open-concept-new-window (silver-brain-concept-uuid concept))))
 
 ;;;###autoload
 (defun silver-brain-kill-concept ()

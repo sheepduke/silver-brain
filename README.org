@@ -118,20 +118,23 @@ For Emacs side, the command ~silver-brain~ is the entry point of the software.
 
 The following is a list of commands defined for ~silver-brain-mode~:
 
-|------------------------------+---------+---------------------------------|
-| Command                      | Binding | Description                     |
-|------------------------------+---------+---------------------------------|
-| silver-brain-refresh         | g       | Refresh current concept         |
-| silver-brain-new-concept     | n       | Create a new concept            |
-| silver-brain-rename          | r       | Rename current concept          |
-| silver-brain-save            | s       | Save changes of current concept |
-| silver-brain-delete          | d       | Delete current concept          |
-| silver-brain-add-parent      | p       | Add a parent of current concept |
-| silver-brain-add-child       | c       | Add a child of current concept  |
-| silver-brain-add-friend      | f       | Add a friend of current concept |
-| silver-brain-remove-relation | R       | Remove a relational concept     |
-| silver-brain-kill-concept    | q       | Kill the concept window         |
-|------------------------------+---------+---------------------------------|
+|--------------------------------+---------+----------------------------------|
+| Command                        | Binding | Description                      |
+|--------------------------------+---------+----------------------------------|
+| silver-brain-refresh           | g       | Refresh current concept          |
+| silver-brain-new-concept       | n       | Create a new concept             |
+| silver-brain-rename            | r       | Rename current concept           |
+| silver-brain-save              | s       | Save changes of current concept  |
+| silver-brain                   | o       | Open a new concept               |
+| silver-brain-new-window        | O       | Open a new concept in new window |
+| silver-brain-delete            | d       | Delete current concept           |
+| silver-brain-add-parent        | p       | Add a parent of current concept  |
+| silver-brain-add-child         | c       | Add a child of current concept   |
+| silver-brain-add-friend        | f       | Add a friend of current concept  |
+| silver-brain-remove-relation   | R       | Remove a relational concept      |
+| silver-brain-kill-concept      | q       | Kill the concept window          |
+| silver-brain-kill-all-concepts | Q       | Kill all the concept windows     |
+|--------------------------------+---------+----------------------------------|
 
 *** Implementation
 
@@ -147,8 +150,21 @@ If you use a synchronization software, such as Syncthing, you may need to restar
 
 This is because the database needs to be re-connected while the current version of Silver Brain cannot handle it well.
 
-*** Auto Save Does Not Work When Cursor Is In Content Field
+*** The Newly Updated Content is Not Shown
 
-If the cursor is left in the content field, the auto-save feature will not work.
+If you run ~silver-brain-refresh~ after some modification and says ~yes~ to save the new contents, you may notice that the content buffer reverts to the original state.
 
-This is because in this case, the auto-save timer is not added to corresponding ~poly-mode~ buffer.
+The solution is simply refreshing the buffer again.
+
+This is because when ~silver-brain-save~ is triggered, the modifications are not transferred to the server, thus the first ~silver-brain-refresh~ command will receive the old content.
+
+*** The Org Mode is Not Rendered Properly
+
+It may happen in some corner cases that the content mode is not in ~org-mode~. The workaround is to reload ~silver-brain~, as shown below:
+
+#+BEGIN_SRC emacs-lisp
+(unload-feature 'silver-brain)
+(require 'silver-brain)
+#+END_SRC
+
+Please report a bug it it happens.
