@@ -24,7 +24,7 @@
   :components ((:module "src"
                 :components
                 ((:file "packages")
-                 (:module "core"
+                 (:module "db"
                   :components 
                   ((:file "db")
                    (:file "concept")
