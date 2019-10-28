@@ -1,4 +1,10 @@
-(in-package :silver-brain)
+(defpackage silver-brain/main
+  (:use #:cl)
+  (:import-from #:silver-brain/config)
+  (:import-from #:silver-brain/server)
+  (:export #:main))
+
+(in-package :silver-brain/main)
 
 (defun main (&optional args)
   "Entry point of the Silver Brain server."
@@ -18,10 +24,10 @@ PROFILE is either 'product' (default) or 'dev'"
          (help (getf options :help))
          (profile (getf options :profile :product)))
     (when help (print-help-and-quit))
-    (conf:set-profile profile)
+    (config:set-profile profile)
     ;; When booted via command line, disable the thread usage. Otherwise the
     ;; program quits immediately.
-    (setf (conf:server-use-thread-p) nil)
+    (setf (config:server-use-thread-p) nil)
     (setup-db)
     (start-server)))
 

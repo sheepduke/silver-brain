@@ -1,11 +1,22 @@
-(in-package silver-brain/tests)
+(defpackage silver-brain-tests/db
+  (:use #:cl
+        #:rove
+        #:alexandria
+        #:iterate
+        #:trivia
+        #:silver-brain/db
+        #:silver-brain/config)
+  (:import-from #:drakma
+                #:http-request))
+
+(in-package silver-brain-tests/db)
 
 (defun url (format-string &rest args)
   (apply #'format
          (append
           (list nil (concatenate 'string
                                  "http://localhost:"
-                                 (format nil "~a" (conf:server-port))
+                                 (format nil "~a" (config:server-port))
                                  format-string))
           args)))
 
@@ -15,27 +26,27 @@
 (defvar *nano* nil)
 
 (defun purge-db ()
-  (uiop:delete-file-if-exists (conf:database-file-name)))
+  (uiop:delete-file-if-exists (config:database-file-name)))
 
 (defun setup-test ()
-  (brain::delete-all-concepts)
-  (setf *software* (brain::add-concept "Software" "Software content." ""))
-  (setf *emacs* (brain::add-concept "Emacs" "Emacs content." ""))
-  (setf *vim* (brain::add-concept "Vim" "Vim content." ""))
-  (setf *nano* (brain::add-concept "Nano" "Nano content." ""))
-  (brain::become-child *software* *emacs*)
-  (brain::become-child *software* *vim*)
-  (brain::become-friend *emacs* *vim*))
+  (db::delete-all-concepts)
+  (setf *software* (db::add-concept "Software" "Software content." ""))
+  (setf *emacs* (db::add-concept "Emacs" "Emacs content." ""))
+  (setf *vim* (db::add-concept "Vim" "Vim content." ""))
+  (setf *nano* (db::add-concept "Nano" "Nano content." ""))
+  (db::become-child *software* *emacs*)
+  (db::become-child *software* *vim*)
+  (db::become-friend *emacs* *vim*))
 
 (defun http-get (control-string &rest format-args)
   (json:decode-json-from-string
    (http-request (apply #'url control-string format-args) :keep-alive nil)))
 
 (defun uuid (concept)
-  (brain::concept-uuid concept))
+  (db::concept-uuid concept))
 
 (setup
-  (conf:set-profile :test)
+  (config:set-profile :test)
   (setup-db)
   (start-server))
 
@@ -54,8 +65,6 @@
                 (mapcar (lambda (alist) (assoc-value alist :uuid)) result)
                 :test #'string=)
         "Contains correct concept.")))
-
-
 
 (deftest test-post-concepts
   (multiple-value-match (http-request (url "/concepts")
@@ -123,10 +132,10 @@
                      (uuid *emacs*)
                      (uuid *nano*))
                 :method :put)
-  (ok (= (length (brain::get-concept-parents *emacs*)) 2)
+  (ok (= (length (db::get-concept-parents *emacs*)) 2)
       "Emacs now has 2 parents.")
   
-  (ok (brain::linkedp *nano* *emacs*)
+  (ok (db::linkedp *nano* *emacs*)
       "Nano is now a parent of Emacs"))
 
 (deftest test-delete-parent
@@ -134,7 +143,7 @@
                      (uuid *emacs*)
                      (uuid *software*))
                 :method :delete)
-  (ok (= (length (brain::get-concept-parents *emacs*)) 0)
+  (ok (= (length (db::get-concept-parents *emacs*)) 0)
       "Emacs now has no parent."))
 
 (deftest test-get-concept-children
@@ -150,15 +159,15 @@
 (deftest test-add-child
   (http-request (url "/concepts/~a/children/~a" (uuid *software*) (uuid *nano*))
                 :method :put)
-  (ok (= (length (brain::get-concept-parents *nano*)) 1)
+  (ok (= (length (db::get-concept-parents *nano*)) 1)
       "Nano has 1 parent."))
 
 (deftest test-delete-child
   (http-request (url "/concepts/~a/children/~a" (uuid *software*) (uuid *emacs*))
                 :method :delete)
-  (ok (= (length (brain::get-concept-children *software*)) 1)
+  (ok (= (length (db::get-concept-children *software*)) 1)
       "Software has 1 child now.")
-  (ok (= (length (brain::get-concept-parents *emacs*)) 0)
+  (ok (= (length (db::get-concept-parents *emacs*)) 0)
       "Emacs has no parent."))
 
 (deftest test-get-concept-friends
@@ -180,25 +189,25 @@
 (deftest test-add-concept-friend
   (http-request (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *software*))
                 :method :put)
-  (ok (= (length (brain::get-concept-friends *emacs*)) 2)
+  (ok (= (length (db::get-concept-friends *emacs*)) 2)
       "Emacs now has 2 friends.")
-  (ok (= (length (brain::get-concept-parents *emacs*)) 0)
+  (ok (= (length (db::get-concept-parents *emacs*)) 0)
       "Emacs now has no parent.")
-  (ok (= (length (brain::get-concept-friends *software*)) 1)
+  (ok (= (length (db::get-concept-friends *software*)) 1)
       "Software now has 1 friend.")
-  (ok (= (length (brain::get-concept-children *software*)) 1)
+  (ok (= (length (db/concept-relation::get-concept-children *software*)) 1)
       "Software now has 1 child."))
 
 (deftest test-delete-concept-friend
   (http-request (url "/concepts/~a/friends/~a" (uuid *emacs*) (uuid *vim*))
                 :method :delete)
-  (ok (= (length (brain::get-concept-friends *emacs*)) 0)
+  (ok (= (length (db::get-concept-friends *emacs*)) 0)
       "Emacs has no friend now.")
-  (ok (= (length (brain::get-concept-friends *vim*)) 0)
+  (ok (= (length (db::get-concept-friends *vim*)) 0)
       "Vim has no friend now."))
 
 ;; (progn
-;;   (conf:set-profile :dev)
+;;   (config:set-profile :dev)
 ;;   (purge-db)
 ;;   (setup-db)
 ;;   (setup-test)

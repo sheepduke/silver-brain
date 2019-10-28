@@ -1,4 +1,10 @@
-(in-package :silver-brain)
+(defpackage silver-brain/db/concept-relation
+  (:nicknames db/concept-relation)
+  (:use #:cl
+        #:silver-brain/db/concept)
+  (:export #:concept-relation))
+
+(in-package silver-brain/db/concept-relation)
 
 (defclass concept-relation ()
   ((source :col-type (:varchar 64)

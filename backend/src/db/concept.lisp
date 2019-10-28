@@ -1,4 +1,11 @@
-(in-package silver-brain)
+(defpackage silver-brain/db/concept
+  (:nicknames db/concept)
+  (:use #:cl)
+  (:export #:concept
+           #:uuid #:name #:content #:content-format
+           #:print-object #:add-concept #:save))
+
+(in-package silver-brain/db/concept)
 
 (defclass concept ()
   ((uuid :col-type (:varchar 64)

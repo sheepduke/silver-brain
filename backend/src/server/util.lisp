@@ -1,9 +1,20 @@
-(in-package silver-brain)
+(defpackage silver-brain/server/util
+  (:nicknames server/util)
+  (:use #:cl #:alexandria)
+  (:import-from #:ningle
+                #:*request*
+                #:*response*)
+  (:import-from #:lack.response
+                #:response-status
+                #:response-headers
+                #:response-body))
+
+(in-package silver-brain/server/util)
 
 (defun request-body ()
   "Extract and return raw request body as string."
   (flexi-streams:octets-to-string
-   (lack.request:request-content caveman2:*request*)
+   (lack.request:request-content *request*)
    :external-format :utf-8))
 
 (defun render-json (thing)
@@ -18,11 +29,12 @@ Return corresponding JSON."
 
 (defun set-response-status (status-code)
   "Set response status to `status-code`."
-  (setf (caveman2:response-status caveman2:*response*) (format nil "~a" status-code)))
+  (setf (response-status *response*)
+        (format nil "~a" status-code)))
 
 (defun set-response-header (header value)
   "Set `header` of current response to `value`."
-  (setf (getf (caveman2:response-headers caveman2:*response*) header) value))
+  (setf (getf (response-headers *response*) header) value))
 
 (defun set-response-location-header (value)
   "Set location header to given `value`."
@@ -48,9 +60,3 @@ If `strict` is set to `T`, return `NIL` when any key is not present."
   "Return an alist representing summary information of given `concept`."
   `((:uuid . ,(concept-uuid concept))
     (:name . ,(concept-name concept))))
-
-(defun get-concept-by-uuid-or-404 (uuid)
-  (let ((concept (get-concept-by-uuid uuid)))
-    (or concept
-        (throw-code 404))
-    concept))
