@@ -1,5 +1,7 @@
 (defpackage silver-brain/main
-  (:use #:cl)
+  (:use #:cl
+        #:alexandria)
+  (:import-from #:silver-brain/db)
   (:import-from #:silver-brain/config)
   (:import-from #:silver-brain/server)
   (:export #:main))
@@ -28,8 +30,8 @@ PROFILE is either 'product' (default) or 'dev'"
     ;; When booted via command line, disable the thread usage. Otherwise the
     ;; program quits immediately.
     (setf (config:server-use-thread-p) nil)
-    (setup-db)
-    (start-server)))
+    (db:setup)
+    (server:start-server)))
 
 (defun print-help-and-quit ()
   "Print help message and quit the software."

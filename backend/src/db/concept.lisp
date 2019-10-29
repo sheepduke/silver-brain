@@ -1,70 +1,45 @@
-(defpackage silver-brain/db/concept
+(uiop:define-package silver-brain/db/concept
   (:nicknames db/concept)
-  (:use #:cl)
-  (:export #:concept
-           #:uuid #:name #:content #:content-format
-           #:print-object #:add-concept #:save))
+  (:use #:cl
+        #:silver-brain/db/concept-dao
+        #:silver-brain/db/concept-relation-dao)
+  (:import-from #:sxql
+                #:where)
+  (:reexport #:silver-brain/db/concept-dao)
+  (:export #:insert #:save #:get-by-uuid #:get-all
+           #:find-by-name #:erase))
 
 (in-package silver-brain/db/concept)
 
-(defclass concept ()
-  ((uuid :col-type (:varchar 64)
-         :initarg :uuid
-         :reader concept-uuid
-         :documentation "The global unique ID of concept. It is a randomly
-generated UUID version 4.")
-   (name :col-type (:varchar 1024)
-         :initarg :name
-         :accessor concept-name
-         :documentation "The name of concept. Can be any string.")
-   (content :col-type (:varchar 1024)
-            :initarg :content
-            :initform ""
-            :accessor concept-content
-            :documentation "The content of concept. Imagine it as a Wiki
-page.")
-   (content-format :col-type (:varchar 16)
-                   :initarg :content-format
-                   :accessor concept-content-format
-                   :documentation "The format of content used by UI."))
-  (:metaclass mito:dao-table-class))
-
-(defmethod print-object ((concept concept) stream)
-  (format stream "#<Concept ~a>" (concept-name concept)))
-
-(defun add-concept (name content content-format)
+(defun insert (name content content-format)
   "Add given `concept` to database."
   (let ((concept (make-instance 'concept
-                                :uuid (format nil "~a" (uuid:make-v4-uuid))
                                 :name name
                                 :content content
                                 :content-format content-format)))
     (mito:save-dao concept)
     concept))
 
-(defun save-concept (concept)
+(defun save (concept)
   "Save `concept` to database."
   (mito:save-dao concept))
 
-(defun get-concept-by-uuid (uuid)
+(defun get-by-uuid (uuid)
+  "Get concept instance by its UUID."
   (mito:find-dao 'concept :uuid uuid))
 
-(defun concept-count ()
-  (mito:count-dao 'concept))
-
-(defun get-all-concepts ()
+(defun get-all ()
   "Return a list UUID and name of all concepts in a list of assoc list.
 The keys of each alist is `(:id :name)`."
   (mito:select-dao 'concept))
 
-(defun find-concepts-by-name (search)
+(defun find-by-name (search)
+  "Search the concept by its name."
   (mito:select-dao 'concept
     (where (:like :name (format nil "%~a%" search)))))
 
-(defun delete-concept (concept)
+(defun erase (concept)
+  "Delete given CONCEPT from database."
   (mito:delete-dao concept)
-  (delete-all-concept-relations concept))
-
-(defun delete-all-concepts ()
-  (mito:delete-by-values 'concept)
-  (mito:delete-by-values 'concept-relation))
+  (mito:delete-by-values ' concept-relation :source (uuid concept))
+  (mito:delete-by-values 'concept-relation :target (uuid concept)))

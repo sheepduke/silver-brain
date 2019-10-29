@@ -1,29 +1,24 @@
 (defpackage silver-brain/server/route
   (:use #:cl
-        #:silver-brain/server/util
-        #:silver-brain/db/concept
-        #:silver-brain/db/concept-relation)
+        #:silver-brain/server/util)
+  (:import-from #:silver-brain/db/concept)
+  (:import-from #:silver-brain/db/concept-relation)
   (:import-from #:caveman2
                 #:defroute)
-  (:import-from #:ningle
-                #:route)
   (:export #:*app*))
 
 (in-package silver-brain/server/route)
-
-(defun get-concept-by-uuid-or-404 (uuid)
-  (let ((concept (get-concept-by-uuid uuid)))
-    (or concept
-        (throw-code 404))
-    concept))
 
 (defvar *app*
   (make-instance 'caveman2:<app>))
 
 (caveman2:clear-routing-rules *app*)
 
-;; (defroute ("/" :method :get) ()
-;;   #P"index.html")
+(defroute ("/" :method :get) ()
+  #P"index.html")
+
+(defroute ("/api/" :method :get) ()
+  "Hello!")
 
 ;; (defroute ("/concepts" :method :get) (&key _parsed)
 ;;   (let ((search (assoc-value _parsed "search" :test #'string=)))

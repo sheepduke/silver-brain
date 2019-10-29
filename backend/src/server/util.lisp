@@ -1,15 +1,23 @@
-(defpackage silver-brain/server/util
+(uiop:define-package silver-brain/server/util
   (:nicknames server/util)
-  (:use #:cl #:alexandria)
-  (:import-from #:ningle
+  (:use #:cl)
+  (:mix #:trivial-types #:alexandria)
+  (:import-from #:silver-brain/db/concept)
+  (:import-from #:caveman2
                 #:*request*
-                #:*response*)
-  (:import-from #:lack.response
+                #:*response*
                 #:response-status
                 #:response-headers
-                #:response-body))
+                #:response-body
+                #:throw-code))
 
 (in-package silver-brain/server/util)
+
+(defun get-concept-by-uuid-or-404 (uuid)
+  (let ((concept (db/concept:get-by-uuid uuid)))
+    (or concept
+        (throw-code 404))
+    concept))
 
 (defun request-body ()
   "Extract and return raw request body as string."
@@ -58,5 +66,5 @@ If `strict` is set to `T`, return `NIL` when any key is not present."
 
 (defun concept-summary (concept)
   "Return an alist representing summary information of given `concept`."
-  `((:uuid . ,(concept-uuid concept))
-    (:name . ,(concept-name concept))))
+  `((:uuid . ,(db/concept:uuid concept))
+    (:name . ,(db/concept:name concept))))

@@ -1,4 +1,5 @@
 (defpackage silver-brain/server
+  (:nicknames server)
   (:use #:cl)
   (:import-from #:clack)
   (:import-from #:silver-brain/server/route)
