@@ -3,8 +3,8 @@
   (:use #:cl)
   (:import-from #:clack)
   (:import-from #:silver-brain/server/route)
-  (:export #:start-server
-           #:stop-server))
+  (:export #:start
+           #:stop))
 
 (in-package silver-brain/server)
 
@@ -20,7 +20,7 @@
 (defvar *server* (make-instance 'server)
   "The global web server.")
 
-(defun start-server ()
+(defun start ()
   "Start the server."
   (unless (handler *server*)
     (setf (handler *server*)
@@ -34,7 +34,7 @@
                          :use-thread (config:server-use-thread-p)
                          ))))
 
-(defun stop-server ()
+(defun stop ()
   "Stop the server."
   (when (handler *server*)
     (clack:stop (handler *server*))

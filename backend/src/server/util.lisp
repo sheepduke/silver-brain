@@ -9,7 +9,16 @@
                 #:response-status
                 #:response-headers
                 #:response-body
-                #:throw-code))
+                #:throw-code)
+  (:export #:get-concept-by-uuid-or-404
+           #:request-body
+           #:render-json
+           #:render-json-array
+           #:set-response-status
+           #:set-response-header
+           #:set-response-location-header
+           #:decode-request-json-alist
+           #:concept-summary))
 
 (in-package silver-brain/server/util)
 

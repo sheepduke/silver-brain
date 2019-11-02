@@ -31,7 +31,7 @@ PROFILE is either 'product' (default) or 'dev'"
     ;; program quits immediately.
     (setf (config:server-use-thread-p) nil)
     (db:setup)
-    (server:start-server)))
+    (server:start)))
 
 (defun print-help-and-quit ()
   "Print help message and quit the software."

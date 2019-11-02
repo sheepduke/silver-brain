@@ -119,7 +119,7 @@ Returns the value of Location header."
 
 (defun silver-brain-api--url (uri)
   "Convert given resource URI to full URL."
-  (format "http://localhost:%s%s" silver-brain-server-port uri))
+  (format "http://localhost:%s/api%s" silver-brain-server-port uri))
 
 (defun silver-brain-api--plist-to-concept (plist)
   "Return a CONCEPT instance from PLIST."

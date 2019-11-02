@@ -8,7 +8,7 @@
   (:export #:linkedp #:childp #:friendp
            #:get-parents-uuid #:get-children-uuid #:get-friends-uuid
            #:become-child #:become-friend #:remove-child #:remove-friend
-           #:remove-all-relations-of))
+           #:unlink #:remove-all-relations-of))
 
 (in-package silver-brain/db/concept-relation)
 
