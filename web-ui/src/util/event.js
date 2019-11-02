@@ -6,10 +6,10 @@ export const Type = Object.freeze({
   ALERT: 'alert'
 })
 
-export function emit (event, data) {
+export function emit(event, data) {
   Bus.$emit(event, data)
 }
 
-export function listen (event, callback) {
+export function listen(event, callback) {
   Bus.$on(event, callback)
 }

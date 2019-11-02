@@ -33,10 +33,10 @@ export default {
     SearchConcept
   },
   methods: {
-    emitSelected (uuid) {
+    emitSelected(uuid) {
       this.$emit('select', uuid)
     },
-    emitClose () {
+    emitClose() {
       this.$emit('close')
     }
   }

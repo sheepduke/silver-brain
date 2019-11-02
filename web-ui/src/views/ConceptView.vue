@@ -48,7 +48,7 @@ export default {
     NewConcept,
     SearchOrNewConcept
   },
-  data () {
+  data() {
     return {
       concept: null,
       ui: {
@@ -62,19 +62,19 @@ export default {
       }
     }
   },
-  beforeRouteEnter (to, from, next) {
+  beforeRouteEnter(to, from, next) {
     next(vm => {
       let uuid = to.params.uuid
       vm.renderConcept(uuid)
     })
   },
-  beforeRouteUpdate (to, from, next) {
+  beforeRouteUpdate(to, from, next) {
     let uuid = to.params.uuid
     this.renderConcept(uuid)
     next()
   },
   methods: {
-    async renderConcept (uuid) {
+    async renderConcept(uuid) {
       this.concept = null
       this.ui.loading = true
 
@@ -94,7 +94,7 @@ export default {
 
       this.ui.loading = false
     },
-    async switchConcept (uuid) {
+    async switchConcept(uuid) {
       this.$router.push(`/concepts/${uuid}`)
     }
   }

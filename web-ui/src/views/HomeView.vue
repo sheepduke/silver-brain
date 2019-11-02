@@ -41,16 +41,16 @@ export default {
     SearchConcept,
     NewConcept
   },
-  data () {
+  data() {
     return {
       showDialog: false
     }
   },
   methods: {
-    selectConcept (uuid) {
+    selectConcept(uuid) {
       this.$router.push(`/concepts/${uuid}`)
     },
-    redirectToNewConcept (uuid) {
+    redirectToNewConcept(uuid) {
       this.$router.push(`/concepts/${uuid}`)
     }
   }

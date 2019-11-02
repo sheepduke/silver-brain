@@ -51,10 +51,10 @@ export default {
     }
   },
   methods: {
-    click () {
+    click() {
       this.$emit('click')
     },
-    close () {
+    close() {
       this.$emit('close')
     }
   }

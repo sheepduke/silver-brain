@@ -34,18 +34,18 @@
 export default {
   name: 'ConceptList',
   props: ['concepts'],
-  data () {
+  data() {
     return {
     }
   },
   methods: {
-    selectConcept (event) {
+    selectConcept(event) {
       console.log('selected')
     },
-    parentsToString (parents) {
+    parentsToString(parents) {
       return parents.map(parent => parent.name).join(',')
     },
-    select (concept) {
+    select(concept) {
       this.$emit('select', concept.uuid)
     }
   }

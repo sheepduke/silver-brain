@@ -57,7 +57,7 @@ import * as Global from '@/util/global'
 
 export default {
   name: 'NewConcept',
-  data () {
+  data() {
     return {
       name: '',
       content: '',
@@ -72,12 +72,12 @@ export default {
     }
   },
   methods: {
-    reset () {
+    reset() {
       this.name = ''
       this.content = ''
       this.contentFormat = 'plain'
     },
-    async submit () {
+    async submit() {
       if (this.name.length === 0) {
         Global.alert({
           message: 'Concept name cannot be empty',
@@ -101,7 +101,7 @@ export default {
         this.reset()
       }
     },
-    close () {
+    close() {
       this.reset()
       this.$emit('close')
     }

@@ -32,12 +32,12 @@ export default {
   components: {
     AlertWithButton
   },
-  data () {
+  data() {
     return {
       alert: this.initAlert()
     }
   },
-  mounted () {
+  mounted() {
     Event.listen(Event.Type.ALERT, (data) => {
       this.alert = this.initAlert()
       this.alert = {
@@ -48,7 +48,7 @@ export default {
     })
   },
   methods: {
-    initAlert () {
+    initAlert() {
       return {
         show: false,
         message: '',

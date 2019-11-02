@@ -42,7 +42,7 @@ export default {
     NewConcept,
     ConceptList
   },
-  data () {
+  data() {
     return {
       search: '',
       concepts: [],
@@ -53,7 +53,7 @@ export default {
     }
   },
   methods: {
-    reset () {
+    reset() {
       this.search = ''
       this.concepts = []
       this.newConcept = {
@@ -62,7 +62,7 @@ export default {
       }
       this.setSearchResultBoxHidden(true)
     },
-    async createNewConcept (name, content, contentFormat) {
+    async createNewConcept(name, content, contentFormat) {
       this.newConcept.showDialog = false
       this.newConcept.buttonLoading = true
       try {
@@ -72,7 +72,7 @@ export default {
       }
       this.newConcept.buttonLoading = false
     },
-    async searchConcept () {
+    async searchConcept() {
       this.setSearchResultBoxHidden(false)
       let concepts = await ConceptApi.searchConcept(this.search)
       for (let index in concepts) {
@@ -81,11 +81,11 @@ export default {
       }
       this.concepts = concepts
     },
-    async selectConcept (uuid) {
+    async selectConcept(uuid) {
       this.reset()
       this.$emit('select', uuid)
     },
-    setSearchResultBoxHidden (statusFlag) {
+    setSearchResultBoxHidden(statusFlag) {
       this.$refs.searchResultBox.hidden = statusFlag
     }
   }

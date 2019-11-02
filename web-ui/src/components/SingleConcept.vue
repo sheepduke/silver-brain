@@ -144,7 +144,7 @@ export default {
       default: null
     }
   },
-  data () {
+  data() {
     return {
       removed: {
         concept: null,
@@ -165,7 +165,7 @@ export default {
     }
   },
   methods: {
-    async removeConceptRelation (type, index) {
+    async removeConceptRelation(type, index) {
       let collection = this.value[type]
       let removedConcept = collection[index]
       this.removed.concept = removedConcept
@@ -187,7 +187,7 @@ export default {
         })
       }
     },
-    async undoRemoveConceptRelation () {
+    async undoRemoveConceptRelation() {
       if (!this.removed.concept) {
         return
       }
@@ -204,11 +204,11 @@ export default {
         })
       }
     },
-    async startAddConceptRelation (type) {
+    async startAddConceptRelation(type) {
       this.newRelation.showDialog = true
       this.newRelation.type = type
     },
-    async addConceptRelation (uuid) {
+    async addConceptRelation(uuid) {
       if (uuid === this.value.uuid) {
         Global.alert({
           message: 'Cannot add itself',
@@ -241,7 +241,7 @@ export default {
         })
       }
     },
-    async updateConcept () {
+    async updateConcept() {
       try {
         await ConceptApi.updateConcept(this.value)
         this.editConcept.enabled = false
@@ -256,7 +256,7 @@ export default {
         })
       }
     },
-    async doDeleteConcept () {
+    async doDeleteConcept() {
       try {
         await ConceptApi.deleteConcept(this.value.uuid)
         Global.alert({
