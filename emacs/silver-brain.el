@@ -227,7 +227,7 @@ RELATION should be a symbol one of: '(parent child friend)."
 
 (define-innermode silver-brain--org-innermode
   :mode 'org-mode
-  :head-matcher (silver-brain--make-separator)
+  :head-matcher (silver-brain--make-separator 50)
   :tail-matcher (silver-brain--make-impossible-matcher)
   :head-mode 'body
   :tail-mode 'body)

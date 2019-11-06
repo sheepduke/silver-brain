@@ -107,9 +107,9 @@ If NO-EDITOR-P is T, exclude the side buffers used by poly-mode."
       (insert " ")
       (put-text-property start end 'uuid (silver-brain-concept-uuid concept)))))
 
-(defun silver-brain--make-separator ()
+(cl-defun silver-brain--make-separator (&optional width)
   "Return a string representing the separator between head and body."
-  (make-string (window-width) ?-))
+  (make-string (if width width (window-width)) ?-))
 
 (defun silver-brain--make-impossible-matcher ()
   "Return a random string that will never be matched."
