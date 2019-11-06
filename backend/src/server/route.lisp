@@ -75,14 +75,14 @@
     (&key uuid parent-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (parent (get-concept-by-uuid-or-404 parent-uuid)))
-    (db/concept-relation:become-child parent concept)
+    (db/concept-relation:become-child concept parent)
     nil))
 
 (defroute ("/api/concepts/:uuid/parents/:parent-uuid" :method :delete)
     (&key uuid parent-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (parent (get-concept-by-uuid-or-404 parent-uuid)))
-    (db/concept-relation:remove-child parent concept)
+    (db/concept-relation:remove-child concept parent)
     nil))
 
 (defroute ("/api/concepts/:uuid/children" :method :get) (&key uuid)
@@ -95,13 +95,13 @@
     (&key uuid child-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (child (get-concept-by-uuid-or-404 child-uuid)))
-    (db/concept-relation:become-child concept child)
+    (db/concept-relation:become-child child concept)
     nil))
 
 (defroute ("/api/concepts/:uuid/children/:child-uuid" :method :delete) (&key uuid child-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (child (get-concept-by-uuid-or-404 child-uuid)))
-    (db/concept-relation:remove-child concept child)
+    (db/concept-relation:remove-child child concept)
     nil))
 
 (defroute ("/api/concepts/:uuid/children/:child-uuid" :method :delete) (&key uuid child-uuid)
