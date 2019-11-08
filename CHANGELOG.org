@@ -1,5 +1,12 @@
 * CHANGELOG
 
+** v1.4
+
+- Change code architecture to package-per-file style.
+- Add ~/api~ prefix to all API.
+- Fix bug that sometimes org-mode cannot be loaded with multiple concept
+  buffers.
+
 ** v1.3
 
 - Add support for opening multiple concepts simultaneously.
