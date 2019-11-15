@@ -1,19 +1,11 @@
-(defpackage silver-brain/server
-  (:nicknames server)
-  (:use #:cl)
-  (:import-from #:clack)
-  (:import-from #:silver-brain/server/route)
-  (:export #:start
-           #:stop))
-
-(in-package silver-brain/server)
+(in-package silver-brain.server)
 
 (defclass server ()
   ((handler :accessor handler
             :initform nil
             :documentation "Server that will be running.")
    (app :accessor app
-        :initform silver-brain/server/route:*app*
+        :initform *app*
         :documentation "Ningle app."))
   (:documentation "The server."))
 

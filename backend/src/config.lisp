@@ -1,14 +1,4 @@
-(defpackage silver-brain/config
-  (:nicknames config)
-  (:use #:cl)
-  (:import-from #:chameleon
-                #:defconfig
-                #:defprofile)
-  (:import-from #:find-port
-                #:find-port)
-  (:export #:set-profile))
-
-(in-package silver-brain/config)
+(in-package silver-brain.config)
 
 (defconfig
   (app-root #P"~/.silver-brain/" "The directory of Silver Brain application.")
