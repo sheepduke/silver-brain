@@ -65,3 +65,18 @@ The UUID must be valid."
   (let ((uuid (concept-uuid concept)))
     (remhash uuid *concept-map*)
     (db:delete-concept uuid)))
+
+(defun make-child (concept child)
+  "Make CHILD a child of CONCEPT."
+  (core:become-child concept child)
+  (db:add-relation (concept-uuid concept) (concept-uuid child)))
+
+(defun make-friend (concept friend)
+  "Make them friends."
+  (core:become-friend concept friend)
+  (db:add-relation (concept-uuid concept) (concept-uuid friend))
+  (db:add-relation (concept-uuid friend) (concept-uuid concept)))
+
+(defun remove-relation (c1 c2)
+  "Remove any relation between c1 and c2."
+  (remove-relations-between c1 c2))

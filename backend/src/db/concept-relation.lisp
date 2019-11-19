@@ -59,19 +59,25 @@
 ;;                          :source (db/concept-dao:uuid concept2)
 ;;                          :target (db/concept-dao:uuid concept1)))
 
-(defun delete-relations-between (concept1 concept2)
+(defun delete-relations-between (uuid1 uuid2)
   "Delete all relations between CONCEPT1 and CONCEPT2."
   (mito:delete-by-values 'concept-relation
-                         :source (concept-uuid concept1)
-                         :target (concept-uuid concept2))
+                         :source uuid1
+                         :target uuid2)
   (mito:delete-by-values 'concept-relation
-                         :source (concept-uuid concept2)
-                         :target (concept-uuid concept1)))
+                         :source uuid2
+                         :target uuid1))
 
-(defun delete-relations-of (concept)
-  "Delete all relations related to CONCEPT."
-  (mito:delete-by-values 'concept-relation :source (concept-uuid concept))
-  (mito:delete-by-values 'concept-relation :target (concept-uuid concept)))
+(defun delete-relations-of (uuid)
+  "Delete all relations related to UUID."
+  (mito:delete-by-values 'concept-relation :source uuid)
+  (mito:delete-by-values 'concept-relation :target uuid))
+
+(defun add-relation (source-uuid target-uuid)
+  "Add a relation from SOURCE-UUID to TARGET-UUID."
+  (mito:insert-dao (make-instance 'concept-relation
+                                  :source source-uuid
+                                  :target target-uuid)))
 
 ;; (defun become-child (child concept)
 ;;   "Make CHILD a child of CONCEPT."

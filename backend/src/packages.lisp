@@ -17,7 +17,8 @@
            #:concept-content #:concept-parents #:concept-children
            #:concept-friends
            ;; Modifiers.
-           #:concept-childp #:concept-friendp #:become-child #:become-friend))
+           #:concept-childp #:concept-friendp #:become-child #:become-friend
+           #:remove-relations-between))
 
 (defpackage silver-brain.db
   (:nicknames db)
@@ -25,21 +26,25 @@
   (:import-from #:sxql
                 #:where)
   (:export #:setup
-           ;; Concept.
+           ;; Concept DAO.
            #:concept #:db-concept-to-core-concept
            #:concept-uuid #:concept-name #:concept-content #:concept-content-format
            #:save-concept
-           ;; Concept relation.
+           ;; Concept Relation DAO.
            #:concept-relation-source #:concept-relation-target
+           ;; Concept.
            #:read-all-concepts #:read-all-concept-relations
-           #:find-concept-by-name #:create-concept #:update-concept #:delete-concept))
+           #:find-concept-by-name #:create-concept #:update-concept #:delete-concept
+           ;; Concept relation.
+           #:add-relation))
 
 (defpackage silver-brain.service
   (:nicknames service)
   (:use #:cl #:alexandria #:iterate #:trivia #:silver-brain.core)
   (:export #:setup
            #:get-all-concepts #:get-concept-by-uuid #:find-concept-by-name
-           #:create-concept #:update-concept #:delete-concept))
+           #:create-concept #:update-concept #:delete-concept
+           #:make-child #:make-friend #:remove-relation))
 
 (defpackage silver-brain.server
   (:nicknames server)

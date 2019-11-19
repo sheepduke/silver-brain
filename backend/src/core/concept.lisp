@@ -48,7 +48,7 @@ picked up by the UI.")
 
 (defun become-friend (concept friend)
   "Make FRIEND and CONCEPT friends of each other."
-  (unless (friendp concept friend)
+  (unless (concept-friendp concept friend)
     (remove-relations-between concept friend)
     (add-friend concept friend)))
 
@@ -61,8 +61,8 @@ picked up by the UI.")
 (defun add-child (concept child)
   "Let CHILD be a child of CONCEPT, without checking existing relations."
   (unless (concept-childp concept child)
-    (adjoin child (concept-children concept))
-    (adjoin concept (concept-parents child))))
+    (pushnew child (concept-children concept))
+    (pushnew concept (concept-parents child))))
 
 (defun remove-child (concept child)
   "Remove the relation between CONCEPT and CHILD if CHILD is a child of
@@ -85,8 +85,8 @@ CONCEPT."
   "Let FRIEND be a friend of CONCEPT and vice vesa, without checking existing
 relations."
   (unless (concept-friendp concept friend)
-    (adjoin friend (concept-friends concept))
-    (adjoin concept (concept-friends friend))))
+    (pushnew friend (concept-friends concept))
+    (pushnew concept (concept-friends friend))))
 
 (defun concept-childp (concept child)
   "Return a boolean value indicating if CONCEPT is a child of PARENT."
