@@ -51,7 +51,6 @@
   "Update corresponding concept in the map with CONCEPT, by UUID.
 The UUID must be valid."
   (let ((concept (get-concept-by-uuid uuid)))
-    ;; TODO update concept
     (setf (concept-name concept) name)
     (setf (concept-content concept) content)
     (setf (concept-content-format concept) content-format)
