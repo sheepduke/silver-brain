@@ -16,7 +16,7 @@
    (-<>> (if search
              (service:find-concept-by-name search)
              (service:get-all-concepts))
-         (mapcar #'concept-summary <>))))
+         (mapcar #'concept-summary))))
 
 (defroute *app* POST "/api/concepts" ()
   (match (decode-request-json-alist '(:name :content :content-format))
@@ -57,7 +57,6 @@
 (defroute *app* GET "/api/concepts/:uuid/parents" (uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (->> (concept-parents concept)
-         (mapcar (lambda (uuid) (service:get-concept-by-uuid uuid)))
          (mapcar #'concept-summary)
          (render-json-array))))
 
@@ -77,14 +76,13 @@
 (defroute *app* GET "/api/concepts/:uuid/children" (uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (->> (concept-children concept)
-         (mapcar (lambda (uuid) (service:get-concept-by-uuid uuid)))
          (mapcar #'concept-summary)
          (render-json-array))))
 
 (defroute *app* PUT "/api/concepts/:uuid/children/:child-uuid" (uuid child-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (child (get-concept-by-uuid-or-404 child-uuid)))
-    (service:make-child child concept)
+    (service:make-child concept child)
   nil))
 
 (defroute *app* DELETE "/api/concepts/:uuid/children/:child-uuid" (uuid child-uuid)
@@ -97,7 +95,6 @@
 (defroute *app* GET "/api/concepts/:uuid/friends" (uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))
     (->> (concept-friends concept)
-         (mapcar (lambda (uuid) (service:get-concept-by-uuid uuid)))
          (mapcar #'concept-summary)
          (render-json-array))))
 

@@ -45,12 +45,18 @@
   :license "MIT"
   :depends-on (#:rove
                #:drakma
-               #:silver-brain
-               #:silver-brain-tests/db)
+               #:silver-brain)
   :components ((:module "tests"
                 :components
                 ((:file "packages")
-                 (:file ""))))
+
+                 (:module "core"
+                  :components
+                  ((:file "concept")))
+
+                 (:module "server"
+                  :components
+                  ((:file "server"))))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c) (symbol-call :rove :run c)))

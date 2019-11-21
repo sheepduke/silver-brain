@@ -1,4 +1,4 @@
-(in-package silver-brain/tests.core)
+(in-package silver-brain-tests.core)
 
 (deftest test-become-child
   (let ((a (make-instance 'concept :name "A"))

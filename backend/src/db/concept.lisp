@@ -12,11 +12,12 @@ The keys of each alist is `(:id :name)`."
 
 (defun save-concept (uuid &key name content content-format)
   "Save CONCEPT to database."
-  (let ((concept-dao (read-concept-by-uuid uuid)))
-    (setf (concept-name concept-dao) name)
-    (setf (concept-content concept-dao) content)
-    (setf (concept-content-format concept-dao) content-format)
-    (mito:save-dao concept-dao)))
+  (let ((concept (or (read-concept-by-uuid uuid)
+                     (make-instance 'concept :uuid uuid))))
+    (setf (concept-name concept) name)
+    (setf (concept-content concept) content)
+    (setf (concept-content-format concept) content-format)
+    (mito:save-dao concept)))
 
 (defun delete-concept (uuid)
   "Delete given CONCEPT from database."

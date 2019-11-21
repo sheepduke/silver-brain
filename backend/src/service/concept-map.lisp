@@ -24,6 +24,11 @@
         (t
          (become-child target source))))))
 
+(defun purge ()
+  "Remove everything."
+  (setf *concept-map* (make-hash-table :test #'equal))
+  (db::purge))
+
 (defun get-all-concepts ()
   "Return all concepts as a list."
   (hash-table-values *concept-map*))
@@ -38,21 +43,31 @@
                  (hash-table-values *concept-map*)))
 
 (defun create-concept (name content content-format)
-  "Add given CONCEPT to the map."
-  (let* ((db-concept (make-instance 'concept
-                                    :name name
-                                    :content content
-                                    :content-format content-format))
-         (concept (db-concept-to-core-concept db-concept)))
-    (save-concept db-concept)
-    (setf (gethash (concept-uuid concept) *concept-map*) concept)))
+  "Create a new concept."
+  (let ((concept (make-instance 'concept
+                                :name name
+                                :content content
+                                :content-format content-format)))
+    (setf (gethash (concept-uuid concept) *concept-map*) concept)
+    (db:save-concept (concept-uuid concept)
+                     :name name
+                     :content content
+                     :content-format content-format)
+    concept))
 
-(defun update-concept (concept)
+(defun update-concept (concept &key name content content-format)
   "Update corresponding concept in the map with CONCEPT, by UUID.
 The UUID must be valid."
-  (let ((original (get-concept-by-uuid )))))
+    (setf (concept-name concept) name)
+    (setf (concept-content concept) content)
+    (setf (concept-content-format concept) content-format)
+    (setf (gethash (concept-uuid concept) *concept-map*) concept)
+    (db:save-concept (concept-uuid concept)
+                     :name name
+                     :content content
+                     :content-format content-format))
 
-(defun delete-concept (concept)
+(defun delete-concept (uuid)
   "Delete given CONCEPT from the map."
-  (remhash (concept-uuid concept) *concept-map*)
-  (delete-concept))
+  (remhash uuid *concept-map*)
+  (db:delete-concept uuid))
