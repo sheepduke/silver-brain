@@ -69,5 +69,7 @@ The UUID must be valid."
 
 (defun delete-concept (uuid)
   "Delete given CONCEPT from the map."
+  (remove-all-relations-of (get-concept-by-uuid uuid))
   (remhash uuid *concept-map*)
-  (db:delete-concept uuid))
+  (db:delete-concept uuid)
+  (db:delete-relations-of uuid))

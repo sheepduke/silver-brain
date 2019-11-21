@@ -52,6 +52,17 @@ picked up by the UI.")
     (remove-relations-between concept friend)
     (add-friend concept friend)))
 
+(defun remove-all-relations-of (concept)
+  (let ((parents (concept-parents concept))
+        (children (concept-children concept))
+        (friends (concept-friends concept)))
+    (dolist (parent parents)
+      (remove-relations-between concept parent))
+    (dolist (child children)
+      (remove-relations-between concept child))
+    (dolist (friend friends)
+      (remove-relations-between concept friend))))
+
 (defun remove-relations-between (c1 c2)
   "Remove any relations between CONCEPT1 and CONCEPT2."
   (remove-child c1 c2)

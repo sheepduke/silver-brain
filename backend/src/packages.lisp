@@ -18,7 +18,7 @@
            #:concept-friends
            ;; Modifiers.
            #:concept-childp #:concept-friendp #:become-child #:become-friend
-           #:remove-relations-between))
+           #:remove-all-relations-of #:remove-relations-between))
 
 (defpackage silver-brain.db
   (:nicknames db)
@@ -36,7 +36,7 @@
            #:read-all-concepts #:read-all-concept-relations
            #:find-concept-by-name #:create-concept #:update-concept #:delete-concept
            ;; Concept relation.
-           #:add-relation))
+           #:add-relation #:delete-relations-of))
 
 (defpackage silver-brain.service
   (:nicknames service)
