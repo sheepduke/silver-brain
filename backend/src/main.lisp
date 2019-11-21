@@ -1,12 +1,4 @@
-(defpackage silver-brain/main
-  (:use #:cl
-        #:alexandria)
-  (:import-from #:silver-brain/db)
-  (:import-from #:silver-brain/config)
-  (:import-from #:silver-brain/server)
-  (:export #:main))
-
-(in-package :silver-brain/main)
+(in-package silver-brain)
 
 (defun main (&optional args)
   "Entry point of the Silver Brain server."
@@ -21,16 +13,23 @@
      :meta-var "PROFILE"
      :description "set profile to use
 PROFILE is either 'product' (default) or 'dev'"
-     :arg-parser (lambda (x) (make-keyword (string-upcase x)))))
+     :arg-parser (lambda (x) (make-keyword (string-upcase x))))
+    (:name :use-thread
+     :short #\t
+     :long "use-thread"
+     :description "start server in another thread (debug use)"))
   (let* ((options (opts:get-opts args))
          (help (getf options :help))
-         (profile (getf options :profile :product)))
+         (profile (getf options :profile :product))
+         (use-thread (getf options :use-thread)))
     (when help (print-help-and-quit))
-    (config:set-profile profile)
+    (unless use-thread
+      (config:set-profile profile))
     ;; When booted via command line, disable the thread usage. Otherwise the
     ;; program quits immediately.
     (setf (config:server-use-thread-p) nil)
     (db:setup)
+    (service:setup)
     (server:start)))
 
 (defun print-help-and-quit ()

@@ -7,8 +7,9 @@ The keys of each alist is `(:id :name)`."
 
 (defun read-concept-by-uuid (uuid)
   "Get corresponding concept by its UUID."
-  (mito:select-dao 'concept
-    (where (:= :uuid uuid))))
+  (first 
+   (mito:select-dao 'concept
+     (where (:= :uuid uuid)))))
 
 (defun save-concept (uuid &key name content content-format)
   "Save CONCEPT to database."

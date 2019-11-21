@@ -83,7 +83,15 @@
                                         :method :put)
       ((_ code _ _ _ _ _)
        (ok (= code 400)
-           "Returns 400 when no content is given.")))))
+           "Returns 400 when no content is given.")))
+    (multiple-value-match (http-request (url "/concepts/~a"
+                                             (concept-uuid *software*))
+                                        :method :put
+                                        :content (json:encode-json-to-string
+                                                  '((:name . "SOFTWARE"))))
+      ((_ code _ _ _ _ _)
+       (ok (= code 200)
+           "Concept got modified.")))))
 
 (deftest test-delete-concept-by-id
   (testing "DELETE /concepts/:id"

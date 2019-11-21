@@ -13,5 +13,5 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.silver-brain.3762670503)
 
 (defun main (&rest argv)
-  (silver-brain/main:main argv))
+  (silver-brain:main argv))
 ;;; vim: set ft=lisp lisp:

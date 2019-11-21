@@ -18,11 +18,11 @@
         ((or (null source) (null target))
          (log:warn "Invalid record: ~a" relation))
         ;; If the target is the parent of source, make them friends.
-        ((concept-childp source target)
+        ((concept-childp target source)
          (become-friend source target))
         ;; Otherwise, make child.
         (t
-         (become-child target source))))))
+         (become-child source target))))))
 
 (defun purge ()
   "Remove everything."
@@ -39,7 +39,7 @@
 
 (defun find-concept-by-name (name)
   (remove-if-not (lambda (concept)
-                   (str:containsp name (core:concept-name concept)))
+                   (str:containsp name (core:concept-name concept) :ignore-case t))
                  (hash-table-values *concept-map*)))
 
 (defun create-concept (name content content-format)

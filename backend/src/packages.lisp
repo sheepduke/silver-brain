@@ -61,3 +61,7 @@
                 #:association-list-p)
   (:export #:start
            #:stop))
+
+(defpackage silver-brain
+  (:use #:cl #:alexandria)
+  (:export #:main))

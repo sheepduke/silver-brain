@@ -36,14 +36,14 @@
        (:content-format . ,(concept-content-format concept))))))
 
 (defroute *app* PUT "/api/concepts/:uuid" (uuid)
-  (get-concept-by-uuid-or-404 uuid)
-  (match (decode-request-json-alist '(:name :content :content-format))
-    ((list name content content-format)
-     (service:update-concept uuid
-                             :name name
-                             :content content
-                             :content-format content-format)))
-  nil)
+  (let ((concept (get-concept-by-uuid-or-404 uuid)))
+    (match (decode-request-json-alist '(:name :content :content-format) :strict nil)
+      ((list name content content-format)
+       (service:update-concept concept
+                               :name (or name "")
+                               :content (or content "")
+                               :content-format (or content-format ""))))
+    nil))
 
 (defroute *app* DELETE "/api/concepts/:uuid" (uuid)
   (get-concept-by-uuid-or-404 uuid)

@@ -5,3 +5,8 @@
   (:use #:cl #:alexandria #:trivia #:rove #:silver-brain.core)
   (:import-from #:drakma
                 #:http-request))
+
+(defpackage silver-brain-tests.service
+  (:use #:cl #:alexandria #:trivia #:rove #:silver-brain.core)
+  (:import-from #:drakma
+                #:http-request))
