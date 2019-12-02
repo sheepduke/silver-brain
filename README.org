@@ -157,14 +157,3 @@ If you run ~silver-brain-refresh~ after some modification and says ~yes~ to save
 The solution is simply refreshing the buffer again.
 
 This is because when ~silver-brain-save~ is triggered, the modifications are not transferred to the server, thus the first ~silver-brain-refresh~ command will receive the old content.
-
-*** The Org Mode is Not Rendered Properly
-
-It may happen in some corner cases that the content mode is not in ~org-mode~. The workaround is to reload ~silver-brain~, as shown below:
-
-#+BEGIN_SRC emacs-lisp
-(unload-feature 'silver-brain)
-(require 'silver-brain)
-#+END_SRC
-
-Please report a bug it it happens.

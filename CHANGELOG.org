@@ -1,5 +1,12 @@
 * CHANGELOG
 
+** v1.4.1
+
+- Change code architecture back to the classic style.
+- Add a cache layer to improve the performance.
+- Fix bug that relations of deleted concept are not removed.
+- Fix bug that sometimes concept body cannot be rendered properly.
+
 ** v1.4
 
 - Change code architecture to package-per-file style.
