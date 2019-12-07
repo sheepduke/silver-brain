@@ -40,9 +40,9 @@
 
                  (:file "main"))))
   :description "A Concept Map software that extends your brain storage"
-  :in-order-to ((test-op (test-op "silver-brain-tests"))))
+  :in-order-to ((test-op (test-op "silver-brain/tests"))))
 
-(defsystem "silver-brain-tests"
+(defsystem "silver-brain/tests"
   :author "YUE Daian"
   :license "MIT"
   :depends-on (#:rove
