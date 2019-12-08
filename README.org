@@ -18,9 +18,11 @@ structured way, like described above.
 I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that
 made me stop using it:
 - [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text in it
-  really made me sad.
+  really made me sad. (This issue has been fixed now.)
 - Although it is doable via ~org-brain-rename-file~, but the inconsistency
   between file name and concept name made me uncomfortable, really.
+- I was concerned about the performance of plain text when the number of
+  concepts grow too large.
 
 *** Introduction
 
