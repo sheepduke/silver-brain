@@ -63,6 +63,8 @@
 (defroute *app* PUT "/api/concepts/:uuid/parents/:parent-uuid" (uuid parent-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (parent (get-concept-by-uuid-or-404 parent-uuid)))
+    (when (string= uuid parent-uuid)
+      (error 'bad-request))
     (service:make-child parent concept)
   nil))
 
@@ -82,6 +84,8 @@
 (defroute *app* PUT "/api/concepts/:uuid/children/:child-uuid" (uuid child-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (child (get-concept-by-uuid-or-404 child-uuid)))
+    (when (string= uuid child-uuid)
+      (error 'bad-request))
     (service:make-child concept child)
   nil))
 
@@ -101,6 +105,8 @@
 (defroute *app* PUT "/api/concepts/:uuid/friends/:friend-uuid" (uuid friend-uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid))
         (friend (get-concept-by-uuid-or-404 friend-uuid)))
+    (when (string= uuid friend-uuid)
+      (error 'bad-request))
     (service:make-friend friend concept)
   nil))
 
