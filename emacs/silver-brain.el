@@ -155,7 +155,8 @@ Should be called in a silver-brain-mode buffer."
   "Rename current concept.
 Should be called in silver-brain-mode buffers."
   (interactive)
-  (let* ((name (read-string "New concept name: "))
+  (let* ((name (read-string "New concept name: "
+                            (silver-brain-concept-name silver-brain--concept)))
          (uuid (silver-brain-concept-uuid silver-brain--concept)))
     (setf (silver-brain-concept-name silver-brain--concept) name)
     (silver-brain-api--update-concept silver-brain--concept)
