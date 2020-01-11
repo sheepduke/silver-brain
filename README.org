@@ -5,27 +5,42 @@
 
 *** Prologue
 
-Back to the time when I was preparing the final examinations as a bachelor student. I wrote down all the concepts to a big white paper in a structured way in order to review what I have learned. I draw lines between concepts and labeled the relationship. For each concept, I wrote some text describing it (usually the paper was too small for large trunk of text).
+Back to the time when I was preparing the final examinations as a bachelor
+student. I wrote down all the concepts to a big white paper in a structured
+way in order to review what I have learned. I draw lines between concepts and
+labeled the relationship. For each concept, I wrote some text describing it
+(usually the paper was too small for large trunk of text).
 
-After Emacs and its decent Org Mode became best partner for my electronic life, I always wanted a software that helps me record everything in a structured way, like described above.
+After Emacs and its decent Org Mode became best partner for my electronic
+life, I always wanted a software that helps me record everything in a
+structured way, like described above.
 
-I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that made me stop using it:
-- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text in it really made me sad.
-- Although it is doable via ~org-brain-rename-file~, but the inconsistency between file name and concept name made me uncomfortable, really.
+I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that
+made me stop using it:
+- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text in it
+  really made me sad.
+- Although it is doable via ~org-brain-rename-file~, but the inconsistency
+  between file name and concept name made me uncomfortable, really.
 
 *** Introduction
 
-Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is directly inspired by [[https://github.com/Kungsgeten/org-brain][org-brain]]. It helps you build your very own personal knowledge center. 
+Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is directly inspired by
+[[https://github.com/Kungsgeten/org-brain][org-brain]]. It helps you build your very own personal knowledge center.
 
 It has the following features:
 
-- Edit concepts using Emacs Org Mode (or probably other major modes in future).
-- Maintain the relationship between concepts, including paternity and friendship.
+- Edit concepts using Emacs Org Mode (or probably other major modes in
+  future).
+- Maintain the relationship between concepts, including paternity and
+  friendship.
 
 The following technical decisions were made:
 
-- Concepts are stored in a single SQLite file. Easy to maintain and synchronize.
-- Separation between back-end and front-end. This makes it possible to develop another UI. The directory ~web-ui/~ contains a proof-of-concept demonstration.
+- Concepts are stored in a single SQLite file. Easy to maintain and
+  synchronize.
+- Separation between back-end and front-end. This makes it possible to develop
+  another UI. The directory ~web-ui/~ contains a proof-of-concept
+  demonstration.
 - Back-end code was written in Common Lisp (a bless or a curse).
 
 *** Screenshots
@@ -44,9 +59,22 @@ Please refer to [[./CHANGELOG.org][CHANGELOG.org]].
 
 Make sure ~SQLite 3~ is installed on your system.
 
+**** Add silver-brain System to ASDF Path
+
+It is essential for the following installation process. And it is a good idea
+if you would like to load silver-brain using ASDF during manual installation.
+
+- When using Roswell, you may simply create a symbolic link of ~silver-brain~
+directory in =~/.roswell/local-projects/= directory.
+
+- Otherwise, you need to add the path of Silver Brain to
+  ~asdf:*central-registry*~.
+
 **** Using Installation Script
 
-An installation script is provided for the sake of quick installation. Before running it, you need to put Silver Brain project under a directory that your local ASDF can find, i.e. ~(ql:quickload :silver-brain)~ does work.
+An installation script is provided for the sake of quick installation. Before
+running it, you need to put Silver Brain project under a directory that your
+local ASDF can find, i.e. ~(ql:quickload :silver-brain)~ does work.
 
 #+BEGIN_SRC sh
 cd /path/to/silver-brain/
@@ -58,7 +86,8 @@ It mainly does the following things:
 2. Install the generated binary to =~/.roswell/bin/= directory.
 3. Copy Emacs Lisp files to =~/.silver-brain/= directory.
 
-You may need to add =~/.roswell/bin/= to your ~PATH~ in order to use ~silver-brain~ anywhere.
+You may need to add =~/.roswell/bin/= to your ~PATH~ in order to use
+~silver-brain~ anywhere.
 
 **** Installing Manually
 
@@ -66,7 +95,8 @@ You may need to add =~/.roswell/bin/= to your ~PATH~ in order to use ~silver-bra
 
 ****** Roswell Way
 
-It is highly recommended to use Roswell to build and install Lisp systems for its simplicity.
+It is highly recommended to use Roswell to build and install Lisp systems for
+its simplicity.
 
 #+BEGIN_SRC sh
 cd /path/to/silver-brain/backend/
@@ -75,7 +105,8 @@ ros build silver-brain.ros
 
 ****** Legacy Way
 
-It is a little bit complicated not to use Roswell. You may load Silver Brain into an image and dump it.
+It is a little bit complicated not to use Roswell. You may load Silver Brain
+into an image and dump it.
 
 See [[https://lispcookbook.github.io/cl-cookbook/scripting.html][The Common Lisp Cookbook]] for more details.
 
@@ -85,9 +116,11 @@ Copy the ~emacs/~ directory to somewhere Emacs can find.
 
 **** Configuration
 
-The server uses ~5000~ as the port. Currently this cannot be changed unless modifying the source code.
+The server uses ~5000~ as the port. Currently this cannot be changed unless
+modifying the source code.
 
-For Emacs UI to work, the following snippet needs to be added into the Emacs configuration file:
+For Emacs UI to work, the following snippet needs to be added into the Emacs
+configuration file:
 
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'load-path "~/.silver-brain/emacs/")
@@ -104,15 +137,21 @@ For Emacs UI to work, the following snippet needs to be added into the Emacs con
 
 **** Concepts
 
-The core concept of Silver Brain is /concept/. A concept a node in your knowledge network. It contains title, content etc.
+The core concept of Silver Brain is /concept/. A concept a node in your
+knowledge network. It contains title, content etc.
 
-Concepts are connected via /relations/. A concept can be either parent, child or friend of another one. You may think of parent/child as a single directional link, while friend is a bi-directional link. 
+Concepts are connected via /relations/. A concept can be either parent, child
+or friend of another one. You may think of parent/child as a single
+directional link, while friend is a bi-directional link.
 
-Practically, parent/child can be used to connect concepts with logical precedence, e.g. ~Editor~ and ~Emacs~. And friend can be used to connect concepts with slightly weak relations, e.g. ~Emacs~ and ~Vim~, hopefully ;-)
+Practically, parent/child can be used to connect concepts with logical
+precedence, e.g. ~Editor~ and ~Emacs~. And friend can be used to connect
+concepts with slightly weak relations, e.g. ~Emacs~ and ~Vim~, hopefully ;-)
 
 **** Software
 
-The back-end server accepts ~-h~ or ~--help~ argument. Please refer to the help.
+The back-end server accepts ~-h~ or ~--help~ argument. Please refer to the
+help.
 
 For Emacs side, the command ~silver-brain~ is the entry point of the software.
 
@@ -138,7 +177,9 @@ The following is a list of commands defined for ~silver-brain-mode~:
 
 *** Implementation
 
-Silver Brain was designed as a traditional Web application that back-end and front-end code communicates via HTTP requests. The concepts and relations are stored in a local SQLite file.
+Silver Brain was designed as a traditional Web application that back-end and
+front-end code communicates via HTTP requests. The concepts and relations are
+stored in a local SQLite file.
 
 The ~web-ui~ directory contains browser UI code written using Vuetify.
 
@@ -146,14 +187,20 @@ The ~web-ui~ directory contains browser UI code written using Vuetify.
 
 *** The Software Needs to Be Restarted If DB file is Changed Externally
 
-If you use a synchronization software, such as Syncthing, you may need to restart the software after the DB file got synchronized.
+If you use a synchronization software, such as Syncthing, you may need to
+restart the software after the DB file got synchronized.
 
-This is because the database needs to be re-connected while the current version of Silver Brain cannot handle it well.
+This is because the database needs to be re-connected while the current
+version of Silver Brain cannot handle it well.
 
 *** The Newly Updated Content is Not Shown
 
-If you run ~silver-brain-refresh~ after some modification and says ~yes~ to save the new contents, you may notice that the content buffer reverts to the original state.
+If you run ~silver-brain-refresh~ after some modification and says ~yes~ to
+save the new contents, you may notice that the content buffer reverts to the
+original state.
 
 The solution is simply refreshing the buffer again.
 
-This is because when ~silver-brain-save~ is triggered, the modifications are not transferred to the server, thus the first ~silver-brain-refresh~ command will receive the old content.
+This is because when ~silver-brain-save~ is triggered, the modifications are
+not transferred to the server, thus the first ~silver-brain-refresh~ command
+will receive the old content.
