@@ -206,3 +206,9 @@ The solution is simply refreshing the buffer again.
 This is because when ~silver-brain-save~ is triggered, the modifications are
 not transferred to the server, thus the first ~silver-brain-refresh~ command
 will receive the old content.
+
+*** Silver Brain Fails to Start After Quicklisp Update
+
+Because Mito and Clack ~quickload~ its dependencies at run-time dynamically,
+the dependency packages cannot be built into the image. So after upgrading
+Quicklisp dist, you need to re-build the Roswell binary.
