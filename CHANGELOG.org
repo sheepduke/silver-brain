@@ -1,5 +1,10 @@
 * CHANGELOG
 
+** v1.4.2
+
+- Add check when creating a relation between relations.
+- Enhance UI when renaming a concept.
+
 ** v1.4.1
 
 - Change code architecture back to the classic style.
