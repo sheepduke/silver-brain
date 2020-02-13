@@ -32,13 +32,13 @@ When CREATE is T, create the "
 If the candidate concept does not exist, ask for creating."
   (let ((selection (silver-brain-search--candidate-to-uuid candidate)))
     (cond
-           (selection selection)
-           ((and create (y-or-n-p "Concept does not exist, create? "))
-            (silver-brain-concept-uuid
-             (silver-brain-api--create-concept
-              candidate
-              silver-brain-default-content-format)))
-           (t nil))))
+     (selection selection)
+     ((and create (y-or-n-p "Concept does not exist, create? "))
+      (silver-brain-concept-uuid
+       (silver-brain-api--create-concept
+        candidate
+        silver-brain-default-content-format)))
+     (t nil))))
 
 (defun silver-brain-search--concept-to-candidate (concept)
   "Convert CONCEPT to candidate string."
