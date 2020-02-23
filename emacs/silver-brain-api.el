@@ -26,9 +26,9 @@ Returns the newly created concept."
    (silver-brain-api--get
     (silver-brain-api--post
      "/concepts"
-     (json-encode-plist (list :name name
-                              :content ""
-                              :content-format content-format))))))
+     (silver-brain--plist-to-json (list :name name
+                                        :content ""
+                                        :content-format content-format))))))
 
 (defun silver-brain-api--search-concept (keyword)
   "Search concept by KEYWORD.
@@ -40,7 +40,7 @@ Returns a list of concepts."
   "Save CONCEPT to the server."
   (silver-brain-api--put
    (concat "/concepts/" (silver-brain-concept-uuid concept))
-   (json-encode-plist
+   (silver-brain--plist-to-json
     (silver-brain-api--concept-to-plist concept))))
 
 (defun silver-brain-api--delete-concept (concept)
@@ -129,16 +129,20 @@ Returns the value of Location header."
       (json-read))))
 
 (defun http-response-body (response)
-  "Extract HTTP body from response."
+  "Extract HTTP body from RESPONSE."
   (cl-subseq response (+ 2 (cl-search "\n\n" response))))
 
 (defun http-response-location (response)
-  "Extract HTTP Location header from response."
+  "Extract HTTP Location header from RESPONSE."
   (let* ((start (cl-search "Location: " response))
          (middle (+ 2 (cl-search ": " response :start2 start)))
          (end (cl-search "\n" response :start2 start))
          (match (cl-subseq response start end)))
     (cl-subseq response middle end)))
+
+(defun silver-brain--plist-to-json (it)
+  "Encode IT to JSON string."
+  (encode-coding-string (json-encode-plist it) 'utf-8))
 
 (defun silver-brain-api--url (uri)
   "Convert given resource URI to full URL."
