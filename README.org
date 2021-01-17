@@ -5,6 +5,10 @@
 
 I have been using it for a year or so and have been re-thinking of this software for some time. I would like to re-design it and make it more useful for general purpose (and surely for myself).
 
+Probably 1.4.3 will be the last release containing all the current features.
+
+New release will start form 1.4.4.
+
 ** Overview
 
 *** Prologue
