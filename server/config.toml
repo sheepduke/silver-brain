@@ -1,5 +1,0 @@
-title = "Test Title"
-
-[store]
-root_dir = "temp"
-database_file = "silver-brain.sqlite"

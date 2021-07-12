@@ -1,0 +1,3 @@
+[store]
+# The database file storing concepts.
+database_file = "~/.silver-brain/silver-brain.sqlite"

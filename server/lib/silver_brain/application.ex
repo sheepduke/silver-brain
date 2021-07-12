@@ -1,20 +1,15 @@
 defmodule SilverBrain.Application do
-  alias Vapor.Provider.File
-
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
 
-  @impl true
+  @impl Application
   def start(_type, _args) do
-    config = load_config()
+    config = SilverBrain.Config.get()
 
     children = [
       # Starts a worker by calling: SilverBrain.Worker.start_link(arg)
-      # {SilverBrain.Worker, arg}
-      {SilverBrain.Repo, [database: config.database]}
+      {SilverBrain.Repo, [database: config.store.database_file]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -23,24 +18,8 @@ defmodule SilverBrain.Application do
     Supervisor.start_link(children, opts)
   end
 
-  def load_config() do
-    providers = [
-      %File{
-        path: "config.toml",
-        bindings: [
-          title: "title",
-          database: ["Database", "database"]
-        ]
-      }
-    ]
-
-    config = Vapor.load!(providers)
-
-    IO.inspect(config)
+  @impl Application
+  def stop(_state) do
+    Supervisor.stop(SilverBrain.Supervisor)
   end
 end
-
-config = SilverBrain.Application.load_config()
-
-# SilverBrain.Application.start(:normal, [])
-# SilverBrain.Application.stop(:killed)
