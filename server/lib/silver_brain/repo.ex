@@ -3,10 +3,15 @@ defmodule SilverBrain.Repo do
     otp_app: :silver_brain,
     adapter: Ecto.Adapters.SQLite3
 
-  def init(_context, config) do
+  def init(_type, config) do
+    app_config = SilverBrain.Config.get()
+
+    repo_config = [
+      database: app_config.store.database_file,
+      primary_key: false,
+      migration_timestamps: [type: :utc_datetime]
+    ]
+
+    {:ok, Keyword.merge(config, repo_config)}
   end
 end
-
-# Ecto.Adapters.SQL.query!(SilverBrain.Repo, "select count(*) from concept")
-
-# SilverBrain.Repo.
