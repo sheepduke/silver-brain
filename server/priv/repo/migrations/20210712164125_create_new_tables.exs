@@ -5,7 +5,10 @@ defmodule SilverBrain.Repo.Migrations.CreateNewTables do
   Create new tables with another name (concept_new, concept_link).
   """
   def change do
-    create table(:concept_new) do
+    # Enable foreign key support.
+    execute "PRAGMA foreign_key = ON"
+
+    create_if_not_exists table(:concept_new) do
       add :uuid, :string, primary_key: true
       add :name, :string
       add :content_type, :string
@@ -14,16 +17,16 @@ defmodule SilverBrain.Repo.Migrations.CreateNewTables do
       timestamps()
     end
 
-    create index(:concept_new, [:name])
+    create_if_not_exists index(:concept_new, [:name])
 
-    create table(:concept_link) do
-      add :source, :string, primary_key: true
-      add :link, :string, primary_key: true
-      add :target, :string, primary_key: true
+    create_if_not_exists table(:concept_link) do
+      add :source, references("concept_new", column: :uuid, type: :string)
+      add :link, references("concept_new", column: :uuid, type: :string)
+      add :target, references("concept_new", column: :uuid, type: :string)
 
       timestamps()
     end
 
-    create index(:concept_link, [:source, :link, :target])
+    create_if_not_exists index(:concept_link, [:source, :link, :target])
   end
 end

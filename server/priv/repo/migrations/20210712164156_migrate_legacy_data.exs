@@ -6,6 +6,9 @@ defmodule SilverBrain.Repo.Migrations.MigrateLegacyData do
   Migrate data from old table (concept) to new one (concept_new).
   """
   def up() do
+    # Enable foreign key support.
+    execute "PRAGMA foreign_key = ON"
+    
     # Insert existing concepts to new table.
     query = from concept in "concept",
       select: %{

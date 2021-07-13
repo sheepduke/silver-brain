@@ -8,7 +8,7 @@ defmodule SilverBrain.Repo do
 
     repo_config = [
       database: app_config.store.database_file,
-      primary_key: false,
+      migration_primary_key: false,
       migration_timestamps: [type: :utc_datetime]
     ]
 
