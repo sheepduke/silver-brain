@@ -20,9 +20,12 @@ defmodule SilverBrain.Repo.Migrations.CreateNewTables do
     create_if_not_exists index(:concept_new, [:name])
 
     create_if_not_exists table(:concept_link) do
-      add :source, references("concept_new", column: :uuid, type: :string)
-      add :link, references("concept_new", column: :uuid, type: :string)
-      add :target, references("concept_new", column: :uuid, type: :string)
+      add :source, references("concept_new", column: :uuid, type: :string),
+        primary_key: true
+      add :link, references("concept_new", column: :uuid, type: :string),
+        primary_key: true
+      add :target, references("concept_new", column: :uuid, type: :string),
+        primary_key: true
 
       timestamps()
     end

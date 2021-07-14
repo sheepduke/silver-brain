@@ -43,7 +43,10 @@ defmodule SilverBrain.Repo.Migrations.MigrateLegacyData do
         updated_at: relation.updated_at
       },
       where: true
-    SilverBrain.Repo.insert_all("concept_link", query)
+    relations = SilverBrain.Repo.all(query)
+    |> Enum.uniq_by(&(&1.source <> &1.target))
+
+    SilverBrain.Repo.insert_all("concept_link", relations)
   end
 
   @doc """
