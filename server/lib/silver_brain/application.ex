@@ -12,10 +12,11 @@ defmodule SilverBrain.Application do
       {SilverBrain.Repo, [database: config.store.database_file]}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: SilverBrain.Supervisor]
     Supervisor.start_link(children, opts)
+
+    # Run Ecto migrations.
+    Ecto.Migrator.run(SilverBrain.Repo, config.app.migration_dir, :up, all: true)
   end
 
   @impl Application

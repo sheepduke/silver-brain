@@ -14,6 +14,8 @@ defmodule SilverBrain.Repo.Migrations.CreateLegacyTables do
       add :updated_at, :utc_datetime
     end
 
+    rename table(:concept), to: table(:concept_legacy)
+
     create_if_not_exists table(:concept_relation, primary_key: true) do
       add :source, :varchar, size: 64, null: false
       add :target, :varchar, size: 64, null: false

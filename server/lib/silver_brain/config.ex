@@ -12,7 +12,7 @@ defmodule SilverBrain.Config.App do
   """
   @spec load!() :: SilverBrain.Config.App.t()
   def load!() do
-    migration_dir = Application.app_dir(@app, "priv/migrations")
+    migration_dir = Application.app_dir(@app, "priv/repo/migrations")
 
     %SilverBrain.Config.App{
       migration_dir: migration_dir
