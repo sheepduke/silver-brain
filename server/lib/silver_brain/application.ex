@@ -9,18 +9,28 @@ defmodule SilverBrain.Application do
 
     children = [
       # Starts a worker by calling: SilverBrain.Worker.start_link(arg)
-      {SilverBrain.Repo, [database: config.store.database_file]}
+      {SilverBrain.Repo, [database: config.store_database_file]}
     ]
 
     opts = [strategy: :one_for_one, name: SilverBrain.Supervisor]
-    Supervisor.start_link(children, opts)
+    return = Supervisor.start_link(children, opts)
 
     # Run Ecto migrations.
     Ecto.Migrator.run(SilverBrain.Repo, config.app.migration_dir, :up, all: true)
+
+    return
   end
 
   @impl Application
   def stop(_state) do
     Supervisor.stop(SilverBrain.Supervisor)
+  end
+
+  @doc """
+  Restart the application.
+  """
+  def restart() do
+    stop(:killed)
+    start(:normal, [])
   end
 end
