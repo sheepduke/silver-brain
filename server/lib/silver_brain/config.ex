@@ -43,8 +43,8 @@ defmodule SilverBrain.Config do
       %Vapor.Provider.File{
         path: config_file,
         bindings: [
-          server_port: ["server", "port"],
-          store_database_file: ["store", "database_file"]
+          {:server_port, ["server", "port"]},
+          {:store_database_file, ["store", "database_file"], map: &Path.expand/1}
         ]
       }
     ]

@@ -16,7 +16,7 @@ defmodule SilverBrain.Application do
     return = Supervisor.start_link(children, opts)
 
     # Run Ecto migrations.
-    Ecto.Migrator.run(SilverBrain.Repo, config.app.migration_dir, :up, all: true)
+    Ecto.Migrator.run(SilverBrain.Repo, config.app_migration_dir, :up, all: true)
 
     return
   end
