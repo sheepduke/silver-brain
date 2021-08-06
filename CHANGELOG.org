@@ -1,5 +1,9 @@
 * CHANGELOG
 
+** v1.4.4
+
+- Use Emacs built-in url.el instead of request.el library.
+
 ** v1.4.3
 
 - Merge the dev code to master.
