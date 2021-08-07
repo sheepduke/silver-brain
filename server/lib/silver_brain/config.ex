@@ -63,13 +63,17 @@ defmodule SilverBrain.Config do
 
   @spec get_config_file() :: String.t()
   defp get_config_file() do
-    if Mix.env() == :dev do
-      "/tmp/silver-brain.toml"
+    if get_environment() == :dev do
+      Path.join([System.tmp_dir(), "silver-brain.toml"])
     else
       case System.get_env(@env_var_config_file) do
         nil -> Path.expand("~/.silver-brain/config.toml")
         file -> file
       end
     end
+  end
+
+  defp get_environment() do
+    Application.get_env(@app, :environment)
   end
 end

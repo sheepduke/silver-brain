@@ -8,6 +8,8 @@ defmodule SilverBrain.Application do
     config = SilverBrain.Config.get()
 
     children = [
+      {Plug.Cowboy, scheme: :http, plug: SilverBrain.Web, options: [port: 4001]},
+
       # Starts a worker by calling: SilverBrain.Worker.start_link(arg)
       {SilverBrain.Repo, [database: config.store_database_file]}
     ]

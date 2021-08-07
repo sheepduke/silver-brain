@@ -6,3 +6,5 @@ config :silver_brain,
 config :silver_brain, SilverBrain.Repo,
   migration_primary_key: false,
   migration_timestamps: [type: :utc_datetime_usec]
+
+config :silver_brain, :environment, Mix.env()
