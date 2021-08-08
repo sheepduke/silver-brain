@@ -1,5 +1,5 @@
 defmodule SilverBrain.Repo.Concept do
-  use Ecto.Schema
+  use SilverBrain.Repo.Schema
 
   @primary_key {:uuid, :string, []}
   schema "concept" do

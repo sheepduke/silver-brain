@@ -9,7 +9,7 @@ defmodule SilverBrain.Web do
   plug(:dispatch)
 
   get "/api/concept/:uuid" do
-    result = ConceptMap.get_concepts_by_uuid(uuid)
+    result = ConceptMap.get_concept_by_uuid(uuid)
     send_json_resp(conn, result)
   end
 

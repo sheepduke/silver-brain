@@ -16,8 +16,8 @@ defmodule SilverBrain.Repo.Migrations.MigrateLegacyData do
         name: concept.name,
         content_type: ^"text/org", # concept.content_format,
         content: concept.content,
-        inserted_at: concept.created_at,
-        updated_at: concept.updated_at
+        create_time: concept.created_at,
+        update_time: concept.updated_at
       },
       where: true
     SilverBrain.Repo.insert_all("concept", query)
@@ -29,8 +29,8 @@ defmodule SilverBrain.Repo.Migrations.MigrateLegacyData do
     SilverBrain.Repo.insert_all("concept", [[
       uuid: contains_uuid,
       name: "Contains",
-      inserted_at: now_time,
-      updated_at: now_time
+      create_time: now_time,
+      update_time: now_time
     ]])
 
     # Populate concept_link table with newly created "Contains" concept.
@@ -39,8 +39,8 @@ defmodule SilverBrain.Repo.Migrations.MigrateLegacyData do
         source: relation.source,
         link: ^contains_uuid,
         target: relation.target,
-        inserted_at: relation.created_at,
-        updated_at: relation.updated_at
+        create_time: relation.created_at,
+        update_time: relation.updated_at
       },
       where: true
     relations = SilverBrain.Repo.all(query)

@@ -14,7 +14,7 @@ defmodule SilverBrain.Repo.Migrations.CreateNewTables do
       add :content_type, :string
       add :content, :string
 
-      timestamps()
+      timestamps(inserted_at: :create_time, updated_at: :update_time)
     end
 
     create_if_not_exists index(:concept, [:name])
@@ -27,7 +27,7 @@ defmodule SilverBrain.Repo.Migrations.CreateNewTables do
       add :target, references(:concept, column: :uuid, type: :string),
         primary_key: true
 
-      timestamps()
+      timestamps(inserted_at: :create_time, updated_at: :update_time)
     end
 
     create_if_not_exists index(:concept_link, [:source, :link, :target])
