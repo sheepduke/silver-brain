@@ -3,7 +3,7 @@ defmodule SilverBrainTest.HttpClient do
 
   plug(Tesla.Middleware.BaseUrl, "http://localhost:4001/api")
 
-  def get(url) do
-    Tesla.get(url)
+  def get(url, query \\ []) do
+    Tesla.get(url, query: query)
   end
 end

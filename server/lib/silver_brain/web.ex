@@ -1,6 +1,5 @@
 defmodule SilverBrain.Web do
   alias SilverBrain.ConceptMap
-  alias SilverBrain.ConceptMap.{Concept}
 
   use Plug.Router
 
@@ -9,7 +8,9 @@ defmodule SilverBrain.Web do
   plug(:dispatch)
 
   get "/api/concept/:uuid" do
-    result = ConceptMap.get_concept_by_uuid(uuid)
+    conn = Plug.Conn.fetch_query_params(conn)
+    params = conn.query_params |> IO.inspect()
+    result = ConceptMap.get_concept_by_uuid(uuid, params)
     send_json_resp(conn, result)
   end
 

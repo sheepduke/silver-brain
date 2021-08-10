@@ -35,6 +35,9 @@ defmodule SilverBrain.MixProject do
       # Configuration adapter.
       {:vapor, "~> 0.10"},
 
+      # Data validator.
+      {:vex, "~>0.9"},
+
       # ----------------------------------------------------------------------
 
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
