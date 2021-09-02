@@ -1,5 +1,9 @@
 * CHANGELOG
 
+** v1.4.5
+
+- Fix cl-case error.
+
 ** v1.4.4
 
 - Use Emacs built-in url.el instead of request.el library.
