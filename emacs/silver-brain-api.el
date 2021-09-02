@@ -71,7 +71,7 @@ Returns a list of concepts."
 
 (defun silver-brain-api--relation-to-url (relation)
   "Convert RELATION to corresponding URL."
-  (case relation
+  (cl-case relation
                 ('parent "parents")
                 ('child "children")
                 ('friend "friends")
@@ -109,7 +109,7 @@ Returns the value of Location header."
 
 (cl-defun http-request (url &key (method :get) (data nil))
   "Send HTTP request to URL with given METHOD and DATA."
-  (let ((url-request-method (case method
+  (let ((url-request-method (cl-case method
                               (:get "GET")
                               (:post "POST")
                               (:put "PUT")
