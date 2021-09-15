@@ -65,17 +65,25 @@
     (dolist (relation (mito:select-dao 'concept-relation))
       (match relation
         ((concept-relation source target object-created-at object-updated-at)
-         (let ((uuid (if (is-doubley-linked source target)
-                         relate-relation-uuid
-                         parent-relation-uuid)))
+         (let* ((is-bidirectional-linked (is-bidirectional-linked source target))
+                (uuid (if is-bidirectional-linked
+                          relate-relation-uuid
+                          parent-relation-uuid)))
            (mito:insert-dao (make-instance 'concept-link
                                            :uuid uuid
                                            :source source
                                            :target target
                                            :created-at object-created-at
-                                           :updated-at object-updated-at))))))))
+                                           :updated-at object-updated-at))
+           (when is-bidirectional-linked
+             (mito:insert-dao (make-instance 'concept-link
+                                             :uuid uuid
+                                             :source target
+                                             :target source
+                                             :created-at object-created-at
+                                             :updated-at object-updated-at)))))))))
 
-(defun is-doubley-linked (source target)
+(defun is-bidirectional-linked (source target)
   (mito:select-dao 'concept-relation
     (sxql:where (:and (:= :source target)
                       (:= :target source)))))
