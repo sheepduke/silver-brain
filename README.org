@@ -5,8 +5,6 @@
 
 I have been using it for a year or so and have been re-thinking of this software for some time. I would like to re-design it and make it more useful for general purpose (and surely for myself).
 
-1.4.4 is the last stable version of existing functionality.
-
 Next release will be a re-implementation of whole software, versioned starting from 2.0.0.
 
 ** Overview
