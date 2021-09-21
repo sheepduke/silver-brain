@@ -1,5 +1,9 @@
 * CHANGELOG
 
+** v1.4.6
+
+- Replace `cl-arrow` with `serapeum`.
+
 ** v1.4.5
 
 - Fix cl-case error.
