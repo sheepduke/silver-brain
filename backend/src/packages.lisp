@@ -48,8 +48,10 @@
 
 (defpackage silver-brain.server
   (:nicknames server)
-  (:use #:cl #:alexandria #:core #:cl-arrows #:trivia
+  (:use #:cl #:alexandria #:core #:trivia
         #:silver-brain.core)
+  (:import-from #:serapeum
+                #:~>>)
   (:import-from #:ningle
                 #:*request*
                 #:*response*)

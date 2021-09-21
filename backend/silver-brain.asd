@@ -3,7 +3,7 @@
   :author "YUE Daian"
   :license "MIT"
   :depends-on (;; Utility.
-               #:alexandria #:iterate #:trivia #:cl-arrows #:str #:trivial-types
+               #:alexandria #:iterate #:trivia #:serapeum #:str #:trivial-types
                #:uuid #:unix-opts
                ;; Logging.
                #:log4cl

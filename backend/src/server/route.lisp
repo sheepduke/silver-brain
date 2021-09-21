@@ -13,10 +13,10 @@
 
 (defroute *app* GET "/api/concepts" (search)
   (render-json-array
-   (-<>> (if search
-             (service:find-concept-by-name search)
-             (service:get-all-concepts))
-         (mapcar #'concept-summary))))
+   (~>> (if search
+            (service:find-concept-by-name search)
+            (service:get-all-concepts))
+        (mapcar #'concept-summary))))
 
 (defroute *app* POST "/api/concepts" ()
   (match (decode-request-json-alist '(:name :content :content-format))
@@ -56,7 +56,7 @@
 
 (defroute *app* GET "/api/concepts/:uuid/parents" (uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))
-    (->> (concept-parents concept)
+    (~>> (concept-parents concept)
          (mapcar #'concept-summary)
          (render-json-array))))
 
@@ -77,7 +77,7 @@
 
 (defroute *app* GET "/api/concepts/:uuid/children" (uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))
-    (->> (concept-children concept)
+    (~>> (concept-children concept)
          (mapcar #'concept-summary)
          (render-json-array))))
 
@@ -98,7 +98,7 @@
 
 (defroute *app* GET "/api/concepts/:uuid/friends" (uuid)
   (let ((concept (get-concept-by-uuid-or-404 uuid)))
-    (->> (concept-friends concept)
+    (~>> (concept-friends concept)
          (mapcar #'concept-summary)
          (render-json-array))))
 
