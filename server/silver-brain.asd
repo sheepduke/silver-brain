@@ -6,13 +6,15 @@
   :depends-on (;; Utility
                #:alexandria
                #:serapeum
+               #:fset
                #:uuid
-
                #:chameleon
-
+               #:trivia
+               ;; Multi threading
+               #:cl-gserver
                ;; Database
                #:mitogrator
-               ;; #:trivia #:str #:trivial-types
+               ;; #:str #:trivial-types
                ;; #:uuid #:unix-opts
                ;; Logging.
                ;; #:log4cl
@@ -23,9 +25,9 @@
   :components ((:module "src"
                 :serial t
                 :components
-                (;; Global files
-                 (:file "packages")
+                (;; Global files.
                  (:file "config")
+                 (:file "globals")
                  ;; Store.
                  (:module "store"
                   :components
@@ -35,26 +37,24 @@
                                  (:file "3.purge-legacy-table")
                                  (:file "migrate")))
                    (:file "store")))
+                 (:module "concept-map"
+                  :components ((:file "cache")
+                               (:file "store")))
                  (:file "silver-brain"))))
   :in-order-to ((test-op (test-op "silver-brain/tests"))))
 
 (defsystem "silver-brain/tests"
   :author "YUE Daian"
   :license "MIT"
-  :depends-on (#:rove
-               #:drakma
+  :depends-on (#:fiveam
                #:silver-brain)
   :components ((:module "tests"
                 :components
-                ((:file "packages")
-
-                 (:module "core"
-                  :components
-                  ((:file "concept")))
-
-                 (:module "server"
-                  :components
-                  ((:file "server"))))))
+                ((:file "suite")
+                 (:module "concept-map"
+                  :components ((:file "cache"))))))
   :description "Test system for silver-brain"
 
-  :perform (test-op (op c) (symbol-call :rove :run c)))
+  :perform (test-op (op c)
+                    (symbol-call :fiveam :run!
+                                 (find-symbol* :silver-brain :silver-brain-tests))))

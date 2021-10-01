@@ -1,3 +1,6 @@
+(defpackage silver-brain.config
+  (:use #:cl))
+
 (in-package silver-brain.config)
 
 (chameleon:defconfig

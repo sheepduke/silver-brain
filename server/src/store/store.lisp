@@ -1,3 +1,23 @@
+(defpackage silver-brain.store
+  (:nicknames store)
+  (:use #:cl)
+  (:local-nicknames (#:config #:silver-brain.config))
+  (:import-from #:mito
+                #:object-created-at
+                #:object-updated-at)
+  (:export #:concept
+           #:concept-uuid
+           #:concept-name
+           #:concept-content-type
+           #:concept-content
+           #:concept-link
+           #:concept-link-uuid
+           #:concept-link-source
+           #:concept-link-target
+           #:object-created-at
+           #:object-updated-at           
+           #:setup))
+
 (in-package silver-brain.store)
 
 (mito:deftable concept ()
