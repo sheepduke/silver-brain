@@ -1,8 +1,6 @@
 (defpackage silver-brain.store.migration.2.create-new-table
   (:use #:cl)
   (:export #:migration)
-  (:import-from #:trivia
-                #:match)
   (:import-from #:mito
                 #:object-created-at
                 #:object-updated-at))
@@ -41,15 +39,17 @@
   (let ((concepts (mito:select-dao 'concept)))
     ;; Migrate concept table.
     (dolist (concept concepts)
-      (match concept
-        ((concept uuid name content object-created-at object-updated-at)
-         (mito:insert-dao (make-instance 'concept-new
-                                         :uuid uuid
-                                         :name name
-                                         :content-type "text/org"
-                                         :content content
-                                         :created-at object-created-at
-                                         :updated-at object-updated-at))))))
+      (with-slots (uuid name content) concept
+        (with-accessors ((created-at object-created-at)
+                         (updated-at object-updated-at))
+            concept
+          (mito:insert-dao (make-instance 'concept-new
+                                          :uuid uuid
+                                          :name name
+                                          :content-type "text/org"
+                                          :content content
+                                          :created-at created-at
+                                          :updated-at updated-at))))))
 
   (let ((parent-relation-uuid (uuid:make-v4-uuid))
         (relate-relation-uuid (uuid:make-v4-uuid)))
@@ -63,25 +63,27 @@
 
     ;; Migrate relation table.
     (dolist (relation (mito:select-dao 'concept-relation))
-      (match relation
-        ((concept-relation source target object-created-at object-updated-at)
-         (let* ((is-bidirectional-linked (is-bidirectional-linked source target))
-                (uuid (if is-bidirectional-linked
-                          relate-relation-uuid
-                          parent-relation-uuid)))
-           (mito:insert-dao (make-instance 'concept-link
-                                           :uuid uuid
-                                           :source source
-                                           :target target
-                                           :created-at object-created-at
-                                           :updated-at object-updated-at))
-           (when is-bidirectional-linked
-             (mito:insert-dao (make-instance 'concept-link
-                                             :uuid uuid
-                                             :source target
-                                             :target source
-                                             :created-at object-created-at
-                                             :updated-at object-updated-at)))))))))
+      (with-slots (concept-relation source target) relation
+        (with-accessors ((created-at object-created-at)
+                         (updated-at object-updated-at))
+            relation
+          (let* ((is-bidirectional-linked (is-bidirectional-linked source target))
+                 (uuid (if is-bidirectional-linked
+                           relate-relation-uuid
+                           parent-relation-uuid)))
+            (mito:insert-dao (make-instance 'concept-link
+                                            :uuid uuid
+                                            :source source
+                                            :target target
+                                            :created-at created-at
+                                            :updated-at updated-at))
+            (when is-bidirectional-linked
+              (mito:insert-dao (make-instance 'concept-link
+                                              :uuid uuid
+                                              :source target
+                                              :target source
+                                              :created-at created-at
+                                              :updated-at updated-at)))))))))
 
 (defun is-bidirectional-linked (source target)
   (mito:select-dao 'concept-relation

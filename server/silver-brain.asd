@@ -8,6 +8,8 @@
                #:serapeum
                #:uuid
 
+               #:chameleon
+
                ;; Database
                #:mitogrator
                ;; #:trivia #:str #:trivial-types
@@ -21,7 +23,18 @@
   :components ((:module "src"
                 :serial t
                 :components
-                ((:file "packages")
+                (;; Global files
+                 (:file "packages")
+                 (:file "config")
+                 ;; Store.
+                 (:module "store"
+                  :components
+                  ((:module "migration"
+                    :components ((:file "1.create-legacy-table")
+                                 (:file "2.migrate-to-new-table")
+                                 (:file "3.purge-legacy-table")
+                                 (:file "migrate")))
+                   (:file "store")))
                  (:file "silver-brain"))))
   :in-order-to ((test-op (test-op "silver-brain/tests"))))
 

@@ -21,5 +21,4 @@
 (defparameter migration
   (make-instance 'mitogrator:migration
                  :name "1.create-legacy-table"
-                 :up #'up
-                 :down #'down))
+                 :up #'up))
