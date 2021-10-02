@@ -27,7 +27,6 @@
                 :components
                 (;; Global files.
                  (:file "config")
-                 (:file "globals")
                  ;; Store.
                  (:module "store"
                   :components
@@ -47,7 +46,8 @@
   :author "YUE Daian"
   :license "MIT"
   :depends-on (#:fiveam
-               #:silver-brain)
+               #:silver-brain
+               #:cl-mock)
   :components ((:module "tests"
                 :components
                 ((:file "suite")

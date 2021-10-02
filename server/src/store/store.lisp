@@ -16,7 +16,8 @@
            #:concept-link-target
            #:object-created-at
            #:object-updated-at           
-           #:setup))
+           #:start
+           #:stop))
 
 (in-package silver-brain.store)
 
@@ -36,7 +37,11 @@
   (:keys uuid source target)
   (:conc-name concept-link-))
 
-(defun setup ()
+(defun start ()
   (unless (mito.connection:connected-p)
     (mito:connect-toplevel :sqlite3 :database-name (config:database-file))
     (store.migration:run-migrations)))
+
+(defun stop ()
+  (when (mito.connection:connected-p)
+    (mito:disconnect-toplevel)))
