@@ -10,6 +10,7 @@
                #:uuid
                #:chameleon
                #:trivia
+               #:jsown
                ;; Multi threading
                #:cl-gserver
                ;; Database
@@ -27,6 +28,7 @@
                 :components
                 (;; Global files.
                  (:file "config")
+                 (:file "util")
                  ;; Store.
                  (:module "store"
                   :components
@@ -37,8 +39,10 @@
                                  (:file "migrate")))
                    (:file "store")))
                  (:module "concept-map"
-                  :components ((:file "cache")
-                               (:file "store")))
+                  :components ((:file "model")
+                               (:file "cache")
+                               (:file "store")
+                               (:file "service")))
                  (:file "silver-brain"))))
   :in-order-to ((test-op (test-op "silver-brain/tests"))))
 

@@ -1,41 +1,44 @@
 (defpackage silver-brain.store
-  (:nicknames store)
   (:use #:cl)
   (:local-nicknames (#:config #:silver-brain.config))
   (:import-from #:mito
                 #:object-created-at
                 #:object-updated-at)
-  (:export #:concept
-           #:concept-uuid
-           #:concept-name
-           #:concept-content-type
-           #:concept-content
-           #:concept-link
-           #:concept-link-uuid
-           #:concept-link-source
-           #:concept-link-target
+  (:export #:start
+           #:stop
+           #:concept
+           #:uuid
+           #:name
+           #:content-type
+           #:content
            #:object-created-at
-           #:object-updated-at           
-           #:start
-           #:stop))
+           #:object-updated-at
+           #:concept-link
+           #:source
+           #:target))
 
 (in-package silver-brain.store)
 
 (mito:deftable concept ()
   ((uuid :col-type :string
+         :reader uuid
          :primary-key t)
-   (name :col-type :string)
-   (content-type :col-type :string :initform "")
-   (content :col-type :string :initform ""))
-  (:keys name)
-  (:conc-name concept-))
+   (name :col-type :string
+         :reader name)
+   (content-type :col-type :string :initform ""
+                 :reader content-type)
+   (content :col-type :string :initform ""
+            :reader content))
+  (:keys name))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :string)
-   (source :col-type :string)
-   (target :col-type :string))
-  (:keys uuid source target)
-  (:conc-name concept-link-))
+  ((uuid :col-type :string
+         :reader uuid)
+   (source :col-type :string
+           :reader source)
+   (target :col-type :string
+           :reader target))
+  (:keys uuid source target))
 
 (defun start ()
   (unless (mito.connection:connected-p)

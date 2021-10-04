@@ -1,5 +1,6 @@
 (defpackage silver-brain.concept-map.cache
   (:use #:cl)
+  (:local-nicknames (#:store #:silver-brain.store))
   (:import-from #:serapeum
                 #:op
                 #:->)
