@@ -6,22 +6,23 @@
   :depends-on (;; Utility
                #:alexandria
                #:serapeum
-               #:fset
-               #:uuid
-               #:chameleon
                #:trivia
+               ;; Application
+               #:chameleon
+               #:uuid
                #:jsown
-               ;; Multi threading
                #:cl-gserver
-               ;; Database
                #:mitogrator
+               #:mito
+               #:ningle
+               #:clack
                ;; #:str #:trivial-types
                ;; #:uuid #:unix-opts
                ;; Logging.
                ;; #:log4cl
                ;; Web related.
                ;; #:chameleon #:find-port #:cl-json
-               ;; #:ningle #:clack #:flexi-streams #:mito
+               #:ningle #:clack ;; #:flexi-streams
                )
   :components ((:module "src"
                 :serial t
@@ -43,6 +44,7 @@
                                (:file "cache")
                                (:file "store")
                                (:file "service")))
+                 (:file "web")
                  (:file "silver-brain"))))
   :in-order-to ((test-op (test-op "silver-brain/tests"))))
 

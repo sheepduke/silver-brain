@@ -17,6 +17,9 @@
 ;;;;                         JSON Methods                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defmethod jsown:to-json ((obj string))
+  obj)
+
 (defmethod jsown:to-json ((obj standard-object))
   (let ((slot-names (~>> (class-of obj)
                          (c2mop:class-direct-slots)
@@ -28,7 +31,7 @@
             (jsown:extend-js js
               ((str:replace-all "-" "_" (str:downcase slot-name))
                (jsown:to-json (slot-value obj slot-name))))))
-    js))
+    (jsown:to-json* js)))
 
 (defmethod jsown:to-json ((obj local-time:timestamp))
   (local-time:to-rfc3339-timestring obj))

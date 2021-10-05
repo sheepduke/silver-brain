@@ -7,7 +7,8 @@
   (:import-from #:serapeum
                 #:->
                 #:defsubst)
-  (:local-nicknames (#:store #:silver-brain.concept-map.store)))
+  (:local-nicknames (#:store #:silver-brain.concept-map.store))
+  (:export #:get-concept))
 
 (in-package silver-brain.concept-map.service)
 
@@ -18,3 +19,7 @@
       (if-let (concept (store:get-concept-by-uuid uuid))
         (make-ok-response concept)
         (make-not-found-response))))
+
+;; (get-concept "1234")
+;; (dex:get
+;;  (format nil "http://localhost:5001/api/concepts/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3"))
