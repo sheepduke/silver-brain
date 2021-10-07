@@ -1,3 +1,18 @@
+(defpackage mitogrator
+  (:use #:cl)
+  (:export #:run
+           #:migration
+           #:name
+           #:up
+           #:down
+           #:database-not-connected-error
+           #:print-object
+           #:migration-history
+           #:migration-history-name)
+  (:import-from #:serapeum
+                #:op
+                #:->))
+
 (in-package mitogrator)
 
 (define-condition database-not-connected-error (error)
@@ -22,21 +37,16 @@
 (defmethod print-object ((obj migration-history) stream)
   (format stream "#<Migration \"~a\">" (slot-value obj 'name)))
 
-(-> run (list &key (:sort boolean)) t)
-(defun run (migrations &key sort)
+(-> run (list) t)
+(defun run (migrations)
   (assert-mito-connected)
   (mito:ensure-table-exists 'migration-history)
-  (let* ((migrations (if sort (sort-migrations migrations) migrations))
-         (latest-history (select-latest-migration-history))
+  (let* ((latest-history (select-latest-migration-history))
          (pending-migrations (get-pending-migrations migrations latest-history)))
-    (loop for migration in pending-migrations
-          do (handler-case (progn (funcall (up migration))
-                                  (insert-migration-history (name migration)))
-               (error (err) (funcall (down migration)) (error err))))))
-
-(-> sort-migrations (list) nil)
-(defun sort-migrations (migrations)
-  (sort (op (string<= (name _1) (name _2))) migrations))
+    (dolist (migration pending-migrations)
+      (dbi:with-transaction mito:*connection*
+        (funcall (up migration))
+        (insert-migration-history (name migration))))))
 
 (defun assert-mito-connected ()
   (unless (mito.connection:connected-p)

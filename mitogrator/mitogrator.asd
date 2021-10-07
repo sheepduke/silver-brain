@@ -9,24 +9,21 @@
   :serial t
   :components ((:module "src"
                 :components
-                ((:file "package")
-                 (:file "mitogrator"))))
-  :in-order-to ((test-op (test-op :mitogrator/test))))
+                ((:file "mitogrator"))))
+  :in-order-to ((test-op (test-op :mitogrator-tests))))
 
-(defsystem mitogrator/test
+(defsystem mitogrator-tests
   :version "0.1.0"
   :license "MIT"
   :author "YUE Daian"
   :depends-on (#:mitogrator
                #:fiveam
-               #:mockingbird
+               #:cl-mock
                #:serapeum)
   :serial t
   :components ((:module "test"
                 :components
-                ((:file "package")
-                 (:file "util")
-                 (:file "mitogrator"))))
+                ((:file "mitogrator"))))
   :perform (test-op (op c)
                     (symbol-call :fiveam :run!
-                                 (find-symbol* :mitogrator :mitogrator-test))))
+                                 (find-symbol* :mitogrator :mitogrator-tests))))
