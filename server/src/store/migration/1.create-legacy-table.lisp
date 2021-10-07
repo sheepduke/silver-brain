@@ -5,14 +5,14 @@
 (in-package silver-brain.store.migration.1.create-legacy-table)
 
 (mito:deftable concept ()
-  ((uuid :col-type :string)
-   (name :col-type :string)
-   (content :col-type :string)
-   (content-format :col-type :string)))
+  ((uuid :col-type :text)
+   (name :col-type :text)
+   (content :col-type :text)
+   (content-format :col-type :text)))
 
 (mito:deftable concept-relation ()
-  ((source :col-type :string)
-   (target :col-type :string)))
+  ((source :col-type :text)
+   (target :col-type :text)))
 
 (defun up ()
   (mito:ensure-table-exists 'concept)

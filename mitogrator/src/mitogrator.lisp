@@ -29,7 +29,7 @@
    (down :type function :initarg :down :initform (op) :accessor down)))
 
 (mito:deftable migration-history ()
-  ((name :col-type :string
+  ((name :col-type :text
          :primary-key t
          :reader name))
   (:table-name "__migration_history"))

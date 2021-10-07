@@ -30,9 +30,9 @@ The whole process can be described by migrations as below:
   (in-package student-system.store.migration)
   
   (mito:deftable student-1 ()
-    ((id :col-type :string
+    ((id :col-type :text
          :primary-key t)
-     (name :col-type :string)
+     (name :col-type :text)
      (grade :col-type :number))
     (:conc-name student-))
   
@@ -48,12 +48,12 @@ The whole process can be described by migrations as below:
         (in-package student-system.store.migration)
         
         (mito:deftable student-2 ()
-          ((id :col-type :string
+          ((id :col-type :text
                :primary-key t)
-           (name :col-type :string)))
+           (name :col-type :text)))
         
         (mito:deftable student-grade-2 ()
-          ((id :col-type :string
+          ((id :col-type :text
                :primary-key t)
            (grade :col-type :number)))
         

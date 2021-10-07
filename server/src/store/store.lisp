@@ -26,7 +26,8 @@
            #:target
            #:with-database
            #:database-not-found-error
-           #:database-name))
+           #:database-name
+           #:with-memory-database))
 
 (in-package silver-brain.store)
 
@@ -47,6 +48,10 @@
          (migration:run-migrations)
          ,@body))))
 
+(defmacro with-memory-database (&body body)
+  `(dbi:with-connection (mito:*connection* :sqlite3 :database-name ":memory:")
+     ,@body))
+
 (defun get (class uuid)
   (mito:find-dao class :uuid uuid))
 
@@ -59,22 +64,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (mito:deftable concept ()
-  ((uuid :col-type :string
+  ((uuid :col-type :text
          :reader uuid
          :primary-key t)
-   (name :col-type :string
+   (name :col-type :text
          :reader name)
-   (content-type :col-type :string :initform ""
+   (content-type :col-type :text :initform ""
                  :reader content-type)
-   (content :col-type :string :initform ""
+   (content :col-type :text :initform ""
             :reader content))
   (:keys name))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :string
+  ((uuid :col-type :text
          :reader uuid)
-   (source :col-type :string
+   (source :col-type :text
            :reader source)
-   (target :col-type :string
+   (target :col-type :text
            :reader target))
   (:keys uuid source target))

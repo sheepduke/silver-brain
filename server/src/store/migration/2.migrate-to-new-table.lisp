@@ -8,27 +8,27 @@
 (in-package silver-brain.store.migration.2.create-new-table)
 
 (mito:deftable concept ()
-  ((uuid :col-type :string)
-   (name :col-type :string)
-   (content :col-type :string)
-   (content-format :col-type :string)))
+  ((uuid :col-type :text)
+   (name :col-type :text)
+   (content :col-type :text)
+   (content-format :col-type :text)))
 
 (mito:deftable concept-relation ()
-  ((source :col-type :string)
-   (target :col-type :string)))
+  ((source :col-type :text)
+   (target :col-type :text)))
 
 (mito:deftable concept-new ()
-  ((uuid :col-type :string
+  ((uuid :col-type :text
          :primary-key t)
-   (name :col-type :string)
-   (content-type :col-type :string :initform "")
-   (content :col-type :string :initform ""))
+   (name :col-type :text)
+   (content-type :col-type :text :initform "")
+   (content :col-type :text :initform ""))
   (:keys name))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :string)
-   (source :col-type :string)
-   (target :col-type :string))
+  ((uuid :col-type :text)
+   (source :col-type :text)
+   (target :col-type :text))
   (:keys uuid source target))
 
 (defun up ()
