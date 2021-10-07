@@ -1,11 +1,19 @@
 (defpackage silver-brain.store
   (:use #:cl)
-  (:local-nicknames (#:config #:silver-brain.config))
+  (:local-nicknames (#:config #:silver-brain.config)
+                    (#:connection #:silver-brain.store.connection))
   (:import-from #:mito
                 #:object-created-at
                 #:object-updated-at)
+  (:import-from #:serapeum
+                #:->)
+  (:import-from #:alexandria
+                #:with-gensyms)
+  (:shadow #:get)
   (:export #:start
            #:stop
+           #:get
+           ;; Dao
            #:concept
            #:uuid
            #:name
@@ -15,9 +23,48 @@
            #:object-updated-at
            #:concept-link
            #:source
-           #:target))
+           #:target
+           #:with-database
+           #:database-not-found-error
+           #:database-name))
 
 (in-package silver-brain.store)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                          Start/Stop                          ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun start ()
+  (connection:start))
+
+(defun stop ()
+  (connection:stop))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                      Database Accessors                      ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-condition database-not-found-error (error)
+  ((database-name :type string :accessor database-name :initarg :database-name)))
+
+(defmacro with-database ((database-name) &body body)
+  (with-gensyms (g-database-name)
+    `(let* ((,g-database-name ,database-name)
+            (mito:*connection* (connection:get ,g-database-name)))
+       (if (null mito:*connection*)
+           (error 'database-not-found-error :database-name ,g-database-name))
+       ,@body)))
+
+(defun get (class uuid)
+  (mito:find-dao class :uuid uuid))
+
+(-> select (symbol &optional sxql.clause:where-clause) standard-object)
+(defun select (class &optional where)
+  (mito:select-dao class where))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                             DAO                              ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (mito:deftable concept ()
   ((uuid :col-type :string
@@ -39,12 +86,3 @@
    (target :col-type :string
            :reader target))
   (:keys uuid source target))
-
-(defun start ()
-  (unless (mito.connection:connected-p)
-    (mito:connect-toplevel :sqlite3 :database-name (config:database-file))
-    (store.migration:run-migrations)))
-
-(defun stop ()
-  (when (mito.connection:connected-p)
-    (mito:disconnect-toplevel)))

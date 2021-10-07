@@ -8,8 +8,13 @@
 (defun start ()
   (setf (config:active-profile) :dev)
   (silver-brain.store:start)
-  (silver-brain.concept-map.cache:start)
-  (silver-brain.web:start))
+  (silver-brain.concept-map:start)
+  (silver-brain.web:start)
+  nil)
 
-;; (setf (config:active-profile) :dev)
-;; (silver-brain::start)
+(defun stop ()
+  (silver-brain.store:stop)
+  (silver-brain.concept-map:stop)
+  (silver-brain.web:stop)
+  nil)
+

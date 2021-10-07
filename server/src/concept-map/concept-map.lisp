@@ -1,16 +1,24 @@
-(defpackage silver-brain.concept-map.service
+(defpackage silver-brain.concept-map
   (:use #:cl
         #:silver-brain.util
         #:silver-brain.concept-map.model)
+  (:local-nicknames (#:store #:silver-brain.concept-map.store))
   (:import-from #:alexandria
                 #:if-let)
   (:import-from #:serapeum
                 #:->
                 #:defsubst)
-  (:local-nicknames (#:store #:silver-brain.concept-map.store))
-  (:export #:get-concept))
+  (:export #:start
+           #:stop
+           #:get-concept))
 
-(in-package silver-brain.concept-map.service)
+(in-package silver-brain.concept-map)
+
+(defun start ()
+  (silver-brain.concept-map.cache:start))
+
+(defun stop ()
+  (silver-brain.concept-map.cache:stop))
 
 (-> get-concept (string) service-response)
 (defun get-concept (uuid)

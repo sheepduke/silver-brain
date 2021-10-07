@@ -1,5 +1,10 @@
 (defpackage silver-brain.config
-  (:use #:cl))
+  (:use #:cl)
+  (:export #:profiles
+           #:active-profile
+           #:database-file
+           #:server-port
+           #:server-print-access-log-p))
 
 (in-package silver-brain.config)
 

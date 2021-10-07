@@ -1,0 +1,125 @@
+* Introduction
+
+Mitogrator is a [[https://github.com/fukamachi/mito][Mito]] based database migration library.
+
+Mito provides schema migration by itself. However, there is no way to transform data during migration. This library aims to provide a flexible way to perform migrations.
+
+* How does it work
+
+Install it via Ultralisp:
+
+#+BEGIN_SRC lisp
+  (ql:quickload "mitogrator")
+#+END_SRC
+
+Mitogrator works like below:
+
+1. A database connection must be established in advance by using ~mito:connect-toplevel~.
+2. A class named ~migration~ is used for defining a migration operation. It has a mandatory ~name~ and optional ~up~ and ~down~ members. ~name~ is used to identify a migration. ~up~ and ~down~ are 0-arg functions used to perform migration and rollback.
+3. Migrations that have been run is kept in table ~__migration_history~.
+4. You want to call ~run~ function that accepts a list of ~migration~ instances. The function finds all new migrations and call their ~up~ functions. If anything wrong happens, corresponding ~down~ function is called to rollback the migration.
+
+* Code example
+
+Suppose there is a ~student~ table that has ~id~, ~name~ and ~grade~. Now we want to move ~grade~ to another table ~student-grade~.
+
+The whole process can be described by migrations as below:
+
+#+BEGIN_SRC lisp
+  ;; 1.create-student-table.lisp
+  (in-package student-system.store.migration)
+  
+  (mito:deftable student-1 ()
+    ((id :col-type :string
+         :primary-key t)
+     (name :col-type :string)
+     (grade :col-type :number))
+    (:conc-name student-))
+  
+  (defparameter migration-1
+    (make-instance 'mitogrator:migration
+                   :name "1.create-student-table"
+                   :up (lambda () (mito:ensure-table-exists 'student))
+                   :down (lambda () (mito:execute-sql (sxql:drop-table :student)))))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+        ;; 2.create-new-student-and-grade-table.lisp
+        (in-package student-system.store.migration)
+        
+        (mito:deftable student-2 ()
+          ((id :col-type :string
+               :primary-key t)
+           (name :col-type :string)))
+        
+        (mito:deftable student-grade-2 ()
+          ((id :col-type :string
+               :primary-key t)
+           (grade :col-type :number)))
+        
+        (defparameter migration-2
+          (make-instance 'mitogrator:migration
+                         :name "2.create-new-student-and-grade-table"
+                         :up (lambda () (mito:ensure-table-exists 'student))
+))
+#+END_SRC
+
+Now we want to move ~grade~ to another table ~student-grade~. It can be done as below:
+
+#+BEGIN_SRC lisp
+  
+  
+  (defun up ()
+    ;; Populate new tables.
+    (let ((students (mito:select-dao 'student)))
+      (dolist (student students)
+        (mito:insert-dao (make-instance 'student
+                                        :id (student-id student)
+                                        :name (student-name student)))
+        (mito:insert-dao (make-instance 'student-grade
+                                        :id (student-id student)
+                                        :grade (student-grade student)))))
+  
+    ;; Clean up tables.
+    (mito:execute-sql (sxql:drop-table :student))
+    (mito:execute-sql (sxql:alter-table :student_new (sxql:rename-to :student))))
+  
+  (defun down ()
+    (mito:execute-sql (sxql:drop-table :student_new :if-exists t))
+    (mito:execute-sql (sxql:drop-table :student_grade :if-exists t)))
+  
+  (defparameter migration
+    (make-instance 'mitogrator:migration
+                        :name "1.separate-student-grade"
+                        :up #'up
+                        :down #'down))
+#+END_SRC
+
+#+BEGIN_SRC lisp
+  (in-package student-system.store.migration)
+  
+  (mitogrator:run
+   (list student-system.store.migration.1.separate-student-grade:migration))
+#+END_SRC
+  
+#+END_SRC
+
+* Some considerations
+
+Mitogrator does not have any restrictions of how you use it. It is by design a bit manual and explicit. Here are just some thoughts.
+
+** Idempotence
+
+Please note that the sample above is not idempotent. Although it is not really possible, but what happens if an error is signaled at the last clause of ~up~ function? Of course, ~down~ will be invoked. However, at this point the table ~student~ has been dropped, and ~down~ function drops ~student_new~, which means critical data loss.
+
+In order to avoid data loss, it is highly recommended to split one migration into multiple and keep each migration idempotent.
+
+** Code duplication
+
+Another point is code duplication. For example, the old ~student~ table and new ~student~ table share many common definitions. It is true.
+
+Unlike code, table schema is more static. I consider data migration as a process of transforming the data from one snapshot to another. Code duplication makes it more explicit, stateless and predictable.
+
+** Migration code organization
+
+As you may observed, the migration and the runner are put in different files and packages.

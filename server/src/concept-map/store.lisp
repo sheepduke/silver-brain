@@ -13,7 +13,7 @@
 
 (-> get-concept-by-uuid (string) (or null concept))
 (defun get-concept-by-uuid (uuid)
-  (match (mito:find-dao 'store:concept :uuid uuid)
+  (match (store:get 'store:concept uuid)
     (nil nil)
     ((and (store:concept) concept)
      (make-instance 'concept

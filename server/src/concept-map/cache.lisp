@@ -28,7 +28,7 @@
 
 (defun get-concept-name (uuid)
   (match (or (agt:agent-get *cache* (op (gethash uuid _)))
-             (mito:find-dao 'store:concept :uuid uuid))
+             (store:get 'store:concept uuid))
     ;; Directly return when in cache.
     ((and (type string) name)
      name)
