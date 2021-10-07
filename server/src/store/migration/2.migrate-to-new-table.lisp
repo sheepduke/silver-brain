@@ -67,28 +67,33 @@
         (with-accessors ((created-at object-created-at)
                          (updated-at object-updated-at))
             relation
-          (let* ((is-bidirectional-linked (is-bidirectional-linked source target))
-                 (uuid (if is-bidirectional-linked
+          (let* ((bidirectional-linked-p (bidirectional-linked-p source target))
+                 (uuid (if bidirectional-linked-p
                            relate-relation-uuid
                            parent-relation-uuid)))
-            (mito:insert-dao (make-instance 'concept-link
-                                            :uuid uuid
-                                            :source source
-                                            :target target
-                                            :created-at created-at
-                                            :updated-at updated-at))
-            (when is-bidirectional-linked
-              (mito:insert-dao (make-instance 'concept-link
-                                              :uuid uuid
-                                              :source target
-                                              :target source
-                                              :created-at created-at
-                                              :updated-at updated-at)))))))))
+            (insert-concept-link-if-not-exists uuid source target
+                                               created-at updated-at)
 
-(defun is-bidirectional-linked (source target)
+            (when bidirectional-linked-p
+              (insert-concept-link-if-not-exists uuid target source
+                                                 created-at updated-at))))))))
+
+(defun bidirectional-linked-p (source target)
   (mito:select-dao 'concept-relation
     (sxql:where (:and (:= :source target)
                       (:= :target source)))))
+
+(defun insert-concept-link-if-not-exists (uuid source target created-at updated-at)
+  (unless (mito:find-dao 'concept-link
+                         :uuid uuid
+                         :source source
+                         :target target)
+    (mito:insert-dao (make-instance 'concept-link
+                                    :uuid uuid
+                                    :source source
+                                    :target target
+                                    :created-at created-at
+                                    :updated-at updated-at))))
 
 (defparameter migration
   (make-instance 'mitogrator:migration
