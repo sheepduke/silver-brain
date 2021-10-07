@@ -60,7 +60,7 @@
   :serial t
   :components ((:module "tests"
                 :components
-                ((:file "suite")
+                ((:file "silver-brain")
                  (:module "concept-map"
                   :components ((:file "cache")))
                  (:module "store"

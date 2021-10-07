@@ -85,5 +85,3 @@
       (connection:stop)
       (uiop:delete-file-if-exists existing-database)
       (uiop:delete-file-if-exists non-existing-database))))
-
-(5am:run! 'silver-brain.store.connection)
