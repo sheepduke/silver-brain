@@ -1,7 +1,9 @@
 (defpackage silver-brain
   (:use #:cl)
   (:local-nicknames (#:config #:silver-brain.config))
-  (:export #:main))
+  (:export #:main
+           #:start
+           #:stop))
 
 (in-package silver-brain)
 

@@ -1,5 +1,4 @@
 (defpackage silver-brain.store.migration
-  (:nicknames store.migration)
   (:use #:cl)
   (:export
    #:run-migrations))
