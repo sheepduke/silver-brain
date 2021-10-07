@@ -40,7 +40,6 @@
                                  (:file "2.migrate-to-new-table")
                                  (:file "3.purge-legacy-table")
                                  (:file "migrate")))
-                   (:file "connection")
                    (:file "store")))
                  (:module "concept-map"
                   :components ((:file "model")
@@ -64,7 +63,8 @@
                  (:module "concept-map"
                   :components ((:file "cache")))
                  (:module "store"
-                  :components ((:file "connection"))))))
+                  :components ((:module "migration"
+                                :components ((:file "migrate"))))))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c)

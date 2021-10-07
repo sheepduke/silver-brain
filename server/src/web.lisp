@@ -83,11 +83,11 @@ request parameter."
                     "Database not found: ~a"
                     (store:database-name err)))))))
 
-(define-route *router* "/api/concepts/:uuid" :get (uuid) 
+(define-route *router* "/api/concepts/:uuid" :get (uuid)
   (concept-map:get-concept uuid))
 
 ;; (silver-brain::start)
 ;; (dex:get
 ;;  (format nil "http://localhost:5001/api/concepts/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3")
-;;  :headers '(("Database" . "/home/sheep/temp/c.sqlite"))
+;;  :headers '(("Database" . "/home/sheep/temp/a.sqlite"))
 ;;  )

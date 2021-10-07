@@ -1,7 +1,7 @@
 (defpackage silver-brain.store
   (:use #:cl)
   (:local-nicknames (#:config #:silver-brain.config)
-                    (#:connection #:silver-brain.store.connection))
+                    (#:migration #:silver-brain.store.migration))
   (:import-from #:mito
                 #:object-created-at
                 #:object-updated-at)
@@ -31,16 +31,6 @@
 (in-package silver-brain.store)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                          Start/Stop                          ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun start ()
-  (connection:start))
-
-(defun stop ()
-  (connection:stop))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                      Database Accessors                      ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -49,11 +39,13 @@
 
 (defmacro with-database ((database-name) &body body)
   (with-gensyms (g-database-name)
-    `(let* ((,g-database-name ,database-name)
-            (mito:*connection* (connection:get ,g-database-name)))
-       (if (null mito:*connection*)
-           (error 'database-not-found-error :database-name ,g-database-name))
-       ,@body)))
+    `(let* ((,g-database-name ,database-name))
+       (unless (uiop:file-exists-p ,g-database-name)
+         (error 'database-not-found-error :database-name ,g-database-name))
+       (dbi:with-connection (mito:*connection* :sqlite3
+                                               :database-name ,g-database-name)
+         (migration:run-migrations)
+         ,@body))))
 
 (defun get (class uuid)
   (mito:find-dao class :uuid uuid))

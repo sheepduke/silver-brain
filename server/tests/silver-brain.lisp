@@ -3,7 +3,8 @@
   (:import-from #:fiveam
                 #:def-suite*)
   (:export #:silver-brain
-           #:make-random-database-name))
+           #:make-random-database-name
+           #:with-database))
 
 (in-package silver-brain-tests)
 
