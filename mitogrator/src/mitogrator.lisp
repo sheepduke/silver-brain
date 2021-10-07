@@ -37,16 +37,17 @@
 (defmethod print-object ((obj migration-history) stream)
   (format stream "#<Migration \"~a\">" (slot-value obj 'name)))
 
-(-> run (list) t)
-(defun run (migrations)
-  (assert-mito-connected)
-  (mito:ensure-table-exists 'migration-history)
-  (let* ((latest-history (select-latest-migration-history))
-         (pending-migrations (get-pending-migrations migrations latest-history)))
-    (dolist (migration pending-migrations)
-      (dbi:with-transaction mito:*connection*
-        (funcall (up migration))
-        (insert-migration-history (name migration))))))
+(-> run (list &optional (or null dbi.driver:dbi-connection)) t)
+(defun run (migrations &optional (connection mito:*connection*))
+  (let ((mito:*connection* connection))
+    (assert-mito-connected)
+    (mito:ensure-table-exists 'migration-history)
+    (let* ((latest-history (select-latest-migration-history))
+           (pending-migrations (get-pending-migrations migrations latest-history)))
+      (dolist (migration pending-migrations)
+        (dbi:with-transaction mito:*connection*
+          (funcall (up migration))
+          (insert-migration-history (name migration)))))))
 
 (defun assert-mito-connected ()
   (unless (mito.connection:connected-p)
