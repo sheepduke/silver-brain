@@ -9,7 +9,7 @@
                #:log4cl
                ;; Web related.
                #:chameleon #:find-port #:cl-json
-               #:ningle #:clack #:flexi-streams #:mito)
+               #:ningle #:clack #:flexi-streams #:mito #:dbd-sqlite3)
   :components ((:module "src"
                 :serial t
                 :components
