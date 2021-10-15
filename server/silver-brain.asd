@@ -60,11 +60,12 @@
   :components ((:module "tests"
                 :components
                 ((:file "silver-brain")
-                 (:module "concept-map"
-                  :components ((:file "cache")))
                  (:module "store"
                   :components ((:module "migration"
-                                :components ((:file "migrate"))))))))
+                                :components ((:file "migrate")))))
+                 (:module "concept-map"
+                  :components ((:file "cache")
+                               (:file "store"))))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c)

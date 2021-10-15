@@ -9,6 +9,7 @@
 
 (defun start ()
   (setf (config:active-profile) :dev)
+  (migrate-all-databases)
   (silver-brain.concept-map:start)
   (silver-brain.web:start)
   nil)
@@ -18,3 +19,6 @@
   (silver-brain.web:stop)
   nil)
 
+(defun migrate-all-databases ()
+  ;; TODO
+  )

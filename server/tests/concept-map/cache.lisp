@@ -3,6 +3,7 @@
   (:local-nicknames (#:cache #:silver-brain.concept-map.cache)
                     (#:store #:silver-brain.store))
   (:import-from #:fiveam
+                #:test
                 #:is
                 #:def-test
                 #:def-suite*)
@@ -14,10 +15,10 @@
 
 (def-suite* silver-brain.concept-map.cache :in silver-brain-tests:silver-brain)
 
-(def-test get-concept-name ()
+(test get-concept-name
   (let ((concept-name "Alpha"))
     (with-mocks ()
-      (answer (mito:find-dao 'store:concept :uuid "1")
+      (answer (store:get 'store:concept "1")
         (make-instance 'store:concept :uuid "1" :name concept-name))
       (cache:start)
       (is (string= concept-name (cache:get-concept-name "1"))
@@ -26,8 +27,8 @@
           "Second hit should return cached value")
       (is (equal nil (cache:get-concept-name "2"))
           "Non-existing hit should return NIL")
-      (is  (equal '((mito:find-dao store:concept :uuid "1")
-                   (mito:find-dao store:concept :uuid "2"))
-                  (cl-mock:invocations 'mito:find-dao))
-          "Database should be invoked exactly twice with uuid (1, 2)")
+      (is (equal '((store:get store:concept "1")
+                   (store:get store:concept "2"))
+                 (cl-mock:invocations 'store:get))
+          "Database should be accessed exactly twice with uuid (1, 2)")
       (cache:stop))))

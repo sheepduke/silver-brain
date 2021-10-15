@@ -15,7 +15,8 @@
            #:concept-summary
            #:concept-link
            #:source
-           #:target))
+           #:target
+           #:concept-summary-list))
 
 (in-package silver-brain.concept-map.model)
 
@@ -34,6 +35,12 @@
 (defclass concept-summary ()
   ((uuid :type string :accessor uuid :initarg :uuid)
    (name :type string :accessor name :initarg :name)))
+
+(defun every-concept-summary-p (list)
+  (every (op (typep _ 'concept-summary)) list))
+
+(deftype concept-summary-list ()
+  `(and list (satisfies every-concept-summary-p)))
 
 (defclass concept-link ()
   ((source :type concept-summary :accessor source :initarg :source)

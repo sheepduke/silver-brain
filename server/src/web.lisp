@@ -68,7 +68,7 @@ request parameter."
     (if (null database-name)
         (progn (set-response-code 400)
                "Database header not specified")
-        (handler-case (match (store:with-database (database-name)
+        (handler-case (match (let ((store:*database* database-name))
                                (funcall fun))
                         ((list :error :not-found)
                          (set-response-code 404))
@@ -83,11 +83,24 @@ request parameter."
                     "Database not found: ~a"
                     (store:database-name err)))))))
 
+(defun get-query-param (key)
+  (assoc-value (lack.request:request-query-parameters ningle:*request*)
+               key
+               :test #'string-equal))
+
 (define-route *router* "/api/concepts/:uuid" :get (uuid)
   (concept-map:get-concept uuid))
+
+(define-route *router* "/api/concepts" :get ()
+  (match (get-query-param "search")
+    (nil '(:error :bad-request :empty-search))
+    ((and (type string) search) (concept-map:search-concept search))))
+
+;; (dex:get "http://localhost:5001/api/concepts?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
 
 ;; (silver-brain::start)
 ;; (dex:get
 ;;  (format nil "http://localhost:5001/api/concepts/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3")
 ;;  :headers '(("Database" . "/home/sheep/temp/a.sqlite"))
 ;;  )
+;; (ql:quickload :dexador)

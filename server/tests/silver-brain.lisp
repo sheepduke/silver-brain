@@ -1,10 +1,14 @@
 (defpackage silver-brain-tests
   (:use #:cl)
+  (:local-nicknames (#:store #:silver-brain.store))
   (:import-from #:fiveam
                 #:def-suite*)
+  (:import-from #:alexandria
+                #:with-gensyms)
   (:export #:silver-brain
            #:make-random-database-name
-           #:with-database))
+           #:with-database
+           #:with-random-database-file))
 
 (in-package silver-brain-tests)
 
@@ -16,6 +20,10 @@
           (uiop:temporary-directory)
           (uuid:make-v4-uuid)))
 
-(defmacro with-database ((database-name) &body body)
-  `(dbi:with-connection (mito:*connection* :sqlite3 :database-name ,database-name)
-     ,@body))
+(defmacro with-random-database-file (&body body)
+  (with-gensyms (g-database-name)
+    `(let* ((,g-database-name (make-random-database-name))
+            (store:*database* ,g-database-name))
+       (store:with-database (,g-database-name :auto-create t))
+       ,@body
+       (uiop:delete-file-if-exists ,g-database-name))))

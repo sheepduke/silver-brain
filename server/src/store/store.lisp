@@ -6,13 +6,13 @@
                 #:object-created-at
                 #:object-updated-at)
   (:import-from #:serapeum
+                #:op
                 #:->)
   (:import-from #:alexandria
                 #:with-gensyms)
   (:shadow #:get)
   (:export #:start
            #:stop
-           #:get
            ;; Dao
            #:concept
            #:uuid
@@ -27,37 +27,64 @@
            #:with-database
            #:database-not-found-error
            #:database-name
-           #:with-memory-database))
+           ;; Accessor
+           #:with-memory-database
+           #:get
+           #:select
+           #:with-current-database
+           #:*database*))
 
 (in-package silver-brain.store)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                            Basic                             ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun every-dao-class-p (list)
+  (every (op (typep _ 'mito:dao-class)) list))
+
+(deftype dao-class-list ()
+  `(and list (satisfies every-dao-p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                      Database Accessors                      ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defvar *database* nil)
+
 (define-condition database-not-found-error (error)
   ((database-name :type string :accessor database-name :initarg :database-name)))
 
-(defmacro with-database ((database-name) &body body)
+(defmacro with-database ((database-name &key (auto-create nil)
+                                          (auto-migrate nil))
+                         &body body)
   (with-gensyms (g-database-name)
-    `(let* ((,g-database-name ,database-name))
-       (unless (uiop:file-exists-p ,g-database-name)
-         (error 'database-not-found-error :database-name ,g-database-name))
+    `(let* ((,g-database-name ,database-name)
+            (*database* ,g-database-name))
+       (or ,auto-create
+           (string= ":memory:" ,g-database-name)
+           (uiop:file-exists-p ,g-database-name)
+           (error 'database-not-found-error :database-name ,g-database-name))
        (dbi:with-connection (mito:*connection* :sqlite3
                                                :database-name ,g-database-name)
-         (migration:run-migrations)
+         (and ,auto-migrate
+              (migration:run-migrations))
          ,@body))))
 
-(defmacro with-memory-database (&body body)
-  `(dbi:with-connection (mito:*connection* :sqlite3 :database-name ":memory:")
+(defmacro with-current-database (&body body)
+  `(with-database (*database*)
      ,@body))
 
+(defmacro with-memory-database (&body body)
+  `(with-database (":memory:")
+     ,@body))
+
+(-> get (symbol string) mito:dao-class)
 (defun get (class uuid)
   (mito:find-dao class :uuid uuid))
 
-(-> select (symbol &optional sxql.clause:where-clause) standard-object)
-(defun select (class &optional where)
-  (mito:select-dao class where))
+(defmacro select (class &body clauses)
+  `(mito:select-dao ,class ,@clauses))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             DAO                              ;;;;

@@ -10,7 +10,8 @@
                 #:defsubst)
   (:export #:start
            #:stop
-           #:get-concept))
+           #:get-concept
+           #:search-concept))
 
 (in-package silver-brain.concept-map)
 
@@ -28,6 +29,17 @@
         (make-ok-response concept)
         (make-not-found-response))))
 
-;; (get-concept "1234")
-;; (dex:get
-;;  (format nil "http://localhost:5001/api/concepts/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3"))
+(defun search-concept (search)
+  (make-ok-response 
+   (store:search-concept-by-string search)))
+
+;; (silver-brain:start)
+
+;; (dex:get (format nil "http://localhost:5001/api/concepts/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '( ("database" . "/home/sheep/temp/a.sqlite")))
+
+;; (ql:quickload :dexador)
+
+;; TODO Re-design auto migration
+;; Add a keyword argument to with-database.
+;; Run migration when startup.
+;; Create database: auto-create & auto-migrate
