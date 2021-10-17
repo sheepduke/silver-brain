@@ -10,9 +10,14 @@
                 #:->)
   (:local-nicknames (#:cache #:silver-brain.concept-map.cache))
   (:export #:get-concept-by-uuid
-           #:search-concept-by-string))
+           #:search-concept-by-string
+           #:create-database))
 
 (in-package silver-brain.concept-map.store)
+
+(-> create-databsae (string) t)
+(defun create-database (database-name)
+  (store:with-database (database-name :auto-create t :auto-migrate t)))
 
 (-> get-concept-by-uuid (string) (or null concept))
 (defun get-concept-by-uuid (uuid)

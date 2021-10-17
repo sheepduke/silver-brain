@@ -55,7 +55,9 @@
   :license "MIT"
   :depends-on (#:silver-brain
                #:fiveam
-               #:cl-mock)
+               #:cl-mock
+               #:dexador
+               #:find-port)
   :serial t
   :components ((:module "tests"
                 :components
@@ -65,7 +67,8 @@
                                 :components ((:file "migrate")))))
                  (:module "concept-map"
                   :components ((:file "cache")
-                               (:file "store"))))))
+                               (:file "store")))
+                 (:file "integration"))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c)

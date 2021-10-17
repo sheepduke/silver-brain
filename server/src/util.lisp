@@ -17,9 +17,6 @@
 ;;;;                         JSON Methods                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod jsown:to-json ((obj string))
-  obj)
-
 (defmethod jsown:to-json ((obj standard-object))
   (let ((slot-names (~>> (class-of obj)
                          (c2mop:class-direct-slots)

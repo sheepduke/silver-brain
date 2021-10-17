@@ -18,11 +18,15 @@
 
 (defvar *server* nil)
 
+(define-condition bad-request (error) ())
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Server                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun start ()
+  (and *server*
+       (print "Server is not nil"))
   (unless *server*
     (setf *server*
           (clack:clackup (lack.builder:builder
@@ -34,12 +38,14 @@
                          :use-thread t))))
 
 (defun stop ()
+  (or *server*
+      (print "Server is already nil"))
   (when *server*
     (clack:stop *server*)
     (setf *server* nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                            Router                            ;;;;
+;;;;                           Utility                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun set-response-code (code)
@@ -62,41 +68,71 @@ request parameter."
                     var-list)
                (handle-request (lambda () ,@body)))))))
 
+(defmacro with-database-header (&body body)
+  (with-gensyms (g-database-name)
+    `(let ((,g-database-name (gethash "database"
+                                      (lack.request:request-headers
+                                       ningle:*request*))))
+      (if (null ,g-database-name)
+          (progn (set-response-code 400)
+                 "Database header not specified")
+          (let ((store:*database* ,g-database-name))
+            ,@body)))))
+
 (defun handle-request (fun)
-  (let ((database-name (gethash "database"
-                                (lack.request:request-headers ningle:*request*))))
-    (if (null database-name)
-        (progn (set-response-code 400)
-               "Database header not specified")
-        (handler-case (match (let ((store:*database* database-name))
-                               (funcall fun))
-                        ((list :error :not-found)
-                         (set-response-code 404))
-                        ((list :error :bad-request reason)
-                         (set-response-code 400)
-                         (format nil "~a" reason))
-                        ((list :ok) "")
-                        ((list :ok obj) (jsown:to-json obj)))
-          (store:database-not-found-error (err)
-            (set-response-code 410)
-            (format nil
-                    "Database not found: ~a"
-                    (store:database-name err)))))))
+  (handler-case (match (funcall fun)
+                  ((list :error :not-found)
+                   (set-response-code 404))
+                  ((list :error :bad-request reason)
+                   (set-response-code 400)
+                   (format nil "~a" reason))
+                  ((list :ok) "")
+                  ((list :ok obj)
+                   (if (stringp obj)
+                       obj
+                       (jsown:to-json obj))))
+    (store:database-not-found-error (err)
+      (set-response-code 410)
+      (format nil
+              "Database not found: ~a"
+              (store:database-name err)))
+    (bad-request ()
+      (set-response-code 400)
+      "")))
 
 (defun get-query-param (key)
   (assoc-value (lack.request:request-query-parameters ningle:*request*)
                key
                :test #'string-equal))
 
-(define-route *router* "/api/concepts/:uuid" :get (uuid)
-  (concept-map:get-concept uuid))
+(defun get-json-params ()
+  (let ((line (read-line (lack.request:request-raw-body ningle:*request*))))
+    (handler-case (jsown:parse line)
+      (error () (error 'bad-request)))))
 
-(define-route *router* "/api/concepts" :get ()
-  (match (get-query-param "search")
-    (nil '(:error :bad-request :empty-search))
-    ((and (type string) search) (concept-map:search-concept search))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                            Router                            ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (dex:get "http://localhost:5001/api/concepts?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
+(define-route *router* "/api/" :get ()
+  '(:ok ""))
+
+(define-route *router* "/api/database" :post ()
+  (let* ((json (get-json-params))
+         (name (jsown:val-safe json "name")))
+    (concept-map:create-database name)))
+
+(define-route *router* "/api/concept/:uuid" :get (uuid)
+  (with-database-header
+    (concept-map:get-concept uuid)))
+
+(define-route *router* "/api/concept" :get ()
+  (with-database-header
+    (match (get-query-param "search")
+      (nil '(:error :bad-request :empty-search))
+      ((and (type string) search) (concept-map:search-concept search)))))
+
+;; (print (dex:get "http://localhost:5001/api/concepts?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite"))))
 
 ;; (silver-brain::start)
 ;; (dex:get

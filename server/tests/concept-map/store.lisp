@@ -39,6 +39,13 @@
     (mito:ensure-table-exists 'store:concept)
     (mapcar (op (mito:insert-dao _)) *concepts*)))
 
+(test create-database
+  (let ((database-name (make-random-database-name)))
+    (concept-map.store:create-database database-name)
+    (store:with-database (database-name)
+      (is (= 2 (length (mito:select-dao 'store:concept)))))
+    (uiop:delete-file-if-exists database-name)))
+
 (test get-concept-by-uuid
   (let ((time1 (local-time:now)))
     (with-random-database-file

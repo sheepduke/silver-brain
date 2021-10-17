@@ -19,3 +19,5 @@
   (server-port 5001)
   (server-print-access-log-p t)
   (database-file (truename "~/temp/a.sqlite")))
+
+(chameleon:defprofile :test)
