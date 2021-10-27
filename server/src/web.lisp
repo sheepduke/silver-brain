@@ -111,21 +111,23 @@
     ((list :ok obj)
      (jsown:to-json obj))))
 
-(defun send-not-found-response (condition)
-  (declare (ignore condition))
-  '(404 ""))
+(defgeneric send-client-error-response (err))
 
-(defun send-bad-request-response (bad-request-error)
-  (list 400 (reason bad-request-error)))
+(defmethod send-client-error-response ((err client-error))
+  (list 400 nil (reason err)))
+
+(defmethod send-client-error-response ((err store:database-not-found-error))
+  (list 400 nil
+        (flex:string-to-octets (format nil "Database not found: ~a" (store:database-name err)))))
 
 (defmacro with-request-handler ((&key (require-database nil))
                                 &body body)
-  `(handler-bind ((bad-request-error #'send-bad-request-response)
-                  (store:database-not-found-error #'send-bad-request-response))
-     (let ((store:*database* ,(if require-database
-                                  `(get-database-name)
-                                  nil)))
-       (parse-service-response (progn ,@body)))))
+  `(handler-case (let ((store:*database* ,(if require-database
+                                              `(get-database-name)
+                                              nil)))
+                   (parse-service-response (progn ,@body)))
+     (bad-request-error (err) (send-client-error-response err))
+     (store:database-not-found-error (err) (send-client-error-response err))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -162,4 +164,4 @@
 
 ;; (format t "~a" (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite"))))
 
-;; (format t "~a" (dex:get "http://localhost:5001/api/concept/5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "/home/sheep/temp/a.sqlite"))))
+;; (dex:get "http://localhost:5001/api/concept/5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))

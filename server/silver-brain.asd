@@ -11,6 +11,7 @@
                #:chameleon
                #:uuid
                #:jsown
+               #:flexi-streams
                #:cl-gserver
                #:mitogrator
                #:mito
