@@ -63,7 +63,7 @@
   (setup)
 
   ;; Database.
-  (is (post "database" (jsown:new-js ("name" *database-name*))))
+  (is (str:emptyp (post "database" (jsown:new-js ("name" *database-name*)))))
 
   ;; Concept.
   (signals dex:http-request-bad-request

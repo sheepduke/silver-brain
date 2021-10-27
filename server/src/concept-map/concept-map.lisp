@@ -25,7 +25,7 @@
 (-> create-database (string) service-response)
 (defun create-database (name)
   (store:create-database name)
-  (make-ok-response ""))
+  (make-ok-response))
 
 (-> get-concept (string) service-response)
 (defun get-concept (uuid)
@@ -41,4 +41,4 @@
 
 ;; (silver-brain:start)
 
-;; (dex:get (format nil "http://localhost:5001/api/concepts/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '( ("database" . "/home/sheep/temp/a.sqlite")))
+;; (dex:get (format nil "http://localhost:5001/api/concept/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '( ("database" . "/home/sheep/temp/a.sqlite")))

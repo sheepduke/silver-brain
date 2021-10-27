@@ -17,20 +17,29 @@
 ;;;;                         JSON Methods                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod jsown:to-json ((obj standard-object))
+(defgeneric object-to-json (obj))
+
+(defmethod object-to-json ((obj standard-object))
   (let ((slot-names (~>> (class-of obj)
                          (c2mop:class-direct-slots)
                          (remove-if-not #'c2mop:slot-definition-readers)
                          (mapcar #'c2mop:slot-definition-name)))
         (js (jsown:new-js)))
     (dolist (slot-name slot-names)
-      (setf js
-            (jsown:extend-js js
-              ((str:replace-all "-" "_" (str:downcase slot-name))
-               (jsown:to-json (slot-value obj slot-name))))))
-    (jsown:to-json* js)))
+      (when (slot-boundp obj slot-name)
+        (let ((value (slot-value obj slot-name)))
+          (setf js
+                (jsown:extend-js js
+                  ((str:replace-all "-" "_" (str:downcase slot-name))
+                   (if (typep value 'standard-object)
+                       (object-to-json value)
+                       value)))))))
+    js))
 
-(defmethod jsown:to-json ((obj local-time:timestamp))
+(defmethod jsown:to-json ((obj standard-object))
+  (jsown:to-json* (object-to-json obj)))
+
+(defmethod object-to-json ((obj local-time:timestamp))
   (local-time:to-rfc3339-timestring obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,8 +49,10 @@
 (deftype service-response ()
   'list)
 
-(defsubst make-ok-response (thing)
-  (list :ok thing))
+(defsubst make-ok-response (&optional (thing nil thing-p))
+  (if thing-p
+      (list :ok thing)
+      '(:ok)))
 
 (defsubst make-bad-request-response (&optional (reason nil))
   (list :error :bad-request reason))
