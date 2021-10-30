@@ -1,5 +1,6 @@
 (defpackage silver-brain.concept-map.model
-  (:use #:cl)
+  (:use #:cl
+        #:silver-brain.util)
   (:import-from #:trivia
                 #:match)
   (:import-from #:serapeum
@@ -32,9 +33,15 @@
                :accessor updated-at
                :initarg :updated-at)))
 
+(defmethod jsown:to-json ((obj concept))
+  (to-json-object obj))
+
 (defclass concept-summary ()
   ((uuid :type string :accessor uuid :initarg :uuid)
    (name :type string :accessor name :initarg :name)))
+
+(defmethod jsown:to-json ((obj concept-summary))
+  (to-json-object obj))
 
 (defun every-concept-summary-p (list)
   (every (op (typep _ 'concept-summary)) list))
@@ -45,3 +52,6 @@
 (defclass concept-link ()
   ((source :type concept-summary :accessor source :initarg :source)
    (target :type concept-summary :accessor target :initarg :target)))
+
+(defmethod jsown:to-json ((obj concept-link))
+  (to-json-object obj))

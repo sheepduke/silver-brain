@@ -41,4 +41,6 @@
 
 ;; (silver-brain:start)
 
-;; (dex:get (format nil "http://localhost:5001/api/concept/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '( ("database" . "/home/sheep/temp/a.sqlite")))
+;; (dex:get (format nil "http://localhost:5001/api/concept/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '(("database" . "a.sqlite")))
+
+;; (dex:get (format nil "http://localhost:5001/api/concept/8FB1298A-D5B0-4B7E-9099-B6E2A77C84A5") :headers '(("database" . "a.sqlite")))

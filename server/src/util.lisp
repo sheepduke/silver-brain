@@ -4,12 +4,12 @@
                 #:->
                 #:~>>
                 #:defsubst)
-  (:export
-   #:is-uuid
-   #:service-response
-   #:make-bad-request-response
-   #:make-not-found-response
-   #:make-ok-response))
+  (:export #:to-json-object
+           #:is-uuid
+           #:service-response
+           #:make-bad-request-response
+           #:make-not-found-response
+           #:make-ok-response))
 
 (in-package silver-brain.util)
 
@@ -17,9 +17,9 @@
 ;;;;                         JSON Methods                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defgeneric object-to-json (obj))
+(defgeneric to-json-object (obj))
 
-(defmethod object-to-json ((obj standard-object))
+(defmethod to-json-object ((obj standard-object))
   (let ((slot-names (~>> (class-of obj)
                          (c2mop:class-direct-slots)
                          (remove-if-not #'c2mop:slot-definition-readers)
@@ -30,16 +30,13 @@
         (let ((value (slot-value obj slot-name)))
           (setf js
                 (jsown:extend-js js
-                  ((str:replace-all "-" "_" (str:downcase slot-name))
+                  ((str:downcase slot-name)
                    (if (typep value 'standard-object)
-                       (object-to-json value)
+                       (to-json-object value)
                        value)))))))
-    js))
+    (jsown:to-json js)))
 
-(defmethod jsown:to-json ((obj standard-object))
-  (jsown:to-json* (object-to-json obj)))
-
-(defmethod object-to-json ((obj local-time:timestamp))
+(defmethod to-json-object ((obj local-time:timestamp))
   (local-time:to-rfc3339-timestring obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

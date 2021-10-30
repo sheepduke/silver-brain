@@ -2,9 +2,9 @@
   (:use #:cl)
   (:export #:profiles
            #:active-profile
-           #:database-file
            #:server-port
-           #:server-print-access-log-p))
+           #:server-print-access-log-p
+           #:data-dir))
 
 (in-package silver-brain.config)
 
@@ -13,11 +13,11 @@
   (server-port 5000 "Server port.")
   (server-print-access-log-p nil)
   ;; Database file.
-  (database-file))
+  (data-dir))
 
 (chameleon:defprofile :dev
   (server-port 5001)
   (server-print-access-log-p t)
-  (database-file (truename "~/temp/a.sqlite")))
+  (data-dir (truename "~/temp")))
 
 (chameleon:defprofile :test)

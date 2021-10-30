@@ -55,11 +55,16 @@
 (define-condition database-not-found-error (error)
   ((database-name :type string :accessor database-name :initarg :database-name)))
 
+(defun get-database-path (database-name)
+  (merge-pathnames database-name (config:data-dir)))
+
 (defmacro with-database ((database-name &key (auto-create nil)
                                           (auto-migrate nil))
                          &body body)
   (with-gensyms (g-database-name)
-    `(let* ((,g-database-name ,database-name)
+    `(let* ((,g-database-name (format nil "~a~a"
+                                      (config:data-dir)
+                                      ,database-name))
             (*database* ,g-database-name))
        (or ,auto-create
            (string= ":memory:" ,g-database-name)
