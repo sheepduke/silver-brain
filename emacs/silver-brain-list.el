@@ -1,50 +1,69 @@
-;;; Package --- silver-brain-list
+;;; silver-brain-list.el -*- lexical-binding: t -*-
 
-;;; Commentary:
-;;;
-;;; List concepts.
+(require 'widget)
+(require 'wid-edit)
+(require 'silver-brain-common)
+(require 'silver-brain-api)
 
-;;; Code:
+(defvar silver-brain-list-buffer-name "*silver-brain-list*")
 
-(require 'silver-brain-util)
+(defvar-local silver-brain-list--search-string nil)
 
-(defvar silver-brain-list-buffer-name "*Silver Brain - List*"
-  "Name of buffer used to list concepts.")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                             Mode                             ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar-local silver-brain-list--query ""
-  "Query string of current search.")
+(defvar silver-brain-list-mode-map
+  (let ((map (make-composed-keymap (list (make-sparse-keymap)
+                                         widget-keymap))))
+    (set-keymap-parent map silver-brain-common-keymap)
+    (define-key map (kbd "g") 'silver-brain-list-refresh)
+    map))
 
-(define-derived-mode silver-brain-list-mode special-mode "Brain-Concepts"
-  "Major mode for listing result of concepts."
-  )
+(define-derived-mode silver-brain-list-mode fundamental-mode "SB-List"
+  "Major mode for Silver Brain list.")
 
-(define-key silver-brain-list-mode-map (kbd "<return>") 'silver-brain-follow-link)
-(define-key silver-brain-list-mode-map (kbd "<tab>") 'silver-brain-jump-to-next-link)
-(define-key silver-brain-list-mode-map (kbd "<backtab>") 'silver-brain-jump-to-previous-link)
-(define-key silver-brain-list-mode-map (kbd "s") 'silver-brain-list)
-(define-key silver-brain-list-mode-map (kbd "g") 'silver-brain-list-refresh)
-(define-key silver-brain-list-mode-map (kbd "p") 'previous-line)
-(define-key silver-brain-list-mode-map (kbd "n") 'next-line)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                           Function                           ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun silver-brain-list ()
-  "List concepts by searching."
+(defun silver-brain-list-show (search-string)
+  (with-current-buffer (silver-brain-api-send-request
+                        (format "concept?search=%s" search-string))
+    (silver-brain-list--prepare-buffer (silver-brain-api-read-json)))
+  (with-current-buffer (get-buffer silver-brain-list-buffer-name)
+    (setq silver-brain-list--search-string search-string)
+    (put 'silver-brain-list--search-string 'permanent-local t)
+    (pop-to-buffer-same-window (current-buffer))))
+
+(defun silver-brain-list-refresh ()
   (interactive)
-  (let* ((query (read-string "Search: "))
-         (concepts (silver-brain-api--search-concept query)))
-    (silver-brain-list--setup-buffer concepts)))
+  (silver-brain-list-show silver-brain-list--search-string))
 
-(defun silver-brain-list--setup-buffer (concepts)
-  "Setup buffer for search result CONCEPTS."
-  (when (get-buffer silver-brain-list-buffer-name)
-    (kill-buffer silver-brain-list-buffer-name))
-  (switch-to-buffer silver-brain-list-buffer-name)
-  (dolist (concept concepts)
-    (silver-brain--insert-link concept)
-    (insert "\n"))
-  (when (not concepts)
-    (insert "No concept defined.\n"))
-  (silver-brain-list-mode)
-  (goto-char (point-min)))
+(defun silver-brain-list--prepare-buffer (concept-list)
+  (silver-brain--with-widget-buffer
+   silver-brain-list-buffer-name
+   (silver-brain-list-mode)
+   (if (null concept-list)
+       (silver-brain-list--insert-not-found)
+     (silver-brain-list--insert-links concept-list))))
+
+(defun silver-brain-list--insert-not-found ()
+  (widget-insert "No concept found."))
+
+(defun silver-brain-list--insert-links (concept-list)
+  (widget-insert (format "%d concepts found.\n"
+                         (length concept-list)))
+  (mapc (lambda (concept)
+          (widget-create 'link
+                         :notify (lambda (&rest _)
+                                   (silver-brain-concept-show
+                                    (alist-get :uuid concept)))
+                         (alist-get :name concept))
+          (widget-insert "\n"))
+        (sort concept-list
+              (lambda (s1 s2)
+                (string< (alist-get :name s2)
+                         (alist-get :name s1))))))
 
 (provide 'silver-brain-list)
-;;; silver-brain-list.el ends here
