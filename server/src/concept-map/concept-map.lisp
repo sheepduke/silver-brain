@@ -8,11 +8,14 @@
   (:import-from #:serapeum
                 #:->
                 #:defsubst)
+  (:import-from #:trivia
+                #:match)
   (:export #:start
            #:stop
            #:get-concept
            #:search-concept
-           #:create-database))
+           #:create-database
+           #:patch-concept))
 
 (in-package silver-brain.concept-map)
 
@@ -35,9 +38,19 @@
         (make-ok-response concept)
         (make-not-found-response))))
 
+(-> search-concept (string) service-response)
 (defun search-concept (search)
   (make-ok-response 
    (store:search-concept-by-string search)))
+
+(defun patch-concept (uuid &key name content-type content)
+  (match (get-concept uuid)
+    ((list :ok concept)
+     (and name (setf (name concept) name))
+     (and content-type (setf (content-type concept) content-type))
+     (and content (setf (content concept) content))
+     (store:save-concept concept))
+    (else else)))
 
 ;; (silver-brain:start)
 

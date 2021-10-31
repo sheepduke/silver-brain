@@ -11,7 +11,8 @@
   (:local-nicknames (#:cache #:silver-brain.concept-map.cache))
   (:export #:get-concept-by-uuid
            #:search-concept-by-string
-           #:create-database))
+           #:create-database
+           #:save-concept))
 
 (in-package silver-brain.concept-map.store)
 
@@ -43,3 +44,28 @@
                      (make-instance 'concept-summary
                                     :uuid (store:uuid concept)
                                     :name (store:name concept))))))))
+
+(-> insert-concept (concept) t)
+(defun insert-concept (concept)
+  (store:with-current-database
+    (store:save (make-instance 'store:concept
+                               :uuid (uuid concept)
+                               :name (name concept)
+                               :content-type (content-type concept)
+                               :content (content concept)))))
+
+(-> save-concept (concept) t)
+(defun save-concept (concept)
+  (store:with-current-database
+    (if (uuid concept)
+        (let ((dao (store:get 'store:concept (uuid concept))))
+          (log:debug "Updating existing concept ~a" (uuid concept))
+          (setf (store:name dao) (name concept))
+          (setf (store:content-type dao) (content-type concept))
+          (setf (store:content dao) (content concept))
+          (store:save dao))
+        (store:save (make-instance 'store:concept
+                                   :uuid (uuid concept)
+                                   :name (name concept)
+                                   :content-type (content-type concept)
+                                   :content (content concept))))))

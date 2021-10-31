@@ -32,7 +32,8 @@
            #:get
            #:select
            #:with-current-database
-           #:*database*))
+           #:*database*
+           #:save))
 
 (in-package silver-brain.store)
 
@@ -88,6 +89,11 @@
 (defun get (class uuid)
   (mito:find-dao class :uuid uuid))
 
+(-> save (standard-object) t)
+(defun save (obj)
+  (log:debug "HERE!!")
+  (mito:save-dao obj))
+
 (defmacro select (class &body clauses)
   `(mito:select-dao ,class ,@clauses))
 
@@ -97,21 +103,21 @@
 
 (mito:deftable concept ()
   ((uuid :col-type :text
-         :reader uuid
+         :accessor uuid
          :primary-key t)
    (name :col-type :text
-         :reader name)
+         :accessor name)
    (content-type :col-type :text :initform ""
-                 :reader content-type)
+                 :accessor content-type)
    (content :col-type :text :initform ""
-            :reader content))
+            :accessor content))
   (:keys name))
 
 (mito:deftable concept-link ()
   ((uuid :col-type :text
-         :reader uuid)
+         :accessor uuid)
    (source :col-type :text
-           :reader source)
+           :accessor source)
    (target :col-type :text
-           :reader target))
+           :accessor target))
   (:keys uuid source target))

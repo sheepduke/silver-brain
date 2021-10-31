@@ -91,9 +91,11 @@
                :reason "Database name not found in HTTP header"))))
 
 (defun get-request-body-as-json ()
-  (let ((line (read-line (lack.request:request-raw-body ningle:*request*))))
-    (handler-case (jsown:parse line)
-      (error () (error 'bad-request)))))
+  (handler-case (let ((line (read-line (lack.request:request-raw-body
+                                        ningle:*request*))))
+                  (log:debug "JSON string: ~a" line)
+                  (jsown:parse line))
+    (error () (error 'bad-request-error))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                      Request & Response                      ;;;;
@@ -161,6 +163,17 @@
   (with-path-vars (uuid) params
     (concept-map:get-concept uuid)))
 
+(define-route "/api/concept/:uuid" params
+    (:method :patch :require-database t)
+  (with-path-vars (uuid) params
+    (let ((json (get-request-body-as-json)))
+      (log:debug "Input JSON: ~a" json)
+      (concept-map:patch-concept
+       uuid
+       :name (jsown:val-safe json "name")
+       :content-type (jsown:val-safe json "content-type")
+       :content (jsown:val-safe json "content")))))
+
 (define-route "/api/concept" params (:require-database t)
   (let ((search-string (get-query-param "search")))
     (log:debug "Search string: ~a" search-string)
@@ -168,4 +181,7 @@
 
 ;; (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
 
-;; (dex:get "http://localhost:5001/api/concept/5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
+;; (progn (setf (silver-brain.config:active-profile) :dev)
+;;        (silver-brain:start))
+
+;; (dex:get "http://localhost:5001/api/concept/5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
