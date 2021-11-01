@@ -103,12 +103,11 @@
 
 (defun parse-service-response (response)
   (match response
-    ((list* (type number) _)
-     response)
+    ((type string) response)
     ((list :error :not-found)
-     (list 404 ""))
+     (list 404 nil nil))
     ((list :error :bad-request reason)
-     (list 400 (format nil "~a" reason)))
+     (list 400 nil (flex:string-to-octets (format nil "~a" reason))))
     ((list :ok) "")
     ((list :ok obj)
      (jsown:to-json obj))))
@@ -134,7 +133,6 @@
                    (parse-service-response (progn ,@body)))
      (bad-request-error (err) (send-client-error-response err))
      (store:database-not-found-error (err) (send-client-error-response err))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Router                            ;;;;
@@ -163,12 +161,21 @@
   (with-path-vars (uuid) params
     (concept-map:get-concept uuid)))
 
+(define-route "/api/concept" params (:method :post :require-database t)
+  (let ((json (get-request-body-as-json)))
+    (log:debug "Input JSON: ~a" json)
+    (let ((uuid (concept-map:create-concept
+                 :name (jsown:val-safe json "name")
+                 :content-type (jsown:val-safe json "content-type")
+                 :content (jsown:val-safe json "content"))))
+      uuid)))
+
 (define-route "/api/concept/:uuid" params
     (:method :patch :require-database t)
   (with-path-vars (uuid) params
     (let ((json (get-request-body-as-json)))
       (log:debug "Input JSON: ~a" json)
-      (concept-map:patch-concept
+      (concept-map:update-concept
        uuid
        :name (jsown:val-safe json "name")
        :content-type (jsown:val-safe json "content-type")
@@ -184,4 +191,4 @@
 ;; (progn (setf (silver-brain.config:active-profile) :dev)
 ;;        (silver-brain:start))
 
-;; (dex:get "http://localhost:5001/api/concept/5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
+;; (dex:get "http://localhost:5001/api/concept/x5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))

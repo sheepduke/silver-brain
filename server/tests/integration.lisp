@@ -33,9 +33,16 @@
   (dex:get (make-url uri)
            :headers `(("Database" . ,*database-name*))))
 
-(defun post (uri &optional data)
+(defun patch (uri data)
+  (dex:patch (make-url uri)
+             :content (jsown:to-json data)))
+
+(defun post (uri data &key (with-database t))
   (dex:post (make-url uri)
-            :content (if data (jsown:to-json data) nil)))
+            :content (if data (jsown:to-json data) nil)
+            :headers (if with-database
+                         `(("Database" . ,*database-name*))
+                         nil)))
 
 (defun setup ()
   (setf (silver-brain.config:active-profile) :test)
@@ -53,24 +60,34 @@
         until can-stop-p
         finally (return (<= i 100))))
 
-(defun teardown ()
-  (silver-brain:stop)
-  (delete-database-file *database-name*)
-  (wait-for-server t))
+(defmacro with-teardown (&body body)
+  `(unwind-protect (progn ,@body)
+     (silver-brain:stop)
+     (delete-database-file *database-name*)
+     (wait-for-server t)))
 
 (test integration
   ;; Setup.
   (setup)
 
-  ;; Database.
-  (is (str:emptyp (post "database" (jsown:new-js ("name" *database-name*)))))
+  (with-teardown
+    ;; Database.
+    (is (str:emptyp (post "database" (jsown:new-js ("name" *database-name*))))) 
 
-  ;; Concept.
-  (signals dex:http-request-bad-request
-    (get "concept/invalid-uuid"))
+    ;; Create concept.
+    (let ((uuid (post "concept" (jsown:new-js ("name" "Concept Name")))))
+      (is (not (str:emptyp uuid)))
 
-  (signals dex:http-request-not-found
-    (get (format nil "concept/~a" (uuid:make-v4-uuid))))
+      (let ((json (jsown:parse (get (format nil "concept/~a" uuid)))))
+        (is (string= "Concept Name" (jsown:val json "name")))))
 
-  ;; Tear down.
-  (teardown))
+    ;; Get concept.
+    (signals dex:http-request-bad-request
+      (get "concept/invalid-uuid"))
+
+    (signals dex:http-request-not-found
+      (get (format nil "concept/~a" (uuid:make-v4-uuid))))))
+
+;; (setf (silver-brain.config:active-profile) :dev)
+;; (silver-brain:start)
+;; (silver-brain:stop)

@@ -12,7 +12,8 @@
   (:export #:get-concept-by-uuid
            #:search-concept-by-string
            #:create-database
-           #:save-concept))
+           #:update-concept
+           #:create-concept))
 
 (in-package silver-brain.concept-map.store)
 
@@ -45,16 +46,27 @@
                                     :uuid (store:uuid concept)
                                     :name (store:name concept))))))))
 
-(-> save-concept (concept) t)
-(defun save-concept (concept)
+(-> create-concept (&key (:name string)
+                         (:content string)
+                         (:content-type string)) string)
+(defun create-concept (&key name content content-type)
+  (let ((uuid (format nil "~a" (uuid:make-v4-uuid))))
+    (store:with-current-database
+      (store:save (make-instance 'store:concept
+                                 :uuid uuid
+                                 :name (or name "")
+                                 :content (or content "")
+                                 :content-type (or content-type "")))
+      uuid)))
+
+(-> update-concept (string &key (:name string)
+                         (:content string)
+                         (:content-type string)) t)
+(defun update-concept (uuid &key name content content-type)
   "Update existing concept or insert a new one. The caller must guarantee that "
   (store:with-current-database
-    (let ((dao (or (and (uuid concept)
-                        (store:get 'store:concept (uuid concept)))
-                   (make-instance 'store:concept
-                                  :uuid (or (uuid concept)
-                                            (uuid:make-v4-uuid))))))
-      (setf (store:name dao) (name concept))
-      (setf (store:content-type dao) (content-type concept))
-      (setf (store:content dao) (content concept))
+    (let ((dao (store:get 'store:concept uuid)))
+      (and name (setf (store:name dao) name))
+      (and content (setf (store:content dao) content))
+      (and content-type (setf (store:content-type dao) content-type)) 
       (store:save dao))))

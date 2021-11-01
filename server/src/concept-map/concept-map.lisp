@@ -15,7 +15,8 @@
            #:get-concept
            #:search-concept
            #:create-database
-           #:patch-concept))
+           #:create-concept
+           #:update-concept))
 
 (in-package silver-brain.concept-map)
 
@@ -43,13 +44,22 @@
   (make-ok-response 
    (store:search-concept-by-string search)))
 
-(defun patch-concept (uuid &key name content-type content)
+(-> create-concept (&key (:name string)
+                         (:content-type string)
+                         (:content string))
+  string)
+(defun create-concept (&key name content-type content)
+  (store:create-concept :name name
+                        :content-type content-type
+                        :content content))
+
+(defun update-concept (uuid &key name content-type content)
   (match (get-concept uuid)
-    ((list :ok concept)
-     (and name (setf (name concept) name))
-     (and content-type (setf (content-type concept) content-type))
-     (and content (setf (content concept) content))
-     (store:save-concept concept))
+    ((list :ok _)
+     (store:update-concept uuid
+                           :name name
+                           :content-type content-type
+                           :content content))
     (else else)))
 
 ;; (silver-brain:start)

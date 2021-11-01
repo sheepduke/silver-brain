@@ -5,6 +5,7 @@
   (:local-nicknames (#:store #:silver-brain.store)
                     (#:concept-map.store #:silver-brain.concept-map.store))
   (:import-from #:fiveam
+                #:signals
                 #:is
                 #:test
                 #:def-suite*)
@@ -77,21 +78,25 @@
                             (string= "Microsoft" (name _1))))
                    concepts)))))
 
-(test save-concept
+(test create-concept
   (with-random-database-file
     (setup)
-    (concept-map.store:save-concept (make-instance 'concept
-                                                   :uuid "1"
-                                                   :name "New 1"))
-    (concept-map.store:save-concept (make-instance 'concept
-                                                   :uuid "5"
-                                                   :name "New 2"))
-    (concept-map.store:save-concept (make-instance 'concept
-                                                   :name "New 3"))
+    (let ((uuid (concept-map.store:create-concept
+                 :name "New"
+                 :content "Content"
+                 :content-type "text/plain")))
+      (store:with-current-database
+        (is (= 5 (mito:count-dao 'store:concept)))
+        (is (mito:find-dao 'store:concept :uuid uuid))))))
+
+(test update-concept
+  (with-random-database-file
+    (setup)
+    (concept-map.store:update-concept "1"
+                                      :name "New")
     (store:with-current-database
-      (is (= 6 (mito:count-dao 'store:concept)))
-      (is (string= "New 1"
-                   (store:name (mito:find-dao 'store:concept :uuid "1"))))
-      (is (string= "New 2"
-                   (store:name (mito:find-dao 'store:concept :uuid "5"))))
-      (is (mito:select-dao 'store:concept (sxql:where (:= :name "New 3")))))))
+      (is (= 4 (mito:count-dao 'store:concept)))
+      (is (string= "New"
+                   (store:name (mito:find-dao 'store:concept :uuid "1")))))
+    (signals error (concept-map.store:update-concept "5"
+                                                     :name "New2"))))

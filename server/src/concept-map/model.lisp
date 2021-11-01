@@ -24,8 +24,7 @@
 (defclass concept ()
   ((uuid :type string
          :accessor uuid
-         :initarg :uuid
-         :initform nil)
+         :initarg :uuid)
    (name :type string
          :accessor name
          :initarg :name
