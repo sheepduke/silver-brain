@@ -91,7 +91,6 @@
 
 (-> save (standard-object) t)
 (defun save (obj)
-  (log:debug "HERE!!")
   (mito:save-dao obj))
 
 (defmacro select (class &body clauses)

@@ -16,8 +16,7 @@
 
 (defun make-random-database-name ()
   (format nil
-          "~asilver-brain-test-~a.sqlite"
-          (uiop:temporary-directory)
+          "silver-brain-test-~a.sqlite"
           (uuid:make-v4-uuid)))
 
 (defmacro with-random-database-file (&body body)
@@ -26,4 +25,6 @@
             (store:*database* ,g-database-name))
        (store:with-database (,g-database-name :auto-create t))
        ,@body
-       (uiop:delete-file-if-exists ,g-database-name))))
+       (uiop:delete-file-if-exists
+        (merge-pathnames ,g-database-name
+                         (silver-brain.config:data-dir))))))

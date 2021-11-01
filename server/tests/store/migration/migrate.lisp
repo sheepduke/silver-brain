@@ -20,6 +20,7 @@
        (string= target (store:target link))))
 
 (test run-migrations-empty-database
+  (setf (silver-brain.config:active-profile) :test)
   (with-random-database-file
     (store:with-current-database
       (migration:run-migrations))
@@ -44,6 +45,7 @@
   (:table-name "concept_relation"))
 
 (test run-migrations-v1-database
+  (setf (silver-brain.config:active-profile) :test)
   (let ((concept-daos '(("0" . "Root")
                         ("11" . "Level 1-1")
                         ("12" . "Level 1-2")

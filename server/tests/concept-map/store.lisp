@@ -35,16 +35,19 @@
                        :name "Relates")))
 
 (defun setup ()
+  (setf (silver-brain.config:active-profile) :test)
   (store:with-current-database
     (mito:ensure-table-exists 'store:concept)
     (mapcar (op (mito:insert-dao _)) *concepts*)))
 
 (test create-database
+  (setf (silver-brain.config:active-profile) :test)
   (let ((database-name (make-random-database-name)))
     (concept-map.store:create-database database-name)
     (store:with-database (database-name)
       (is (= 2 (length (mito:select-dao 'store:concept)))))
-    (uiop:delete-file-if-exists database-name)))
+    (uiop:delete-file-if-exists (merge-pathnames database-name
+                                                 (silver-brain.config:data-dir)))))
 
 (test get-concept-by-uuid
   (let ((time1 (local-time:now)))

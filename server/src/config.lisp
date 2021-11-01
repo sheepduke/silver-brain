@@ -20,4 +20,5 @@
   (server-print-access-log-p t)
   (data-dir (truename "~/temp")))
 
-(chameleon:defprofile :test)
+(chameleon:defprofile :test
+  (data-dir (uiop:temporary-directory)))
