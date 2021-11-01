@@ -8,7 +8,8 @@
   (:export #:silver-brain
            #:make-random-database-name
            #:with-database
-           #:with-random-database-file))
+           #:with-random-database-file
+           #:delete-database-file))
 
 (in-package silver-brain-tests)
 
@@ -24,7 +25,10 @@
     `(let* ((,g-database-name (make-random-database-name))
             (store:*database* ,g-database-name))
        (store:with-database (,g-database-name :auto-create t))
-       ,@body
-       (uiop:delete-file-if-exists
-        (merge-pathnames ,g-database-name
-                         (silver-brain.config:data-dir))))))
+       (unwind-protect (progn ,@body)
+         (delete-database-file ,g-database-name)))))
+
+(defun delete-database-file (database-name)
+  (uiop:delete-file-if-exists
+   (merge-pathnames database-name
+                    (silver-brain.config:data-dir))))

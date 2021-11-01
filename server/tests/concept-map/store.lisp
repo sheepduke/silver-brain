@@ -46,8 +46,7 @@
     (concept-map.store:create-database database-name)
     (store:with-database (database-name)
       (is (= 2 (length (mito:select-dao 'store:concept)))))
-    (uiop:delete-file-if-exists (merge-pathnames database-name
-                                                 (silver-brain.config:data-dir)))))
+    (delete-database-file database-name)))
 
 (test get-concept-by-uuid
   (let ((time1 (local-time:now)))
@@ -77,3 +76,22 @@
       (is (find-if (op (and (string= "3" (uuid _1))
                             (string= "Microsoft" (name _1))))
                    concepts)))))
+
+(test save-concept
+  (with-random-database-file
+    (setup)
+    (concept-map.store:save-concept (make-instance 'concept
+                                                   :uuid "1"
+                                                   :name "New 1"))
+    (concept-map.store:save-concept (make-instance 'concept
+                                                   :uuid "5"
+                                                   :name "New 2"))
+    (concept-map.store:save-concept (make-instance 'concept
+                                                   :name "New 3"))
+    (store:with-current-database
+      (is (= 6 (mito:count-dao 'store:concept)))
+      (is (string= "New 1"
+                   (store:name (mito:find-dao 'store:concept :uuid "1"))))
+      (is (string= "New 2"
+                   (store:name (mito:find-dao 'store:concept :uuid "5"))))
+      (is (mito:select-dao 'store:concept (sxql:where (:= :name "New 3")))))))

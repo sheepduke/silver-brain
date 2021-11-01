@@ -55,8 +55,7 @@
 
 (defun teardown ()
   (silver-brain:stop)
-  (uiop:delete-file-if-exists (merge-pathnames *database-name*
-                                               (silver-brain.config:data-dir)))
+  (delete-database-file *database-name*)
   (wait-for-server t))
 
 (test integration

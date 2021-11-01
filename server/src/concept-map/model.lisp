@@ -22,10 +22,22 @@
 (in-package silver-brain.concept-map.model)
 
 (defclass concept ()
-  ((uuid :type string :accessor uuid :initarg :uuid)
-   (name :type string :accessor name :initarg :name)
-   (content-type :type string :accessor content-type :initarg :content-type)
-   (content :type string :accessor content :initarg :content)
+  ((uuid :type string
+         :accessor uuid
+         :initarg :uuid
+         :initform nil)
+   (name :type string
+         :accessor name
+         :initarg :name
+         :initform "")
+   (content-type :type string
+                 :accessor content-type
+                 :initarg :content-type
+                 :initform "")
+   (content :type string
+            :accessor content
+            :initarg :content
+            :initform "")
    (created-at :type local-time:timestamp
                :accessor created-at
                :initarg :created-at)

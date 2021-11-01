@@ -45,27 +45,16 @@
                                     :uuid (store:uuid concept)
                                     :name (store:name concept))))))))
 
-(-> insert-concept (concept) t)
-(defun insert-concept (concept)
-  (store:with-current-database
-    (store:save (make-instance 'store:concept
-                               :uuid (uuid concept)
-                               :name (name concept)
-                               :content-type (content-type concept)
-                               :content (content concept)))))
-
 (-> save-concept (concept) t)
 (defun save-concept (concept)
+  "Update existing concept or insert a new one. The caller must guarantee that "
   (store:with-current-database
-    (if (uuid concept)
-        (let ((dao (store:get 'store:concept (uuid concept))))
-          (log:debug "Updating existing concept ~a" (uuid concept))
-          (setf (store:name dao) (name concept))
-          (setf (store:content-type dao) (content-type concept))
-          (setf (store:content dao) (content concept))
-          (store:save dao))
-        (store:save (make-instance 'store:concept
-                                   :uuid (uuid concept)
-                                   :name (name concept)
-                                   :content-type (content-type concept)
-                                   :content (content concept))))))
+    (let ((dao (or (and (uuid concept)
+                        (store:get 'store:concept (uuid concept)))
+                   (make-instance 'store:concept
+                                  :uuid (or (uuid concept)
+                                            (uuid:make-v4-uuid))))))
+      (setf (store:name dao) (name concept))
+      (setf (store:content-type dao) (content-type concept))
+      (setf (store:content dao) (content concept))
+      (store:save dao))))
