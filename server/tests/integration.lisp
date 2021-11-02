@@ -35,7 +35,8 @@
 
 (defun patch (uri data)
   (dex:patch (make-url uri)
-             :content (jsown:to-json data)))
+             :content (jsown:to-json data)
+             :headers `(("Database" . ,*database-name*))))
 
 (defun post (uri data &key (with-database t))
   (dex:post (make-url uri)
@@ -71,22 +72,30 @@
   (setup)
 
   (with-teardown
-    ;; Database.
-    (is (str:emptyp (post "database" (jsown:new-js ("name" *database-name*))))) 
+    (let (uuid-new)
 
-    ;; Create concept.
-    (let ((uuid (post "concept" (jsown:new-js ("name" "Concept Name")))))
-      (is (not (str:emptyp uuid)))
+      ;; Database.
+      (is (str:emptyp (post "database" (jsown:new-js ("name" *database-name*)))))
 
-      (let ((json (jsown:parse (get (format nil "concept/~a" uuid)))))
-        (is (string= "Concept Name" (jsown:val json "name")))))
+      ;; Get concept.
+      (signals dex:http-request-bad-request
+        (get "concept/invalid-uuid"))
 
-    ;; Get concept.
-    (signals dex:http-request-bad-request
-      (get "concept/invalid-uuid"))
+      (signals dex:http-request-not-found
+        (get (format nil "concept/~a" (uuid:make-v4-uuid))))
 
-    (signals dex:http-request-not-found
-      (get (format nil "concept/~a" (uuid:make-v4-uuid))))))
+      ;; Create concept.
+      (setf uuid-new (post "concept" (jsown:new-js ("name" "Concept Name"))))
+      (is (not (str:emptyp uuid-new)))
+
+      (let ((json (jsown:parse (get (format nil "concept/~a" uuid-new)))))
+        (is (string= "Concept Name" (jsown:val json "name"))))
+
+      ;; Update concept.
+      (patch (format nil "concept/~a" uuid-new)
+             (jsown:new-js ("name" "New Name")))
+      (let ((json (jsown:parse (get (format nil "concept/~a" uuid-new)))))
+        (is (string= "New Name" (jsown:val json "name")))))))
 
 ;; (setf (silver-brain.config:active-profile) :dev)
 ;; (silver-brain:start)
