@@ -35,12 +35,13 @@
                       :updated-at (store:object-updated-at concept)))
       (_ nil))))
 
-(-> search-concept-by-string (string) concept-summary-list)
-(defun search-concept-by-string (search)
+(-> search-concept-by-string (list) concept-summary-list)
+(defun search-concept-by-string (searches)
   (store:with-current-database
-    (let ((search-string (format nil "%~a%" search)))
+    (let ((conditions (mapcar (op (list :like :name (format nil "%~a%" _)))
+                              searches)))
       (~>> (store:select 'store:concept
-             (sxql:where (:like :name search-string)))
+             (sxql:where (append '(:or) conditions)))
            (mapcar (lambda (concept)
                      (make-instance 'concept-summary
                                     :uuid (store:uuid concept)

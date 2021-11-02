@@ -6,6 +6,7 @@
   (:import-from #:alexandria
                 #:if-let)
   (:import-from #:serapeum
+                #:~>>
                 #:->
                 #:defsubst)
   (:import-from #:trivia
@@ -42,7 +43,8 @@
 (-> search-concept (string) service-response)
 (defun search-concept (search)
   (make-ok-response 
-   (store:search-concept-by-string search)))
+   (store:search-concept-by-string (~>> (str:split " " search)
+                                        (remove-if #'str:emptyp)))))
 
 (-> create-concept (&key (:name string)
                          (:content-type string)
