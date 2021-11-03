@@ -181,6 +181,11 @@
        :content-type (jsown:val-safe json "content-type")
        :content (jsown:val-safe json "content")))))
 
+(define-route "/api/concept/:uuid" params
+    (:method :delete :require-database t)
+  (with-path-vars (uuid) params
+    (concept-map:delete-concept uuid)))
+
 (define-route "/api/concept" params (:require-database t)
   (let ((search-string (get-query-param "search")))
     (log:debug "Search string: ~a" search-string)

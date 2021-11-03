@@ -16,7 +16,8 @@
 (defcustom silver-brain-content-mode-alist
   '(("text/org" . org-mode)
     ("text/markdown" . markdown-mode)
-    ("text/md" . markdown-mode))
+    ("text/md" . markdown-mode)
+    ("" . fundamental-mode))
   "The alist of mapping between concept's content type and major mode used to open it."
   :type 'alist
   :group 'silver-brain)

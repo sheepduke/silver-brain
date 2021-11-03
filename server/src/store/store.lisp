@@ -10,7 +10,8 @@
                 #:->)
   (:import-from #:alexandria
                 #:with-gensyms)
-  (:shadow #:get)
+  (:shadow #:get
+           #:count)
   (:export #:start
            #:stop
            ;; Dao
@@ -25,6 +26,7 @@
            #:source
            #:target
            #:with-database
+           #:with-transaction
            #:database-not-found-error
            #:database-name
            ;; Accessor
@@ -33,7 +35,9 @@
            #:select
            #:with-current-database
            #:*database*
-           #:save))
+           #:save
+           #:count
+           #:delete-by))
 
 (in-package silver-brain.store)
 
@@ -77,6 +81,10 @@
               (migration:run-migrations))
          ,@body))))
 
+(defmacro with-transaction (&body body)
+  `(dbi:with-transaction mito:*connection*
+     ,@body))
+
 (defmacro with-current-database (&body body)
   `(with-database (*database*)
      ,@body))
@@ -95,6 +103,15 @@
 
 (defmacro select (class &body clauses)
   `(mito:select-dao ,class ,@clauses))
+
+(-> count (symbol &rest t) number)
+(defun count (class &rest fields-and-values)
+  (apply #'mito:count-dao class fields-and-values))
+
+(-> delete-by (symbol &rest t) t)
+(defun delete-by (class &rest fields-and-values)
+  "Delete by values"
+  (apply #'mito:delete-by-values class fields-and-values))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             DAO                              ;;;;

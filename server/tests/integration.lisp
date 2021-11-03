@@ -10,7 +10,8 @@
                 #:test)
   (:import-from #:trivia
                 #:match)
-  (:shadow #:get))
+  (:shadow #:get
+           #:delete))
 
 (in-package silver-brain-tests.integration)
 
@@ -44,6 +45,9 @@
             :headers (if with-database
                          `(("Database" . ,*database-name*))
                          nil)))
+(defun delete (uri)
+  (dex:delete (make-url uri)
+              :headers `(("Database" . ,*database-name*))))
 
 (defun setup ()
   (setf (silver-brain.config:active-profile) :test)
@@ -95,7 +99,15 @@
       (patch (format nil "concept/~a" uuid-new)
              (jsown:new-js ("name" "New Name")))
       (let ((json (jsown:parse (get (format nil "concept/~a" uuid-new)))))
-        (is (string= "New Name" (jsown:val json "name")))))))
+        (is (string= "New Name" (jsown:val json "name"))))
+
+      ;; Delete concept.
+      (let* ((uuid (post "concept"
+                         (jsown:new-js ("name" "Wrong one"))))
+             (json (jsown:parse (get (format nil "concept/~a" uuid)))))
+        (is (string= "Wrong one" (jsown:val json "name")))
+        (delete (format nil "concept/~a" uuid))
+        (signals dex:http-request-not-found (get (format nil "concept/~a" uuid)))))))
 
 ;; (setf (silver-brain.config:active-profile) :dev)
 ;; (silver-brain:start)

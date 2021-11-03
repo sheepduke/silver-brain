@@ -35,39 +35,25 @@
 
 (defun silver-brain-hello--prepare-buffer ()
   "Prepare the silver-brain-hello buffer."
-  (let ((buffer (get-buffer-create silver-brain-hello-buffer-name)))
-    (with-current-buffer buffer
-      (let ((inhibit-read-only t))
-        ;; Reset buffer by removing all the widgets and content.
-        (mapc 'widget-delete widget-field-list)
-        (erase-buffer)
-        (silver-brain-hello-mode)
+  (silver-brain--with-widget-buffer
+   silver-brain-hello-buffer-name
+   (silver-brain-hello-mode)
+   (silver-brain-hello--insert-widgets))
 
-        ;; Setup widgets.
-        (silver-brain-hello--insert-banner)
-        (silver-brain-hello--insert-search)
-        (silver-brain-hello--insert-footer)
-        (widget-setup))
-      
-      ;; Move cursor to the beginning of buffer.
-      (goto-char (point-min)))))
+  (with-current-buffer (get-buffer silver-brain-hello-buffer-name)
+    (widget-forward 1)))
 
-(defun silver-brain-hello--insert-banner ()
-  "Insert banner."
+(defun silver-brain-hello--insert-widgets ()
   (widget-insert "Hello!
-I am Silver, your personal external brain.\n\n"))
+I am Silver, your personal external brain.\n\n")
 
-(defun silver-brain-hello--insert-search ()
-  "Insert search line."
   (widget-insert "Search: ")
   (widget-create 'editable-field
-                 :size (silver-brain--get-textfield-length)
+                 :size (silver-brain--get-textfield-length 8)
                  :action (lambda (widget &rest _event)
                            (silver-brain-list-show (widget-value widget))))
-  (widget-insert "\n"))
-
-(defun silver-brain-hello--insert-footer ()
-  "Insert footer."
+  
+  (widget-insert "\n")
   (widget-insert "\nInput keywords separated by space to search."))
 
 (provide 'silver-brain-hello)

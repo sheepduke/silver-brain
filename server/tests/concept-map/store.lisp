@@ -39,7 +39,12 @@
   (setf (silver-brain.config:active-profile) :test)
   (store:with-current-database
     (mito:ensure-table-exists 'store:concept)
-    (mapcar (op (mito:insert-dao _)) *concepts*)))
+    (mito:ensure-table-exists 'store:concept-link)
+    (mapcar (op (mito:insert-dao _)) *concepts*)
+    (mito:insert-dao (make-instance 'store:concept-link
+                                    :source "1"
+                                    :uuid "4"
+                                    :target "2"))))
 
 (test create-database
   (setf (silver-brain.config:active-profile) :test)
@@ -111,3 +116,24 @@
                    (store:name (mito:find-dao 'store:concept :uuid "1")))))
     (signals error (concept-map.store:update-concept "5"
                                                      :name "New2"))))
+
+(test used-as-link-p
+  (with-random-database-file
+    (setup)
+    (is (concept-map.store:used-as-link-p "4"))
+    (is (not (concept-map.store:used-as-link-p "1")))))
+
+(test delete-concept
+  (with-random-database-file
+    (setup)
+    (concept-map.store:delete-concept "1")
+    (store:with-current-database
+      (is (= 3 (mito:count-dao 'store:concept)))
+      (is (= 0 (mito:count-dao 'store:concept-link)))))
+
+  (with-random-database-file
+    (setup)
+    (concept-map.store:delete-concept "4")
+    (store:with-current-database
+      (is (= 3 (mito:count-dao 'store:concept)))
+      (is (= 0 (mito:count-dao 'store:concept-link))))))

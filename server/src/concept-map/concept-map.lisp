@@ -17,7 +17,8 @@
            #:search-concept
            #:create-database
            #:create-concept
-           #:update-concept))
+           #:update-concept
+           #:delete-concept))
 
 (in-package silver-brain.concept-map)
 
@@ -35,7 +36,7 @@
 (-> get-concept (string) service-response)
 (defun get-concept (uuid)
   (if (not (is-uuid uuid))
-      (make-bad-request-response :invalid-uuid)
+      (make-bad-request-response "Invalid UUID")
       (if-let (concept (store:get-concept-by-uuid uuid))
         (make-ok-response concept)
         (make-not-found-response))))
@@ -63,6 +64,13 @@
                            :content-type content-type
                            :content content))
     (else else)))
+
+(-> delete-concept (string) service-response)
+(defun delete-concept (uuid)
+  (if (store:used-as-link-p uuid)
+      '(:error :conflict "Concept used as link")
+      (progn (store:delete-concept uuid)
+             '(:ok))))
 
 ;; (silver-brain:start)
 

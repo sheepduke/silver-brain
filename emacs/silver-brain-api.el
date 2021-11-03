@@ -15,11 +15,18 @@
         (url-request-method (cl-case method
                               (:get "GET")
                               (:post "POST")
-                              (:patch "PATCH")))
+                              (:patch "PATCH")
+                              (:delete "DELETE")))
         (url-request-data data))
     (url-retrieve-synchronously (format "http://localhost:%d/api/%s"
                                         silver-brain-server-port
                                         uri))))
+
+(defun silver-brain-api-body-string ()
+  (save-excursion
+    (goto-char (point-min))
+    (search-forward "\n\n")
+    (buffer-substring (point) (point-max))))
 
 (cl-defun silver-brain-api-read-json (&key (object-type 'alist)
                             (key-type 'keyword))

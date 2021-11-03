@@ -12,7 +12,13 @@
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'quit-window)
+    (define-key map [remap self-insert-command] 'silver-brain-no-edit)
     map))
+
+(defun silver-brain-no-edit ()
+  "Invoke button at POS, or refuse to allow editing of Custom buffer."
+  (interactive)
+  (error "Undefined key binding"))
 
 (cl-defmacro silver-brain--with-widget-buffer (buffer-name &body body)
   `(with-current-buffer (get-buffer-create ,buffer-name)

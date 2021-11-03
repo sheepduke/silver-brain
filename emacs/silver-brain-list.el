@@ -46,16 +46,16 @@
    (silver-brain-list-mode)
    (if (null concept-list)
        (silver-brain-list--insert-not-found)
-     (silver-brain-list--insert-links concept-list))))
+     (silver-brain-list--insert-buttons concept-list))))
 
 (defun silver-brain-list--insert-not-found ()
   (widget-insert "No concept found."))
 
-(defun silver-brain-list--insert-links (concept-list)
+(defun silver-brain-list--insert-buttons (concept-list)
   (widget-insert (format "%d concepts found.\n"
                          (length concept-list)))
   (mapc (lambda (concept)
-          (widget-create 'link
+          (widget-create 'push-button
                          :notify (lambda (&rest _)
                                    (silver-brain-concept-show
                                     (alist-get :uuid concept)))

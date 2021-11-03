@@ -13,7 +13,9 @@
            #:search-concept-by-string
            #:create-database
            #:update-concept
-           #:create-concept))
+           #:create-concept
+           #:used-as-link-p
+           #:delete-concept))
 
 (in-package silver-brain.concept-map.store)
 
@@ -71,3 +73,19 @@
       (and content (setf (store:content dao) content))
       (and content-type (setf (store:content-type dao) content-type)) 
       (store:save dao))))
+
+(-> used-as-link-p (string) boolean)
+(defun used-as-link-p (uuid)
+  "Return T is given UUID is used as link concept."
+  (store:with-current-database
+    (> (store:count 'store:concept-link :uuid uuid) 0)))
+
+(-> delete-concept (string) t)
+(defun delete-concept (uuid)
+  "Delete concept by UUID and all the related concepts."
+  (store:with-current-database
+    (store:with-transaction
+        (store:delete-by 'store:concept :uuid uuid)
+      (store:delete-by 'store:concept-link :source uuid)
+      (store:delete-by 'store:concept-link :uuid uuid)
+      (store:delete-by 'store:concept-link :target uuid))))

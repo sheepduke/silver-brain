@@ -71,9 +71,29 @@
   (widget-insert "\n")
   (widget-insert "Update Time: ")
   (widget-insert (silver-brain--display-time (alist-get :updated-at concept)))
-  (widget-insert "\n")
+  (widget-insert "\n\n")
+
+  ;; Insert buttons.
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (silver-brain-concept-show (silver-brain-concept-create)))
+                 "Create")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (silver-brain-concept-delete)
+                           (quit-window))
+                 "Delete")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (kill-buffer))
+                 "Back")
+
+  ;; Insert content.
+  (widget-insert "\n\n")
   (widget-insert (make-string (window-width) ?-))
-  (widget-insert "\n")
+  (widget-insert "\n\n")
   (widget-insert (alist-get :content concept)))
 
 (defun silver-brain-concept--rename (new-name)
@@ -93,6 +113,20 @@
    :data (json-encode `((:content-type . ,content-type))))
   (alist-set :content-type silver-brain-current-concept content-type)
   (set-buffer-modified-p nil))
+
+(defun silver-brain-concept-create ()
+  (let ((name (read-string "Concept name: ")))
+    (with-current-buffer (silver-brain-api-send-request
+                          "concept"
+                          :method :post
+                          :data (json-encode `((:name . ,name))))
+      (silver-brain-api-body-string))))
+
+(defun silver-brain-concept-delete ()
+  (let ((concept silver-brain-current-concept))
+    (with-current-buffer (silver-brain-api-send-request
+                          (concat "concept/" (alist-get :uuid concept))
+                          :method :delete))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                        Content Buffer                        ;;;;
@@ -115,6 +149,7 @@
       (put 'silver-brain-current-concept 'permanent-local t)
       
       ;; Set local keys.
+      (silver-brain-concept-setup-local-key)
       (add-hook 'after-change-major-mode-hook
                 'silver-brain-concept-setup-local-key)
 
