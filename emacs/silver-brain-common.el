@@ -6,8 +6,11 @@
 (require 'cl-lib)
 (require 'silver-brain-vars)
 
-(defvar silver-brain-concept-list '()
-  "List of concepts to display.")
+(defvar silver-brain-after-concept-create-hook '())
+
+(defvar silver-brain-after-concept-update-hook '())
+
+(defvar silver-brain-after-concept-delete-hook '())
 
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))

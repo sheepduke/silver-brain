@@ -32,25 +32,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun silver-brain-concept-show (uuid)
-  (with-current-buffer (silver-brain-api-send-request
-                        (format "concept/%s" uuid))
-    (let ((concept (silver-brain-api-read-json)))
-      (silver-brain-concept--prepare-buffer concept)
-      (pop-to-buffer-same-window (get-buffer (silver-brain-concept--get-buffer-name concept))))))
+  (let ((buffer (silver-brain-concept--prepare-buffer uuid)))
+    (pop-to-buffer-same-window buffer)))
 
 (defun silver-brain-concept--refresh ()
   (interactive)
-  (silver-brain-concept-show (alist-get :uuid silver-brain-current-concept)))
+  (with-current-buffer (silver-brain-concept--get-buffer-name silver-brain-current-concept)
+    (silver-brain-concept--prepare-buffer (alist-get :uuid silver-brain-current-concept))))
 
 (defun silver-brain-concept--get-buffer-name (concept)
   (format silver-brain-concept-buffer-name-format (alist-get :name concept)))
 
-(defun silver-brain-concept--prepare-buffer (concept)
-  (silver-brain--with-widget-buffer
-   (silver-brain-concept--get-buffer-name concept)
-   (silver-brain-concept-mode)
-   (silver-brain-concept--insert-widgets concept)
-   (setq silver-brain-current-concept concept)))
+(defun silver-brain-concept--prepare-buffer (uuid)
+  (with-current-buffer (silver-brain-api-send-request (concat "concept/" uuid))
+    (let ((concept (silver-brain-api-read-json)))
+      (silver-brain--with-widget-buffer
+       (silver-brain-concept--get-buffer-name concept)
+       (silver-brain-concept-mode)
+       (silver-brain-concept--insert-widgets concept)
+       (setq silver-brain-current-concept concept))
+      (get-buffer (silver-brain-concept--get-buffer-name concept)))))
 
 (defun silver-brain-concept--insert-widgets (concept)
   (widget-insert "Name: ")
@@ -104,7 +105,7 @@
      :data (json-encode `((:name . ,new-name))))
     (alist-set :name silver-brain-current-concept new-name)
     (rename-buffer (silver-brain-concept--get-buffer-name concept))
-    (set-buffer-modified-p nil)))
+    (run-hooks 'silver-brain-after-concept-update-hook)))
 
 (defun silver-brain-concept--update-content-type (content-type)
   (silver-brain-api-send-request
@@ -112,7 +113,7 @@
    :method :patch
    :data (json-encode `((:content-type . ,content-type))))
   (alist-set :content-type silver-brain-current-concept content-type)
-  (set-buffer-modified-p nil))
+  (run-hooks 'silver-brain-after-concept-update-hook))
 
 (defun silver-brain-concept-create ()
   (let ((name (read-string "Concept name: ")))
@@ -150,8 +151,6 @@
       
       ;; Set local keys.
       (silver-brain-concept-setup-local-key)
-      (add-hook 'after-change-major-mode-hook
-                'silver-brain-concept-setup-local-key)
 
       (set-buffer-modified-p nil)
       (pop-to-buffer-same-window (current-buffer)))))
@@ -168,8 +167,13 @@
                           (concat "concept/" (alist-get :uuid concept))
                           :method :patch
                           :data (json-encode `((:content . ,new-content)))))
-    (setf (cdr (assoc :content silver-brain-current-concept)) new-content))
+    (setf (cdr (assoc :content silver-brain-current-concept)) new-content)
+    (run-hooks 'silver-brain-after-concept-update-hook))
 
   (set-buffer-modified-p nil))
+
+(add-hook 'silver-brain-after-concept-update-hook 'silver-brain-concept--refresh)
+
+(add-hook 'after-change-major-mode-hook 'silver-brain-concept-setup-local-key)
 
 (provide 'silver-brain-concept)

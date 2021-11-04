@@ -9,6 +9,8 @@
 
 (defvar-local silver-brain-list--search-string nil)
 
+(put 'silver-brain-list--search-string 'permanent-local t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Mode                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -17,7 +19,7 @@
   (let ((map (make-composed-keymap (list (make-sparse-keymap)
                                          widget-keymap))))
     (set-keymap-parent map silver-brain-common-keymap)
-    (define-key map (kbd "g") 'silver-brain-list-refresh)
+    (define-key map (kbd "g") 'silver-brain-list--refresh)
     map))
 
 (define-derived-mode silver-brain-list-mode fundamental-mode "SB-List"
@@ -28,25 +30,25 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun silver-brain-list-show (search-string)
+  (silver-brain-list--prepare-buffer search-string)
+  (pop-to-buffer-same-window (get-buffer silver-brain-list-buffer-name)))
+
+(defun silver-brain-list--refresh ()
+  (interactive)
+  (with-current-buffer silver-brain-list-buffer-name
+    (silver-brain-list--prepare-buffer silver-brain-list--search-string)))
+
+(defun silver-brain-list--prepare-buffer (search-string)
   (with-current-buffer (silver-brain-api-send-request
                         (format "concept?search=%s" search-string))
-    (silver-brain-list--prepare-buffer (silver-brain-api-read-json)))
-  (with-current-buffer (get-buffer silver-brain-list-buffer-name)
-    (setq silver-brain-list--search-string search-string)
-    (put 'silver-brain-list--search-string 'permanent-local t)
-    (pop-to-buffer-same-window (current-buffer))))
-
-(defun silver-brain-list-refresh ()
-  (interactive)
-  (silver-brain-list-show silver-brain-list--search-string))
-
-(defun silver-brain-list--prepare-buffer (concept-list)
-  (silver-brain--with-widget-buffer
-   silver-brain-list-buffer-name
-   (silver-brain-list-mode)
-   (if (null concept-list)
-       (silver-brain-list--insert-not-found)
-     (silver-brain-list--insert-buttons concept-list))))
+    (let ((concept-list (silver-brain-api-read-json)))
+      (silver-brain--with-widget-buffer
+       silver-brain-list-buffer-name
+       (silver-brain-list-mode)
+       (if (null concept-list)
+           (silver-brain-list--insert-not-found)
+         (silver-brain-list--insert-buttons concept-list))
+       (setq silver-brain-list--search-string search-string)))))
 
 (defun silver-brain-list--insert-not-found ()
   (widget-insert "No concept found."))
@@ -65,5 +67,9 @@
               (lambda (s1 s2)
                 (string< (alist-get :name s2)
                          (alist-get :name s1))))))
+
+(add-hook 'silver-brain-after-concept-create-hook 'silver-brain-list--refresh)
+
+(add-hook 'silver-brain-after-concept-update-hook 'silver-brain-list--refresh)
 
 (provide 'silver-brain-list)
