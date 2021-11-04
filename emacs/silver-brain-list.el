@@ -72,4 +72,6 @@
 
 (add-hook 'silver-brain-after-concept-update-hook 'silver-brain-list--refresh)
 
+(add-hook 'silver-brain-after-concept-delete-hook 'silver-brain-list--refresh)
+
 (provide 'silver-brain-list)

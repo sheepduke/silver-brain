@@ -104,8 +104,8 @@
      :method :patch
      :data (json-encode `((:name . ,new-name))))
     (alist-set :name silver-brain-current-concept new-name)
-    (rename-buffer (silver-brain-concept--get-buffer-name concept))
-    (run-hooks 'silver-brain-after-concept-update-hook)))
+    (rename-buffer (silver-brain-concept--get-buffer-name concept)))
+  (run-hooks 'silver-brain-after-concept-update-hook))
 
 (defun silver-brain-concept--update-content-type (content-type)
   (silver-brain-api-send-request
@@ -116,18 +116,22 @@
   (run-hooks 'silver-brain-after-concept-update-hook))
 
 (defun silver-brain-concept-create ()
-  (let ((name (read-string "Concept name: ")))
+  (let* ((name (read-string "Concept name: "))
+         uuid)
     (with-current-buffer (silver-brain-api-send-request
                           "concept"
                           :method :post
                           :data (json-encode `((:name . ,name))))
-      (silver-brain-api-body-string))))
+      (setq uuid (silver-brain-api-body-string)))
+    (run-hooks 'silver-brain-after-concept-create-hook)
+    uuid))
 
 (defun silver-brain-concept-delete ()
   (let ((concept silver-brain-current-concept))
     (with-current-buffer (silver-brain-api-send-request
                           (concat "concept/" (alist-get :uuid concept))
-                          :method :delete))))
+                          :method :delete)))
+  (run-hooks 'silver-brain-after-concept-delete-hook))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                        Content Buffer                        ;;;;
