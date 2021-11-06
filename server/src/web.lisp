@@ -104,13 +104,20 @@
 (defun parse-service-response (response)
   (match response
     ((type string) response)
+    
+    ((list (and (type number) status)
+           (and (type string) response))
+     (list status nil (flex:string-to-octets response)))
+    
     ((list :error :not-found)
      (list 404 nil nil))
+    
     ((list :error :bad-request reason)
      (list 400 nil (flex:string-to-octets (format nil "~a" reason))))
+    
     ((list :ok) "")
-    ((list :ok obj)
-     (jsown:to-json obj))))
+    
+    ((list :ok obj) (jsown:to-json obj))))
 
 (defgeneric send-client-error-response (err))
 
@@ -191,9 +198,16 @@
     (log:debug "Search string: ~a" search-string)
     (concept-map:search-concept search-string)))
 
+(define-route "/api/concept-link" params (:require-database t)
+  (let ((source (get-query-param "source" :default nil))
+        (target (get-query-param "target" :default nil)))
+    (concept-map:get-links :source source :target target)))
+
 ;; (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
 
 ;; (progn (setf (silver-brain.config:active-profile) :dev)
 ;;        (silver-brain:start))
 
 ;; (dex:get "http://localhost:5001/api/concept/x5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
+
+;; (dex:get "http://localhost:5001/api/concept-link?source=5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))

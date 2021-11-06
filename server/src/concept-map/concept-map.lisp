@@ -18,7 +18,8 @@
            #:create-database
            #:create-concept
            #:update-concept
-           #:delete-concept))
+           #:delete-concept
+           #:get-links))
 
 (in-package silver-brain.concept-map)
 
@@ -71,6 +72,15 @@
       '(:error :conflict "Concept used as link")
       (progn (store:delete-concept uuid)
              '(:ok))))
+
+(-> get-links (&key (:source (or null string))
+                    (:target (or null string)))
+  service-response)
+(defun get-links (&key source target)
+  (if (or source target)
+      (make-ok-response
+       (store:get-links :source source :target target))
+      (make-bad-request-response "Both source and target not provided")))
 
 ;; (silver-brain:start)
 

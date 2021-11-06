@@ -137,3 +137,26 @@
     (store:with-current-database
       (is (= 3 (mito:count-dao 'store:concept)))
       (is (= 0 (mito:count-dao 'store:concept-link))))))
+
+(test get-links
+  (with-random-database-file
+    (setup)
+    (labels ((check-link (link)
+               (is (string= "1" (uuid (source link))))
+               (is (string= "Software" (name (source link))))
+               (is (string= "4" (uuid (relation link))))
+               (is (string= "Relates" (name (relation link))))
+               (is (string= "2" (uuid (target link))))
+               (is (string= "Middleware" (name (target link))))))
+
+      (with-mocks ()
+        (answer (silver-brain.concept-map.cache:get-concept-name "1")
+          "Software")
+        (answer (silver-brain.concept-map.cache:get-concept-name "2")
+          "Middleware")
+        (answer (silver-brain.concept-map.cache:get-concept-name "4")
+          "Relates")
+        (check-link (first (concept-map.store:get-links :source "1")))
+        (check-link (first (concept-map.store:get-links :target "2")))
+        (check-link (first (concept-map.store:get-links :source "1" :target "2")))
+        (is (null (concept-map.store:get-links :source "3")))))))

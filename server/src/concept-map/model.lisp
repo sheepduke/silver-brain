@@ -16,8 +16,10 @@
            #:concept-summary
            #:concept-link
            #:source
+           #:relation
            #:target
-           #:concept-summary-list))
+           #:concept-summary-list
+           #:concept-link-list))
 
 (in-package silver-brain.concept-map.model)
 
@@ -62,7 +64,14 @@
 
 (defclass concept-link ()
   ((source :type concept-summary :accessor source :initarg :source)
+   (relation :type concept-summary :accessor relation :initarg :relation)
    (target :type concept-summary :accessor target :initarg :target)))
+
+(defun every-concept-link-p (list)
+  (every (op (typep _ 'concept-link)) list))
+
+(deftype concept-link-list ()
+  `(and list (satisfies every-concept-link-p)))
 
 (defmethod jsown:to-json ((obj concept-link))
   (to-json-object obj))

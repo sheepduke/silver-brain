@@ -107,7 +107,10 @@
              (json (jsown:parse (get (format nil "concept/~a" uuid)))))
         (is (string= "Wrong one" (jsown:val json "name")))
         (delete (format nil "concept/~a" uuid))
-        (signals dex:http-request-not-found (get (format nil "concept/~a" uuid)))))))
+        (signals dex:http-request-not-found (get (format nil "concept/~a" uuid))))
+
+      ;; Insert some concepts for links
+      )))
 
 ;; (setf (silver-brain.config:active-profile) :dev)
 ;; (silver-brain:start)

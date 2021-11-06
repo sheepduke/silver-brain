@@ -15,13 +15,22 @@
            #:update-concept
            #:create-concept
            #:used-as-link-p
-           #:delete-concept))
+           #:delete-concept
+           #:get-links))
 
 (in-package silver-brain.concept-map.store)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                           Database                           ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (-> create-databsae (string) t)
 (defun create-database (database-name)
   (store:with-database (database-name :auto-create t :auto-migrate t)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                           Concept                            ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (-> get-concept-by-uuid (string) (or null concept))
 (defun get-concept-by-uuid (uuid)
@@ -43,7 +52,7 @@
     (let ((conditions (mapcar (op (list :like :name (format nil "%~a%" _)))
                               searches)))
       (~>> (store:select 'store:concept
-             (sxql:where (append '(:or) conditions)))
+             (sxql:where (cons :or conditions)))
            (mapcar (lambda (concept)
                      (make-instance 'concept-summary
                                     :uuid (store:uuid concept)
@@ -89,3 +98,28 @@
       (store:delete-by 'store:concept-link :source uuid)
       (store:delete-by 'store:concept-link :uuid uuid)
       (store:delete-by 'store:concept-link :target uuid))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                         Concept Link                         ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(-> get-links (&key (:source (or null string))
+                    (:target (or null string)))
+  concept-link-list)
+(defun get-links (&key source target)
+  (labels ((make-summary (uuid)
+             (make-instance 'concept-summary
+                            :uuid uuid
+                            :name (cache:get-concept-name uuid)))
+           (make-concept-link-from-dao (dao)
+             (make-instance 'concept-link
+                            :source (make-summary (store:source dao))
+                            :relation (make-summary (store:uuid dao))
+                            :target (make-summary (store:target dao)))))
+    (let ((conditions (~>> (list (and source (list := :source source))
+                                 (and target (list := :target target)))
+                           (remove-if #'null))))
+      (store:with-current-database
+        (~>> (store:select 'store:concept-link
+               (sxql:where (cons :and conditions)))
+             (mapcar (op (make-concept-link-from-dao _))))))))
