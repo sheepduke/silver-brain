@@ -47,14 +47,14 @@
                :initarg :updated-at)))
 
 (defmethod jsown:to-json ((obj concept))
-  (to-json-object obj))
+  (jsown:to-json (to-json-object obj)))
 
 (defclass concept-summary ()
   ((uuid :type string :accessor uuid :initarg :uuid)
    (name :type string :accessor name :initarg :name)))
 
 (defmethod jsown:to-json ((obj concept-summary))
-  (to-json-object obj))
+  (jsown:to-json (to-json-object obj)))
 
 (defun every-concept-summary-p (list)
   (every (op (typep _ 'concept-summary)) list))
@@ -74,4 +74,4 @@
   `(and list (satisfies every-concept-link-p)))
 
 (defmethod jsown:to-json ((obj concept-link))
-  (to-json-object obj))
+  (jsown:to-json (to-json-object obj)))

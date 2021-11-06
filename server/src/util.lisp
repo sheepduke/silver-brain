@@ -34,7 +34,7 @@
                    (if (typep value 'standard-object)
                        (to-json-object value)
                        value)))))))
-    (jsown:to-json js)))
+    js))
 
 (defmethod to-json-object ((obj local-time:timestamp))
   (local-time:to-rfc3339-timestring obj))
