@@ -23,7 +23,7 @@
   (interactive)
   (error "Undefined key binding"))
 
-(cl-defmacro silver-brain--with-widget-buffer (buffer-name &body body)
+(defmacro silver-brain--with-widget-buffer (buffer-name &rest body)
   `(with-current-buffer (get-buffer-create ,buffer-name)
      (let ((inhibit-read-only t))
        (mapc 'widget-delete widget-field-list)
@@ -43,5 +43,23 @@
   (format-time-string silver-brain-time-string
                       (encode-time
                        (iso8601-parse time-string))))
+
+(defmacro silver-brain-with-concept-hyperlink-face (&rest body)
+  `(let ((widget-button-face 'silver-brain-concept-hyperlink)
+         (widget-push-button-prefix nil)
+         (widget-push-button-suffix nil))
+     ,@body))
+
+(defmacro silver-brain-with-push-button-face (&rest body)
+  `(let ((widget-button-face 'silver-brain-push-button)
+         (widget-push-button-prefix " ")
+         (widget-push-button-suffix " "))
+     ,@body))
+
+(defun silver-brain-widget-insert-with-face (text face)
+  (let ((start (point)))
+    (widget-insert text)
+    (let ((end (point)))
+      (add-face-text-property start end face))))
 
 (provide 'silver-brain-common)
