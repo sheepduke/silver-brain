@@ -156,7 +156,20 @@
           "Middleware")
         (answer (silver-brain.concept-map.cache:get-concept-name "4")
           "Relates")
-        (check-link (first (concept-map.store:get-links :source "1")))
-        (check-link (first (concept-map.store:get-links :target "2")))
-        (check-link (first (concept-map.store:get-links :source "1" :target "2")))
+        (check-link (car (concept-map.store:get-links :source "1")))
+        (check-link (car (concept-map.store:get-links :target "2")))
+        (check-link (car (concept-map.store:get-links :source "1" :target "2")))
+        (check-link (car (concept-map.store:get-links :source "1"
+                                                      :relation "4"
+                                                      :target "2")))
         (is (null (concept-map.store:get-links :source "3")))))))
+
+(test create-link
+  (with-random-database-file
+    (setup)
+    (concept-map.store:create-link "1" "4" "2")
+    (store:with-current-database
+      (is (= 1 (mito:count-dao 'store:concept-link))))
+    (concept-map.store:create-link "1" "4" "3")
+    (store:with-current-database
+      (is (= 2 (mito:count-dao 'store:concept-link))))))

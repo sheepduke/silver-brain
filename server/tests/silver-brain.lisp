@@ -17,7 +17,7 @@
 
 (defun make-random-database-name ()
   (format nil
-          "silver-brain-test-~a.sqlite"
+          "~a.sqlite"
           (uuid:make-v4-uuid)))
 
 (defmacro with-random-database-file (&body body)

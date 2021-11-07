@@ -75,8 +75,7 @@
                                            ,database-name)
                                    database-name))
             (*database* ,g-database-name))
-       (print ,g-database-name)
-       ,(when auto-create
+       ,(unless auto-create
           `(or (string= ":memory:" ,g-database-name)
                (uiop:file-exists-p ,g-database-name)
                (error 'database-not-found-error :database-name ,g-database-name)))

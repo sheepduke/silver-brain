@@ -16,7 +16,8 @@
            #:create-concept
            #:used-as-link-p
            #:delete-concept
-           #:get-links))
+           #:get-links
+           #:create-link))
 
 (in-package silver-brain.concept-map.store)
 
@@ -104,10 +105,10 @@
     (> (store:count 'store:concept-link :relation uuid) 0)))
 
 (-> get-links (&key (:source (or null string))
+                    (:relation (or null string))
                     (:target (or null string)))
   concept-link-list)
-
-(defun get-links (&key source target)
+(defun get-links (&key source relation target)
   (labels ((make-summary (uuid)
              (make-instance 'concept-summary
                             :uuid uuid
@@ -118,9 +119,24 @@
                             :relation (make-summary (store:relation dao))
                             :target (make-summary (store:target dao)))))
     (let ((conditions (~>> (list (and source (list := :source source))
+                                 (and relation (list := :relation relation))
                                  (and target (list := :target target)))
                            (remove-if #'null))))
       (store:with-current-database
         (~>> (store:select 'store:concept-link
                (sxql:where (cons :and conditions)))
              (mapcar (op (make-concept-link-from-dao _))))))))
+
+(-> create-link (string string string) t)
+(defun create-link (source relation target)
+  (store:with-current-database
+    (store:with-transaction
+        (unless (> (store:count 'store:concept-link
+                                :source source
+                                :relation relation
+                                :target target)
+                   0)
+          (store:save (make-instance 'store:concept-link
+                                     :source source
+                                     :relation relation
+                                     :target target))))))

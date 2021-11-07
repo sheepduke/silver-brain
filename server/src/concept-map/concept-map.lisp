@@ -19,7 +19,8 @@
            #:create-concept
            #:update-concept
            #:delete-concept
-           #:get-links))
+           #:get-links
+           #:create-link))
 
 (in-package silver-brain.concept-map)
 
@@ -74,13 +75,21 @@
              '(:ok))))
 
 (-> get-links (&key (:source (or null string))
+                    (:relation (or null string))
                     (:target (or null string)))
   service-response)
-(defun get-links (&key source target)
+(defun get-links (&key source relation target)
   (if (or source target)
       (make-ok-response
-       (store:get-links :source source :target target))
+       (store:get-links :source source
+                        :relation relation
+                        :target target))
       (make-bad-request-response "Both source and target not provided")))
+
+(-> create-link (string string string) service-response)
+(defun create-link (source relation target)
+  (store:create-link source relation target)
+  (make-ok-response))
 
 ;; (silver-brain:start)
 

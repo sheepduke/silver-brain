@@ -203,6 +203,13 @@
         (target (get-query-param "target" :default nil)))
     (concept-map:get-links :source source :target target)))
 
+(define-route "/api/concept-link" params (:method :put :require-database t)
+  (let* ((json (get-request-body-as-json))
+         (source (jsown:val json "source"))
+         (relation (jsown:val json "relation"))
+         (target (jsown:val json "target")))
+    (concept-map:create-link source relation target)))
+
 ;; (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
 
 ;; (progn (setf (silver-brain.config:active-profile) :dev)

@@ -10,6 +10,8 @@
                 #:test)
   (:import-from #:trivia
                 #:match)
+  (:import-from #:serapeum
+                #:~>>)
   (:shadow #:get
            #:delete))
 
@@ -36,6 +38,11 @@
 
 (defun patch (uri data)
   (dex:patch (make-url uri)
+             :content (jsown:to-json data)
+             :headers `(("Database" . ,*database-name*))))
+
+(defun put (uri data)
+  (dex:put (make-url uri)
              :content (jsown:to-json data)
              :headers `(("Database" . ,*database-name*))))
 
@@ -76,7 +83,7 @@
   (setup)
 
   (with-teardown
-    (let (uuid-new)
+    (let (uuid-new uuid-software uuid-middleware uuid-includes)
 
       ;; Database.
       (is (str:emptyp (post "database" (jsown:new-js ("name" *database-name*)))))
@@ -109,8 +116,46 @@
         (delete (format nil "concept/~a" uuid))
         (signals dex:http-request-not-found (get (format nil "concept/~a" uuid))))
 
-      ;; Insert some concepts for links
-      )))
+      ;; Insert concepts and links.
+      (setf uuid-software
+            (post "concept" (jsown:new-js ("name" "Software"))))
+      (setf uuid-middleware
+            (post "concept" (jsown:new-js ("name" "Middleware"))))
+      (setf uuid-includes
+            (post "concept" (jsown:new-js ("name" "Includes"))))
+      (put "concept-link" (jsown:new-js
+                            ("source" uuid-software)
+                            ("relation" uuid-includes)
+                            ("target" uuid-middleware)))
+
+      ;; Get links
+      (let ((json (first (jsown:parse
+                          (get (format nil "concept-link?source=~a&target=~a"
+                                       uuid-software
+                                       uuid-middleware))))))
+        (is (string= uuid-software
+                     (~>> (jsown:val-safe json "source")
+                          (jsown:val-safe _ "uuid"))))
+        (is (string= "Software"
+                     (~>> (jsown:val-safe json "source")
+                          (jsown:val-safe _ "name"))))
+        (is (string= uuid-includes
+                     (~>> (jsown:val-safe json "relation")
+                          (jsown:val-safe _ "uuid"))))
+        (is (string= "Includes"
+                     (~>> (jsown:val-safe json "relation")
+                          (jsown:val-safe _ "name"))))
+        (is (string= uuid-middleware
+                     (~>> (jsown:val-safe json "target")
+                          (jsown:val-safe _ "uuid"))))
+        (is (string= "Middleware"
+                     (~>> (jsown:val-safe json "target")
+                          (jsown:val-safe _ "name")))))
+
+      (let ((json (jsown:parse (get "concept-link?source=123"))))
+        (is (null json))))))
+
+;; (setf 5am:*run-test-when-defined* t)
 
 ;; (setf (silver-brain.config:active-profile) :dev)
 ;; (silver-brain:start)
