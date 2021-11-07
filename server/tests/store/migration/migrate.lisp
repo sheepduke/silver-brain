@@ -14,9 +14,9 @@
 
 (def-suite* silver-brain.store.migration :in silver-brain)
 
-(defun check-concept-link (link uuid source target)
-  (and (string= uuid (store:uuid link))
-       (string= source (store:source link))
+(defun check-concept-link (link source relation target)
+  (and (string= source (store:source link))
+       (string= relation (store:relation link))
        (string= target (store:target link))))
 
 (test run-migrations-empty-database
@@ -28,7 +28,6 @@
     (store:with-current-database
       (let ((concepts (mito:select-dao 'store:concept)))
         (is (= 2 (length concepts)))
-        (print (store:name (first concepts)))
         (is (find-if (op (string= "Contains" (store:name _))) concepts))
         (is (find-if (op (string= "Relates" (store:name _))) concepts))))))
 
@@ -78,7 +77,7 @@
           (mito:insert-dao (make-instance 'legacy-concept-relation
                                           :source (car pair)
                                           :target (cdr pair)))))
-    
+
       ;; Run.
       (store:with-current-database
         (migration:run-migrations))
@@ -104,9 +103,9 @@
           (is (not (null relates)))
           ;; Links are inserted.
           (is (= 6 (length links)))
-          (is (find-if (op (check-concept-link _ contains-uuid "0" "11")) links))
-          (is (find-if (op (check-concept-link _ contains-uuid "0" "12")) links))
-          (is (find-if (op (check-concept-link _ contains-uuid "11" "21")) links))
-          (is (find-if (op (check-concept-link _ contains-uuid "11" "22")) links))
-          (is (find-if (op (check-concept-link _ relates-uuid "12" "22")) links))
-          (is (find-if (op (check-concept-link _ relates-uuid "22" "12")) links)) )))))
+          (is (find-if (op (check-concept-link _ "0" contains-uuid "11")) links))
+          (is (find-if (op (check-concept-link _ "0" contains-uuid "12")) links))
+          (is (find-if (op (check-concept-link _ "11" contains-uuid "21")) links))
+          (is (find-if (op (check-concept-link _ "11" contains-uuid "22")) links))
+          (is (find-if (op (check-concept-link _ "12" relates-uuid "22")) links))
+          (is (find-if (op (check-concept-link _ "22" relates-uuid "12")) links)))))))

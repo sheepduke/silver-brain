@@ -26,10 +26,10 @@
   (:keys name))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :text)
-   (source :col-type :text)
+  ((source :col-type :text)
+   (relation :col-type :text)
    (target :col-type :text))
-  (:keys uuid source target))
+  (:keys source relation target))
 
 (defun up ()
   ;; Create new table.
@@ -71,11 +71,11 @@
                  (uuid (if bidirectional-linked-p
                            relate-relation-uuid
                            parent-relation-uuid)))
-            (insert-concept-link-if-not-exists uuid source target
+            (insert-concept-link-if-not-exists source uuid target
                                                created-at updated-at)
 
             (when bidirectional-linked-p
-              (insert-concept-link-if-not-exists uuid target source
+              (insert-concept-link-if-not-exists target uuid source
                                                  created-at updated-at))))))))
 
 (defun bidirectional-linked-p (source target)
@@ -83,14 +83,14 @@
     (sxql:where (:and (:= :source target)
                       (:= :target source)))))
 
-(defun insert-concept-link-if-not-exists (uuid source target created-at updated-at)
+(defun insert-concept-link-if-not-exists (source relation target created-at updated-at)
   (unless (mito:find-dao 'concept-link
-                         :uuid uuid
                          :source source
+                         :relation relation
                          :target target)
     (mito:insert-dao (make-instance 'concept-link
-                                    :uuid uuid
                                     :source source
+                                    :relation relation
                                     :target target
                                     :created-at created-at
                                     :updated-at updated-at))))

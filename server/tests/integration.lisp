@@ -115,3 +115,7 @@
 ;; (setf (silver-brain.config:active-profile) :dev)
 ;; (silver-brain:start)
 ;; (silver-brain:stop)
+
+;; (let ((store:*database* "a.sqlite"))
+;;   (store:with-current-database
+;;     (silver-brain.store.migration:run-migrations)))

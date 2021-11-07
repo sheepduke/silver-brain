@@ -83,12 +83,6 @@
       (and content-type (setf (store:content-type dao) content-type)) 
       (store:save dao))))
 
-(-> used-as-link-p (string) boolean)
-(defun used-as-link-p (uuid)
-  "Return T is given UUID is used as link concept."
-  (store:with-current-database
-    (> (store:count 'store:concept-link :uuid uuid) 0)))
-
 (-> delete-concept (string) t)
 (defun delete-concept (uuid)
   "Delete concept by UUID and all the related concepts."
@@ -96,16 +90,23 @@
     (store:with-transaction
         (store:delete-by 'store:concept :uuid uuid)
       (store:delete-by 'store:concept-link :source uuid)
-      (store:delete-by 'store:concept-link :uuid uuid)
+      (store:delete-by 'store:concept-link :relation uuid)
       (store:delete-by 'store:concept-link :target uuid))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Concept Link                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(-> used-as-link-p (string) boolean)
+(defun used-as-link-p (uuid)
+  "Return T is given UUID is used as link concept."
+  (store:with-current-database
+    (> (store:count 'store:concept-link :relation uuid) 0)))
+
 (-> get-links (&key (:source (or null string))
                     (:target (or null string)))
   concept-link-list)
+
 (defun get-links (&key source target)
   (labels ((make-summary (uuid)
              (make-instance 'concept-summary
@@ -114,7 +115,7 @@
            (make-concept-link-from-dao (dao)
              (make-instance 'concept-link
                             :source (make-summary (store:source dao))
-                            :relation (make-summary (store:uuid dao))
+                            :relation (make-summary (store:relation dao))
                             :target (make-summary (store:target dao)))))
     (let ((conditions (~>> (list (and source (list := :source source))
                                  (and target (list := :target target)))

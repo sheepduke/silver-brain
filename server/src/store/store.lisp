@@ -24,6 +24,7 @@
            #:object-updated-at
            #:concept-link
            #:source
+           #:relation
            #:target
            #:with-database
            #:with-transaction
@@ -130,10 +131,10 @@
   (:keys name))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :text
-         :accessor uuid)
-   (source :col-type :text
+  ((source :col-type :text
            :accessor source)
+   (relation :col-type :text
+             :accessor relation)
    (target :col-type :text
            :accessor target))
-  (:keys uuid source target))
+  (:keys source relation target))

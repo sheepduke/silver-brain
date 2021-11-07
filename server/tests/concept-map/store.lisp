@@ -43,7 +43,7 @@
     (mapcar (op (mito:insert-dao _)) *concepts*)
     (mito:insert-dao (make-instance 'store:concept-link
                                     :source "1"
-                                    :uuid "4"
+                                    :relation "4"
                                     :target "2"))))
 
 (test create-database
