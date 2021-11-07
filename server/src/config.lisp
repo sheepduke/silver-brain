@@ -18,7 +18,7 @@
 (chameleon:defprofile :dev
   (server-port 5001)
   (server-print-access-log-p t)
-  (data-dir (truename "~/temp")))
+  (data-dir (truename "~/temp/silver-brain/")))
 
 (chameleon:defprofile :test
   (data-dir (uiop:temporary-directory)))

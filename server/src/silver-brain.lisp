@@ -19,5 +19,8 @@
   nil)
 
 (defun migrate-all-databases ()
-  ;; TODO
-  )
+  "Run migrations for all the database file under data dir."
+  (loop for file in (uiop:directory-files (config:data-dir))
+        do (silver-brain.store:with-database (file
+                                              :auto-migrate t
+                                              :expand-path-p nil))))

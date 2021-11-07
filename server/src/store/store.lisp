@@ -65,17 +65,21 @@
   (merge-pathnames database-name (config:data-dir)))
 
 (defmacro with-database ((database-name &key (auto-create nil)
-                                          (auto-migrate nil))
+                                          (auto-migrate nil)
+                                          (expand-path-p t))
                          &body body)
   (with-gensyms (g-database-name)
-    `(let* ((,g-database-name (format nil "~a~a"
-                                      (config:data-dir)
-                                      ,database-name))
+    `(let* ((,g-database-name ,(if expand-path-p
+                                   `(format nil "~a~a"
+                                           (config:data-dir)
+                                           ,database-name)
+                                   database-name))
             (*database* ,g-database-name))
-       (or ,auto-create
-           (string= ":memory:" ,g-database-name)
-           (uiop:file-exists-p ,g-database-name)
-           (error 'database-not-found-error :database-name ,g-database-name))
+       (print ,g-database-name)
+       ,(when auto-create
+          `(or (string= ":memory:" ,g-database-name)
+               (uiop:file-exists-p ,g-database-name)
+               (error 'database-not-found-error :database-name ,g-database-name)))
        (dbi:with-connection (mito:*connection* :sqlite3
                                                :database-name ,g-database-name)
          (and ,auto-migrate

@@ -211,3 +211,6 @@
 ;; (dex:get "http://localhost:5001/api/concept/x5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
 
 ;; (dex:get "http://localhost:5001/api/concept-link?source=5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
+
+;; (setf (config:active-profile) :dev)
+;; (silver-brain:start)
