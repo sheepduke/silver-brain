@@ -1,7 +1,6 @@
-;; Local Variables:
-;; nameless-current-name: "silver-brain"
-;; lexical-binding: t
-;; End:
+;;; silver-brain.el -*- lexical-binding: t -*-
+
+(require 'silver-brain-hello)
 
 (defun silver-brain ()
   (interactive)
@@ -10,4 +9,3 @@
 (provide 'silver-brain)
 
 ;;; silver-brain.el ends here
-

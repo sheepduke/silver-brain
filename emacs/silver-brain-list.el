@@ -4,6 +4,7 @@
 (require 'wid-edit)
 (require 'silver-brain-common)
 (require 'silver-brain-api)
+(require 'silver-brain-concept)
 
 (defvar silver-brain-list-buffer-name "*silver-brain-list*")
 

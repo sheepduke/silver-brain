@@ -1,13 +1,11 @@
-;; Local Variables:
-;; lexical-binding: t
-;; nameless-current-name: "silver-brain-hello"
-;; End:
+;;; silver-brain-hello.el -*- lexical-binding: t -*-
 
 (require 'widget)
 (require 'wid-edit)
 
 (require 'silver-brain-api)
 (require 'silver-brain-common)
+(require 'silver-brain-list)
 
 (defvar silver-brain-hello-buffer-name "*Silver Brain Hello*")
 
@@ -15,14 +13,14 @@
 ;;;;                             Mode                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-derived-mode silver-brain-hello-mode fundamental-mode "SB-Hello"
-  "Major mode for Silver Brain software.")
-
 (defvar silver-brain-hello-mode-map
   (let ((map (make-composed-keymap (list (make-sparse-keymap)
                                          widget-keymap))))
     (set-keymap-parent map silver-brain-common-keymap)
     map))
+
+(define-derived-mode silver-brain-hello-mode fundamental-mode "SB-Hello"
+  "Major mode for Silver Brain software.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Function                           ;;;;

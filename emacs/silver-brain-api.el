@@ -18,9 +18,21 @@
                               (:patch "PATCH")
                               (:delete "DELETE")))
         (url-request-data data))
-    (url-retrieve-synchronously (format "http://localhost:%d/api/%s"
-                                        silver-brain-server-port
-                                        uri))))
+    (let ((buffer (url-retrieve-synchronously (format "http://localhost:%d/api/%s"
+                                                      silver-brain-server-port
+                                                      uri))))
+      (with-current-buffer buffer
+        (let ((code (silver-brain-api-status-code)))
+          (unless (<= 200 code 299)
+            (error (silver-brain-api-body-string)))))
+      buffer)))
+
+(defun silver-brain-api-status-code ()
+  (save-excursion
+    (goto-char (point-min))
+    (search-forward "HTTP/")
+    (let ((end (search-forward-regexp "[0-9]\\{3\\}")))
+      (car (read-from-string (buffer-substring (- end 3) end))))))
 
 (defun silver-brain-api-body-string ()
   (save-excursion
