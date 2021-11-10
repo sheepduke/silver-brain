@@ -94,30 +94,27 @@
 
   ;; Insert links. 
   (widget-insert "\n\n")
-  (silver-brain-widget-insert-with-face "Links" 'silver-brain-concept-subtitle)
+  (silver-brain-widget-insert-with-face "Inbound Links" 'silver-brain-concept-subtitle)
   (widget-insert "\n")
 
   (let ((links (silver-brain-concept--get-links "target")))
     (mapc (lambda (link)
             (widget-insert "\n  ")
             (silver-brain-concept--insert-concept-button (alist-get :source link))
-            (widget-insert " -- ")
+            (widget-insert " == ")
             (silver-brain-concept--insert-concept-button (alist-get :relation link))
-            (widget-insert " --> ")
-            (silver-brain-widget-insert-with-face
-             (alist-get :name (alist-get :target link))
-             '(:underline t)))
+            (widget-insert " => #"))
           links))
+
+  (widget-insert "\n\n")
+  (silver-brain-widget-insert-with-face "Outbound Links" 'silver-brain-concept-subtitle)
+  (widget-insert "\n")
 
   (let ((links (silver-brain-concept--get-links "source")))
     (mapc (lambda (link)
-            (widget-insert "\n  ")
-            (silver-brain-widget-insert-with-face
-             (alist-get :name (alist-get :source link))
-             '(:underline t))
-            (widget-insert " -- ")
+            (widget-insert "\n  # == ")
             (silver-brain-concept--insert-concept-button (alist-get :relation link))
-            (widget-insert " --> ")
+            (widget-insert " => ")
             (silver-brain-concept--insert-concept-button (alist-get :target link)))
           links))
   
