@@ -49,8 +49,8 @@
       (silver-brain--with-widget-buffer
        (silver-brain-concept--get-buffer-name concept)
        (silver-brain-concept-mode)
-       (silver-brain-concept--insert-widgets concept)
-       (setq silver-brain-current-concept concept))
+       (setq silver-brain-current-concept concept)
+       (silver-brain-concept--insert-widgets concept))
       (get-buffer (silver-brain-concept--get-buffer-name concept)))))
 
 (defun silver-brain-concept--insert-widgets (concept)
