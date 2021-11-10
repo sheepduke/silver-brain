@@ -77,20 +77,20 @@
   ;; Insert buttons.
   (silver-brain-with-push-button-face
    (widget-create 'push-button
-                  "Create"
                   :notify (lambda (&rest _)
-                            (silver-brain-concept-show (silver-brain-concept-create))))
+                            (silver-brain-concept-show (silver-brain-concept-create)))
+                  "Create")
    (widget-insert " ")
    (widget-create 'push-button
-                  "Delete"
                   :notify (lambda (&rest _)
-                            (silver-brain-concept-delete)
-                            (quit-window)))
+                            (and (silver-brain-concept-delete)
+                                 (quit-window)))
+                  "Delete")
    (widget-insert " ")
    (widget-create 'push-button
-                  "Back"
                   :notify (lambda (&rest _)
-                            (kill-buffer))))
+                            (kill-buffer))
+                  "Back"))
 
   ;; Insert links. 
   (widget-insert "\n\n")
@@ -132,8 +132,8 @@
         (name (alist-get :name concept-summary)))
     (silver-brain-with-concept-hyperlink-face
      (widget-create 'push-button
-                    name
-                    :notify (lambda (&rest _) (silver-brain-concept-show uuid))))))
+                    :notify (lambda (&rest _) (silver-brain-concept-show uuid))
+                    name))))
 
 (defun silver-brain-concept--rename (new-name)
   (let ((concept silver-brain-current-concept))
@@ -165,11 +165,13 @@
     uuid))
 
 (defun silver-brain-concept-delete ()
-  (let ((concept silver-brain-current-concept))
-    (with-current-buffer (silver-brain-api-send-request
-                          (concat "concept/" (alist-get :uuid concept))
-                          :method :delete)))
-  (run-hooks 'silver-brain-after-concept-delete-hook))
+  (and (y-or-n-p "This concept and all its links will be permanently deleted. Confirm?")
+       (let ((concept silver-brain-current-concept))
+         (with-current-buffer (silver-brain-api-send-request
+                               (concat "concept/" (alist-get :uuid concept))
+                               :method :delete))
+         (run-hooks 'silver-brain-after-concept-delete-hook))
+       t))
 
 (defun silver-brain-concept--get-links (type)
   (let ((concept silver-brain-current-concept))
