@@ -17,7 +17,8 @@
            #:used-as-link-p
            #:delete-concept
            #:get-links
-           #:create-link))
+           #:create-link
+           #:delete-links))
 
 (in-package silver-brain.concept-map.store)
 
@@ -104,9 +105,9 @@
   (store:with-current-database
     (> (store:count 'store:concept-link :relation uuid) 0)))
 
-(-> get-links (&key (:source (or null string))
-                    (:relation (or null string))
-                    (:target (or null string)))
+(-> get-links (&key (:source string)
+                    (:relation string)
+                    (:target string))
   concept-link-list)
 (defun get-links (&key source relation target)
   (labels ((make-summary (uuid)
@@ -118,14 +119,9 @@
                             :source (make-summary (store:source dao))
                             :relation (make-summary (store:relation dao))
                             :target (make-summary (store:target dao)))))
-    (let ((conditions (~>> (list (and source (list := :source source))
-                                 (and relation (list := :relation relation))
-                                 (and target (list := :target target)))
-                           (remove-if #'null))))
-      (store:with-current-database
-        (~>> (store:select 'store:concept-link
-               (sxql:where (cons :and conditions)))
-             (mapcar (op (make-concept-link-from-dao _))))))))
+    (store:with-current-database
+      (mapcar (op (make-concept-link-from-dao _))
+              (get-links* source relation target)))))
 
 (-> create-link (string string string) t)
 (defun create-link (source relation target)
@@ -140,3 +136,17 @@
                                      :source source
                                      :relation relation
                                      :target target))))))
+
+(-> delete-links (&key (:source string) (:relation string) (:target string)) t)
+(defun delete-links (&key source relation target)
+  (store:with-current-database
+    (mapc (op (store:delete _))
+          (get-links* source relation target))))
+
+(defun get-links* (source relation target)
+  (let ((conditions (~>> (list (and source (list := :source source))
+                               (and relation (list := :relation relation))
+                               (and target (list := :target target)))
+                         (remove-if #'null))))
+    (store:select 'store:concept-link
+      (sxql:where (cons :and conditions)))))

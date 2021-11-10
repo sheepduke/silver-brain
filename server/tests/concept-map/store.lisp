@@ -173,3 +173,25 @@
     (concept-map.store:create-link "1" "4" "3")
     (store:with-current-database
       (is (= 2 (mito:count-dao 'store:concept-link))))))
+
+(test delete-link
+  (with-random-database-file
+    (setup)
+    (store:with-current-database
+      (mito:insert-dao (make-instance 'store:concept-link
+                                      :source "1"
+                                      :relation "4"
+                                      :target "3"))
+      (mito:insert-dao (make-instance 'store:concept-link
+                                      :source "3"
+                                      :relation "4"
+                                      :target "1"))
+      (is (= 3 (mito:count-dao 'store:concept-link))))
+    (concept-map.store:delete-links :source "1")
+    (store:with-current-database
+      (is (= 1 (mito:count-dao 'store:concept-link))))
+    (concept-map.store:delete-links :source "3" :target "1")
+    (store:with-current-database
+      (is (= 0 (mito:count-dao 'store:concept-link))))))
+
+;; (setf 5am:*run-test-when-defined* t)

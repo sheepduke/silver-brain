@@ -74,24 +74,36 @@
       (progn (store:delete-concept uuid)
              '(:ok))))
 
-(-> get-links (&key (:source (or null string))
-                    (:relation (or null string))
-                    (:target (or null string)))
+(-> get-links
+  (&key (:source string) (:relation string) (:target string))
   service-response)
 (defun get-links (&key source relation target)
-  (if (or source target)
+  (if (or source relation target)
       (make-ok-response
        (store:get-links :source source
                         :relation relation
                         :target target))
-      (make-bad-request-response "Both source and target not provided")))
+      (make-bad-request-response "None of source, target or relation is provided")))
 
 (-> create-link (string string string) service-response)
 (defun create-link (source relation target)
   (store:create-link source relation target)
   (make-ok-response))
 
+(-> delete-links
+  (&key (:source string) (:relation string) (:target string))
+  service-response)
+(defun delete-links (&key source relation target)
+  (if (or source relation target)
+      (make-ok-response
+       (store:delete-links :source source
+                           :relation relation
+                           :target target))
+      (make-bad-request-response "None of source, target or relation is provided")))
+
+;; (setf (silver-brain.config:active-profile) :dev)
 ;; (silver-brain:start)
+;; (silver-brain:stop)
 
 ;; (dex:get (format nil "http://localhost:5001/api/concept/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '(("database" . "a.sqlite")))
 

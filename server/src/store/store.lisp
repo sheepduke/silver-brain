@@ -11,7 +11,8 @@
   (:import-from #:alexandria
                 #:with-gensyms)
   (:shadow #:get
-           #:count)
+           #:count
+           #:delete)
   (:export #:start
            #:stop
            ;; Dao
@@ -38,6 +39,7 @@
            #:*database*
            #:save
            #:count
+           #:delete
            #:delete-by))
 
 (in-package silver-brain.store)
@@ -111,6 +113,10 @@
 (-> count (symbol &rest t) number)
 (defun count (class &rest fields-and-values)
   (apply #'mito:count-dao class fields-and-values))
+
+(-> delete (standard-object) t)
+(defun delete (dao)
+  (mito:delete-dao dao))
 
 (-> delete-by (symbol &rest t) t)
 (defun delete-by (class &rest fields-and-values)
