@@ -204,15 +204,25 @@
     (concept-map:get-links :source source :target target)))
 
 (define-route "/api/concept-link" params (:method :post :require-database t)
-  (let* ((json (get-request-body-as-json)))
-    ;; TODO
-    (source (jsown:val json "source"))
-    (relation (jsown:val json "relation"))
-    (target (jsown:val json "target"))
-    (concept-map:create-link source relation target)))
+  (~>> (get-request-body-as-json)
+       (mapcar (lambda (obj)
+                 (list (jsown:val obj "source")
+                       (jsown:val obj "relation")
+                       (jsown:val obj "target"))))
+       (mapc (lambda (uuids)
+               (concept-map:create-link (car uuids)
+                                        (cadr uuids)
+                                        (caddr uuids)))))
+  "")
 
 (define-route "/api/concept-link" params (:method :delete :require-database t)
-  )
+  (let ((source (get-query-param "source" :default nil))
+        (relation (get-query-param "relation" :default nil))
+        (target (get-query-param "target" :default nil)))
+    (concept-map:delete-links :source source
+                              :relation relation
+                              :target target))
+  "")
 
 ;; (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
 

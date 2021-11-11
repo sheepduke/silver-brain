@@ -108,14 +108,6 @@
       (let ((json (jsown:parse (get (format nil "concept/~a" uuid-new)))))
         (is (string= "New Name" (jsown:val json "name"))))
 
-      ;; Delete concept.
-      (let* ((uuid (post "concept"
-                         (jsown:new-js ("name" "Wrong one"))))
-             (json (jsown:parse (get (format nil "concept/~a" uuid)))))
-        (is (string= "Wrong one" (jsown:val json "name")))
-        (delete (format nil "concept/~a" uuid))
-        (signals dex:http-request-not-found (get (format nil "concept/~a" uuid))))
-
       ;; Insert concepts and links.
       (setf uuid-software
             (post "concept" (jsown:new-js ("name" "Software"))))
@@ -123,12 +115,12 @@
             (post "concept" (jsown:new-js ("name" "Middleware"))))
       (setf uuid-includes
             (post "concept" (jsown:new-js ("name" "Includes"))))
-      (put "concept-link" (jsown:new-js
-                            ("source" uuid-software)
-                            ("relation" uuid-includes)
-                            ("target" uuid-middleware)))
+      (post "concept-link" (list (jsown:new-js
+                                   ("source" uuid-software)
+                                   ("relation" uuid-includes)
+                                   ("target" uuid-middleware))))
 
-      ;; Get links
+      ;; Get links.
       (let ((json (first (jsown:parse
                           (get (format nil "concept-link?source=~a&target=~a"
                                        uuid-software
@@ -153,7 +145,51 @@
                           (jsown:val-safe _ "name")))))
 
       (let ((json (jsown:parse (get "concept-link?source=123"))))
-        (is (null json))))))
+        (is (null json)))
+
+      ;; Delete concept and links.
+      (let* ((uuid (post "concept"
+                         (jsown:new-js ("name" "Wrong one"))))
+             (json (jsown:parse (get (format nil "concept/~a" uuid)))))
+        (is (string= "Wrong one" (jsown:val json "name")))
+
+        ;; Create links.
+        (post "concept-link" (list (jsown:new-js
+                                     ("source" uuid)
+                                     ("relation" uuid-includes)
+                                     ("target" uuid-software))
+                                   (jsown:new-js
+                                     ("source" uuid-software)
+                                     ("relation" uuid-includes)
+                                     ("target" uuid))
+                                   (jsown:new-js
+                                     ("source" uuid)
+                                     ("relation" uuid-includes)
+                                     ("target" uuid-middleware))))
+
+        ;; Get links.
+        (let* ((url (format nil "concept-link?source=~a" uuid))
+               (links (jsown:parse (get url))))
+          (is (= 2 (length links))))
+        (let* ((url (format nil "concept-link?target=~a" uuid))
+               (links (jsown:parse (get url))))
+          (is (= 1 (length links))))
+
+        ;; Delete links.
+        (delete (format nil "concept-link?source=~a" uuid))
+        (let* ((url (format nil "concept-link?source=~a" uuid))
+               (links (jsown:parse (get url))))
+          (is (null links)))
+        (let* ((url (format nil "concept-link?target=~a" uuid))
+               (links (jsown:parse (get url))))
+          (is (= 1 (length links))))
+
+        ;; Delete concept.
+        (delete (format nil "concept/~a" uuid))
+        (signals dex:http-request-not-found (get (format nil "concept/~a" uuid)))
+        (let* ((url (format nil "concept-link?target=~a" uuid))
+               (links (jsown:parse (get url))))
+          (is (null links)))))))
 
 ;; (setf 5am:*run-test-when-defined* t)
 

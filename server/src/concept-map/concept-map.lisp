@@ -20,7 +20,8 @@
            #:update-concept
            #:delete-concept
            #:get-links
-           #:create-link))
+           #:create-link
+           #:delete-links))
 
 (in-package silver-brain.concept-map)
 
