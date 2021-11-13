@@ -13,6 +13,13 @@
   (silver-brain.web:start)
   nil)
 
+(defun start-dev ()
+  (setf (config:active-profile) :dev)
+  (migrate-all-databases)
+  (silver-brain.concept-map:start)
+  (silver-brain.web:start)
+  nil)
+
 (defun stop ()
   (silver-brain.concept-map:stop)
   (silver-brain.web:stop)

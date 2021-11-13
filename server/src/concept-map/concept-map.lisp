@@ -109,3 +109,5 @@
 ;; (dex:get (format nil "http://localhost:5001/api/concept/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '(("database" . "a.sqlite")))
 
 ;; (dex:get (format nil "http://localhost:5001/api/concept/8FB1298A-D5B0-4B7E-9099-B6E2A77C84A5") :headers '(("database" . "a.sqlite")))
+
+;; (format t (dex:get (format nil "http://localhost:5001/api/concept-link?source=26BFE97F-903A-4113-93FD-273E82D97003") :headers '(("database" . "a.sqlite"))))

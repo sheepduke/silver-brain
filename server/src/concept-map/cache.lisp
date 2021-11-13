@@ -8,7 +8,8 @@
                 #:match)
   (:export #:start
            #:stop
-           #:get-concept-name))
+           #:get-concept-name
+           #:invalidate-if-exists))
 
 (in-package silver-brain.concept-map.cache)
 
@@ -38,3 +39,7 @@
                        (op (setf (gethash uuid _) name) _1))
      name)
     (_ nil)))
+
+(defun invalidate-if-exists (uuid)
+  "Invalidate the cache entry if exists."
+  (agt:agent-update *cache* (op (remhash uuid _1) _1)))
