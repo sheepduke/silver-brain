@@ -48,9 +48,12 @@ using given SEARCH-STRING."
                         (format "concept?search=%s" search-string))
     (let ((concept-list (silver-brain--api-read-json)))
       (silver-brain--with-widget-buffer silver-brain-list-buffer-name
-       (silver-brain-list-mode)
-       (silver-brain--list-create-widgets concept-list)
-       (setq silver-brain-list-search-string search-string)))))
+        (silver-brain-list-mode)
+        (setq silver-brain-list-search-string search-string)
+        (silver-brain--list-create-widgets concept-list))
+      (with-current-buffer silver-brain-list-buffer-name
+        (goto-char (point-min))
+        (widget-forward 1)))))
 
 (defun silver-brain--list-create-widgets (concept-list)
   "Create inserts to "
@@ -58,13 +61,15 @@ using given SEARCH-STRING."
     (if (= 0 concept-count)
         (widget-insert "I dit not find any concept. :-(")
       (widget-insert (format "I found %d councepts.\n" concept-count))))
-  
+
+  ;; Insert concept buttons.
   (mapc (lambda (concept)
-          (widget-create 'push-button
-                         :notify (lambda (&rest _)
-                                   (silver-brain-concept-show
-                                    (alist-get :uuid concept)))
-                         (alist-get :name concept))
+          (silver-brain--with-concept-hyperlink-face
+           (widget-create 'push-button
+                          :notify (lambda (&rest _)
+                                    (silver-brain-concept-show
+                                     (alist-get :uuid concept)))
+                          (alist-get :name concept)))
           (widget-insert "\n"))
         (sort concept-list
               (lambda (s1 s2)
