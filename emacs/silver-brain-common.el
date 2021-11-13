@@ -1,29 +1,38 @@
-;; Local Variables:
-;; lexical-binding: t
-;; nameless-current-name: "silver-brain"
-;; End:
+;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
 
 (require 'cl-lib)
+(require 'json)
+
 (require 'silver-brain-vars)
-
-(defvar silver-brain-after-concept-create-hook '())
-
-(defvar silver-brain-after-concept-update-hook '())
-
-(defvar silver-brain-after-concept-delete-hook '())
 
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'quit-window)
-    (define-key map [remap self-insert-command] 'silver-brain-no-edit)
-    map))
+    (define-key map (kbd "Q") 'silver-brain-quit-all)
+    (define-key map [remap self-insert-command] 'silver-brain--no-edit)
+    map)
+  "Common keymap shared by all the Silver Brain buffers.")
 
-(defun silver-brain-no-edit ()
-  "Invoke button at POS, or refuse to allow editing of Custom buffer."
+(defun silver-brain--no-edit ()
+  "Refuse to allow editing of Custom buffer."
   (interactive)
   (error "Undefined key binding"))
 
+(defun silver-brain-quit-all ()
+  "Kill all the Silver Brain buffers."
+  (interactive)
+  (mapc (lambda (buffer) (kill-buffer buffer))
+        (remove-if-not (lambda (buffer)
+                         (string-prefix-p "*Silver Brain" (buffer-name buffer)))
+                       (buffer-list))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                            Basic                             ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmacro silver-brain--with-widget-buffer (buffer-name &rest body)
+  "Wrap basic buffer setup functions."
+  (declare (indent defun))
   `(with-current-buffer (get-buffer-create ,buffer-name)
      (let ((inhibit-read-only t))
        (mapc 'widget-delete widget-field-list)
@@ -34,32 +43,120 @@
        (goto-char (point-min)))))
 
 (defun silver-brain--get-textfield-length (length)
+  "Return the width of text field widget. LENGTH is the extra
+length to be removed."
   (max 8 (- (window-width) 10 length)))
 
-(defun alist-set (key alist value)
+(defun silver-brain--alist-set (key alist value)
+  "Set VALUE of KEY in ALIST."
   (setf (cdr (assoc key alist)) value))
 
-(defun silver-brain--display-time (time-string)
-  (format-time-string silver-brain-time-string
+(defun silver-brain--time-to-string (time-string)
+  "Display "
+  (format-time-string silver-brain-time-format
                       (encode-time
                        (iso8601-parse time-string))))
 
-(defmacro silver-brain-with-concept-hyperlink-face (&rest body)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                         Buffer Style                         ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro silver-brain--with-concept-hyperlink-face (&rest body)
   `(let ((widget-button-face 'silver-brain-concept-hyperlink)
          (widget-push-button-prefix nil)
          (widget-push-button-suffix nil))
      ,@body))
 
-(defmacro silver-brain-with-push-button-face (&rest body)
+(defmacro silver-brain--with-push-button-face (&rest body)
   `(let ((widget-button-face 'silver-brain-push-button)
          (widget-push-button-prefix " ")
          (widget-push-button-suffix " "))
      ,@body))
 
-(defun silver-brain-widget-insert-with-face (text face)
+(defun silver-brain--widget-insert-with-face (text face)
   (let ((start (point)))
     (widget-insert text)
     (let ((end (point)))
       (add-face-text-property start end face))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                           Request                            ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(cl-defun silver-brain--api-send-request (uri &key (method :get) data)
+  "Send HTTP request to URI with Database header set."
+  (let ((url-request-extra-headers `(("Database" . ,silver-brain-database-name)))
+        (url-request-method (cl-case method
+                              (:get "GET")
+                              (:post "POST")
+                              (:patch "PATCH")
+                              (:delete "DELETE")))
+        (url-request-data data))
+    (let ((buffer (url-retrieve-synchronously (format "http://localhost:%d/api/%s"
+                                                      silver-brain-server-port
+                                                      uri))))
+      (with-current-buffer buffer
+        (let ((code (silver-brain--api-status-code)))
+          (unless (<= 200 code 299)
+            (error (format "Server response %d: %s"
+                           code
+                           (string-trim (silver-brain--api-body-string)))))))
+      buffer)))
+
+(defun silver-brain--api-status-code ()
+  "Extract the HTTP status code in number format from response."
+  (save-excursion
+    (goto-char (point-min))
+    (search-forward "HTTP/")
+    (let ((end (search-forward-regexp "[0-9]\\{3\\}")))
+      (car (read-from-string (buffer-substring (- end 3) end))))))
+
+(defun silver-brain--api-body-string ()
+  (save-excursion
+    (goto-char (point-min))
+    (search-forward "\n\n")
+    (buffer-substring (point) (point-max))))
+
+(cl-defun silver-brain--api-read-json (&key (object-type 'alist)
+                                (key-type 'keyword))
+  "Read response body as JSON and parse it.
+OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
+  (let ((json-object-type object-type)
+        (json-key-type key-type)
+        (json-array-type 'list))
+    (save-excursion
+      (goto-char (point-min))
+      (search-forward "\n\n")
+      (json-read))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                             Api                              ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(cl-defun silver-brain-new-concept (&optional name)
+  (interactive)
+  (let* ((name (or name (read-string "Concept name: ")))
+         uuid)
+    (with-current-buffer (silver-brain--api-send-request
+                          "concept"
+                          :method :post
+                          :data (json-encode `((:name . ,name))))
+      (setq uuid (silver-brain--api-body-string)))
+    (run-hooks 'silver-brain-after-concept-create-hook)
+    uuid))
+
+(cl-defun silver-brain-delete-concept (&key uuid)
+  (interactive)
+  (let ((uuid (or uuid
+                  (and (or silver-brain-current-concept
+                           (error "Not invoked in Silver Brain Concept buffer"))
+                       (alist-get :uuid silver-brain-current-concept)))))
+    (and uuid
+         (with-current-buffer (silver-brain--api-send-request
+                               (concat "concept/" uuid)
+                               :method :delete))
+         (run-hooks 'silver-brain-after-concept-delete-hook)
+         t)))
 
 (provide 'silver-brain-common)
