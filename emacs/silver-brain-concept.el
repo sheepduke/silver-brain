@@ -108,8 +108,10 @@
                                             (alist-get :uuid silver-brain-current-concept))))
                     "New"))
   (widget-insert "\n")
-
-  (let ((links (silver-brain--concept-get-links "target")))
+  
+  (let ((links (sort (silver-brain--concept-get-links "target")
+                     (lambda (a b) (string-lessp (alist-get :name (alist-get :source a))
+                                                 (alist-get :name (alist-get :source b)))))))
     (and (< 0 (length links)) (widget-insert "\n"))
     (mapc (lambda (link)
             (widget-insert "  ")
@@ -147,7 +149,10 @@
                     "New"))
   (widget-insert "\n")
 
-  (let ((links (silver-brain--concept-get-links "source")))
+  (let ((links (sort (silver-brain--concept-get-links "source")
+                     (lambda (a b)
+                       (string-lessp (alist-get :name (alist-get :target a))
+                                     (alist-get :name (alist-get :target b)))))))
     (and (< 0 (length links)) (widget-insert "\n"))
     (mapc (lambda (link)
             (widget-insert "  ")
