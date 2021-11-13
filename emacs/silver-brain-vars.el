@@ -68,11 +68,9 @@
   :group 'silver-brain)
 
 (defface silver-brain-concept-subtitle '((t :underline t
-                                :height 1.5
-                                :weight bold))
+                                            :height 1.5
+                                            :weight bold))
   "Face used for subtitle in concept buffer."
   :group 'silver-brain)
-
-
 
 (provide 'silver-brain-vars)
