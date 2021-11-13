@@ -171,4 +171,29 @@ deleted."
                       :method :delete)
   (run-hooks 'silver-brain-after-concept-update-hook))
 
+(defun silver-brain--search-concept (search-string)
+  (with-current-buffer (silver-brain--api-send-request
+                        (format "concept?search=%s" search-string))
+    (silver-brain--api-read-json)))
+
+(cl-defun silver-brain--search-concept-and-select (&optional (prompt "Search string: "))
+  "Ask for a search string, search for concepts and select
+one. PROMPT is the prompt for search string."
+  (let* ((result (silver-brain--search-concept (read-string prompt)))
+         (concepts (mapcar (lambda (alist) (cons (alist-get :name alist)
+                                                 (alist-get :uuid alist)))
+                           result)))
+    (and concepts
+         (let ((key (completing-read "Choose concept: " concepts)))
+           (cdr (assoc-string key concepts))))))
+
+(defun silver-brain--new-link (source relation target)
+  (silver-brain--api-send-request "concept-link"
+                      :method :post
+                      :data (json-encode-list
+                             `((("source" . ,source)
+                                ("relation" . ,relation)
+                                ("target" . ,target)))))
+  (run-hooks 'silver-brain-after-concept-update-hook))
+
 (provide 'silver-brain-common)

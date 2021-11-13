@@ -93,14 +93,15 @@
                             (kill-buffer))
                   "Back"))
 
-  ;; Insert links. 
+  ;; Insert inbound links.
   (widget-insert "\n\n")
   (silver-brain--widget-insert-with-face "Inbound Links" 'silver-brain-concept-subtitle)
   (widget-insert "\n")
 
   (let ((links (silver-brain--concept-get-links "target")))
+    (and (< 0 (length links)) (widget-insert "\n"))
     (mapc (lambda (link)
-            (widget-insert "\n  ")
+            (widget-insert "  ")
             (silver-brain--with-push-button-face
              (widget-create 'push-button
                             :notify (lambda (&rest _)
@@ -115,16 +116,30 @@
             (silver-brain--concept-insert-concept-button (alist-get :relation link))
             (widget-insert " → ")
             (silver-brain--widget-insert-with-face (alist-get :name (alist-get :target link))
-                                       '(:underline t)))
-          links))
+                                       '(:underline t))
+            (widget-insert "\n"))
+          links)
+    (widget-insert "\n  ")
+    (silver-brain--with-push-button-face
+     (widget-create 'push-button
+                    :notify (lambda (&rest _)
+                              (let ((source (silver-brain--search-concept-and-select
+                                             "Search source: "))
+                                    (relation (silver-brain--search-concept-and-select
+                                               "Search relation: ")))
+                                (silver-brain--new-link source relation
+                                            (alist-get :uuid silver-brain-current-concept))))
+                    "New")))
 
+  ;; Insert outbound links.
   (widget-insert "\n\n")
   (silver-brain--widget-insert-with-face "Outbound Links" 'silver-brain-concept-subtitle)
   (widget-insert "\n")
 
   (let ((links (silver-brain--concept-get-links "source")))
+    (and (< 0 (length links)) (widget-insert "\n"))
     (mapc (lambda (link)
-            (widget-insert "\n  ")
+            (widget-insert "  ")
             (silver-brain--with-push-button-face
              (widget-create 'push-button
                             :notify (lambda (&rest _)
@@ -139,8 +154,20 @@
             (widget-insert " → ")
             (silver-brain--concept-insert-concept-button (alist-get :relation link))
             (widget-insert " → ")
-            (silver-brain--concept-insert-concept-button (alist-get :target link)))
-          links))
+            (silver-brain--concept-insert-concept-button (alist-get :target link))
+            (widget-insert "\n"))
+          links)
+    (widget-insert "\n  ")
+    (silver-brain--with-push-button-face
+     (widget-create 'push-button
+                    :notify (lambda (&rest _)
+                              (let ((relation (silver-brain--search-concept-and-select
+                                               "Search relation: "))
+                                    (target (silver-brain--search-concept-and-select
+                                             "Search target: ")))
+                                (silver-brain--new-link (alist-get :uuid silver-brain-current-concept)
+                                            relation target)))
+                    "New")))
   
   ;; Insert content.
   (widget-insert "\n\n")
