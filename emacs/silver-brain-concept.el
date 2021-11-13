@@ -103,7 +103,11 @@
             (widget-insert "\n  ")
             (silver-brain--with-push-button-face
              (widget-create 'push-button
-                            :notify (lambda (&rest _))
+                            :notify (lambda (&rest _)
+                                      (silver-brain-delete-link
+                                       (alist-get :uuid (alist-get :source link))
+                                       (alist-get :uuid (alist-get :relation link))
+                                       (alist-get :uuid (alist-get :target link))))
                             "Unlink"))
             (widget-insert " ")
             (silver-brain--concept-insert-concept-button (alist-get :source link))
@@ -123,7 +127,11 @@
             (widget-insert "\n  ")
             (silver-brain--with-push-button-face
              (widget-create 'push-button
-                            :notify (lambda (&rest _))
+                            :notify (lambda (&rest _)
+                                      (silver-brain-delete-link
+                                       (alist-get :uuid (alist-get :source link))
+                                       (alist-get :uuid (alist-get :relation link))
+                                       (alist-get :uuid (alist-get :target link))))
                             "Unlink"))
             (widget-insert " ")
             (silver-brain--widget-insert-with-face (alist-get :name (alist-get :source link))

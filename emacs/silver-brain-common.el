@@ -135,6 +135,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (cl-defun silver-brain-new-concept (&optional name)
+  "Create a new concept. If NAME is given, it is used as the name
+of new concept. Otherwise, it prompts the user to input one."
   (interactive)
   (let* ((name (or name (read-string "Concept name: ")))
          uuid)
@@ -147,6 +149,9 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
     uuid))
 
 (cl-defun silver-brain-delete-concept (&key uuid)
+  "Delete concept. If UUID is given, it is used to specify the
+target concept. Otherwise, silver-brain-current-concept will be
+deleted."
   (interactive)
   (let ((uuid (or uuid
                   (and (or silver-brain-current-concept
@@ -158,5 +163,12 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
                                :method :delete))
          (run-hooks 'silver-brain-after-concept-delete-hook)
          t)))
+
+(defun silver-brain-delete-link (source relation target)
+  "Delete link with RELATION between SOURCE and TARGET."
+  (silver-brain--api-send-request (format "concept-link?source=%s&relation=%s&target=%s"
+                              source relation target)
+                      :method :delete)
+  (run-hooks 'silver-brain-after-concept-update-hook))
 
 (provide 'silver-brain-common)
