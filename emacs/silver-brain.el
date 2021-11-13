@@ -6,6 +6,11 @@
   (interactive)
   (silver-brain-hello))
 
+(defun silver-brain-open ()
+  "Search and open concept."
+  (interactive)
+  (silver-brain-concept-show (silver-brain--search-concept-and-select)))
+
 (defun silver-brain-install ()
   (silver-brain--list-install)
   (silver-brain--concept-install))
