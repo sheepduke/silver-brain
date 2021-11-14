@@ -37,8 +37,16 @@ I am Silver, your personal external brain.\n\n")
                    :size (silver-brain--get-textfield-length 8)
                    :action (lambda (widget &rest _event)
                              (silver-brain-list-show (widget-value widget))))
-
     (widget-insert "\n")
+    
+    ;; Insert New button.
+    (widget-insert "\n  ")
+    (silver-brain--with-push-button-face
+     (widget-create 'push-button
+                    :notify (lambda (&rest _) (silver-brain-new-concept))
+                    "New"))
+    (widget-insert "\n")
+    
     (widget-insert "\nInput keywords separated by space to search."))
 
   ;; Switch to the hello buffer.

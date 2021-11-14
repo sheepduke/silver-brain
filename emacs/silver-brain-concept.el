@@ -268,11 +268,11 @@
 
 (defun silver-brain-concept-get-all-buffers ()
   "Return all the Silver Brain Concept buffers."
-  (remove-if-not (lambda (buffer)
-                   (with-current-buffer buffer
-                     (and (string-prefix-p "*Silver Brain Concept" (buffer-name))
-                          (equal 'silver-brain-concept-mode major-mode))))
-                 (buffer-list)))
+  (cl-remove-if-not (lambda (buffer)
+                      (with-current-buffer buffer
+                        (and (string-prefix-p "*Silver Brain Concept" (buffer-name))
+                             (equal 'silver-brain-concept-mode major-mode))))
+                    (buffer-list)))
 
 (defun silver-brain--concept-install ()
   "Setup hooks etc for Silver Brain Concept buffers."

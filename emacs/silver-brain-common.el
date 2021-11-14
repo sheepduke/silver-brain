@@ -7,6 +7,7 @@
 
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "n") 'silver-brain-new-concept)
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "Q") 'silver-brain-quit-all)
     (define-key map [remap self-insert-command] 'silver-brain--no-edit)
@@ -22,9 +23,9 @@
   "Kill all the Silver Brain buffers."
   (interactive)
   (mapc (lambda (buffer) (kill-buffer buffer))
-        (remove-if-not (lambda (buffer)
-                         (string-prefix-p "*Silver Brain" (buffer-name buffer)))
-                       (buffer-list))))
+        (cl-remove-if-not (lambda (buffer)
+                            (string-prefix-p "*Silver Brain" (buffer-name buffer)))
+                          (buffer-list))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Basic                             ;;;;
