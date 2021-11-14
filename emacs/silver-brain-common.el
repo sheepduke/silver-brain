@@ -143,10 +143,12 @@ of new concept. Otherwise, it prompts the user to input one."
     (with-current-buffer (silver-brain--api-send-request
                           "concept"
                           :method :post
-                          :data (json-encode `((:name . ,name))))
+                          :data (json-encode
+                                 `((:name . ,name)
+                                   (:content-type . ,silver-brain-default-content-type))))
       (setq uuid (silver-brain--api-body-string)))
     (run-hooks 'silver-brain-after-concept-create-hook)
-    uuid))
+    (silver-brain-concept-show uuid)))
 
 (cl-defun silver-brain-delete-concept (&key uuid)
   "Delete concept. If UUID is given, it is used to specify the

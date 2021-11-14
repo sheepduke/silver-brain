@@ -1,7 +1,8 @@
 ;;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
 
 (defgroup silver-brain nil
-  "Silver Brain customizations.")
+  "Silver Brain customizations."
+  :group 'applications)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Customs                            ;;;;
@@ -17,17 +18,22 @@
   :type 'string
   :group 'silver-brain)
 
-(defcustom silver-brain-content-mode-alist
-  '(("text/org" . org-mode)
-    ("text/markdown" . markdown-mode)
-    ("text/md" . markdown-mode)
-    ("" . fundamental-mode))
-  "The alist of mapping between concept's content type and major mode used to open it."
+(defcustom silver-brain-content-mode-alist '(("text/org" . org-mode)
+                                 ("text/markdown" . markdown-mode)
+                                 ("text/md" . markdown-mode)
+                                 ("" . fundamental-mode))
+  "The alist of mapping between concept's content type and major
+mode used to open it."
   :type 'alist
   :group 'silver-brain)
 
 (defcustom silver-brain-database-name nil
   "The default database name."
+  :type 'string
+  :group 'silver-brain)
+
+(defcustom silver-brain-default-content-type "text/org"
+  "The default content type for concept."
   :type 'string
   :group 'silver-brain)
 

@@ -78,7 +78,7 @@
   (silver-brain--with-push-button-face
    (widget-create 'push-button
                   :notify (lambda (&rest _)
-                            (silver-brain-concept-show (silver-brain-new-concept)))
+                            (silver-brain-new-concept))
                   "New")
    (widget-insert " ")
    (widget-create 'push-button
