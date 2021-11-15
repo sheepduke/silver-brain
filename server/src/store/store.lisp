@@ -72,7 +72,7 @@
                          &body body)
   (with-gensyms (g-database-name)
     `(let* ((,g-database-name ,(if expand-path-p
-                                   `(format nil "~a~a"
+                                   `(format nil "~a~a.sqlite"
                                            (config:data-dir)
                                            ,database-name)
                                    database-name))
