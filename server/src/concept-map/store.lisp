@@ -54,7 +54,7 @@
     (let ((conditions (mapcar (op (list :like :name (format nil "%~a%" _)))
                               searches)))
       (~>> (store:select 'store:concept
-             (sxql:where (cons :or conditions)))
+             (and conditions (sxql:where (cons :or conditions))))
            (mapcar (lambda (concept)
                      (make-instance 'concept-summary
                                     :uuid (store:uuid concept)
