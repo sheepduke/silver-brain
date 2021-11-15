@@ -3,13 +3,15 @@
         #:silver-brain-tests
         #:silver-brain.concept-map.model)
   (:local-nicknames (#:store #:silver-brain.store)
-                    (#:concept-map.store #:silver-brain.concept-map.store))
+                    (#:concept-map.store #:silver-brain.concept-map.store)
+                    (#:cache #:silver-brain.concept-map.cache))
   (:import-from #:fiveam
                 #:signals
                 #:is
                 #:test
                 #:def-suite*)
   (:import-from #:cl-mock
+                #:invocations
                 #:answer
                 #:with-mocks)
   (:import-from #:serapeum
@@ -108,14 +110,18 @@
 (test update-concept
   (with-random-database-file
     (setup)
-    (concept-map.store:update-concept "1"
-                                      :name "New")
-    (store:with-current-database
-      (is (= 4 (mito:count-dao 'store:concept)))
-      (is (string= "New"
-                   (store:name (mito:find-dao 'store:concept :uuid "1")))))
-    (signals error (concept-map.store:update-concept "5"
-                                                     :name "New2"))))
+    (with-mocks ()
+      (answer (cache:invalidate-if-exists "1"))
+      (concept-map.store:update-concept "1" :name "New")
+      
+      (store:with-current-database
+        (is (= 4 (mito:count-dao 'store:concept)))
+        (is (string= "New" (store:name (mito:find-dao 'store:concept :uuid "1")))))
+
+      (is (= 1 (length (invocations 'cache:invalidate-if-exists)))) 
+
+      (signals error (concept-map.store:update-concept "5"
+                                                       :name "New2")))))
 
 (test used-as-link-p
   (with-random-database-file
@@ -126,17 +132,23 @@
 (test delete-concept
   (with-random-database-file
     (setup)
-    (concept-map.store:delete-concept "1")
-    (store:with-current-database
-      (is (= 3 (mito:count-dao 'store:concept)))
-      (is (= 0 (mito:count-dao 'store:concept-link)))))
+    (with-mocks ()
+      (answer (cache:invalidate-if-exists "1"))
+      (concept-map.store:delete-concept "1")
+      (store:with-current-database
+        (is (= 3 (mito:count-dao 'store:concept)))
+        (is (= 0 (mito:count-dao 'store:concept-link))))
+      (is (= 1 (length (invocations 'cache:invalidate-if-exists))))))
 
   (with-random-database-file
     (setup)
-    (concept-map.store:delete-concept "4")
-    (store:with-current-database
-      (is (= 3 (mito:count-dao 'store:concept)))
-      (is (= 0 (mito:count-dao 'store:concept-link))))))
+    (with-mocks ()
+      (answer (cache:invalidate-if-exists "4"))
+      (concept-map.store:delete-concept "4")
+      (store:with-current-database
+        (is (= 3 (mito:count-dao 'store:concept)))
+        (is (= 0 (mito:count-dao 'store:concept-link))))
+      (is (= 1 (length (invocations 'cache:invalidate-if-exists)))))))
 
 (test get-links
   (with-random-database-file
@@ -150,12 +162,9 @@
                (is (string= "Middleware" (name (target link))))))
 
       (with-mocks ()
-        (answer (silver-brain.concept-map.cache:get-concept-name "1")
-          "Software")
-        (answer (silver-brain.concept-map.cache:get-concept-name "2")
-          "Middleware")
-        (answer (silver-brain.concept-map.cache:get-concept-name "4")
-          "Relates")
+        (answer (cache:get-concept-name "1") "Software")
+        (answer (cache:get-concept-name "2") "Middleware")
+        (answer (cache:get-concept-name "4") "Relates")
         (check-link (car (concept-map.store:get-links :source "1")))
         (check-link (car (concept-map.store:get-links :target "2")))
         (check-link (car (concept-map.store:get-links :source "1" :target "2")))
