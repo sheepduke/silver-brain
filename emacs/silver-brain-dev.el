@@ -25,4 +25,4 @@
   (require 'silver-brain-common)
   (require 'silver-brain-vars)
   (setq silver-brain-server-port 5001)
-  (setq silver-brain-database-name "a.sqlite"))
+  (setq silver-brain-database-name "a"))

@@ -58,6 +58,10 @@ length to be removed."
                       (encode-time
                        (iso8601-parse time-string))))
 
+;; (defun silver-brain--time-to-string (time)
+;;   "Convert given TIME to string. TIME is a timestamp."
+;;   (format-time-string silver-brain-time-format time))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Buffer Style                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -132,6 +136,35 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
       (json-read))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                          Data Model                          ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(cl-defstruct silver-brain-concept uuid name content-type content created-at updated-at)
+
+(defun silver-brain-concept-from-alist (alist)
+  "Create concept from alist."
+  (let* ((keys '(:uuid :name :content-type :content))
+         (initargs (cl-reduce (lambda (acc key)
+                                (append acc (list key (alist-get key alist))))
+                              keys
+                              :initial-value '()))
+         (concept (apply #'make-silver-brain-concept initargs)))
+    (if-let (create-time (alist-get :created-at alist))
+        (setf (silver-brain-concept-created-at concept)
+              (encode-time (iso8601-parse create-time))))
+    (if-let (update-time (alist-get :updated-at alist))
+        (setf (silver-brain-concept-updated-at concept)
+              (encode-time (iso8601-parse update-time))))
+    concept))
+
+(cl-defstruct silver-brain-concept-summary uuid name)
+
+(defun silver-brain-concept-summary-from-alist (alist)
+  "Create concept-summary from alist."
+  (make-silver-brain-concept-summary :uuid (alist-get :uuid alist)
+                                     :name (alist-get :name alist)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Api                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -175,9 +208,18 @@ deleted."
   (run-hooks 'silver-brain-after-concept-update-hook))
 
 (defun silver-brain--search-concept (search-string)
+  "Search concept with SEARCH-STRING and return a list of
+concept-summary in sorted order."
   (with-current-buffer (silver-brain--api-send-request
                         (format "concept?search=%s" search-string))
-    (silver-brain--api-read-json)))
+    (thread-first (mapcar #'silver-brain-concept-summary-from-alist (silver-brain--api-read-json))
+      (sort (lambda (s1 s2)
+              (string< (silver-brain-concept-summary-uuid s1)
+                       (silver-brain-concept-summary-uuid s2))))
+      (sort (lambda (s1 s2)
+              (string< (silver-brain-concept-summary-name s1)
+                       (silver-brain-concept-summary-name s2)))))))
+
 
 (cl-defun silver-brain--search-concept-and-select (&optional (prompt "Search string: "))
   "Ask for a search string, search for concepts and select

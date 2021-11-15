@@ -44,23 +44,21 @@
 (defun silver-brain--list-prepare-buffer (search-string)
   "Prepare the Silver Brain List buffer. The data is fetched
 using given SEARCH-STRING."
-  (with-current-buffer (silver-brain--api-send-request
-                        (format "concept?search=%s" search-string))
-    (let ((concept-list (silver-brain--api-read-json)))
-      (silver-brain--with-widget-buffer silver-brain-list-buffer-name
-        (silver-brain-list-mode)
-        (setq silver-brain-list-search-string search-string)
-        (silver-brain--list-create-widgets concept-list))
-      (with-current-buffer silver-brain-list-buffer-name
-        (goto-char (point-min))
-        (widget-forward 1)))))
+  (let ((concept-list (silver-brain--search-concept search-string)))
+    (silver-brain--with-widget-buffer silver-brain-list-buffer-name
+      (silver-brain-list-mode)
+      (setq silver-brain-list-search-string search-string)
+      (silver-brain--list-create-widgets concept-list))
+    (with-current-buffer silver-brain-list-buffer-name
+      (goto-char (point-min))
+      (widget-forward 1))))
 
 (defun silver-brain--list-create-widgets (concept-list)
   "Create inserts to "
   (let ((concept-count (length concept-list)))
     (if (= 0 concept-count)
         (widget-insert "I dit not find any concept. :-(")
-      (widget-insert (format "I found %d councepts.\n" concept-count))))
+      (widget-insert (format "I found %d councepts. :-)\n\n" concept-count))))
 
   ;; Insert concept buttons.
   (mapc (lambda (concept)
@@ -68,13 +66,10 @@ using given SEARCH-STRING."
            (widget-create 'push-button
                           :notify (lambda (&rest _)
                                     (silver-brain-concept-show
-                                     (alist-get :uuid concept)))
-                          (alist-get :name concept)))
+                                     (silver-brain-concept-summary-uuid concept)))
+                          (silver-brain-concept-summary-name concept)))
           (widget-insert "\n"))
-        (sort concept-list
-              (lambda (s1 s2)
-                (string< (alist-get :name s2)
-                         (alist-get :name s1))))))
+        concept-list))
 
 (defun silver-brain--list-install ()
   "Install hooks etc."
