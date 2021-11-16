@@ -167,6 +167,18 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;                             Api                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun silver-brain-switch-database ()
+  (interactive)
+  (let* ((database-list (silver-brain-get-database-list))
+         (database (completing-read "Switch to: " database-list)))
+    (silver-brain-quit-all)
+    (setq silver-brain-database-name database)))
+
+(defun silver-brain-get-database-list ()
+  "Return a list of databases."
+  (with-current-buffer (silver-brain--api-send-request "database")
+    (silver-brain--api-read-json)))
+
 (cl-defun silver-brain-new-concept (&optional name)
   "Create a new concept. If NAME is given, it is used as the name
 of new concept. Otherwise, it prompts the user to input one."

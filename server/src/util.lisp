@@ -9,9 +9,20 @@
            #:service-response
            #:make-bad-request-response
            #:make-not-found-response
-           #:make-ok-response))
+           #:make-ok-response
+           #:string-list))
 
 (in-package silver-brain.util)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                            Types                             ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun every-string-p (list)
+  (every #'stringp list))
+
+(deftype string-list ()
+  `(and list (satisfies every-string-p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         JSON Methods                         ;;;;

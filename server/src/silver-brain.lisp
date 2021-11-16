@@ -1,6 +1,9 @@
 (defpackage silver-brain
   (:use #:cl)
-  (:local-nicknames (#:config #:silver-brain.config))
+  (:import-from #:serapeum
+                #:op)
+  (:local-nicknames (#:config #:silver-brain.config)
+                    (#:store #:silver-brain.store))
   (:export #:main
            #:start
            #:stop))
@@ -27,8 +30,5 @@
 
 (defun migrate-all-databases ()
   "Run migrations for all the database file under data dir."
-  (loop for file in (uiop:directory-files (config:data-dir))
-        when (string= "sqlite" (pathname-type file))
-          do (silver-brain.store:with-database ((format nil "~a" file)
-                                                :auto-migrate t
-                                                :expand-path-p nil))))
+  (mapc (op (store:with-database (_ :auto-migrate t)))
+        (silver-brain.store:list-databases)))

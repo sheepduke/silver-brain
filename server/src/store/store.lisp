@@ -1,11 +1,13 @@
 (defpackage silver-brain.store
-  (:use #:cl)
+  (:use #:cl
+        #:silver-brain.util)
   (:local-nicknames (#:config #:silver-brain.config)
                     (#:migration #:silver-brain.store.migration))
   (:import-from #:mito
                 #:object-created-at
                 #:object-updated-at)
   (:import-from #:serapeum
+                #:~>>
                 #:op
                 #:->)
   (:import-from #:alexandria
@@ -40,7 +42,8 @@
            #:save
            #:count
            #:delete
-           #:delete-by))
+           #:delete-by
+           #:list-databases))
 
 (in-package silver-brain.store)
 
@@ -67,15 +70,12 @@
   (merge-pathnames database-name (config:data-dir)))
 
 (defmacro with-database ((database-name &key (auto-create nil)
-                                          (auto-migrate nil)
-                                          (expand-path-p t))
+                                          (auto-migrate nil))
                          &body body)
   (with-gensyms (g-database-name)
-    `(let* ((,g-database-name ,(if expand-path-p
-                                   `(format nil "~a~a.sqlite"
-                                           (config:data-dir)
-                                           ,database-name)
-                                   database-name))
+    `(let* ((,g-database-name (format nil "~a~a.sqlite"
+                                      (config:data-dir)
+                                      ,database-name))
             (*database* ,g-database-name))
        ,(unless auto-create
           `(or (string= ":memory:" ,g-database-name)
@@ -98,6 +98,13 @@
 (defmacro with-memory-database (&body body)
   `(with-database (":memory:")
      ,@body))
+
+(-> list-databases () string-list)
+(defun list-databases ()
+  "Return a list of strings as database."
+  (~>> (uiop:directory-files (config:data-dir))
+       (remove-if-not (op (string= "sqlite" (pathname-type _))))
+       (mapcar (op (pathname-name _)))))
 
 (-> get (symbol string) mito:dao-class)
 (defun get (class uuid)
