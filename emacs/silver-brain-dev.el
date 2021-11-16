@@ -24,5 +24,6 @@
   (require 'silver-brain-concept)
   (require 'silver-brain-common)
   (require 'silver-brain-vars)
+  (silver-brain-install)
   (setq silver-brain-server-port 5001)
   (setq silver-brain-database-name "a"))

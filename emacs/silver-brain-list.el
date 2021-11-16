@@ -38,8 +38,9 @@
 (defun silver-brain-list-refresh ()
   "Refresh Silver Brain List buffer."
   (interactive)
-  (with-current-buffer silver-brain-list-buffer-name
-    (silver-brain--list-prepare-buffer silver-brain-list-search-string)))
+  (if-let ((buffer (get-buffer silver-brain-list-buffer-name)))
+      (with-current-buffer buffer
+        (silver-brain--list-prepare-buffer silver-brain-list-search-string))))
 
 (defun silver-brain--list-prepare-buffer (search-string)
   "Prepare the Silver Brain List buffer. The data is fetched
@@ -51,7 +52,7 @@ using given SEARCH-STRING."
       (silver-brain--list-create-widgets concept-list))
     (with-current-buffer silver-brain-list-buffer-name
       (goto-char (point-min))
-      (widget-forward 1))))
+      (ignore-errors (widget-forward 1)))))
 
 (defun silver-brain--list-create-widgets (concept-list)
   "Create inserts to "

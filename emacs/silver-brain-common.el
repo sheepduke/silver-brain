@@ -48,19 +48,9 @@
 length to be removed."
   (max 8 (- (window-width) 10 length)))
 
-(defun silver-brain--alist-set (key alist value)
-  "Set VALUE of KEY in ALIST."
-  (setf (cdr (assoc key alist)) value))
-
-(defun silver-brain--time-to-string (time-string)
-  "Display "
-  (format-time-string silver-brain-time-format
-                      (encode-time
-                       (iso8601-parse time-string))))
-
-;; (defun silver-brain--time-to-string (time)
-;;   "Convert given TIME to string. TIME is a timestamp."
-;;   (format-time-string silver-brain-time-format time))
+(defun silver-brain--time-to-string (time)
+  "Convert given TIME to string. TIME is a timestamp."
+  (format-time-string silver-brain-time-format time))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Buffer Style                         ;;;;
@@ -164,6 +154,15 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (make-silver-brain-concept-summary :uuid (alist-get :uuid alist)
                                      :name (alist-get :name alist)))
 
+(cl-defstruct silver-brain-concept-link source relation target)
+
+(defun silver-brain-concept-link-from-alist (alist)
+  "Create concept-link object from given ALIST."
+  (make-silver-brain-concept-link
+   :source (silver-brain-concept-summary-from-alist (alist-get :source alist))
+   :relation (silver-brain-concept-summary-from-alist (alist-get :relation alist))
+   :target (silver-brain-concept-summary-from-alist (alist-get :target alist))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Api                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -184,15 +183,14 @@ of new concept. Otherwise, it prompts the user to input one."
     (run-hooks 'silver-brain-after-concept-create-hook)
     (silver-brain-concept-show uuid)))
 
-(cl-defun silver-brain-delete-concept (&key uuid)
+(cl-defun silver-brain-delete-concept (uuid)
   "Delete concept. If UUID is given, it is used to specify the
 target concept. Otherwise, silver-brain-current-concept will be
 deleted."
-  (interactive)
   (let ((uuid (or uuid
                   (and (or silver-brain-current-concept
                            (error "Not invoked in Silver Brain Concept buffer"))
-                       (alist-get :uuid silver-brain-current-concept)))))
+                       (silver-brain-concept-uuid silver-brain-current-concept)))))
     (and uuid
          (with-current-buffer (silver-brain--api-send-request
                                (concat "concept/" uuid)
@@ -225,14 +223,15 @@ concept-summary in sorted order."
   "Ask for a search string, search for concepts and select
 one. PROMPT is the prompt for search string."
   (let* ((result (silver-brain--search-concept (read-string prompt)))
-         (concepts (mapcar (lambda (alist) (cons (alist-get :name alist)
-                                                 (alist-get :uuid alist)))
+         (concepts (mapcar (lambda (alist) (cons (silver-brain-concept-summary-name alist)
+                                                 (silver-brain-concept-summary-uuid alist)))
                            result)))
     (and concepts
          (let ((key (completing-read "Choose concept: " concepts)))
            (cdr (assoc-string key concepts))))))
 
 (defun silver-brain--new-link (source relation target)
+  "Create a new link from SOURCE to TARGET with RELATION as the edge."
   (silver-brain--api-send-request "concept-link"
                       :method :post
                       :data (json-encode-list
