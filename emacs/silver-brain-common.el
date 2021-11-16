@@ -9,6 +9,7 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "g") 'silver-brain-refresh)
     (define-key map (kbd "n") 'silver-brain-new-concept)
+    (define-key map (kbd "s") 'silver-brain-open)
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "Q") 'silver-brain-quit-all)
     (define-key map [remap self-insert-command] 'silver-brain--no-edit)
