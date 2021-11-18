@@ -7,6 +7,7 @@
 
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "g") 'silver-brain-refresh)
     (define-key map (kbd "n") 'silver-brain-new-concept)
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "Q") 'silver-brain-quit-all)
@@ -30,6 +31,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Basic                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun silver-brain-refresh ()
+  (interactive)
+  (funcall silver-brain-refresh-function))
 
 (defmacro silver-brain--with-widget-buffer (buffer-name &rest body)
   "Wrap basic buffer setup functions."

@@ -23,7 +23,6 @@
     (set-keymap-parent map silver-brain-common-keymap)
     (define-key map (kbd "e") 'silver-brain-concept-open-content)
     (define-key map (kbd "d") 'silver-brain-delete-this-concept)
-    (define-key map (kbd "g") 'silver-brain-concept-refresh)
     map))
 
 (define-derived-mode silver-brain-concept-mode fundamental-mode "SB-Concept"
@@ -38,7 +37,6 @@
     (pop-to-buffer-same-window buffer)))
 
 (defun silver-brain-concept-refresh ()
-  (interactive)
   (with-current-buffer (silver-brain--concept-get-buffer-name silver-brain-current-concept)
     (silver-brain--concept-prepare-buffer (silver-brain-concept-uuid silver-brain-current-concept))))
 
@@ -51,6 +49,7 @@
       (silver-brain--with-widget-buffer (silver-brain--concept-get-buffer-name concept)
         (silver-brain-concept-mode)
         (setq silver-brain-current-concept concept)
+        (setq silver-brain-refresh-function 'silver-brain-concept-refresh)
         (silver-brain--concept-insert-widgets concept))
       (get-buffer (silver-brain--concept-get-buffer-name concept)))))
 

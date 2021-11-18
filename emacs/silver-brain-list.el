@@ -19,7 +19,6 @@
   (let ((map (make-composed-keymap (list (make-sparse-keymap)
                                          widget-keymap))))
     (set-keymap-parent map silver-brain-common-keymap)
-    (define-key map (kbd "g") 'silver-brain-list-refresh)
     map)
   "The keymap used for Silver Brain List mode.")
 
@@ -37,7 +36,6 @@
 
 (defun silver-brain-list-refresh ()
   "Refresh Silver Brain List buffer."
-  (interactive)
   (if-let ((buffer (get-buffer silver-brain-list-buffer-name)))
       (with-current-buffer buffer
         (silver-brain--list-prepare-buffer silver-brain-list-search-string))))
@@ -49,6 +47,7 @@ using given SEARCH-STRING."
     (silver-brain--with-widget-buffer silver-brain-list-buffer-name
       (silver-brain-list-mode)
       (setq silver-brain-list-search-string search-string)
+      (setq silver-brain-refresh-function 'silver-brain-list-refresh)
       (silver-brain--list-create-widgets concept-list))
     (with-current-buffer silver-brain-list-buffer-name
       (goto-char (point-min))

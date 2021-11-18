@@ -47,6 +47,9 @@ mode used to open it."
 
 (defvar silver-brain-after-concept-delete-hook '())
 
+(defvar-local silver-brain-refresh-function nil)
+(put 'silver-brain-refresh-function 'permanent-local t)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Faces                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -74,8 +77,8 @@ mode used to open it."
   :group 'silver-brain)
 
 (defface silver-brain-concept-subtitle '((t :underline t
-                                            :height 1.5
-                                            :weight bold))
+                                :height 1.5
+                                :weight bold))
   "Face used for subtitle in concept buffer."
   :group 'silver-brain)
 
