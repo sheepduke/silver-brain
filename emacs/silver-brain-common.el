@@ -46,7 +46,7 @@
 (defun silver-brain--get-textfield-length (length)
   "Return the width of text field widget. LENGTH is the extra
 length to be removed."
-  (max 8 (- (window-width) 10 length)))
+  (max 8 (- (min 80 (window-width)) 10 length)))
 
 (defun silver-brain--time-to-string (time)
   "Convert given TIME to string. TIME is a timestamp."
