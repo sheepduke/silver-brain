@@ -85,15 +85,9 @@
                             (string= "Microsoft" (name _1))))
                    concepts)))
     (let ((concepts (concept-map.store:search-concept-by-string '("soft" "ware"))))
-      (is (= 3 (length concepts)))
+      (is (= 1 (length concepts)))
       (is (find-if (op (and (string= "1" (uuid _1))
                             (string= "Software" (name _1))))
-                   concepts))
-      (is (find-if (op (and (string= "2" (uuid _1))
-                            (string= "Middleware" (name _1))))
-                   concepts))
-      (is (find-if (op (and (string= "3" (uuid _1))
-                            (string= "Microsoft" (name _1))))
                    concepts)))))
 
 (test create-concept
