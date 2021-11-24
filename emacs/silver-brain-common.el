@@ -8,6 +8,7 @@
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "g") 'silver-brain-refresh)
+    (define-key map (kbd "j") 'silver-brain-widget-jump)
     (define-key map (kbd "n") 'silver-brain-new-concept)
     (define-key map (kbd "s") 'silver-brain-open)
     (define-key map (kbd "q") 'quit-window)
@@ -57,6 +58,28 @@ length to be removed."
 (defun silver-brain--time-to-string (time)
   "Convert given TIME to string. TIME is a timestamp."
   (format-time-string silver-brain-time-format time))
+
+(defun silver-brain--get-widgets ()
+  "Get a list of points of widgets."
+  (let (widget-points)
+    (save-excursion
+      (goto-char (point-min))
+      (when (widget-at)
+        (push (point) widget-points))
+      (widget-forward 1)
+
+      (while (and (widget-at)
+                  (not (member (point) widget-points)))
+        (push (point) widget-points)
+        (widget-forward 1)))
+    (nreverse widget-points)))
+
+(defun silver-brain-widget-jump ()
+  "Jump to the widgets."
+  (interactive)
+  (avy-process (mapcar (lambda (point)
+                         (cons point (selected-window)))
+                       (silver-brain--get-widgets))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Buffer Style                         ;;;;
