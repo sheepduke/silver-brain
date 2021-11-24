@@ -182,7 +182,7 @@ inbound or outbound links are wanted."
     (silver-brain--api-send-request
      (concat "concept/" (silver-brain-concept-uuid concept))
      :method :patch
-     :data (json-encode `((:name . ,new-name))))
+     :data `((:name . ,new-name)))
     (setf (silver-brain-concept-name silver-brain-current-concept) new-name)
     (rename-buffer (silver-brain--concept-get-buffer-name concept)))
   (run-hooks 'silver-brain-after-concept-update-hook))
@@ -191,7 +191,7 @@ inbound or outbound links are wanted."
   (silver-brain--api-send-request
    (concat "concept/" (silver-brain-concept-uuid silver-brain-current-concept))
    :method :patch
-   :data (json-encode `((:content-type . ,content-type))))
+   :data  `((:content-type . ,content-type)))
   (setf (silver-brain-concept-content-type silver-brain-current-concept) content-type)
   (run-hooks 'silver-brain-after-concept-update-hook))
 
@@ -249,8 +249,8 @@ inbound or outbound links are wanted."
     (with-current-buffer (silver-brain--api-send-request
                           (concat "concept/" (silver-brain-concept-uuid concept))
                           :method :patch
-                          :data (json-encode `((:content . ,new-content)))))
-    (setf (cdr (assoc :content silver-brain-current-concept)) new-content)
+                          :data `((:content . ,new-content))))
+    (setf (silver-brain-concept-content silver-brain-current-concept) new-content)
     (run-hooks 'silver-brain-after-concept-update-hook))
 
   (set-buffer-modified-p nil))

@@ -91,10 +91,11 @@
                :reason "Database name not found in HTTP header"))))
 
 (defun get-request-body-as-json ()
-  (handler-case (let ((line (read-line (lack.request:request-raw-body
-                                        ningle:*request*))))
-                  (log:debug "JSON string: ~a" line)
-                  (jsown:parse line))
+  (handler-case (let ((request-body (flexi-streams:octets-to-string
+                                     (lack.request:request-content ningle:*request*)
+                                     :external-format :utf-8)))
+                  (log:debug "Request body: ~a" request-body)
+                  (jsown:parse request-body))
     (error () (error 'bad-request-error))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

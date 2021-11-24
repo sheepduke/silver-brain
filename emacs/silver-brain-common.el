@@ -93,7 +93,7 @@ length to be removed."
                               (:post "POST")
                               (:patch "PATCH")
                               (:delete "DELETE")))
-        (url-request-data data))
+        (url-request-data (and data (encode-coding-string (json-encode data) 'utf-8))))
     (let ((buffer (url-retrieve-synchronously (format "http://localhost:%d/api/%s"
                                                       silver-brain-server-port
                                                       uri))))
@@ -194,9 +194,8 @@ of new concept. Otherwise, it prompts the user to input one."
     (with-current-buffer (silver-brain--api-send-request
                           "concept"
                           :method :post
-                          :data (json-encode
-                                 `((:name . ,name)
-                                   (:content-type . ,silver-brain-default-content-type))))
+                          :data `((:name . ,name)
+                                  (:content-type . ,silver-brain-default-content-type)))
       (setq uuid (silver-brain--api-body-string)))
     (run-hooks 'silver-brain-after-concept-create-hook)
     (silver-brain-concept-show uuid)))
@@ -252,10 +251,9 @@ one. PROMPT is the prompt for search string."
   "Create a new link from SOURCE to TARGET with RELATION as the edge."
   (silver-brain--api-send-request "concept-link"
                       :method :post
-                      :data (json-encode-list
-                             `((("source" . ,source)
-                                ("relation" . ,relation)
-                                ("target" . ,target)))))
+                      :data `((("source" . ,source)
+                               ("relation" . ,relation)
+                               ("target" . ,target))))
   (run-hooks 'silver-brain-after-concept-update-hook))
 
 (provide 'silver-brain-common)
