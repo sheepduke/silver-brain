@@ -183,6 +183,14 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (make-silver-brain-concept-summary :uuid (alist-get :uuid alist)
                                      :name (alist-get :name alist)))
 
+(defun silver-brain-concept-summary-by-uuid-< (a b)
+  (string< (silver-brain-concept-summary-uuid a)
+           (silver-brain-concept-summary-uuid b)))
+
+(defun silver-brain-concept-summary-by-name-< (a b)
+  (string< (silver-brain-concept-summary-name a)
+           (silver-brain-concept-summary-name b)))
+
 (cl-defstruct silver-brain-concept-link source relation target)
 
 (defun silver-brain-concept-link-from-alist (alist)
@@ -251,13 +259,8 @@ concept-summary in sorted order."
   (with-current-buffer (silver-brain--api-send-request
                         (format "concept?search=%s" search-string))
     (thread-first (mapcar #'silver-brain-concept-summary-from-alist (silver-brain--api-read-json))
-      (sort (lambda (s1 s2)
-              (string< (silver-brain-concept-summary-uuid s1)
-                       (silver-brain-concept-summary-uuid s2))))
-      (sort (lambda (s1 s2)
-              (string< (silver-brain-concept-summary-name s1)
-                       (silver-brain-concept-summary-name s2)))))))
-
+      (sort #'silver-brain-concept-summary-by-uuid-<)
+      (sort #'silver-brain-concept-summary-by-name-<))))
 
 (cl-defun silver-brain--search-concept-and-select (&optional (prompt "Search string: "))
   "Ask for a search string, search for concepts and select
