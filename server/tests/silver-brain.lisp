@@ -17,7 +17,7 @@
 
 (defun make-random-database-name ()
   (format nil
-          "~a.sqlite"
+          "~a"
           (uuid:make-v4-uuid)))
 
 (defmacro with-random-database-file (&body body)
@@ -30,5 +30,5 @@
 
 (defun delete-database-file (database-name)
   (uiop:delete-file-if-exists
-   (merge-pathnames database-name
+   (merge-pathnames (format nil "~a.sqlite" database-name)
                     (silver-brain.config:data-dir))))

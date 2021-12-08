@@ -21,5 +21,6 @@
   (data-dir (truename "~/temp/silver-brain/")))
 
 (chameleon:defprofile :test
-  (data-dir (ensure-directories-exist (merge-pathnames "silver-brain/"
-                                                       (uiop:temporary-directory)))))
+  (data-dir (lambda ()
+              (ensure-directories-exist (merge-pathnames "silver-brain/"
+                                                         (uiop:temporary-directory))))))
