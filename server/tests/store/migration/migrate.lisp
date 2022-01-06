@@ -20,16 +20,16 @@
        (string= target (store:target link))))
 
 (test run-migrations-empty-database
-  (setf (silver-brain.config:active-profile) :test)
-  (with-random-database-file
-    (store:with-current-database
-      (migration:run-migrations))
+  (let ((silver-brain.config:*profile* :test))
+    (with-random-database-file
+      (store:with-current-database
+        (migration:run-migrations))
 
-    (store:with-current-database
-      (let ((concepts (mito:select-dao 'store:concept)))
-        (is (= 2 (length concepts)))
-        (is (find-if (op (string= "Contains" (store:name _))) concepts))
-        (is (find-if (op (string= "Relates" (store:name _))) concepts))))))
+      (store:with-current-database
+        (let ((concepts (mito:select-dao 'store:concept)))
+          (is (= 2 (length concepts)))
+          (is (find-if (op (string= "Contains" (store:name _))) concepts))
+          (is (find-if (op (string= "Relates" (store:name _))) concepts)))))))
 
 (mito:deftable legacy-concept ()
   ((uuid :col-type :text)
@@ -44,18 +44,18 @@
   (:table-name "concept_relation"))
 
 (test run-migrations-v1-database
-  (setf (silver-brain.config:active-profile) :test)
-  (let ((concept-daos '(("0" . "Root")
-                        ("11" . "Level 1-1")
-                        ("12" . "Level 1-2")
-                        ("21" . "Level 2-1")
-                        ("22" . "Level 2-2")))
-        (concept-relation-daos '(("0" . "11")
-                                 ("0" . "12")
-                                 ("11" . "21")
-                                 ("11" . "22")
-                                 ("12" . "22")
-                                 ("22" . "12"))))
+  (let* ((silver-brain.config:*profile* :test)
+         (concept-daos '(("0" . "Root")
+                         ("11" . "Level 1-1")
+                         ("12" . "Level 1-2")
+                         ("21" . "Level 2-1")
+                         ("22" . "Level 2-2")))
+         (concept-relation-daos '(("0" . "11")
+                                  ("0" . "12")
+                                  ("11" . "21")
+                                  ("11" . "22")
+                                  ("12" . "22")
+                                  ("22" . "12"))))
     (with-random-database-file
       (store:with-current-database
         (mito:ensure-table-exists 'legacy-concept)

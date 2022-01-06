@@ -230,7 +230,7 @@
 
 ;; (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
 
-;; (progn (setf (silver-brain.config:active-profile) :dev)
+;; (progn (setf silver-brain.config:*profile* :dev)
 ;;        (silver-brain:start))
 
 ;; (dex:get "http://localhost:5001/api/concept/x5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))

@@ -1,7 +1,6 @@
 (defpackage silver-brain.config
   (:use #:cl)
-  (:export #:profiles
-           #:active-profile
+  (:export #:*profile*
            #:server-port
            #:server-print-access-log-p
            #:data-dir))
@@ -23,4 +22,5 @@
 (chameleon:defprofile :test
   (data-dir (lambda ()
               (ensure-directories-exist (merge-pathnames "silver-brain/"
-                                                         (uiop:temporary-directory))))))
+                                                         (uiop:temporary-directory)))))
+  (server-port (chameleon:eval-once (find-port:find-port))))

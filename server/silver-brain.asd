@@ -21,7 +21,7 @@
                ;; #:str #:trivial-types
                ;; #:uuid #:unix-opts
                ;; Logging.
-               ;; #:log4cl
+               #:log4cl
                ;; Web related.
                ;; #:chameleon #:find-port #:cl-json
                #:ningle #:clack ;; #:flexi-streams

@@ -19,8 +19,6 @@
 
 (def-suite* silver-brain.integration :in silver-brain)
 
-(defparameter *server-port* (find-port:find-port))
-
 (defparameter *database-name* (make-random-database-name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -28,9 +26,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun make-url (uri)
-  (format nil "http://localhost:~a/api/~a"
-          (silver-brain.config:server-port)
-          uri))
+  (let ((url (format nil "http://localhost:~a/api/~a"
+                     (silver-brain.config:server-port)
+                     uri)))
+    (log:trace "URL: ~a" url)
+    url))
 
 (defun get (uri)
   (dex:get (make-url uri)
@@ -56,13 +56,6 @@
   (dex:delete (make-url uri)
               :headers `(("Database" . ,*database-name*))))
 
-(defun setup ()
-  (setf (silver-brain.config:active-profile) :test)
-  (setf (silver-brain.config:server-port) (find-port:find-port))
-  (store:with-database (*database-name* :auto-create t :auto-migrate t))
-  (silver-brain:start)
-  (wait-for-server nil))
-
 (defun wait-for-server (stop-p)
   (loop for i from 1 to 10
         for can-stop-p = (handler-case (get "")
@@ -72,17 +65,20 @@
         until can-stop-p
         finally (return (<= i 100))))
 
-(defmacro with-teardown (&body body)
-  `(unwind-protect (progn ,@body)
+(defmacro with-test-context (&body body)
+  `(let ((silver-brain.config:*profile* :test))
+     (store:with-database (*database-name* :auto-create t :auto-migrate t))
      (silver-brain:stop)
-     (delete-database-file *database-name*)
-     (wait-for-server t)))
+     (wait-for-server t)
+     (silver-brain:start)
+     (wait-for-server nil)
+     (unwind-protect (progn ,@body)
+       (silver-brain:stop)
+       (delete-database-file *database-name*)
+       (wait-for-server t))))
 
 (test integration
-  ;; Setup.
-  (setup)
-
-  (with-teardown
+  (with-test-context
     (let (uuid-new uuid-software uuid-middleware uuid-includes)
 
       ;; Database.
@@ -192,11 +188,3 @@
           (is (null links)))))))
 
 ;; (setf 5am:*run-test-when-defined* t)
-
-;; (setf (silver-brain.config:active-profile) :dev)
-;; (silver-brain:start)
-;; (silver-brain:stop)
-
-;; (let ((store:*database* "a.sqlite"))
-;;   (store:with-current-database
-;;     (silver-brain.store.migration:run-migrations)))

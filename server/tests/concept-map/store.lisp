@@ -38,7 +38,6 @@
                        :name "Relates")))
 
 (defun setup ()
-  (setf (silver-brain.config:active-profile) :test)
   (store:with-current-database
     (mito:ensure-table-exists 'store:concept)
     (mito:ensure-table-exists 'store:concept-link)
@@ -48,9 +47,15 @@
                                     :relation "4"
                                     :target "2"))))
 
+(defmacro with-test-context (&body body)
+  `(let ((silver-brain.config:*profile* :test))
+     (with-random-database-file
+       (setup)
+       ,@body)))
+
 (test create-database
-  (setf (silver-brain.config:active-profile) :test)
-  (let ((database-name (make-random-database-name)))
+  (let* ((silver-brain.config:*profile* :test)
+         (database-name (make-random-database-name)))
     (concept-map.store:create-database database-name)
     (store:with-database (database-name)
       (is (= 2 (length (mito:select-dao 'store:concept)))))
@@ -58,8 +63,7 @@
 
 (test get-concept-by-uuid
   (let ((time1 (local-time:now)))
-    (with-random-database-file
-      (setup)
+    (with-test-context
       (is (null (concept-map.store:get-concept-by-uuid "0")))
       (let* ((concept (concept-map.store:get-concept-by-uuid "1"))
              (time2 (local-time:now)))
@@ -73,8 +77,7 @@
                                     time2))))))
 
 (test search-concept-by-string
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (is (null (concept-map.store:search-concept-by-string '("wrong"))))
     (let ((concepts (concept-map.store:search-concept-by-string '("soft"))))
       (is (= 2 (length concepts)))
@@ -91,8 +94,7 @@
                    concepts)))))
 
 (test create-concept
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (let ((uuid (concept-map.store:create-concept
                  :name "New"
                  :content "Content"
@@ -102,30 +104,27 @@
         (is (mito:find-dao 'store:concept :uuid uuid))))))
 
 (test update-concept
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (with-mocks ()
       (answer (cache:invalidate-if-exists "1"))
       (concept-map.store:update-concept "1" :name "New")
-      
+
       (store:with-current-database
         (is (= 4 (mito:count-dao 'store:concept)))
         (is (string= "New" (store:name (mito:find-dao 'store:concept :uuid "1")))))
 
-      (is (= 1 (length (invocations 'cache:invalidate-if-exists)))) 
+      (is (= 1 (length (invocations 'cache:invalidate-if-exists))))
 
       (signals error (concept-map.store:update-concept "5"
                                                        :name "New2")))))
 
 (test used-as-link-p
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (is (concept-map.store:used-as-link-p "4"))
     (is (not (concept-map.store:used-as-link-p "1")))))
 
 (test delete-concept
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (with-mocks ()
       (answer (cache:invalidate-if-exists "1"))
       (concept-map.store:delete-concept "1")
@@ -134,8 +133,7 @@
         (is (= 0 (mito:count-dao 'store:concept-link))))
       (is (= 1 (length (invocations 'cache:invalidate-if-exists))))))
 
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (with-mocks ()
       (answer (cache:invalidate-if-exists "4"))
       (concept-map.store:delete-concept "4")
@@ -145,8 +143,7 @@
       (is (= 1 (length (invocations 'cache:invalidate-if-exists)))))))
 
 (test get-links
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (labels ((check-link (link)
                (is (string= "1" (uuid (source link))))
                (is (string= "Software" (name (source link))))
@@ -168,8 +165,7 @@
         (is (null (concept-map.store:get-links :source "3")))))))
 
 (test create-link
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (concept-map.store:create-link "1" "4" "2")
     (store:with-current-database
       (is (= 1 (mito:count-dao 'store:concept-link))))
@@ -178,8 +174,7 @@
       (is (= 2 (mito:count-dao 'store:concept-link))))))
 
 (test delete-link
-  (with-random-database-file
-    (setup)
+  (with-test-context
     (store:with-current-database
       (mito:insert-dao (make-instance 'store:concept-link
                                       :source "1"
