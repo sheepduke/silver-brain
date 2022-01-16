@@ -22,8 +22,9 @@
                ;; #:uuid #:unix-opts
                ;; Logging.
                #:log4cl
+               #:find-port
                ;; Web related.
-               ;; #:chameleon #:find-port #:cl-json
+               ;; #:chameleon  #:cl-json
                #:ningle #:clack ;; #:flexi-streams
                )
   :serial t

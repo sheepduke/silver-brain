@@ -17,7 +17,7 @@
   nil)
 
 (defun start-dev ()
-  (setf config:*profile* :dev)
+  (config:switch-profile :dev)
   (migrate-all-databases)
   (silver-brain.concept-map:start)
   (silver-brain.web:start)

@@ -1,6 +1,7 @@
 (defpackage silver-brain.config
   (:use #:cl)
   (:export #:*profile*
+           #:switch-profile
            #:server-port
            #:server-print-access-log-p
            #:data-dir))
