@@ -28,7 +28,8 @@
 (mito:deftable concept-link ()
   ((source :col-type :text)
    (relation :col-type :text)
-   (target :col-type :text))
+   (target :col-type :text)
+   (directionalp :col-type :boolean))
   (:keys source relation target))
 
 (defun up ()
@@ -63,27 +64,18 @@
 
     ;; Migrate relation table.
     (dolist (relation (mito:select-dao 'concept-relation))
-      (with-slots (concept-relation source target) relation
+      (with-slots (source target) relation
         (with-accessors ((created-at object-created-at)
                          (updated-at object-updated-at))
             relation
-          (let* ((bidirectional-linked-p (bidirectional-linked-p source target))
-                 (uuid (if bidirectional-linked-p
-                           relate-relation-uuid
-                           parent-relation-uuid)))
-            (insert-concept-link-if-not-exists source uuid target
-                                               created-at updated-at)
+          (if (link-directional-p source target)
+              (ensure-linked source parent-relation-uuid target
+                             created-at updated-at)
+              (ensure-undirectional-linked source relate-relation-uuid target
+                                           created-at updated-at)))))))
 
-            (when bidirectional-linked-p
-              (insert-concept-link-if-not-exists target uuid source
-                                                 created-at updated-at))))))))
-
-(defun bidirectional-linked-p (source target)
-  (mito:select-dao 'concept-relation
-    (sxql:where (:and (:= :source target)
-                      (:= :target source)))))
-
-(defun insert-concept-link-if-not-exists (source relation target created-at updated-at)
+(defun ensure-linked (source relation target created-at updated-at
+                      &optional (directionalp t))
   (unless (mito:find-dao 'concept-link
                          :source source
                          :relation relation
@@ -93,7 +85,19 @@
                                     :relation relation
                                     :target target
                                     :created-at created-at
-                                    :updated-at updated-at))))
+                                    :updated-at updated-at
+                                    :directionalp directionalp))))
+
+(defun ensure-undirectional-linked (source relation target created-at updated-at)
+  (let* ((swap-p (string> source target))
+         (fixed-source (if swap-p target source))
+         (fixed-target (if swap-p source target)))
+    (ensure-linked fixed-source relation fixed-target created-at updated-at nil)))
+
+(defun link-directional-p (source target)
+  (null (mito:select-dao 'concept-relation
+          (sxql:where (:and (:= :source target)
+                            (:= :target source))))))
 
 (defparameter migration
   (make-instance 'mitogrator:migration

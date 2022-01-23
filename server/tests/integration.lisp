@@ -114,7 +114,8 @@
       (post "concept-link" (list (jsown:new-js
                                    ("source" uuid-software)
                                    ("relation" uuid-includes)
-                                   ("target" uuid-middleware))))
+                                   ("target" uuid-middleware)
+                                   ("directional" t))))
 
       ;; Get links.
       (let ((json (first (jsown:parse
@@ -153,15 +154,18 @@
         (post "concept-link" (list (jsown:new-js
                                      ("source" uuid)
                                      ("relation" uuid-includes)
-                                     ("target" uuid-software))
+                                     ("target" uuid-software)
+                                     ("directional" t))
                                    (jsown:new-js
                                      ("source" uuid-software)
                                      ("relation" uuid-includes)
-                                     ("target" uuid))
+                                     ("target" uuid)
+                                     ("directional" t))
                                    (jsown:new-js
                                      ("source" uuid)
                                      ("relation" uuid-includes)
-                                     ("target" uuid-middleware))))
+                                     ("target" uuid-middleware)
+                                     ("directional" t))))
 
         ;; Get links.
         (let* ((url (format nil "concept-link?source=~a" uuid))

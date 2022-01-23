@@ -125,19 +125,18 @@
       (mapcar (op (make-concept-link-from-dao _))
               (get-links* source relation target)))))
 
-(-> create-link (string string string) t)
-(defun create-link (source relation target)
+(-> create-link (string string string boolean) t)
+(defun create-link (source relation target directionalp)
   (store:with-current-database
-    (store:with-transaction
-        (unless (> (store:count 'store:concept-link
-                                :source source
-                                :relation relation
-                                :target target)
-                   0)
-          (store:save (make-instance 'store:concept-link
-                                     :source source
-                                     :relation relation
-                                     :target target))))))
+    (let* ((swap-p (and (not directionalp)
+                        (string> source target)))
+           (fixed-source (if swap-p target source))
+           (fixed-target (if swap-p source target)))
+      (store:save (make-instance 'store:concept-link
+                                 :source fixed-source
+                                 :relation relation
+                                 :target fixed-target
+                                 :directionalp directionalp)))))
 
 (-> delete-links (&key (:source string) (:relation string) (:target string)) t)
 (defun delete-links (&key source relation target)

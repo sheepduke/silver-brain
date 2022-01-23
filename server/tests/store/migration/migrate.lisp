@@ -102,10 +102,9 @@
           (is (not (null contains)))
           (is (not (null relates)))
           ;; Links are inserted.
-          (is (= 6 (length links)))
+          (is (= 5 (length links)))
           (is (find-if (op (check-concept-link _ "0" contains-uuid "11")) links))
           (is (find-if (op (check-concept-link _ "0" contains-uuid "12")) links))
           (is (find-if (op (check-concept-link _ "11" contains-uuid "21")) links))
           (is (find-if (op (check-concept-link _ "11" contains-uuid "22")) links))
-          (is (find-if (op (check-concept-link _ "12" relates-uuid "22")) links))
-          (is (find-if (op (check-concept-link _ "22" relates-uuid "12")) links)))))))
+          (is (find-if (op (check-concept-link _ "12" relates-uuid "22")) links)))))))

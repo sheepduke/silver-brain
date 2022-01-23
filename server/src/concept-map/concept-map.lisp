@@ -86,9 +86,9 @@
                         :target target))
       (make-bad-request-response "None of source, target or relation is provided")))
 
-(-> create-link (string string string) service-response)
-(defun create-link (source relation target)
-  (store:create-link source relation target)
+(-> create-link (string string string boolean) service-response)
+(defun create-link (source relation target directionalp)
+  (store:create-link source relation target directionalp)
   (make-ok-response))
 
 (-> delete-links

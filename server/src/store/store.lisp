@@ -152,5 +152,7 @@
    (relation :col-type :text
              :accessor relation)
    (target :col-type :text
-           :accessor target))
+           :accessor target)
+   (directionalp :col-type :boolean
+                 :accessor directionalp))
   (:keys source relation target))

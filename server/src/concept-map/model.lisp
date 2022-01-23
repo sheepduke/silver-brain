@@ -65,7 +65,8 @@
 (defclass concept-link ()
   ((source :type concept-summary :accessor source :initarg :source)
    (relation :type concept-summary :accessor relation :initarg :relation)
-   (target :type concept-summary :accessor target :initarg :target)))
+   (target :type concept-summary :accessor target :initarg :target)
+   (directionalp :type boolean :accessor directional :initarg :directionalp)))
 
 (defun every-concept-link-p (list)
   (every (op (typep _ 'concept-link)) list))
