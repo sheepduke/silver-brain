@@ -64,7 +64,10 @@
 (defvar *database* nil)
 
 (define-condition database-not-found-error (error)
-  ((database-name :type string :accessor database-name :initarg :database-name)))
+  ((database-name :type string :accessor database-name :initarg :database-name))
+  (:report (lambda (err stream)
+             (format stream "Database '~a' cannot be found"
+                     (database-name err)))))
 
 (defun get-database-path (database-name)
   (merge-pathnames database-name (config:data-dir)))
@@ -106,7 +109,7 @@
        (remove-if-not (op (string= "sqlite" (pathname-type _))))
        (mapcar (op (pathname-name _)))))
 
-(-> get (symbol string) mito:dao-class)
+(-> get (symbol string) (or null mito:dao-class))
 (defun get (class uuid)
   (mito:find-dao class :uuid uuid))
 
@@ -147,7 +150,10 @@
   (:keys name))
 
 (mito:deftable concept-link ()
-  ((source :col-type :text
+  ((uuid :col-type :text
+         :accessor uuid
+         :primary-key t)
+   (source :col-type :text
            :accessor source)
    (relation :col-type :text
              :accessor relation)

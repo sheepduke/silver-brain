@@ -16,17 +16,20 @@
 (def-suite* silver-brain)
 
 (defun make-random-database-name ()
-  (format nil
-          "~a"
-          (uuid:make-v4-uuid)))
+  (format nil "~a" (uuid:make-v4-uuid)))
 
-(defmacro with-random-database-file (&body body)
+(defmacro with-random-database-file ((&key (connectp t)) &body body)
   (with-gensyms (g-database-name)
     `(let* ((,g-database-name (make-random-database-name))
             (store:*database* ,g-database-name))
-       (store:with-database (,g-database-name :auto-create t))
-       (unwind-protect (progn ,@body)
-         (delete-database-file ,g-database-name)))))
+       ,(if connectp
+            `(store:with-database (,g-database-name :auto-create t)
+               (unwind-protect (progn ,@body)
+                 (delete-database-file ,g-database-name)))
+            `(progn
+               (store:with-database (,g-database-name :auto-create t))
+               (unwind-protect (progn ,@body)
+                 (delete-database-file ,g-database-name)))))))
 
 (defun delete-database-file (database-name)
   (uiop:delete-file-if-exists

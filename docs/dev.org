@@ -1,0 +1,115 @@
+* API
+
+Base URL is ~/api~.
+
+** Data Model
+
+*** concept-summay
+
+#+BEGIN_SRC json
+  {
+    "uuid": "string",
+    "name": "string"
+  }
+#+END_SRC
+
+*** concept
+
+#+BEGIN_SRC json
+  {
+    "uuid": "string",
+    "name": "string",
+    "content-type": "string",
+    "content": "string",
+    "links": [
+      "uuid": "string",
+      "source": "string",
+      "relation": "string",
+      "target": "string",
+      "directional": true
+    ]
+  }
+#+END_SRC
+
+*** concept-link
+
+#+BEGIN_SRC json
+  {
+    "uuid": "string",
+    "source": "string",
+    "relation": "string",
+    "target": "string",
+    "directional": true
+  }
+#+END_SRC
+
+** Endpoint
+
+*** GET /concepts?search={query}
+
+Search concepts by given query string.
+
+Return a list of concept-summary.
+
+*** GET /concepts/{uuid}
+
+Get specific concept.
+
+#+BEGIN_SRC json
+  {
+    "uuid": "string",
+    "name": "string",
+    "content-type": "string",
+    "content": "string",
+    "links": [
+      "uuid": "string",
+      "source": "string",
+      "relation": "string",
+      "target": "string",
+      "directional": true
+    ]
+  }
+#+END_SRC
+
+*** POST /concepts
+
+Create a new concept.
+
+#+BEGIN_SRC json
+  {
+    "name": "string",
+    "content-type": "string",
+    "content": "string"
+  }
+#+END_SRC
+
+Return ~uuid~ of the newly created concept.
+
+*** PATCH /concepts/{uuid}
+
+Partially update specific concept.
+
+~name~, ~content-type~ or ~content~ can be modified using this API.
+
+*** DELETE /concepts/{uuid}
+
+Delete specific concept and all the related resources.
+
+*** POST /concept-links
+
+Create a new link.
+
+#+BEGIN_SRC json
+  {
+    "source": "string",
+    "relation": "string",
+    "target": "string",
+    "directional": false
+  }
+#+END_SRC
+
+Return ~uuid~ of the newly created link.
+
+*** DELETE /concept-links/{uuid}
+
+Delete a specific link.

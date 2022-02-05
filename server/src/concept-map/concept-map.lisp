@@ -2,7 +2,8 @@
   (:use #:cl
         #:silver-brain.util
         #:silver-brain.concept-map.model)
-  (:local-nicknames (#:store #:silver-brain.concept-map.store))
+  (:local-nicknames (#:cm-store #:silver-brain.concept-map.store)
+                    (#:store #:silver-brain.store))
   (:import-from #:alexandria
                 #:if-let)
   (:import-from #:serapeum
@@ -21,7 +22,8 @@
            #:delete-concept
            #:get-links
            #:create-link
-           #:delete-links))
+           #:delete-links
+           #:delete-link))
 
 (in-package silver-brain.concept-map)
 
@@ -31,83 +33,77 @@
 (defun stop ()
   (silver-brain.concept-map.cache:stop))
 
-(-> create-database (string) service-response)
+(-> create-database (string) t)
 (defun create-database (name)
-  (store:create-database name)
-  (make-ok-response))
+  (cm-store:create-database name))
 
-(-> get-concept (string) service-response)
+(-> get-concept (string) concept)
 (defun get-concept (uuid)
-  (if (not (is-uuid uuid))
-      (make-bad-request-response "Invalid UUID")
-      (if-let (concept (store:get-concept-by-uuid uuid))
-        (make-ok-response concept)
-        (make-not-found-response))))
+  (store:with-current-database
+    (store:with-transaction
+        (validate-concept-uuid uuid)
+      (cm-store:get-concept-by-uuid uuid))))
 
-(-> search-concept (string) service-response)
+;; TODO: use properties argument instead of concept-summary
+(-> search-concept (string) (values symbol concept-summary-list))
 (defun search-concept (search)
-  (make-ok-response 
-   (store:search-concept-by-string (~>> (str:split " " search)
-                                        (remove-if #'str:emptyp)))))
+  (store:with-current-database
+    (cm-store:search-concept-by-string (~>> (str:split " " search)
+                                            (remove-if #'str:emptyp)))))
 
 (-> create-concept (&key (:name string)
                          (:content-type string)
                          (:content string))
   string)
 (defun create-concept (&key name content-type content)
-  (store:create-concept :name name
-                        :content-type content-type
-                        :content content))
+  (store:with-current-database
+    (cm-store:create-concept :name name
+                             :content-type content-type
+                             :content content)))
 
+(-> update-concept (string &key (:name string)
+                           (:content-type string)
+                           (:content string))
+  t)
 (defun update-concept (uuid &key name content-type content)
-  (match (get-concept uuid)
-    ((list :ok _)
-     (store:update-concept uuid
-                           :name name
-                           :content-type content-type
-                           :content content))
-    (else else)))
+  (store:with-current-database
+    (store:with-transaction
+        (validate-concept-uuid uuid)
+      (cm-store:update-concept uuid
+                               :name name
+                               :content-type content-type
+                               :content content))))
 
-(-> delete-concept (string) service-response)
+(-> delete-concept (string) t)
 (defun delete-concept (uuid)
-  (if (store:used-as-link-p uuid)
-      '(:error :conflict "Concept used as link")
-      (progn (store:delete-concept uuid)
-             '(:ok))))
+  (store:with-current-database
+    (store:with-transaction
+        (validate-concept-uuid uuid)
+      (cm-store:delete-concept uuid))))
 
-(-> get-links
-  (&key (:source string) (:relation string) (:target string))
-  service-response)
-(defun get-links (&key source relation target)
-  (if (or source relation target)
-      (make-ok-response
-       (store:get-links :source source
-                        :relation relation
-                        :target target))
-      (make-bad-request-response "None of source, target or relation is provided")))
-
-(-> create-link (string string string boolean) service-response)
+(-> create-link (string string string boolean) t)
 (defun create-link (source relation target directionalp)
-  (store:create-link source relation target directionalp)
-  (make-ok-response))
+  (store:with-current-database
+    (cm-store:create-link source relation target directionalp)))
 
-(-> delete-links
-  (&key (:source string) (:relation string) (:target string))
-  service-response)
-(defun delete-links (&key source relation target)
-  (if (or source relation target)
-      (make-ok-response
-       (store:delete-links :source source
-                           :relation relation
-                           :target target))
-      (make-bad-request-response "None of source, target or relation is provided")))
+(-> delete-link (string) t)
+(defun delete-link (uuid)
+  (store:with-current-database
+    (store:with-transaction
+        (validate-link-uuid uuid)
+      (cm-store:delete-link uuid))))
 
-;; (setf (silver-brain.config:active-profile) :dev)
-;; (silver-brain:start)
-;; (silver-brain:stop)
+(-> validate-concept-uuid (string) (values))
+(defun validate-concept-uuid (uuid)
+  (unless (is-uuid uuid)
+    (error 'bad-request-error :reason (format nil "Invalid UUID '~a'" uuid)))
+  (unless (cm-store:concept-uuid-exists-p uuid)
+    (error 'not-found-error :reason (format nil "Concept UUID '~a'" uuid)))
+  (values))
 
-;; (dex:get (format nil "http://localhost:5001/api/concept/~a" "5BAAB06F-D70D-4405-8511-3032D12448B3") :headers '(("database" . "a.sqlite")))
-
-;; (dex:get (format nil "http://localhost:5001/api/concept/8FB1298A-D5B0-4B7E-9099-B6E2A77C84A5") :headers '(("database" . "a.sqlite")))
-
-;; (format t (dex:get (format nil "http://localhost:5001/api/concept-link?source=26BFE97F-903A-4113-93FD-273E82D97003") :headers '(("database" . "a.sqlite"))))
+(defun validate-link-uuid (uuid)
+  (unless (is-uuid uuid)
+    (error 'bad-request-error :reason (format nil "Invalid UUID '~a'" uuid)))
+  (unless (cm-store:link-uuid-exists-p uuid)
+    (error 'not-found-error :reason (format nil "Link UUID '~a'" uuid)))
+  (values))

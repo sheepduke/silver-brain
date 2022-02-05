@@ -2,15 +2,14 @@
   (:use #:cl)
   (:import-from #:serapeum
                 #:->
-                #:~>>
-                #:defsubst)
+                #:~>>)
   (:export #:to-json-object
            #:is-uuid
-           #:service-response
-           #:make-bad-request-response
-           #:make-not-found-response
-           #:make-ok-response
-           #:string-list))
+           #:string-list
+           #:make-uuid
+           #:client-error
+           #:not-found-error
+           #:bad-request-error))
 
 (in-package silver-brain.util)
 
@@ -23,6 +22,23 @@
 
 (deftype string-list ()
   `(and list (satisfies every-string-p)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                          Conditions                          ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-condition client-error (error)
+  ((reason :type string :accessor reason :initarg :reason)))
+
+(define-condition not-found-error (client-error) ()
+  (:report (lambda (err stream)
+             (format stream "Resource not found error: ~a"
+                     (reason err)))))
+
+(define-condition bad-request-error (client-error) ()
+  (:report (lambda (err stream)
+             (format stream "Bad request error: ~a"
+                     (reason err)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         JSON Methods                         ;;;;
@@ -54,20 +70,6 @@
 ;;;;                           Service                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(deftype service-response ()
-  'list)
-
-(defsubst make-ok-response (&optional (thing nil thing-p))
-  (if thing-p
-      (list :ok thing)
-      '(:ok)))
-
-(defsubst make-bad-request-response (&optional (reason nil))
-  (list :error :bad-request reason))
-
-(defsubst make-not-found-response ()
-  (list :error :not-found))
-
 (defparameter +uuid-scanner+
   (ppcre:create-scanner "^[A-Z0-9]{8}-([A-Z0-9]{4}-){3}[A-Z0-9]{12}$"))
 
@@ -77,3 +79,6 @@
   (trivia:match (multiple-value-list (ppcre:scan +uuid-scanner+ string))
     (nil nil)
     ((list* 0 36 _) t)))
+
+(defun make-uuid ()
+  (format nil "~a" (uuid:make-v4-uuid)))

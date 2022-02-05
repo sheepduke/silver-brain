@@ -6,10 +6,13 @@
                 #:->)
   (:import-from #:trivia
                 #:match)
+  (:import-from #:alexandria
+                #:when-let)
   (:export #:start
            #:stop
            #:get-concept-name
-           #:invalidate-if-exists))
+           #:invalidate-if-exists
+           #:update-if-exists))
 
 (in-package silver-brain.concept-map.cache)
 
@@ -39,6 +42,13 @@
                        (op (setf (gethash uuid _) name) _1))
      name)
     (_ nil)))
+
+(defun update-if-exists (uuid name)
+  (agt:agent-update *cache*
+                    (lambda (hash-table)
+                      (when (gethash uuid hash-table)
+                        (setf (gethash uuid hash-table) name))
+                      hash-table)))
 
 (defun invalidate-if-exists (uuid)
   "Invalidate the cache entry if exists."

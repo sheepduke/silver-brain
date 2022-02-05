@@ -1,5 +1,6 @@
 (defpackage silver-brain.web
-  (:use #:cl)
+  (:use #:cl
+        #:silver-brain.util)
   (:local-nicknames (#:config #:silver-brain.config)
                     (#:store #:silver-brain.store)
                     (#:concept-map #:silver-brain.concept-map))
@@ -9,7 +10,7 @@
                 #:make-keyword
                 #:with-gensyms)
   (:import-from #:trivia
-                #:match)
+                #:multiple-value-match)
   (:import-from #:serapeum
                 #:op
                 #:~>>)
@@ -21,11 +22,6 @@
 (defvar *router* (make-instance 'ningle:app))
 
 (defvar *server* nil)
-
-(define-condition client-error (error)
-  ((reason :type string :accessor reason :initarg :reason)))
-
-(define-condition bad-request-error (client-error) ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Server                            ;;;;
@@ -102,45 +98,25 @@
 ;;;;                      Request & Response                      ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun parse-service-response (response)
-  (match response
-    ((type string) response)
-    
-    ((list (and (type number) status)
-           (and (type string) response))
-     (list status nil (flex:string-to-octets response)))
-    
-    ((list :error :not-found)
-     (list 404 nil nil))
-    
-    ((list :error :bad-request reason)
-     (list 400 nil (flex:string-to-octets (format nil "~a" reason))))
-    
-    ((list :ok) "")
-    
-    ((list :ok obj) (jsown:to-json obj))))
-
-(defgeneric send-client-error-response (err))
-
-(defmethod send-client-error-response ((err client-error))
-  (list 400
-        nil
-        (flex:string-to-octets (reason err))))
-
-(defmethod send-client-error-response ((err store:database-not-found-error))
-  (list 400
-        nil
+(defun make-response (body &optional (status 200) headers)
+  (list status headers
         (flex:string-to-octets
-         (format nil "Database not found: ~a" (store:database-name err)))))
+         (if (stringp body)
+             body
+             (jsown:to-json (to-json-object body))))))
 
 (defmacro with-request-handler ((&key (require-database t))
                                 &body body)
   `(handler-case (let ((store:*database* ,(if require-database
                                               `(get-database-name)
                                               nil)))
-                   (parse-service-response (progn ,@body)))
-     (bad-request-error (err) (send-client-error-response err))
-     (store:database-not-found-error (err) (send-client-error-response err))))
+                   ,@body)
+     (not-found-error (err)
+       (make-response (format nil "~a" err) 404))
+     (bad-request-error (err)
+       (make-response (format nil "~a" err) 400))
+     (store:database-not-found-error (err)
+       (make-response (format nil "~a" err) 400))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Router                            ;;;;
@@ -156,23 +132,26 @@
            (with-request-handler (:require-database ,require-database)
              ,@body))))
 
-(define-route "/api/" _ () nil)
+(define-route "/api/" _ (:require-database nil)
+  nil)
 
-(define-route "/api" _ () nil)
+(define-route "/api" _ (:require-database nil)
+  nil)
 
-(define-route "/api/database" _ (:method :post :require-database nil)
+(define-route "/api/databases" _ (:method :post :require-database nil)
   (let* ((json (get-request-body-as-json))
          (name (jsown:val-safe json "name")))
-    (concept-map:create-database name)))
+    (concept-map:create-database name)
+    nil))
 
-(define-route "/api/database" _ (:require-database nil)
+(define-route "/api/databases" _ (:require-database nil)
   (jsown:to-json (store:list-databases)))
 
-(define-route "/api/concept/:uuid" params ()
+(define-route "/api/concepts/:uuid" params ()
   (with-path-vars (uuid) params
-    (concept-map:get-concept uuid)))
+    (make-response (concept-map:get-concept uuid))))
 
-(define-route "/api/concept" params (:method :post)
+(define-route "/api/concepts" params (:method :post)
   (let ((json (get-request-body-as-json)))
     (log:debug "Input JSON: ~a" json)
     (let ((uuid (concept-map:create-concept
@@ -181,7 +160,7 @@
                  :content (jsown:val-safe json "content"))))
       uuid)))
 
-(define-route "/api/concept/:uuid" params
+(define-route "/api/concepts/:uuid" params
     (:method :patch)
   (with-path-vars (uuid) params
     (let ((json (get-request-body-as-json)))
@@ -190,24 +169,22 @@
        uuid
        :name (jsown:val-safe json "name")
        :content-type (jsown:val-safe json "content-type")
-       :content (jsown:val-safe json "content")))))
+       :content (jsown:val-safe json "content"))))
+  nil)
 
-(define-route "/api/concept/:uuid" params
+(define-route "/api/concepts/:uuid" params
     (:method :delete)
   (with-path-vars (uuid) params
-    (concept-map:delete-concept uuid)))
+    (concept-map:delete-concept uuid))
+  nil)
 
-(define-route "/api/concept" params ()
+(define-route "/api/concepts" params ()
   (let ((search-string (get-query-param "search")))
     (log:debug "Search string: ~a" search-string)
-    (concept-map:search-concept search-string)))
+    (concept-map:search-concept search-string))
+  nil)
 
-(define-route "/api/concept-link" params ()
-  (let ((source (get-query-param "source" :default nil))
-        (target (get-query-param "target" :default nil)))
-    (concept-map:get-links :source source :target target)))
-
-(define-route "/api/concept-link" params (:method :post)
+(define-route "/api/concept-links" params (:method :post)
   (~>> (get-request-body-as-json)
        (mapcar (lambda (obj)
                  (list (jsown:val obj "source")
@@ -216,26 +193,9 @@
                        (jsown:val obj "directional"))))
        (mapc (lambda (args)
                (apply #'concept-map:create-link args))))
-  "")
+  nil)
 
-(define-route "/api/concept-link" params (:method :delete)
-  (let ((source (get-query-param "source" :default nil))
-        (relation (get-query-param "relation" :default nil))
-        (target (get-query-param "target" :default nil)))
-    (concept-map:delete-links :source source
-                              :relation relation
-                              :target target))
-  "")
-
-;; (dex:get "http://localhost:5001/api/concept?search=soft" :headers '(("Database" . "/home/sheep/temp/a.sqlite")))
-
-;; (progn (setf silver-brain.config:*profile* :dev)
-;;        (silver-brain:start))
-
-;; (dex:get "http://localhost:5001/api/concept/x5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
-
-;; (dex:get "http://localhost:5001/api/concept-link?source=5BAAB06F-D70D-4405-8511-3032D12448B3" :headers '(("Database" . "a.sqlite")))
-
-;; (setf (config:active-profile) :dev)
-;; (silver-brain:start)
-;; (silver-brain:stop)
+(define-route "/api/concept-links/:uuid" params (:method :delete)
+  (with-path-vars (uuid) params
+    (concept-map:delete-link uuid))
+  nil)

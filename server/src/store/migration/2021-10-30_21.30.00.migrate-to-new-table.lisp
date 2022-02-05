@@ -26,7 +26,9 @@
   (:keys name))
 
 (mito:deftable concept-link ()
-  ((source :col-type :text)
+  ((uuid :col-type :text
+         :primary-key t)
+   (source :col-type :text)
    (relation :col-type :text)
    (target :col-type :text)
    (directionalp :col-type :boolean))
@@ -81,6 +83,7 @@
                          :relation relation
                          :target target)
     (mito:insert-dao (make-instance 'concept-link
+                                    :uuid (uuid:make-v4-uuid)
                                     :source source
                                     :relation relation
                                     :target target

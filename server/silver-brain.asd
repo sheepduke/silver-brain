@@ -38,9 +38,9 @@
                  (:module "store"
                   :components
                   ((:module "migration"
-                    :components ((:file "1.create-legacy-table")
-                                 (:file "2.migrate-to-new-table")
-                                 (:file "3.purge-legacy-table")
+                    :components ((:file "2021-10-30_21.22.00.create-legacy-table")
+                                 (:file "2021-10-30_21.30.00.migrate-to-new-table")
+                                 (:file "2021-10-30_21.33.00.purge-legacy-table")
                                  (:file "migrate")))
                    (:file "store")))
                  (:module "concept-map"
@@ -70,7 +70,7 @@
                  (:module "concept-map"
                   :components ((:file "cache")
                                (:file "store")))
-                 (:file "integration"))))
+                 (:file "web"))))
   :description "Test system for silver-brain"
 
   :perform (test-op (op c)
