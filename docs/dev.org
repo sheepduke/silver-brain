@@ -26,9 +26,40 @@ Base URL is ~/api~.
       "source": "string",
       "relation": "string",
       "target": "string",
-      "directional": true
+      "is-directional": true
     ]
   }
+#+END_SRC
+
+Example:
+
+#+BEGIN_SRC json
+  {
+  "uuid": "36ffb637-990d-47a0-8661-76585ffbc08f",
+  "name": "Oh my",
+  "content-type": "text/org",
+  "content": "",
+  "links": [
+    {
+      "uuid": "5802e10a-8219-4261-a6a2-eb9532ef93e3",
+      "source": {
+        "uuid": "36ffb637-990d-47a0-8661-76585ffbc08f",
+        "name": "Oh my"
+      },
+      "relation": {
+        "uuid": "36ffb637-990d-47a0-8661-76585ffbc08f",
+        "name": "Oh my"
+      },
+      "target": {
+        "uuid": "36ffb637-990d-47a0-8661-76585ffbc08f",
+        "name": "Oh my"
+      },
+      "is-directional": true
+    }
+  ],
+  "create-time": "2022-02-06T23:28:05.821933+08:00",
+  "update-time": "2022-02-06T23:28:05.821933+08:00"
+}
 #+END_SRC
 
 *** concept-link
@@ -39,7 +70,7 @@ Base URL is ~/api~.
     "source": "string",
     "relation": "string",
     "target": "string",
-    "directional": true
+    "is-directional": true
   }
 #+END_SRC
 
@@ -66,7 +97,7 @@ Get specific concept.
       "source": "string",
       "relation": "string",
       "target": "string",
-      "directional": true
+      "is-directional": true
     ]
   }
 #+END_SRC
@@ -104,7 +135,7 @@ Create a new link.
     "source": "string",
     "relation": "string",
     "target": "string",
-    "directional": false
+    "is-directional": false
   }
 #+END_SRC
 
