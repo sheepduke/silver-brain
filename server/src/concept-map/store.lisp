@@ -41,10 +41,9 @@
 (defun get-concept-by-uuid (uuid)
   (if-let (dao (store:get 'store:concept uuid))
     (let* ((concept (concept-dao->concept dao))
-           (links (append (store:select 'store:concept-link
-                            (sxql:where (:= :source uuid)))
-                          (store:select 'store:concept-link
-                            (sxql:where (:= :target uuid))))))
+           (links (store:select 'store:concept-link
+                    (sxql:where (:or (:= :source uuid)
+                                     (:= :target uuid))))))
       (setf (links concept)
             (mapcar #'concept-link-dao->concept-link links))
       concept)))
