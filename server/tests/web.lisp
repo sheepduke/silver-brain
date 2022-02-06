@@ -158,6 +158,18 @@
       (is (string= new-name
                    (json-get (get-concept uuid-new) "name"))))))
 
+(test create-invalid-link
+  (let* ((concept1 (create-concept "Test"))
+         (uuid1 (json-get-uuid concept1))
+         (concept2 (create-concept "Test 2"))
+         (uuid2 (json-get-uuid concept2)))
+    (delete-concept uuid2)
+
+    (signals dex:http-request-bad-request
+      (create-link uuid1 uuid1 uuid2 t))
+    
+    (delete-concept uuid1)))
+
 (test insert-concepts-and-delete
   ;; Insert concepts and links.
   (let ((uuid-software (json-get-uuid (create-concept "Software")))

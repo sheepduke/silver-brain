@@ -84,7 +84,11 @@
 (-> create-link (string string string boolean) concept-link)
 (defun create-link (source relation target directionalp)
   (store:with-current-database
-    (cm-store:create-link source relation target directionalp)))
+    (store:with-transaction
+        (validate-concept-uuid source 'bad-request-error)
+      (validate-concept-uuid relation 'bad-request-error)
+      (validate-concept-uuid target 'bad-request-error)
+      (cm-store:create-link source relation target directionalp))))
 
 (-> delete-link (string) t)
 (defun delete-link (uuid)
@@ -93,12 +97,12 @@
         (validate-link-uuid uuid)
       (cm-store:delete-link uuid))))
 
-(-> validate-concept-uuid (string) (values))
-(defun validate-concept-uuid (uuid)
+(-> validate-concept-uuid (string &optional symbol) (values))
+(defun validate-concept-uuid (uuid &optional (not-found-error 'not-found-error))
   (unless (is-uuid uuid)
     (error 'bad-request-error :reason (format nil "Invalid UUID '~a'" uuid)))
   (unless (cm-store:concept-uuid-exists-p uuid)
-    (error 'not-found-error :reason (format nil "Concept UUID '~a'" uuid)))
+    (error not-found-error :reason (format nil "Concept UUID '~a'" uuid)))
   (values))
 
 (defun validate-link-uuid (uuid)

@@ -31,6 +31,8 @@ Base URL is ~/api~.
   }
 #+END_SRC
 
+~uuid~ must be lower case.
+
 Example:
 
 #+BEGIN_SRC json
