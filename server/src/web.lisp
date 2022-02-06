@@ -191,7 +191,7 @@
      (concept-map:create-link (jsown:val json "source")
                               (jsown:val json "relation")
                               (jsown:val json "target")
-                              (jsown:val json "directional")))))
+                              (jsown:val json "is-directional")))))
 
 (define-route "/api/concept-links/:uuid" params (:method :delete)
   (with-path-vars (uuid) params

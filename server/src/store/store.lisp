@@ -44,7 +44,8 @@
            #:count
            #:delete
            #:delete-by
-           #:list-databases))
+           #:list-databases
+           #:directionalp))
 
 (in-package silver-brain.store)
 

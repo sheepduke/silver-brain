@@ -43,7 +43,11 @@
    (source :type concept-summary :accessor source :initarg :source)
    (relation :type concept-summary :accessor relation :initarg :relation)
    (target :type concept-summary :accessor target :initarg :target)
-   (directionalp :type boolean :accessor directional :initarg :directionalp)))
+   (directionalp :type boolean
+                 :accessor directional
+                 :initarg :directionalp
+                 :json-key-name "is-directional"))
+  (:metaclass json-serializable-class))
 
 (defun every-concept-link-p (list)
   (every (op (typep _ 'concept-link)) list))

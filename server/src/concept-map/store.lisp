@@ -127,7 +127,8 @@
                  :uuid (store:object-id dao)
                  :source (make-concept-summary (store:source dao))
                  :relation (make-concept-summary (store:relation dao))
-                 :target (make-concept-summary (store:target dao))))
+                 :target (make-concept-summary (store:target dao))
+                 :directionalp (store:directionalp dao)))
 
 (defun concept-dao->concept (dao)
   (make-instance 'concept

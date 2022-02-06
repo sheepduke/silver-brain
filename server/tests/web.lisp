@@ -113,7 +113,7 @@
                           ("source" source)
                           ("relation" relation)
                           ("target" target)
-                          ("directional" directionalp))))
+                          ("is-directional" directionalp))))
 
 (defun delete-link (uuid)
   (delete (format nil "concept-links/~a" uuid)))
@@ -188,3 +188,9 @@
         (delete-concept uuid)
         (signals dex:http-request-not-found
           (get (format nil "concepts/~a" uuid)))))))
+
+;; (with-test-context
+;;   (let* ((concept (create-concept "Oh my"))
+;;          (uuid (json-get-uuid concept)))
+;;     (create-link uuid uuid uuid t)
+;;     (format t "~a" (get (format nil "concepts/~a" uuid)))))

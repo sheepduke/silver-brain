@@ -1,5 +1,7 @@
 (defpackage silver-brain.util
   (:use #:cl)
+  (:import-from #:alexandria
+                #:if-let)
   (:import-from #:serapeum
                 #:->
                 #:~>>)
@@ -8,7 +10,8 @@
            #:string-list
            #:client-error
            #:not-found-error
-           #:bad-request-error))
+           #:bad-request-error
+           #:json-serializable-class))
 
 (in-package silver-brain.util)
 
@@ -43,23 +46,55 @@
 ;;;;                         JSON Methods                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defclass json-serializable-class (standard-class) ())
+
+(defclass json-serializable-slot-class (c2mop:standard-direct-slot-definition
+                                        c2mop:standard-effective-slot-definition)
+  ((json-key-name :type (or null string)
+                  :accessor json-key-name
+                  :initarg :json-key-name
+                  :initform nil)))
+
+(defmethod c2mop:direct-slot-definition-class ((class json-serializable-class)
+                                               &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'json-serializable-slot-class))
+
+(defmethod c2mop:effective-slot-definition-class ((class json-serializable-class)
+                                                  &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'json-serializable-slot-class))
+
+(defmethod c2mop:validate-superclass ((class json-serializable-class)
+                                      (superclass standard-class))
+  t)
+
+(defmethod json-key-name (object)
+  nil)
+
 (defgeneric to-json-object (obj))
 
 (defmethod to-json-object ((obj standard-object))
-  (let ((slot-names (~>> (class-of obj)
-                         (c2mop:class-direct-slots)
-                         (remove-if-not #'c2mop:slot-definition-readers)
-                         (mapcar #'c2mop:slot-definition-name)))
+  (let ((slot-names-pairs
+         (~>> (class-of obj)
+              (c2mop:class-direct-slots)
+              (remove-if-not #'c2mop:slot-definition-readers)
+              (mapcar (lambda (slot)
+                        (let ((slot-name (c2mop:slot-definition-name slot)))
+                          (cons slot-name
+                                (if-let (custom-name (json-key-name slot))
+                                  custom-name
+                                  slot-name)))))))
         (js (jsown:new-js)))
-    (dolist (slot-name slot-names)
-      (when (slot-boundp obj slot-name)
-        (let ((value (slot-value obj slot-name)))
-          (setf js
-                (jsown:extend-js js
-                  ((str:downcase slot-name)
-                   (if (typep value 'standard-object)
-                       (to-json-object value)
-                       value)))))))
+    (dolist (slot-name-pair slot-names-pairs)
+      (let ((slot-name (car slot-name-pair))
+            (json-key-name (cdr slot-name-pair)))
+        (when (slot-boundp obj slot-name)
+          (let ((value (slot-value obj slot-name)))
+            (jsown:extend-js js ((str:downcase json-key-name)
+                                 (if (typep value 'standard-object)
+                                     (to-json-object value)
+                                     value)))))))
     js))
 
 (defmethod to-json-object ((obj local-time:timestamp))
