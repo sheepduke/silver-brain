@@ -83,7 +83,7 @@ Create a new concept.
   }
 #+END_SRC
 
-Return ~uuid~ of the newly created concept.
+Return the newly created concept, including UUID property.
 
 *** PATCH /concepts/{uuid}
 
@@ -108,7 +108,7 @@ Create a new link.
   }
 #+END_SRC
 
-Return ~uuid~ of the newly created link.
+Return the newly created link, including UUID property.
 
 *** DELETE /concept-links/{uuid}
 
