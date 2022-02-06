@@ -2,37 +2,36 @@
   (:use #:cl)
   (:export #:migration)
   (:import-from #:mito
+                #:object-id
                 #:object-created-at
                 #:object-updated-at))
 
 (in-package silver-brain.store.migration.2.create-new-table)
 
 (mito:deftable concept ()
-  ((uuid :col-type :text)
-   (name :col-type :text)
-   (content :col-type :text)
-   (content-format :col-type :text)))
+  ((uuid :col-type :text :accessor uuid)
+   (name :col-type :text :accessor name)
+   (content :col-type :text :accessor content)
+   (content-format :col-type :text :accessor content-format)))
 
 (mito:deftable concept-relation ()
   ((source :col-type :text)
    (target :col-type :text)))
 
 (mito:deftable concept-new ()
-  ((uuid :col-type :text
-         :primary-key t)
-   (name :col-type :text)
+  ((name :col-type :text)
    (content-type :col-type :text :initform "")
    (content :col-type :text :initform ""))
-  (:keys name))
+  (:keys name)
+  (:auto-pk :uuid))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :text
-         :primary-key t)
-   (source :col-type :text)
+  ((source :col-type :text)
    (relation :col-type :text)
    (target :col-type :text)
    (directionalp :col-type :boolean))
-  (:keys source relation target))
+  (:keys source relation target)
+  (:auto-pk :uuid))
 
 (defun up ()
   ;; Create new table.
@@ -42,26 +41,23 @@
   (let ((concepts (mito:select-dao 'concept)))
     ;; Migrate concept table.
     (dolist (concept concepts)
-      (with-slots (uuid name content) concept
-        (with-accessors ((created-at object-created-at)
-                         (updated-at object-updated-at))
-            concept
-          (mito:insert-dao (make-instance 'concept-new
-                                          :uuid uuid
-                                          :name name
-                                          :content-type "text/org"
-                                          :content content
-                                          :created-at created-at
-                                          :updated-at updated-at))))))
+      (mito:insert-dao
+       (make-instance 'concept-new
+                      :id (string-downcase (uuid concept))
+                      :name (name concept)
+                      :content-type "text/org"
+                      :content (content concept)
+                      :created-at (object-created-at concept)
+                      :updated-at (object-updated-at concept)))))
 
-  (let ((parent-relation-uuid (uuid:make-v4-uuid))
-        (relate-relation-uuid (uuid:make-v4-uuid)))
+  (let ((parent-relation-uuid (make-uuid))
+        (relate-relation-uuid (make-uuid)))
     ;; Create default relation concept.
     (mito:insert-dao (make-instance 'concept-new
-                                    :uuid parent-relation-uuid
+                                    :id parent-relation-uuid
                                     :name "Contains"))
     (mito:insert-dao (make-instance 'concept-new
-                                    :uuid relate-relation-uuid
+                                    :id relate-relation-uuid
                                     :name "Relates"))
 
     ;; Migrate relation table.
@@ -83,7 +79,6 @@
                          :relation relation
                          :target target)
     (mito:insert-dao (make-instance 'concept-link
-                                    :uuid (uuid:make-v4-uuid)
                                     :source source
                                     :relation relation
                                     :target target
@@ -106,3 +101,6 @@
   (make-instance 'mitogrator:migration
                  :name "2.migrate-to-new-table"
                  :up #'up))
+
+(defun make-uuid ()
+  (string-downcase (format nil "~a" (uuid:make-v4-uuid))))

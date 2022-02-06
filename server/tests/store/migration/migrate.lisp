@@ -80,23 +80,23 @@
             (mito:insert-dao (make-instance 'legacy-concept-relation
                                             :source (car pair)
                                             :target (cdr pair))))
-
+          
           ;; Run.
           (migration:run-migrations))
-
+        
         (store:with-current-database
           (let* ((concepts (mito:select-dao 'store:concept))
                  (links (mito:select-dao 'store:concept-link))
                  (contains (find-if (op (string= "Contains" (store:name _)))
                                     concepts))
-                 (contains-uuid (store:uuid contains))
+                 (contains-uuid (store:object-id contains))
                  (relates (find-if (op (string= "Relates" (store:name _)))
                                    concepts))
-                 (relates-uuid (store:uuid relates)))
+                 (relates-uuid (store:object-id relates)))
             ;; New concepts equal to the original ones.
             (is (equal concept-daos
                        (subseq (mapcar (lambda (concept)
-                                         (cons (store:uuid concept)
+                                         (cons (store:object-id concept)
                                                (store:name concept)))
                                        concepts)
                                0 5)))

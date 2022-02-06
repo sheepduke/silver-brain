@@ -6,7 +6,6 @@
   (:export #:to-json-object
            #:is-uuid
            #:string-list
-           #:make-uuid
            #:client-error
            #:not-found-error
            #:bad-request-error))
@@ -71,7 +70,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defparameter +uuid-scanner+
-  (ppcre:create-scanner "^[A-Z0-9]{8}-([A-Z0-9]{4}-){3}[A-Z0-9]{12}$"))
+  (ppcre:create-scanner "^[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}$"))
 
 (-> is-uuid (string) (boolean))
 (defun is-uuid (string)
@@ -79,6 +78,3 @@
   (trivia:match (multiple-value-list (ppcre:scan +uuid-scanner+ string))
     (nil nil)
     ((list* 0 36 _) t)))
-
-(defun make-uuid ()
-  (format nil "~a" (uuid:make-v4-uuid)))

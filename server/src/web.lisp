@@ -154,11 +154,11 @@
 (define-route "/api/concepts" params (:method :post)
   (let ((json (get-request-body-as-json)))
     (log:debug "Input JSON: ~a" json)
-    (let ((uuid (concept-map:create-concept
-                 :name (jsown:val-safe json "name")
-                 :content-type (jsown:val-safe json "content-type")
-                 :content (jsown:val-safe json "content"))))
-      uuid)))
+    (make-response
+     (concept-map:create-concept
+      :name (jsown:val-safe json "name")
+      :content-type (jsown:val-safe json "content-type")
+      :content (jsown:val-safe json "content")))))
 
 (define-route "/api/concepts/:uuid" params
     (:method :patch)
@@ -185,15 +185,13 @@
   nil)
 
 (define-route "/api/concept-links" params (:method :post)
-  (~>> (get-request-body-as-json)
-       (mapcar (lambda (obj)
-                 (list (jsown:val obj "source")
-                       (jsown:val obj "relation")
-                       (jsown:val obj "target")
-                       (jsown:val obj "directional"))))
-       (mapc (lambda (args)
-               (apply #'concept-map:create-link args))))
-  nil)
+  (let ((json (get-request-body-as-json)))
+    (log:debug "Input JSON: ~a" json)
+    (make-response
+     (concept-map:create-link (jsown:val json "source")
+                              (jsown:val json "relation")
+                              (jsown:val json "target")
+                              (jsown:val json "directional")))))
 
 (define-route "/api/concept-links/:uuid" params (:method :delete)
   (with-path-vars (uuid) params

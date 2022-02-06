@@ -4,6 +4,7 @@
   (:local-nicknames (#:config #:silver-brain.config)
                     (#:migration #:silver-brain.store.migration))
   (:import-from #:mito
+                #:object-id
                 #:object-created-at
                 #:object-updated-at)
   (:import-from #:serapeum
@@ -19,10 +20,10 @@
            #:stop
            ;; Dao
            #:concept
-           #:uuid
            #:name
            #:content-type
            #:content
+           #:object-id
            #:object-created-at
            #:object-updated-at
            #:concept-link
@@ -111,7 +112,7 @@
 
 (-> get (symbol string) (or null mito:dao-class))
 (defun get (class uuid)
-  (mito:find-dao class :uuid uuid))
+  (mito:find-dao class :id uuid))
 
 (-> save (standard-object) t)
 (defun save (obj)
@@ -138,22 +139,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (mito:deftable concept ()
-  ((uuid :col-type :text
-         :accessor uuid
-         :primary-key t)
-   (name :col-type :text
+  ((name :col-type :text
          :accessor name)
    (content-type :col-type :text :initform ""
                  :accessor content-type)
    (content :col-type :text :initform ""
             :accessor content))
-  (:keys name))
+  (:keys name)
+  (:auto-pk :uuid))
 
 (mito:deftable concept-link ()
-  ((uuid :col-type :text
-         :accessor uuid
-         :primary-key t)
-   (source :col-type :text
+  ((source :col-type :text
            :accessor source)
    (relation :col-type :text
              :accessor relation)
@@ -161,4 +157,5 @@
            :accessor target)
    (directionalp :col-type :boolean
                  :accessor directionalp))
-  (:keys source relation target))
+  (:keys source relation target)
+  (:auto-pk :uuid))

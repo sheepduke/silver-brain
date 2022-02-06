@@ -19,7 +19,7 @@
   (let ((concept-name "Alpha"))
     (with-mocks ()
       (answer (store:get 'store:concept "1")
-        (make-instance 'store:concept :uuid "1" :name concept-name))
+        (make-instance 'store:concept :id "1" :name concept-name))
       (cache:start)
       (is (string= concept-name (cache:get-concept-name "1"))
           "First hit should return database value")

@@ -7,6 +7,7 @@
                #:alexandria
                #:serapeum
                #:trivia
+               #:closer-mop
                ;; Application
                #:chameleon
                #:uuid

@@ -66,12 +66,6 @@
         until can-stop-p
         finally (return (<= i 100))))
 
-(defun json-get (json &rest keys)
-  (let ((value (jsown:val json (first keys))))
-    (if (null (rest keys))
-        value
-        (apply #'json-get value (rest keys)))))
-
 (defmacro with-test-context (&body body)
   `(let ((current-profile config::*profile*))
      (config:switch-profile :test)
@@ -86,6 +80,47 @@
        (wait-for-server t)
        (and current-profile
             (config:switch-profile current-profile)))))
+
+(defun json-get (json &rest keys)
+  (let ((value (jsown:val json (first keys))))
+    (if (null (rest keys))
+        value
+        (apply #'json-get value (rest keys)))))
+
+(defun json-get-uuid (json)
+  (json-get json "uuid"))
+
+(defun json-get-name (json)
+  (json-get json "name"))
+
+(defun get-concept (uuid)
+  (jsown:parse (get (format nil "concepts/~a" uuid))))
+
+(defun create-concept (name)
+  (jsown:parse (post "concepts"
+                     (jsown:new-js ("name" name)))))
+
+(defun update-concept (uuid &key name)
+  (let ((json (jsown:new-js)))
+    (and name (jsown:extend-js json ("name" name)))
+    (patch (format nil "concepts/~a" uuid) json)))
+
+(defun delete-concept (uuid)
+  (delete (format nil "concepts/~a" uuid)))
+
+(defun create-link (source relation target directionalp)
+  (post "concept-links" (jsown:new-js
+                          ("source" source)
+                          ("relation" relation)
+                          ("target" target)
+                          ("directional" directionalp))))
+
+(defun delete-link (uuid)
+  (delete (format nil "concept-links/~a" uuid)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                            Tests                             ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (test web
   (with-test-context
@@ -102,91 +137,54 @@
         (get "concepts/invalid-uuid"))
 
       (signals dex:http-request-not-found
-        (get (format nil "concepts/~a" (uuid:make-v4-uuid))))
+        (get (string-downcase (format nil "concepts/~a" (uuid:make-v4-uuid)))))
 
       ;; Create concept.
-      (setf uuid-new (post "concepts" (jsown:new-js ("name" "Concept Name"))))
+      (setf uuid-new (json-get (create-concept "Concept Name") "uuid"))
       (is (not (str:emptyp uuid-new)))
-
-      (let ((json (jsown:parse (get (format nil "concepts/~a" uuid-new)))))
-        (is (string= "Concept Name" (jsown:val json "name"))))
+      
+      (let ((concept (get-concept uuid-new)))
+        (is (string= "Concept Name" (json-get concept "name"))))
 
       ;; Update concept.
-      (patch (format nil "concepts/~a" uuid-new)
-             (jsown:new-js ("name" "New Name")))
-      (let ((json (jsown:parse (get (format nil "concepts/~a" uuid-new)))))
-        (is (string= "New Name" (jsown:val json "name"))))
+      (let ((new-name "New Name"))
+        (update-concept uuid-new :name new-name)
+        (is (string= new-name
+                     (json-get (get-concept uuid-new) "name"))))
 
       ;; Insert concepts and links.
-      (setf uuid-software
-            (post "concepts" (jsown:new-js ("name" "Software"))))
-      (setf uuid-middleware
-            (post "concepts" (jsown:new-js ("name" "Middleware"))))
-      (setf uuid-includes
-            (post "concepts" (jsown:new-js ("name" "Includes"))))
-      (post "concept-links" (list (jsown:new-js
-                                    ("source" uuid-software)
-                                    ("relation" uuid-includes)
-                                    ("target" uuid-middleware)
-                                    ("directional" t))))
+      (setf uuid-software (json-get-uuid (create-concept "Software")))
+      (setf uuid-middleware (json-get-uuid (create-concept "Middleware")))
+      (setf uuid-includes (json-get-uuid (create-concept "Includes")))
+      (create-link uuid-software uuid-includes uuid-middleware t)
 
       ;; Get concept and verify links.
-      (let* ((json (jsown:parse (get (format nil "concepts/~a" uuid-software))))
-             (link (first (jsown:val json "links"))))
-
-        ;; Get links.
-        (is (string= uuid-software
-                     (json-get link "source" "uuid")))
-
-        (is (string= "Software"
-                     (json-get link "source" "name")))
-        (is (string= uuid-includes
-                     (json-get link "relation" "uuid")))
-        (is (string= "Includes"
-                     (json-get link "relation" "name")))
-        (is (string= uuid-middleware
-                     (json-get link "target" "uuid")))
-        (is (string= "Middleware"
-                     (json-get link "target" "name"))))
+      (let* ((concept (get-concept uuid-software))
+             (link (first (json-get concept "links")))
+             (source (json-get link "source"))
+             (relation (json-get link "relation"))
+             (target (json-get link "target")))
+        (is (string= uuid-software (json-get-uuid source)))
+        (is (string= "Software" (json-get-name source)))
+        (is (string= uuid-includes (json-get-uuid relation)))
+        (is (string= "Includes" (json-get-name relation)))
+        (is (string= uuid-middleware (json-get-uuid target)))
+        (is (string= "Middleware" (json-get-name target))))
 
       ;; Delete concept and links.
-      (let* ((uuid (post "concepts"
-                         (jsown:new-js ("name" "Wrong one"))))
-             (json (jsown:parse (get (format nil "concepts/~a" uuid)))))
-        (is (string= "Wrong one" (jsown:val json "name")))
+      (let* ((new-name "Wrong one")
+             (concept (create-concept new-name))
+             (uuid (json-get-uuid concept))
+             (link1 (create-link uuid uuid-includes uuid-software t))
+             (link2 (create-link uuid-software uuid-includes uuid t))
+             (link3 (create-link uuid uuid-includes uuid-middleware t)))
 
-        ;; Create links.
-        (post "concept-links" (list (jsown:new-js
-                                      ("source" uuid)
-                                      ("relation" uuid-includes)
-                                      ("target" uuid-software)
-                                      ("directional" t))
-                                    (jsown:new-js
-                                      ("source" uuid-software)
-                                      ("relation" uuid-includes)
-                                      ("target" uuid)
-                                      ("directional" t))
-                                    (jsown:new-js
-                                      ("source" uuid)
-                                      ("relation" uuid-includes)
-                                      ("target" uuid-middleware)
-                                      ("directional" t))))
-
-        ;; Get links.
-        (let* ((url (format nil "concepts/~a" uuid))
-               (concept (jsown:parse (get url)))
+        ;; Check link count.
+        (let* ((concept (get-concept uuid))
                (links (json-get concept "links")))
-          (is (= 3 (length links)))
+          (is (= 3 (length links))))
 
-          ;; Delete links.
-          (delete (format nil "concept-links/~a"
-                          (json-get (first links) "uuid")))
-
-          (let* ((url (format nil "concepts/~a" uuid))
-                 (concept (jsown:parse (get url))))
-            (is (= 2 (length (json-get concept "links"))))))
-
-        ;;   Delete concept.
-        (delete (format nil "concepts/~a" uuid))
+        ;; Delete concept.
+        (delete-concept uuid)
         (signals dex:http-request-not-found
           (get (format nil "concepts/~a" uuid)))))))

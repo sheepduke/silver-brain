@@ -26,16 +26,16 @@
 
 (defparameter *concepts*
   (list (make-instance 'store:concept
-                       :uuid "1"
+                       :id "1"
                        :name "Software")
         (make-instance 'store:concept
-                       :uuid "2"
+                       :id "2"
                        :name "Middleware")
         (make-instance 'store:concept
-                       :uuid "3"
+                       :id "3"
                        :name "Microsoft")
         (make-instance 'store:concept
-                       :uuid "4"
+                       :id "4"
                        :name "Relates")))
 
 (defun setup ()
@@ -43,7 +43,7 @@
   (mito:ensure-table-exists 'store:concept-link)
   (mapcar (op (mito:insert-dao _)) *concepts*)
   (mito:insert-dao (make-instance 'store:concept-link
-                                  :uuid "142"
+                                  :id "142"
                                   :source "1"
                                   :relation "4"
                                   :target "2"
@@ -110,12 +110,12 @@
 
 (test create-concept
   (with-test-context
-    (let ((uuid (cm-store:create-concept
-                 :name "New"
-                 :content "Content"
-                 :content-type "text/plain")))
+    (let ((concept (cm-store:create-concept
+                    :name "New"
+                    :content "Content"
+                    :content-type "text/plain")))
       (is (= 5 (mito:count-dao 'store:concept)))
-      (is (mito:find-dao 'store:concept :uuid uuid)))))
+      (is (mito:find-dao 'store:concept :id (uuid concept))))))
 
 (test update-concept
   (with-test-context
@@ -124,7 +124,7 @@
       (cm-store:update-concept "1" :name "New")
 
       (is (= 4 (mito:count-dao 'store:concept)))
-      (is (string= "New" (store:name (mito:find-dao 'store:concept :uuid "1"))))
+      (is (string= "New" (store:name (mito:find-dao 'store:concept :id "1"))))
 
       (is (= 1 (length (invocations 'cache:update-if-exists))))
 
@@ -151,24 +151,29 @@
 
 (test create-link
   (with-test-context
-    (cm-store:create-link "1" "4" "2" t)
-    (is (= 2 (mito:count-dao 'store:concept-link)))
-    (cm-store:create-link "3" "4" "1" nil)
-    (is (= 3 (mito:count-dao 'store:concept-link)))
-    (is (= 1 (mito:count-dao 'store:concept-link
-                             :source "1"
-                             :target "3")))))
+    (with-mocks ()
+      (answer (cache:get-concept-name "1") "A")
+      (answer (cache:get-concept-name "2") "B")
+      (answer (cache:get-concept-name "3") "C")
+      (answer (cache:get-concept-name "4") "D")
+      (cm-store:create-link "1" "4" "2" t)
+      (is (= 2 (mito:count-dao 'store:concept-link)))
+      (cm-store:create-link "3" "4" "1" nil)
+      (is (= 3 (mito:count-dao 'store:concept-link)))
+      (is (= 1 (mito:count-dao 'store:concept-link
+                               :source "1"
+                               :target "3"))))))
 
 (test delete-link
   (with-test-context
     (mito:insert-dao (make-instance 'store:concept-link
-                                    :uuid "143"
+                                    :id "143"
                                     :source "1"
                                     :relation "4"
                                     :target "3"
                                     :directionalp nil))
     (mito:insert-dao (make-instance 'store:concept-link
-                                    :uuid "341"
+                                    :id "341"
                                     :source "3"
                                     :relation "4"
                                     :target "1"

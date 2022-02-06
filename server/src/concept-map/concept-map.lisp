@@ -54,7 +54,7 @@
 (-> create-concept (&key (:name string)
                          (:content-type string)
                          (:content string))
-  string)
+  concept)
 (defun create-concept (&key name content-type content)
   (store:with-current-database
     (cm-store:create-concept :name name
@@ -81,7 +81,7 @@
         (validate-concept-uuid uuid)
       (cm-store:delete-concept uuid))))
 
-(-> create-link (string string string boolean) t)
+(-> create-link (string string string boolean) concept-link)
 (defun create-link (source relation target directionalp)
   (store:with-current-database
     (cm-store:create-link source relation target directionalp)))
