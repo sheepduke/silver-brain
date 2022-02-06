@@ -4,6 +4,7 @@
   (:local-nicknames (#:config #:silver-brain.config)
                     (#:store #:silver-brain.store))
   (:import-from #:fiveam
+                #:pass
                 #:signals
                 #:is
                 #:fail
@@ -122,75 +123,86 @@
 ;;;;                            Tests                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(test web
-  (with-test-context
-    (let (uuid-new uuid-software uuid-middleware uuid-includes)
+(test initialize
+  (config:switch-profile :test)
+  (silver-brain:stop)
+  (wait-for-server t)
+  (silver-brain:start)
+  (wait-for-server nil)
+  (store:with-database (*database-name* :auto-create t :auto-migrate t))
+  (pass))
 
-      ;; Ping the server.
-      (get "")
+(test ping-server
+  (is (str:emptyp (get ""))))
 
-      ;; Database.
-      (is (str:emptyp (post "databases" (jsown:new-js ("name" *database-name*)))))
+(test database-exists
+  (is (str:emptyp (post "databases" (jsown:new-js ("name" *database-name*))))))
 
-      ;; Get concept.
-      (signals dex:http-request-bad-request
-        (get "concepts/invalid-uuid"))
+(test get-invalid-concept
+  (signals dex:http-request-bad-request
+    (get "concepts/invalid-uuid"))
 
+  (signals dex:http-request-not-found
+    (get (string-downcase (format nil "concepts/~a" (uuid:make-v4-uuid))))))
+
+(test create-and-update-concept
+  (let ((uuid-new (json-get (create-concept "Concept Name") "uuid")))
+
+    (is (not (str:emptyp uuid-new)))
+
+    (let ((concept (get-concept uuid-new)))
+      (is (string= "Concept Name" (json-get concept "name"))))
+
+    (let ((new-name "New Name"))
+      (update-concept uuid-new :name new-name)
+      (is (string= new-name
+                   (json-get (get-concept uuid-new) "name"))))))
+
+(test insert-concepts-and-delete
+  ;; Insert concepts and links.
+  (let ((uuid-software (json-get-uuid (create-concept "Software")))
+        (uuid-middleware (json-get-uuid (create-concept "Middleware")))
+        (uuid-includes (json-get-uuid (create-concept "Includes"))))
+    (create-link uuid-software uuid-includes uuid-middleware t)
+
+    (let* ((concept (get-concept uuid-software))
+           (link (first (json-get concept "links")))
+           (source (json-get link "source"))
+           (relation (json-get link "relation"))
+           (target (json-get link "target")))
+      (is (string= uuid-software (json-get-uuid source)))
+      (is (string= "Software" (json-get-name source)))
+      (is (string= uuid-includes (json-get-uuid relation)))
+      (is (string= "Includes" (json-get-name relation)))
+      (is (string= uuid-middleware (json-get-uuid target)))
+      (is (string= "Middleware" (json-get-name target)))
+      (is (equal t (json-get link "is-directional"))))
+
+    ;; Delete concepts and links.
+    (let* ((new-name "Wrong one")
+           (concept (create-concept new-name))
+           (uuid (json-get-uuid concept)))
+      (create-link uuid uuid-includes uuid-software t)
+      (create-link uuid-software uuid-includes uuid t)
+      (create-link uuid uuid-includes uuid-middleware t)
+
+      ;; Check link count.
+      (let* ((concept (get-concept uuid))
+             (links (json-get concept "links")))
+        (is (= 3 (length links))))
+
+      ;; Delete concept.
+      (delete-concept uuid)
       (signals dex:http-request-not-found
-        (get (string-downcase (format nil "concepts/~a" (uuid:make-v4-uuid)))))
+        (get (format nil "concepts/~a" uuid))))
 
-      ;; Create concept.
-      (setf uuid-new (json-get (create-concept "Concept Name") "uuid"))
-      (is (not (str:emptyp uuid-new)))
-      
-      (let ((concept (get-concept uuid-new)))
-        (is (string= "Concept Name" (json-get concept "name"))))
+    ;; Delete everything.
+    (delete-concept uuid-software)
+    (delete-concept uuid-middleware)
+    (delete-concept uuid-includes)))
 
-      ;; Update concept.
-      (let ((new-name "New Name"))
-        (update-concept uuid-new :name new-name)
-        (is (string= new-name
-                     (json-get (get-concept uuid-new) "name"))))
-
-      ;; Insert concepts and links.
-      (setf uuid-software (json-get-uuid (create-concept "Software")))
-      (setf uuid-middleware (json-get-uuid (create-concept "Middleware")))
-      (setf uuid-includes (json-get-uuid (create-concept "Includes")))
-      (create-link uuid-software uuid-includes uuid-middleware t)
-
-      ;; Get concept and verify links.
-      (let* ((concept (get-concept uuid-software))
-             (link (first (json-get concept "links")))
-             (source (json-get link "source"))
-             (relation (json-get link "relation"))
-             (target (json-get link "target")))
-        (is (string= uuid-software (json-get-uuid source)))
-        (is (string= "Software" (json-get-name source)))
-        (is (string= uuid-includes (json-get-uuid relation)))
-        (is (string= "Includes" (json-get-name relation)))
-        (is (string= uuid-middleware (json-get-uuid target)))
-        (is (string= "Middleware" (json-get-name target))))
-
-      ;; Delete concept and links.
-      (let* ((new-name "Wrong one")
-             (concept (create-concept new-name))
-             (uuid (json-get-uuid concept))
-             (link1 (create-link uuid uuid-includes uuid-software t))
-             (link2 (create-link uuid-software uuid-includes uuid t))
-             (link3 (create-link uuid uuid-includes uuid-middleware t)))
-
-        ;; Check link count.
-        (let* ((concept (get-concept uuid))
-               (links (json-get concept "links")))
-          (is (= 3 (length links))))
-
-        ;; Delete concept.
-        (delete-concept uuid)
-        (signals dex:http-request-not-found
-          (get (format nil "concepts/~a" uuid)))))))
-
-;; (with-test-context
-;;   (let* ((concept (create-concept "Oh my"))
-;;          (uuid (json-get-uuid concept)))
-;;     (create-link uuid uuid uuid t)
-;;     (format t "~a" (get (format nil "concepts/~a" uuid)))))
+(test cleanup
+  (silver-brain:stop)
+  (delete-database-file *database-name*)
+  (wait-for-server t)
+  (pass))
