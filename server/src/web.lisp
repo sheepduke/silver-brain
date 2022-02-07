@@ -101,9 +101,7 @@
 (defun make-response (body &optional (status 200) headers)
   (list status headers
         (flex:string-to-octets
-         (if (stringp body)
-             body
-             (jsown:to-json (to-json-object body))))))
+         (jsown:to-json body))))
 
 (defmacro with-request-handler ((&key (require-database t))
                                 &body body)
@@ -181,8 +179,8 @@
 (define-route "/api/concepts" params ()
   (let ((search-string (get-query-param "search")))
     (log:debug "Search string: ~a" search-string)
-    (concept-map:search-concept search-string))
-  nil)
+    (make-response
+     (concept-map:search-concept search-string))))
 
 (define-route "/api/concept-links" params (:method :post)
   (let ((json (get-request-body-as-json)))

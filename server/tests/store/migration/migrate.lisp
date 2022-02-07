@@ -38,8 +38,11 @@
   ((uuid :col-type :text)
    (name :col-type :text)
    (content :col-type :text)
-   (content-format :col-type :text))
-  (:table-name "concept"))
+   (content-format :col-type :text)
+   (created-at :col-type :timestamp)
+   (updated-at :col-type :timestamp))
+  (:table-name "concept")
+  (:record-timestamps nil))
 
 (mito:deftable legacy-concept-relation ()
   ((source :col-type :text)
@@ -58,7 +61,9 @@
                                     ("11" . "21")
                                     ("11" . "22")
                                     ("12" . "22")
-                                    ("22" . "12"))))
+                                    ("22" . "12")))
+           (create-time (local-time:parse-timestring "2021-10-23T12:34:56Z"))
+           (update-time (local-time:parse-timestring "2021-11-23T12:34:56Z")))
       (with-random-database-file (:connectp nil)
         (store:with-current-database
           (mito:ensure-table-exists 'legacy-concept)
@@ -71,16 +76,19 @@
           ;;    / \      |
           ;;  2-1  2-2 --+
           (dolist (pair concept-daos)
-            (mito:insert-dao (make-instance 'legacy-concept
-                                            :uuid (car pair)
-                                            :name (cdr pair)
-                                            :content-format ""
-                                            :content "")))
+            (mito:insert-dao
+             (make-instance 'legacy-concept
+                            :uuid (car pair)
+                            :name (cdr pair)
+                            :content-format ""
+                            :content ""
+                            :created-at create-time
+                            :updated-at update-time)))
           (dolist (pair concept-relation-daos)
             (mito:insert-dao (make-instance 'legacy-concept-relation
                                             :source (car pair)
                                             :target (cdr pair))))
-          
+        
           ;; Run.
           (migration:run-migrations))
         
@@ -109,4 +117,9 @@
             (is (find-if (op (check-concept-link _ "0" contains-uuid "12")) links))
             (is (find-if (op (check-concept-link _ "11" contains-uuid "21")) links))
             (is (find-if (op (check-concept-link _ "11" contains-uuid "22")) links))
-            (is (find-if (op (check-concept-link _ "12" relates-uuid "22")) links))))))))
+            (is (find-if (op (check-concept-link _ "12" relates-uuid "22")) links)))
+
+          ;; Check timestamp.
+          (let ((concept (mito:find-dao 'store:concept :id "0")))
+            (is (local-time:timestamp= create-time
+                                       (store:object-created-at concept)))))))))

@@ -21,17 +21,23 @@
 (mito:deftable concept-new ()
   ((name :col-type :text)
    (content-type :col-type :text :initform "")
-   (content :col-type :text :initform ""))
+   (content :col-type :text :initform "")
+   (created-at :col-type :timestamp :accessor created-at)
+   (updated-at :col-type :timestamp :accessor updated-at))
   (:keys name)
-  (:auto-pk :uuid))
+  (:auto-pk :uuid)
+  (:record-timestamps nil))
 
 (mito:deftable concept-link ()
   ((source :col-type :text)
    (relation :col-type :text)
    (target :col-type :text)
-   (directionalp :col-type :boolean))
+   (directionalp :col-type :boolean)
+   (created-at :col-type :timestamp :accessor created-at)
+   (updated-at :col-type :timestamp :accessor updated-at))
   (:keys source relation target)
-  (:auto-pk :uuid))
+  (:auto-pk :uuid)
+  (:record-timestamps nil))
 
 (defun up ()
   ;; Create new table.
@@ -55,11 +61,15 @@
     ;; Create default relation concept.
     (mito:insert-dao (make-instance 'concept-new
                                     :id parent-relation-uuid
-                                    :name "Contains"))
+                                    :name "Contains"
+                                    :created-at (local-time:now)
+                                    :updated-at (local-time:now)))
     (mito:insert-dao (make-instance 'concept-new
                                     :id relate-relation-uuid
-                                    :name "Relates"))
-
+                                    :name "Relates"
+                                    :created-at (local-time:now)
+                                    :updated-at (local-time:now)))
+    
     ;; Migrate relation table.
     (dolist (relation (mito:select-dao 'concept-relation))
       (with-slots (source target) relation
