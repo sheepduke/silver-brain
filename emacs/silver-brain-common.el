@@ -77,9 +77,10 @@ length to be removed."
 (defun silver-brain-widget-jump ()
   "Jump to the widgets."
   (interactive)
-  (avy-process (mapcar (lambda (point)
-                         (cons point (selected-window)))
-                       (silver-brain--get-widgets))))
+  (avy-action-goto 
+   (avy-process (mapcar (lambda (point)
+                          (cons point (selected-window)))
+                        (silver-brain--get-widgets)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Buffer Style                         ;;;;
