@@ -2,7 +2,6 @@
 
 (require 'cl-lib)
 (require 'json)
-
 (require 'silver-brain-vars)
 
 (defvar silver-brain-common-keymap
@@ -108,19 +107,10 @@ length to be removed."
 ;;;;                             Api                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(cl-defun silver-brain-new-concept (&optional name)
-  "Create a new concept. If NAME is given, it is used as the name
-of new concept. Otherwise, it prompts the user to input one."
-  (interactive)
-  (let* ((name (or name (read-string "Concept name: ")))
-         (concept (silver-brain-api-create-concept name silver-brain-default-content-type)))
-    (run-hooks 'silver-brain-after-concept-create-hook)
-    (silver-brain-concept-show concept)))
-
 (cl-defun silver-brain--search-concept-and-select (&optional (prompt "Search string: "))
   "Ask for a search string, search for concepts and select
 one. PROMPT is the prompt for search string."
-  (let* ((result (silver-brain--search-concept (read-string prompt)))
+  (let* ((result (silver-brain-api-search-concept (read-string prompt)))
          (concepts (mapcar (lambda (alist) (cons (silver-brain-concept-summary-name alist)
                                                  (silver-brain-concept-summary-uuid alist)))
                            result)))

@@ -60,7 +60,7 @@ using given SEARCH-STRING."
   (let ((concept-count (length concept-list)))
     (if (= 0 concept-count)
         (widget-insert "I dit not find any concept. :-(")
-      (widget-insert (format "I found %d councepts. :-)\n\n" concept-count))))
+      (widget-insert (format "I found %d councepts. :-)\n" concept-count))))
 
   ;; Insert concept buttons.
   (mapc (lambda (concept)

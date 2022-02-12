@@ -179,6 +179,15 @@
             (widget-insert "\n"))
           links)))
 
+(cl-defun silver-brain-new-concept (&optional name)
+  "Create a new concept. If NAME is given, it is used as the name
+of new concept. Otherwise, it prompts the user to input one."
+  (interactive)
+  (let* ((name (or name (read-string "Concept name: ")))
+         (concept (silver-brain-api-create-concept name silver-brain-default-content-type)))
+    (run-hooks 'silver-brain-after-concept-create-hook)
+    (silver-brain-concept-show concept)))
+
 (defun silver-brain--concept-create-inbound-link ()
   (let* (source relation)
     (setq source (silver-brain--search-concept-and-select "Search and select source: "))
@@ -276,15 +285,9 @@ current concept, insert a button otherwise."
 
 (defun silver-brain-concept-save-content ()
   (interactive)
-  (let ((concept silver-brain-current-concept)
-        (new-content (buffer-string)))
-    (with-current-buffer (silver-brain--api-send-request
-                          (concat "concepts/" (silver-brain-concept-uuid concept))
-                          :method :patch
-                          :data `((:content . ,new-content))))
-    (setf (silver-brain-concept-content silver-brain-current-concept) new-content)
-    (run-hooks 'silver-brain-after-update-concept-hook))
-
+  (silver-brain-api-update-concept (silver-brain-concept-uuid silver-brain-current-concept)
+                       :content (buffer-string))
+  (run-hooks 'silver-brain-after-update-concept-hook)
   (set-buffer-modified-p nil))
 
 (defun silver-brain-concept-refresh-all-buffers ()
@@ -298,7 +301,8 @@ current concept, insert a button otherwise."
   "Return all the Silver Brain Concept buffers."
   (cl-remove-if-not (lambda (buffer)
                       (with-current-buffer buffer
-                        (and (string-prefix-p "*Silver Brain Concept" (buffer-name))
+                        (and (string-prefix-p "*Silver Brain Concept"
+                                              (buffer-name))
                              (equal 'silver-brain-concept-mode major-mode))))
                     (buffer-list)))
 
