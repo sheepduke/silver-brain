@@ -43,7 +43,7 @@ mode used to open it."
 
 (defvar silver-brain-after-create-concept-hook '())
 
-(defvar silver-brain-after-rename-concept-hook '())
+(defvar silver-brain-after-update-concept-hook '())
 
 (defvar silver-brain-after-delete-concept-hook '())
 

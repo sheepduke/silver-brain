@@ -76,7 +76,7 @@ using given SEARCH-STRING."
 (defun silver-brain--list-install ()
   "Install hooks etc."
   (add-hook 'silver-brain-after-create-concept-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-rename-concept-hook 'silver-brain-list-refresh)
+  (add-hook 'silver-brain-after-update-concept-hook 'silver-brain-list-refresh)
   (add-hook 'silver-brain-after-delete-concept-hook 'silver-brain-list-refresh))
 
 (provide 'silver-brain-list)

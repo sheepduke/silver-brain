@@ -157,9 +157,9 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 
 (defun silver-brain-api-create-link (source relation target directionalp)
   (silver-brain-api--post "concept-links"
-          `((("source" . ,source)
-             ("relation" . ,relation)
-             ("target" . ,target)
-             ("is-directional" . ,directionalp)))))
+          `(("source" . ,source)
+            ("relation" . ,relation)
+            ("target" . ,target)
+            ("is-directional" . ,directionalp))))
 
 (provide 'silver-brain-api)
