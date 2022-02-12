@@ -85,9 +85,9 @@
 (defun ensure-linked (source relation target created-at updated-at
                       &optional (directionalp t))
   (unless (mito:find-dao 'concept-link
-                         :source source
-                         :relation relation
-                         :target target)
+                         :source (string-downcase source)
+                         :relation (string-downcase relation)
+                         :target (string-downcase target))
     (mito:insert-dao (make-instance 'concept-link
                                     :source (string-downcase source)
                                     :relation (string-downcase relation)
