@@ -89,9 +89,9 @@
                          :relation relation
                          :target target)
     (mito:insert-dao (make-instance 'concept-link
-                                    :source source
-                                    :relation relation
-                                    :target target
+                                    :source (string-downcase source)
+                                    :relation (string-downcase relation)
+                                    :target (string-downcase target)
                                     :created-at created-at
                                     :updated-at updated-at
                                     :directionalp directionalp))))

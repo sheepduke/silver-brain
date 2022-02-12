@@ -99,9 +99,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun make-response (body &optional (status 200) headers)
-  (list status headers
-        (flex:string-to-octets
-         (jsown:to-json body))))
+  (let ((json (jsown:to-json body)))
+    (log:debug json)
+    (list status headers
+          (flex:string-to-octets
+           json))))
 
 (defmacro with-request-handler ((&key (require-database t))
                                 &body body)
