@@ -22,6 +22,10 @@
   (interactive)
   (error "Undefined key binding"))
 
+(defun silver-brain-refresh ()
+  (interactive)
+  (funcall silver-brain-refresh-function))
+
 (defun silver-brain-quit-all ()
   "Kill all the Silver Brain buffers."
   (interactive)
@@ -31,12 +35,8 @@
                           (buffer-list))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                            Basic                             ;;;;
+;;;;                            Widget                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun silver-brain-refresh ()
-  (interactive)
-  (funcall silver-brain-refresh-function))
 
 (defmacro silver-brain--with-widget-buffer (buffer-name &rest body)
   "Wrap basic buffer setup functions."
@@ -103,164 +103,18 @@ length to be removed."
     (let ((end (point)))
       (add-face-text-property start end face))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                           Request                            ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(cl-defun silver-brain--api-send-request (uri &key (method :get) data)
-  "Send HTTP request to URI with Database header set."
-  (let ((url-request-extra-headers `(("Database" . ,silver-brain-database-name)))
-        (url-request-method (cl-case method
-                              (:get "GET")
-                              (:post "POST")
-                              (:patch "PATCH")
-                              (:delete "DELETE")))
-        (url-request-data (and data (encode-coding-string (json-encode data) 'utf-8))))
-    (let ((buffer (url-retrieve-synchronously (format "http://localhost:%d/api/%s"
-                                                      silver-brain-server-port
-                                                      uri))))
-      (with-current-buffer buffer
-        (let ((code (silver-brain--api-status-code)))
-          (unless (<= 200 code 299)
-            (error (format "Server response %d: %s"
-                           code
-                           (string-trim (silver-brain--api-body-string)))))))
-      buffer)))
-
-(defun silver-brain--api-status-code ()
-  "Extract the HTTP status code in number format from response."
-  (save-excursion
-    (goto-char (point-min))
-    (search-forward "HTTP/")
-    (let ((end (search-forward-regexp "[0-9]\\{3\\}")))
-      (car (read-from-string (buffer-substring (- end 3) end))))))
-
-(defun silver-brain--api-body-string ()
-  (save-excursion
-    (goto-char (point-min))
-    (search-forward "\n\n")
-    (buffer-substring (point) (point-max))))
-
-(cl-defun silver-brain--api-read-json (&key (object-type 'alist)
-                                (key-type 'keyword))
-  "Read response body as JSON and parse it.
-OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
-  (let ((json-object-type object-type)
-        (json-key-type key-type)
-        (json-array-type 'list))
-    (save-excursion
-      (goto-char (point-min))
-      (search-forward "\n\n")
-      (json-read))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                          Data Model                          ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(cl-defstruct silver-brain-concept uuid name content-type content created-at updated-at)
-
-(defun silver-brain-concept-from-alist (alist)
-  "Create concept from alist."
-  (let* ((keys '(:uuid :name :content-type :content))
-         (initargs (cl-reduce (lambda (acc key)
-                                (append acc (list key (alist-get key alist))))
-                              keys
-                              :initial-value '()))
-         (concept (apply #'make-silver-brain-concept initargs)))
-    (if-let (create-time (alist-get :created-at alist))
-        (setf (silver-brain-concept-created-at concept)
-              (encode-time (iso8601-parse create-time))))
-    (if-let (update-time (alist-get :updated-at alist))
-        (setf (silver-brain-concept-updated-at concept)
-              (encode-time (iso8601-parse update-time))))
-    concept))
-
-(cl-defstruct silver-brain-concept-summary uuid name)
-
-(defun silver-brain-concept-summary-from-alist (alist)
-  "Create concept-summary from alist."
-  (make-silver-brain-concept-summary :uuid (alist-get :uuid alist)
-                                     :name (alist-get :name alist)))
-
-(defun silver-brain-concept-summary-by-uuid-< (a b)
-  (string< (silver-brain-concept-summary-uuid a)
-           (silver-brain-concept-summary-uuid b)))
-
-(defun silver-brain-concept-summary-by-name-< (a b)
-  (string< (silver-brain-concept-summary-name a)
-           (silver-brain-concept-summary-name b)))
-
-(cl-defstruct silver-brain-concept-link source relation target)
-
-(defun silver-brain-concept-link-from-alist (alist)
-  "Create concept-link object from given ALIST."
-  (make-silver-brain-concept-link
-   :source (silver-brain-concept-summary-from-alist (alist-get :source alist))
-   :relation (silver-brain-concept-summary-from-alist (alist-get :relation alist))
-   :target (silver-brain-concept-summary-from-alist (alist-get :target alist))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Api                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun silver-brain-switch-database ()
-  (interactive)
-  (let* ((database-list (silver-brain-get-database-list))
-         (database (completing-read "Switch to: " database-list)))
-    (silver-brain-quit-all)
-    (setq silver-brain-database-name database)))
-
-(defun silver-brain-get-database-list ()
-  "Return a list of databases."
-  (with-current-buffer (silver-brain--api-send-request "database")
-    (silver-brain--api-read-json)))
 
 (cl-defun silver-brain-new-concept (&optional name)
   "Create a new concept. If NAME is given, it is used as the name
 of new concept. Otherwise, it prompts the user to input one."
   (interactive)
   (let* ((name (or name (read-string "Concept name: ")))
-         uuid)
-    (with-current-buffer (silver-brain--api-send-request
-                          "concept"
-                          :method :post
-                          :data `((:name . ,name)
-                                  (:content-type . ,silver-brain-default-content-type)))
-      (setq uuid (silver-brain--api-body-string)))
+         (concept (silver-brain-api-create-concept name silver-brain-default-content-type)))
     (run-hooks 'silver-brain-after-concept-create-hook)
-    (silver-brain-concept-show uuid)))
-
-(cl-defun silver-brain-delete-concept (uuid)
-  "Delete concept. If UUID is given, it is used to specify the
-target concept. Otherwise, silver-brain-current-concept will be
-deleted."
-  (let ((uuid (or uuid
-                  (and (or silver-brain-current-concept
-                           (error "Not invoked in Silver Brain Concept buffer"))
-                       (silver-brain-concept-uuid silver-brain-current-concept)))))
-    (and uuid
-         (with-current-buffer (silver-brain--api-send-request
-                               (concat "concept/" uuid)
-                               :method :delete))
-         (run-hooks 'silver-brain-after-concept-delete-hook)
-         t)))
-
-(defun silver-brain-delete-link (source relation target)
-  "Delete link with RELATION between SOURCE and TARGET."
-  (silver-brain--api-send-request (format "concept-link?source=%s&relation=%s&target=%s"
-                              source relation target)
-                      :method :delete)
-  (run-hooks 'silver-brain-after-concept-update-hook))
-
-(defun silver-brain--search-concept (search-string)
-  "Search concept with SEARCH-STRING and return a list of
-concept-summary in sorted order."
-  (with-current-buffer (silver-brain--api-send-request
-                        (format "concept?search=%s" search-string))
-    (thread-first (mapcar #'silver-brain-concept-summary-from-alist (silver-brain--api-read-json))
-      (sort #'silver-brain-concept-summary-by-uuid-<)
-      (sort #'silver-brain-concept-summary-by-name-<))))
+    (silver-brain-concept-show concept)))
 
 (cl-defun silver-brain--search-concept-and-select (&optional (prompt "Search string: "))
   "Ask for a search string, search for concepts and select
@@ -272,14 +126,5 @@ one. PROMPT is the prompt for search string."
     (and concepts
          (let ((key (completing-read "Choose concept: " concepts)))
            (cdr (assoc-string key concepts))))))
-
-(defun silver-brain--new-link (source relation target)
-  "Create a new link from SOURCE to TARGET with RELATION as the edge."
-  (silver-brain--api-send-request "concept-link"
-                      :method :post
-                      :data `((("source" . ,source)
-                               ("relation" . ,relation)
-                               ("target" . ,target))))
-  (run-hooks 'silver-brain-after-concept-update-hook))
 
 (provide 'silver-brain-common)

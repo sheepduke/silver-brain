@@ -9,7 +9,7 @@
 (defun silver-brain-open ()
   "Search and open concept."
   (interactive)
-  (silver-brain-concept-show (silver-brain--search-concept-and-select)))
+  (silver-brain-concept-open (silver-brain--search-concept-and-select)))
 
 (defun silver-brain-install ()
   (silver-brain--list-install)

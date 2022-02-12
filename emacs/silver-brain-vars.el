@@ -41,11 +41,11 @@ mode used to open it."
 ;;;;                            Hooks                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar silver-brain-after-concept-create-hook '())
+(defvar silver-brain-after-create-concept-hook '())
 
-(defvar silver-brain-after-concept-update-hook '())
+(defvar silver-brain-after-rename-concept-hook '())
 
-(defvar silver-brain-after-concept-delete-hook '())
+(defvar silver-brain-after-delete-concept-hook '())
 
 (defvar-local silver-brain-refresh-function nil)
 (put 'silver-brain-refresh-function 'permanent-local t)

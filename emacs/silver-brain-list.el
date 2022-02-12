@@ -43,7 +43,9 @@
 (defun silver-brain--list-prepare-buffer (search-string)
   "Prepare the Silver Brain List buffer. The data is fetched
 using given SEARCH-STRING."
-  (let ((concept-list (silver-brain--search-concept search-string)))
+  (let ((concept-list (thread-first (silver-brain-api-search-concept search-string)
+                        (sort #'silver-brain-concept-summary-by-uuid-<)
+                        (sort #'silver-brain-concept-summary-by-name-<))))
     (silver-brain--with-widget-buffer silver-brain-list-buffer-name
       (silver-brain-list-mode)
       (setq silver-brain-list-search-string search-string)
@@ -65,7 +67,7 @@ using given SEARCH-STRING."
           (silver-brain--with-concept-hyperlink-face
            (widget-create 'push-button
                           :notify (lambda (&rest _)
-                                    (silver-brain-concept-show
+                                    (silver-brain-concept-open
                                      (silver-brain-concept-summary-uuid concept)))
                           (silver-brain-concept-summary-name concept)))
           (widget-insert "\n"))
@@ -73,8 +75,8 @@ using given SEARCH-STRING."
 
 (defun silver-brain--list-install ()
   "Install hooks etc."
-  (add-hook 'silver-brain-after-concept-create-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-concept-update-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-concept-delete-hook 'silver-brain-list-refresh))
+  (add-hook 'silver-brain-after-create-concept-hook 'silver-brain-list-refresh)
+  (add-hook 'silver-brain-after-rename-concept-hook 'silver-brain-list-refresh)
+  (add-hook 'silver-brain-after-delete-concept-hook 'silver-brain-list-refresh))
 
 (provide 'silver-brain-list)
