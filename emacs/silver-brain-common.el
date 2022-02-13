@@ -9,7 +9,6 @@
     (define-key map (kbd "g") 'silver-brain-refresh)
     (define-key map (kbd "j") 'silver-brain-widget-jump)
     (define-key map (kbd "c c") 'silver-brain-create-concept)
-    (define-key map (kbd "s") 'silver-brain-open)
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "Q") 'silver-brain-quit-all)
     (define-key map [remap self-insert-command] 'silver-brain--no-edit)
