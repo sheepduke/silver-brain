@@ -114,7 +114,7 @@
                           ("source" source)
                           ("relation" relation)
                           ("target" target)
-                          ("is-directional" directionalp))))
+                          ("isDirectional" directionalp))))
 
 (defun delete-link (uuid)
   (delete (format nil "concept-links/~a" uuid)))
@@ -176,19 +176,20 @@
         (uuid-middleware (json-get-uuid (create-concept "Middleware")))
         (uuid-includes (json-get-uuid (create-concept "Includes"))))
     (create-link uuid-software uuid-includes uuid-middleware t)
-
+    
     (let* ((concept (get-concept uuid-software))
            (link (first (json-get concept "links")))
            (source (json-get link "source"))
            (relation (json-get link "relation"))
            (target (json-get link "target")))
+
       (is (string= uuid-software (json-get-uuid source)))
       (is (string= "Software" (json-get-name source)))
       (is (string= uuid-includes (json-get-uuid relation)))
       (is (string= "Includes" (json-get-name relation)))
       (is (string= uuid-middleware (json-get-uuid target)))
       (is (string= "Middleware" (json-get-name target)))
-      (is (equal t (json-get link "is-directional"))))
+      (is (equal t (json-get link "isDirectional"))))
 
     ;; Delete concepts and links.
     (let* ((new-name "Wrong one")

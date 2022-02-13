@@ -46,7 +46,7 @@
    (directionalp :type boolean
                  :accessor directional
                  :initarg :directionalp
-                 :json-key-name "is-directional"))
+                 :json-key-name "isDirectional"))
   (:metaclass json-serializable-class))
 
 (defun every-concept-link-p (list)
@@ -66,7 +66,8 @@
    (content-type :type string
                  :accessor content-type
                  :initarg :content-type
-                 :initform "")
+                 :initform ""
+                 :json-key-name "contentType")
    (content :type string
             :accessor content
             :initarg :content
@@ -76,11 +77,14 @@
           :initarg :links
           :initform '())
    (create-time :type local-time:timestamp
-               :accessor create-time
-               :initarg :create-time)
+                :accessor create-time
+                :initarg :create-time
+                :json-key-name "createTime")
    (update-time :type local-time:timestamp
                :accessor update-time
-               :initarg :update-time)))
+                :initarg :update-time
+                :json-key-name "updateTime"))
+  (:metaclass json-serializable-class))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Methods                            ;;;;

@@ -157,7 +157,7 @@
     (make-response
      (concept-map:create-concept
       :name (jsown:val-safe json "name")
-      :content-type (jsown:val-safe json "content-type")
+      :content-type (jsown:val-safe json "contentType")
       :content (jsown:val-safe json "content")))))
 
 (define-route "/api/concepts/:uuid" params
@@ -168,7 +168,7 @@
       (concept-map:update-concept
        uuid
        :name (jsown:val-safe json "name")
-       :content-type (jsown:val-safe json "content-type")
+       :content-type (jsown:val-safe json "contentType")
        :content (jsown:val-safe json "content"))))
   nil)
 
@@ -191,7 +191,7 @@
      (concept-map:create-link (jsown:val json "source")
                               (jsown:val json "relation")
                               (jsown:val json "target")
-                              (jsown:val json "is-directional")))))
+                              (jsown:val json "isDirectional")))))
 
 (define-route "/api/concept-links/:uuid" params (:method :delete)
   (with-path-vars (uuid) params

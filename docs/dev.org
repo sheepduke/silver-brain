@@ -19,15 +19,17 @@ Base URL is ~/api~.
   {
     "uuid": "string",
     "name": "string",
-    "content-type": "string",
+    "contentType": "string",
     "content": "string",
     "links": [
       "uuid": "string",
       "source": "string",
       "relation": "string",
       "target": "string",
-      "is-directional": true
-    ]
+      "isDirectional": true
+    ],
+    "createTime": "string",
+    "updateTime": "string"
   }
 #+END_SRC
 
@@ -39,7 +41,7 @@ Example:
   {
   "uuid": "36ffb637-990d-47a0-8661-76585ffbc08f",
   "name": "Oh my",
-  "content-type": "text/org",
+  "contentType": "text/org",
   "content": "",
   "links": [
     {
@@ -56,11 +58,11 @@ Example:
         "uuid": "36ffb637-990d-47a0-8661-76585ffbc08f",
         "name": "Oh my"
       },
-      "is-directional": true
+      "isDirectional": true
     }
   ],
-  "create-time": "2022-02-06T23:28:05.821933+08:00",
-  "update-time": "2022-02-06T23:28:05.821933+08:00"
+  "createTime": "2022-02-06T23:28:05.821933+08:00",
+  "updateTime": "2022-02-06T23:28:05.821933+08:00"
 }
 #+END_SRC
 
@@ -72,7 +74,7 @@ Example:
     "source": "string",
     "relation": "string",
     "target": "string",
-    "is-directional": true
+    "isDirectional": true
   }
 #+END_SRC
 
@@ -92,14 +94,14 @@ Get specific concept.
   {
     "uuid": "string",
     "name": "string",
-    "content-type": "string",
+    "contentType": "string",
     "content": "string",
     "links": [
       "uuid": "string",
       "source": "string",
       "relation": "string",
       "target": "string",
-      "is-directional": true
+      "isDirectional": true
     ]
   }
 #+END_SRC
@@ -111,7 +113,7 @@ Create a new concept.
 #+BEGIN_SRC json
   {
     "name": "string",
-    "content-type": "string",
+    "contentType": "string",
     "content": "string"
   }
 #+END_SRC
@@ -122,7 +124,7 @@ Return the newly created concept, including UUID property.
 
 Partially update specific concept.
 
-~name~, ~content-type~ or ~content~ can be modified using this API.
+~name~, ~contentType~ or ~content~ can be modified using this API.
 
 *** DELETE /concepts/{uuid}
 
@@ -137,7 +139,7 @@ Create a new link.
     "source": "string",
     "relation": "string",
     "target": "string",
-    "is-directional": false
+    "isDirectional": false
   }
 #+END_SRC
 

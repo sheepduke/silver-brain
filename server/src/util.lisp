@@ -84,14 +84,14 @@
                           (cons slot-name
                                 (if-let (custom-name (json-key-name slot))
                                   custom-name
-                                  slot-name)))))))
+                                  (string-downcase slot-name))))))))
         (js (jsown:new-js)))
     (dolist (slot-name-pair slot-names-pairs)
       (let ((slot-name (car slot-name-pair))
             (json-key-name (cdr slot-name-pair)))
         (when (slot-boundp obj slot-name)
           (let ((value (slot-value obj slot-name)))
-            (jsown:extend-js js ((str:downcase json-key-name)
+            (jsown:extend-js js (json-key-name
                                  (if (typep value 'standard-object)
                                      (to-json-object value)
                                      value)))))))
