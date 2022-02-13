@@ -90,10 +90,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
    :content-type (silver-brain--api-assoc alist "content-type")
    :content (silver-brain--api-assoc alist "content")
    :links (mapcar #'silver-brain--api-alist->concept-link (silver-brain--api-assoc alist "links"))
-   :create-time (if-let (timestring (silver-brain--api-assoc alist "create-time"))
-                    (encode-time (iso8601-parse timestring)))
-   :update-time (if-let (timestring (silver-brain--api-assoc alist "update-time"))
-                    (encode-time (iso8601-parse timestring)))))
+   :create-time (silver-brain--api-assoc alist "create-time")
+   :update-time (silver-brain--api-assoc alist "update-time")))
 
 (defun silver-brain--api-alist->concept-link (alist)
   (make-silver-brain-concept-link

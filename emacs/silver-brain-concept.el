@@ -74,9 +74,9 @@
                  :action (lambda (widget &rest _)
                            (silver-brain--concept-update-content-type (widget-value widget))))
   (widget-insert "\n  Create Time: ")
-  (widget-insert (silver-brain--time-to-string (silver-brain-concept-create-time concept)))
+  (widget-insert (silver-brain--format-time (silver-brain-concept-create-time concept)))
   (widget-insert "\n  Update Time: ")
-  (widget-insert (silver-brain--time-to-string (silver-brain-concept-update-time concept)))
+  (widget-insert (silver-brain--format-time (silver-brain-concept-update-time concept)))
   (widget-insert "\n\n  ")
   
   ;; Insert buttons.
@@ -96,6 +96,7 @@
                             (kill-buffer))
                   "Back"))
 
+  ;; Insert links.
   (widget-insert "\n")
   (silver-brain--concept-insert-link-widgets
    (cl-remove-if-not (lambda (link)

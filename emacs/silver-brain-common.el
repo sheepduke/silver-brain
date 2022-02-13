@@ -54,9 +54,9 @@
 length to be removed."
   (max 8 (- (min 80 (window-width)) 10 length)))
 
-(defun silver-brain--time-to-string (time)
-  "Convert given TIME to string. TIME is a timestamp."
-  (format-time-string silver-brain-time-format time))
+(defun silver-brain--format-time (timestring)
+  "Format given TIMESTRING corresponding to silver-brain-time-format."
+  (format-time-string silver-brain-time-format (encode-time (iso8601-parse timestring))))
 
 (defun silver-brain--get-widgets ()
   "Get a list of points of widgets."
