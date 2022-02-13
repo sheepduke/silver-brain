@@ -24,6 +24,9 @@
     (set-keymap-parent map silver-brain-common-keymap)
     (define-key map (kbd "e") 'silver-brain-concept-open-content)
     (define-key map (kbd "d") 'silver-brain-delete-this-concept)
+    (define-key map (kbd "l i") 'silver-brain-create-inbound-link)
+    (define-key map (kbd "l o") 'silver-brain-create-outbound-link)
+    (define-key map (kbd "l b") 'silver-brain-create-bidirectional-link)
     map))
 
 (define-derived-mode silver-brain-concept-mode fundamental-mode "SB-Concept"
@@ -83,7 +86,7 @@
   (silver-brain--with-push-button-face
    (widget-create 'push-button
                   :notify (lambda (&rest _)
-                            (silver-brain-new-concept))
+                            (silver-brain-create-concept))
                   "New")
    (widget-insert " ")
    (widget-create 'push-button
@@ -146,9 +149,9 @@
                   :notify (lambda (&rest _)
                             (funcall
                              (cl-case links-type
-                               (:inbound #'silver-brain--concept-create-inbound-link)
-                               (:outbound #'silver-brain--concept-create-outbound-link)
-                               (:bidirectional #'silver-brain--concept-create-bidirectional-link))))
+                               (:inbound #'silver-brain-create-inbound-link)
+                               (:outbound #'silver-brain-create-outbound-link)
+                               (:bidirectional #'silver-brain-create-bidirectional-link))))
                   "New"))
   (widget-insert "\n")
 
@@ -180,7 +183,7 @@
             (widget-insert "\n"))
           links)))
 
-(cl-defun silver-brain-new-concept (&optional name)
+(cl-defun silver-brain-create-concept (&optional name)
   "Create a new concept. If NAME is given, it is used as the name
 of new concept. Otherwise, it prompts the user to input one."
   (interactive)
@@ -189,21 +192,27 @@ of new concept. Otherwise, it prompts the user to input one."
     (run-hooks 'silver-brain-after-concept-create-hook)
     (silver-brain-concept-show concept)))
 
-(defun silver-brain--concept-create-inbound-link ()
+(defun silver-brain-create-inbound-link ()
+  (interactive)
+  (silver-brain--verify-current-concept)
   (let* (source relation)
     (setq source (silver-brain--search-concept-and-select "Search and select source: "))
     (setq relation (silver-brain--search-concept-and-select "Search and select relation: "))
     (silver-brain-api-create-link source relation (silver-brain-concept-uuid silver-brain-current-concept) t))
   (run-hooks 'silver-brain-after-update-concept-hook))
 
-(defun silver-brain--concept-create-outbound-link ()
+(defun silver-brain-create-outbound-link ()
+  (interactive)
+  (silver-brain--verify-current-concept)
   (let* (relation target)
     (setq relation (silver-brain--search-concept-and-select "Search and select relation: "))
     (setq target (silver-brain--search-concept-and-select "Search and select target: "))
     (silver-brain-api-create-link (silver-brain-concept-uuid silver-brain-current-concept) relation target t))
   (run-hooks 'silver-brain-after-update-concept-hook))
 
-(defun silver-brain--concept-create-bidirectional-link ()
+(defun silver-brain-create-bidirectional-link ()
+  (interactive)
+  (silver-brain--verify-current-concept)
   (let* (relation target)
     (setq relation (silver-brain--search-concept-and-select "Search and select relation: "))
     (setq target (silver-brain--search-concept-and-select "Search and select target: "))
@@ -246,11 +255,16 @@ current concept, insert a button otherwise."
 
 (defun silver-brain-delete-this-concept ()
   (interactive)
+  (silver-brain--verify-current-concept)
   (when (y-or-n-p "I will delete this concept and all the related links. Continue?")
     (let ((uuid (silver-brain-concept-uuid silver-brain-current-concept)))
       (kill-buffer)
       (silver-brain-delete-concept uuid)
       (run-hooks 'silver-brain-after-delete-concept-hook))))
+
+(defun silver-brain--verify-current-concept ()
+  (unless silver-brain-current-concept
+    (error "This command must be invoked within a concept buffer")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                        Content Buffer                        ;;;;
@@ -258,6 +272,7 @@ current concept, insert a button otherwise."
 
 (defun silver-brain-concept-open-content ()
   (interactive)
+  (silver-brain--verify-current-concept)
   (let ((concept silver-brain-current-concept))
     (with-current-buffer (get-buffer-create
                           (format silver-brain-concept-content-buffer-name-format
