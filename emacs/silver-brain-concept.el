@@ -259,7 +259,7 @@ current concept, insert a button otherwise."
   (when (y-or-n-p "I will delete this concept and all the related links. Continue?")
     (let ((uuid (silver-brain-concept-uuid silver-brain-current-concept)))
       (kill-buffer)
-      (silver-brain-delete-concept uuid)
+      (silver-brain-api-delete-concept uuid)
       (run-hooks 'silver-brain-after-delete-concept-hook))))
 
 (defun silver-brain--verify-current-concept ()
