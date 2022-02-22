@@ -38,7 +38,7 @@
                           (if (config:server-print-access-log-p) :accesslog nil)
                           *router*)
                          :port (config:server-port)
-                         :use-thread t))))
+                         :use-thread (config:server-use-thread-p)))))
 
 (defun stop ()
   (or *server*

@@ -32,3 +32,8 @@
   "Run migrations for all the database file under data dir."
   (mapc (op (store:with-database (_ :auto-migrate t)))
         (silver-brain.store:list-databases)))
+
+(defun main (args)
+  (declare (ignore args))
+  (config:switch-profile :prod)
+  (start))

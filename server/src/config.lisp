@@ -4,7 +4,8 @@
            #:switch-profile
            #:server-port
            #:server-print-access-log-p
-           #:data-dir))
+           #:data-dir
+           #:server-use-thread-p))
 
 (in-package silver-brain.config)
 
@@ -12,6 +13,7 @@
   ;; Web server port.
   (server-port 5000 "Server port.")
   (server-print-access-log-p nil)
+  (server-use-thread-p t)
   ;; Database file.
   (data-dir))
 
@@ -25,3 +27,9 @@
               (ensure-directories-exist (merge-pathnames "silver-brain/"
                                                          (uiop:temporary-directory)))))
   (server-port (chameleon:eval-once (find-port:find-port))))
+
+(chameleon:defprofile :prod
+  (server-port 5000)
+  (server-print-access-log-p nil)
+  (server-use-thread-p nil)
+  (data-dir (truename "~/.silver-brain/")))
