@@ -145,7 +145,7 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (cl-defun silver-brain-api-update-concept (uuid &key name content-type content)
   (let ((data '()))
     (when name
-      (push (cons "name" name)))
+      (push (cons "name" name) data))
     (when content-type
       (push (cons "content-type" content-type) data))
     (when content
@@ -161,5 +161,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
             ("relation" . ,relation)
             ("target" . ,target)
             ("isDirectional" . ,directionalp))))
+
+(defun silver-brain-api-delete-link (uuid)
+  (silver-brain--api-delete (format "concept-links/%s" uuid)))
 
 (provide 'silver-brain-api)
