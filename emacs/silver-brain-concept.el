@@ -221,7 +221,7 @@ of new concept. Otherwise, it prompts the user to input one."
 
 (defun silver-brain--concept-confirm-delete-link (uuid)
   (when (y-or-n-p "Confirm? ")
-    (silver-brain-delete-link uuid)
+    (silver-brain-api-delete-link uuid)
     (run-hook-with-args 'silver-brain-after-update-concept-hook)))
 
 (defun silver-brain--concept-insert-text-or-button (concept-summary)
