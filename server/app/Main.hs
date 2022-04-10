@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import qualified SilverBrain.Web as Web
 
 main :: IO ()
-main = someFunc
+main = Web.run
