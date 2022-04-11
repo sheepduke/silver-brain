@@ -10,9 +10,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Database.SQLite.Simple as Sqlite
 
-type SqliteConnection = Sqlite.Connection
-
-newtype StoreConnection = SqliteConnection SqliteConnection
+type StoreConnection = Sqlite.Connection
 
 newtype StoreConnector = StoreConnector
   { connections :: MVar (Map String StoreConnection)
@@ -32,15 +30,13 @@ getSqliteConnection StoreConnector {connections} dbName dbFilePath = do
     case Map.lookup dbName connMap of
       Just conn -> return (connMap, conn)
       Nothing -> do
-        conn <- SqliteConnection <$> Sqlite.open dbFilePath
+        conn <- Sqlite.open dbFilePath
         return (Map.insert dbName conn connMap, conn)
 
 closeAllConnections :: StoreConnector -> IO ()
 closeAllConnections StoreConnector {connections} = do
   connMap <- MVar.readMVar connections
   Map.traverseWithKey
-    ( \_ value -> case value of
-        SqliteConnection conn -> Sqlite.close conn
-    )
+    (\_ conn -> Sqlite.close conn)
     connMap
   return ()

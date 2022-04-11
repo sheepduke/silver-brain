@@ -32,6 +32,8 @@ library
       SilverBrain.ConceptMap.Core.Types
       SilverBrain.ConceptMap.Domain
       SilverBrain.ConceptMap.Store
+      SilverBrain.Util.RequestContext
+      SilverBrain.Util.ServerContext
       SilverBrain.Util.StoreConnection
       SilverBrain.Web
   other-modules:
@@ -47,6 +49,7 @@ library
     , http-types
     , scotty
     , sqlite-simple
+    , string-conversions
     , text
     , time
     , uuid
@@ -69,6 +72,7 @@ executable silver-brain-exe
     , scotty
     , silver-brain
     , sqlite-simple
+    , string-conversions
     , text
     , time
     , uuid
@@ -92,6 +96,7 @@ test-suite silver-brain-test
     , scotty
     , silver-brain
     , sqlite-simple
+    , string-conversions
     , text
     , time
     , uuid

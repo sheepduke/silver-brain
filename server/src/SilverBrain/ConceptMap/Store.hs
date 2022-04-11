@@ -4,36 +4,55 @@
 module SilverBrain.ConceptMap.Store where
 
 import Control.Monad (forM_)
+import Data.Either (fromRight)
+import qualified Data.Either as Either
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import qualified Data.Text as Text
+import Data.Time (UTCTime)
 import Database.SQLite.Simple
-import Database.SQLite.Simple.FromRow
+import Database.SQLite.Simple.Time
+import SilverBrain.ConceptMap.Core.Concept (Concept)
+import qualified SilverBrain.ConceptMap.Core.Concept as Concept
 import SilverBrain.ConceptMap.Core.Types
 import SilverBrain.Util.StoreConnection (StoreConnection)
 import qualified SilverBrain.Util.StoreConnection as StoreConnection
 
-newtype Store = Store
-  { conn :: StoreConnection.StoreConnection
-  }
+getConceptByUuid :: StoreConnection -> Uuid -> IO (Maybe Concept)
+getConceptByUuid conn uuid = do
+  result <- queryNamed conn query queryArgs
+  return $ case result of
+    [[uuid, name, contentType, content, createTimeText, updateTimeText]] ->
+      let createTime = textToUTCTime createTimeText
+          updateTime = textToUTCTime updateTimeText
+       in Just
+            Concept.Concept
+              { Concept.uuid,
+                Concept.name,
+                Concept.contentType,
+                Concept.content,
+                Concept.createTime,
+                Concept.updateTime
+              }
+    _ -> Nothing
+  where
+    query =
+      "select id, name, content_type, content, \
+      \ created_at, updated_at from concept \
+      \ where id = :uuid"
+    queryArgs = [":uuid" := uuid]
 
-new :: StoreConnection.StoreConnection -> Store
-new conn =
-  Store
-    { conn
-    }
-
-getConceptNameByUuid :: Store -> Text -> IO (Maybe Text)
-getConceptNameByUuid store uuid = do
-  result <-
-    queryNamed
-      (getRawStoreConnection store)
-      "select name from concept where id = :uuid"
-      [":uuid" := uuid]
+getConceptNameByUuid :: StoreConnection -> Uuid -> IO (Maybe Text)
+getConceptNameByUuid conn uuid = do
+  result <- queryNamed conn query queryArgs
   case result of
     [[name]] -> return $ Just name
     _ -> return Nothing
+  where
+    query = "select name from concept where id = :uuid"
+    queryArgs = [":uuid" := uuid]
 
-getRawStoreConnection :: Store -> Connection
-getRawStoreConnection store = case conn store of
-  StoreConnection.SqliteConnection conn -> conn
+textToUTCTime :: Text -> UTCTime
+textToUTCTime text = case parseUTCTime text of
+  Right value -> value
+  Left _ -> error "Database corrupted"

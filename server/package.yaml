@@ -28,6 +28,7 @@ dependencies:
 - http-types
 - scotty
 - sqlite-simple
+- string-conversions
 - text
 - time
 - uuid
