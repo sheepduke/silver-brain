@@ -1,15 +1,16 @@
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module SilverBrain.Web where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import qualified Data.Aeson as Json
 import Data.String.Conversions
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Network.HTTP.Types
-import SilverBrain.ConceptMap (ErrorType (UuidNotFound))
+import SilverBrain.ConceptMap
 import qualified SilverBrain.ConceptMap as ConceptMap
+import SilverBrain.ConceptMap.Core.Concept
 import qualified SilverBrain.ConceptMap.Core.Concept as Concept
 import SilverBrain.Util.RequestContext (RequestContext (RequestContext))
 import qualified SilverBrain.Util.RequestContext as RequestContext
@@ -22,7 +23,7 @@ import Web.Scotty
 
 run :: IO ()
 run = do
-  storeConnector <- StoreConnection.newConnector
+  storeConnector <- StoreConnection.newStoreConnector
   let serverContext = ServerContext.new storeConnector
       conceptMap = ConceptMap.new serverContext
    in scotty 3000 $ do
@@ -42,9 +43,13 @@ run = do
         -- TODO Change to configurable prefix.
         (homeDir ++ "/temp/silver-brain/" ++ storeName ++ ".sqlite")
 
-    -- TODO Use real JSON here.
-    dataOrError (Right obj) = do
-      status status200
-      text . cs . Concept.name $ obj
-    dataOrError (Left UuidNotFound) = do
-      status status404
+-- TODO Use real JSON here.
+dataOrError (Right obj) = do
+  status status200
+  json obj
+dataOrError (Left (UuidNotFound uuid)) = do
+  status status404
+  text . cs $ Text.concat ["Uuid not found: ", uuid]
+dataOrError (Left (InvalidArgument reason)) = do
+  status status400
+  text . cs $ Text.concat ["Bad request: ", reason]

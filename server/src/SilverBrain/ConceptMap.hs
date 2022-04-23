@@ -3,6 +3,7 @@
 
 module SilverBrain.ConceptMap where
 
+import Data.Text (Text)
 import SilverBrain.ConceptMap.Core.Concept (Concept)
 import SilverBrain.ConceptMap.Core.Types
 import qualified SilverBrain.ConceptMap.Store as Store
@@ -11,8 +12,8 @@ import SilverBrain.Util.ServerContext (ServerContext)
 import qualified SilverBrain.Util.StoreConnection as StoreConnection
 
 data ErrorType
-  = UuidNotFound
-  | InvalidArgument
+  = UuidNotFound Text
+  | InvalidArgument Text
 
 newtype ConceptMap = ConceptMap
   { serverContext :: ServerContext
@@ -26,4 +27,4 @@ getConceptByUuid conceptMap context uuid = do
   maybeConcept <- Store.getConceptByUuid (storeConnection context) uuid
   return $ case maybeConcept of
     Just concept -> Right concept
-    Nothing -> Left UuidNotFound
+    Nothing -> Left $ UuidNotFound uuid

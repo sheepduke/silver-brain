@@ -6,6 +6,8 @@ module SilverBrain.ConceptMap.Store where
 import Control.Monad (forM_)
 import Data.Either (fromRight)
 import qualified Data.Either as Either
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -17,10 +19,11 @@ import qualified SilverBrain.ConceptMap.Core.Concept as Concept
 import SilverBrain.ConceptMap.Core.Types
 import SilverBrain.Util.StoreConnection (StoreConnection)
 import qualified SilverBrain.Util.StoreConnection as StoreConnection
+import Text.Printf
 
 getConceptByUuid :: StoreConnection -> Uuid -> IO (Maybe Concept)
 getConceptByUuid conn uuid = do
-  result <- queryNamed conn query queryArgs
+  result <- queryNamed conn sql queryArgs
   return $ case result of
     [[uuid, name, contentType, content, createTimeText, updateTimeText]] ->
       let createTime = textToUTCTime createTimeText
@@ -36,7 +39,7 @@ getConceptByUuid conn uuid = do
               }
     _ -> Nothing
   where
-    query =
+    sql =
       "select id, name, content_type, content, \
       \ created_at, updated_at from concept \
       \ where id = :uuid"
@@ -44,12 +47,12 @@ getConceptByUuid conn uuid = do
 
 getConceptNameByUuid :: StoreConnection -> Uuid -> IO (Maybe Text)
 getConceptNameByUuid conn uuid = do
-  result <- queryNamed conn query queryArgs
+  result <- queryNamed conn sql queryArgs
   case result of
     [[name]] -> return $ Just name
     _ -> return Nothing
   where
-    query = "select name from concept where id = :uuid"
+    sql = "select name from concept where id = :uuid"
     queryArgs = [":uuid" := uuid]
 
 textToUTCTime :: Text -> UTCTime

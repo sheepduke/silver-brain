@@ -16,8 +16,8 @@ newtype StoreConnector = StoreConnector
   { connections :: MVar (Map String StoreConnection)
   }
 
-newConnector :: IO StoreConnector
-newConnector = do
+newStoreConnector :: IO StoreConnector
+newStoreConnector = do
   mvar <- MVar.newMVar Map.empty
   return
     StoreConnector
@@ -32,6 +32,10 @@ getSqliteConnection StoreConnector {connections} dbName dbFilePath = do
       Nothing -> do
         conn <- Sqlite.open dbFilePath
         return (Map.insert dbName conn connMap, conn)
+
+withTransaction :: StoreConnection -> IO a -> IO a
+withTransaction connection stmt = do
+  Sqlite.withTransaction connection stmt
 
 closeAllConnections :: StoreConnector -> IO ()
 closeAllConnections StoreConnector {connections} = do
