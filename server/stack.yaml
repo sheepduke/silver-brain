@@ -17,8 +17,9 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/25.yaml
+# resolver:
+#   url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/25.yaml
+resolver: nightly-2022-04-24
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -41,6 +42,10 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 # extra-deps: []
+extra-deps:
+  - sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+  - direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
+  - semigroups-0.19.2@sha256:4eaa22de527068e5a323c4ba5411e24b60386507730d0445865ab71b35e5f95e,6539
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
@@ -65,3 +70,4 @@ packages:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+compiler: ghc-9.2.1

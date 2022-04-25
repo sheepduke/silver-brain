@@ -3,11 +3,31 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+    pantry-tree:
+      size: 1930
+      sha256: e58b9955e483d51ee0966f8ba4384305d871480e2a38b32ee0fcd4573d74cf95
+  original:
+    hackage: sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+- completed:
+    hackage: direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
+    pantry-tree:
+      size: 770
+      sha256: 11874ab21e10c5b54cd1e02a037b677dc1e2ee9986f38c599612c56654dc01c3
+  original:
+    hackage: direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
+- completed:
+    hackage: semigroups-0.19.2@sha256:4eaa22de527068e5a323c4ba5411e24b60386507730d0445865ab71b35e5f95e,6539
+    pantry-tree:
+      size: 481
+      sha256: 0840abb02bf1882bdf356dc7360453d0b121739a808c981d8bcf4fa0c3ee043f
+  original:
+    hackage: semigroups-0.19.2@sha256:4eaa22de527068e5a323c4ba5411e24b60386507730d0445865ab71b35e5f95e,6539
 snapshots:
 - completed:
-    size: 587393
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/25.yaml
-    sha256: 1b74fb5e970497b5aefae56703f1bd44aa648bd1a5ef95c1eb8c29775087e2bf
-  original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/25.yaml
+    size: 554666
+    url: https://mirrors.tuna.tsinghua.edu.cn/stackage/stackage-snapshots/nightly/2022/4/24.yaml
+    sha256: da53a13f9bc564a93de5b9b39453514c4e386de0dadf648bfe376b04c486c891
+  original: nightly-2022-04-24
