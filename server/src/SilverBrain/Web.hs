@@ -1,55 +1,71 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module SilverBrain.Web where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import qualified Data.Aeson as Json
 import Data.String.Conversions
 import Data.Text (Text)
-import qualified Data.Text as Text
+import Data.Text qualified as Text
 import Network.HTTP.Types
+import SilverBrain.Common.StoreConnection qualified as StoreConnection
 import SilverBrain.ConceptMap
-import qualified SilverBrain.ConceptMap as ConceptMap
-import SilverBrain.ConceptMap.Core.Concept
-import qualified SilverBrain.ConceptMap.Core.Concept as Concept
-import SilverBrain.Util.RequestContext (RequestContext (RequestContext))
-import qualified SilverBrain.Util.RequestContext as RequestContext
-import SilverBrain.Util.ServerContext (ServerContext)
-import qualified SilverBrain.Util.ServerContext as ServerContext
-import SilverBrain.Util.StoreConnection
-import qualified SilverBrain.Util.StoreConnection as StoreConnection
-import qualified System.Directory
+import SilverBrain.ConceptMap qualified as ConceptMap
+import System.Directory qualified as Directory
 import Web.Scotty
 
 run :: IO ()
 run = do
   storeConnector <- StoreConnection.newStoreConnector
-  let serverContext = ServerContext.new storeConnector
-      conceptMap = ConceptMap.new serverContext
-   in scotty 3000 $ do
-        get "/api/concepts/:uuid" $ do
-          -- TODO Read HTTP header for store name.
-          conn <- liftIO $ getStoreConnection storeConnector "a"
-          uuid <- param "uuid"
-          let requestContext = RequestContext.new conn
-          concept <- liftIO $ ConceptMap.getConceptByUuid conceptMap requestContext uuid
-          dataOrError concept
+  scotty 3000 $ do
+    get "/api/concepts/:uuid" $ do
+      -- TODO Read HTTP header for store name.
+      uuid <- param "uuid"
+      conceptProperties <- rescue (param "conceptProps") (\_ -> pure "")
+      conceptMap <- newConceptMap storeConnector
+      conceptResult <-
+        liftIO $
+          ConceptMap.getConceptByUuid
+            conceptMap
+            uuid
+            GetConceptOptions
+              { conceptProperties
+              }
+      dataOrError conceptResult
   where
-    getStoreConnection storeConnector storeName = do
-      homeDir <- System.Directory.getHomeDirectory
+    dataOrError (Right obj) = do
+      status status200
+      json obj
+    dataOrError (Left (UuidNotFound uuid)) = do
+      status status404
+      text . cs $ Text.concat ["Uuid not found: ", uuid]
+    dataOrError (Left (InvalidArgument reason)) = do
+      status status400
+      text . cs $ Text.concat ["Bad request: ", reason]
+
+newConceptMap :: MonadIO m => StoreConnection.StoreConnector -> m ConceptMap
+newConceptMap storeConnector = do
+  homeDir <- liftIO $ Directory.getHomeDirectory
+
+  storeConnection <-
+    liftIO $
       StoreConnection.getSqliteConnection
         storeConnector
         storeName
         -- TODO Change to configurable prefix.
         (homeDir ++ "/temp/silver-brain/" ++ storeName ++ ".sqlite")
+  return
+    ConceptMap
+      { storeConnection
+      }
+  where
+    storeName = "a"
 
--- TODO Use real JSON here.
-dataOrError (Right obj) = do
-  status status200
-  json obj
-dataOrError (Left (UuidNotFound uuid)) = do
-  status status404
-  text . cs $ Text.concat ["Uuid not found: ", uuid]
-dataOrError (Left (InvalidArgument reason)) = do
-  status status400
-  text . cs $ Text.concat ["Bad request: ", reason]
+requireParam :: Parsable a => Text -> ActionM a
+requireParam key = do
+  rescue (param $ cs key) $
+    \msg -> do
+      status status400
+      text msg
+      finish
+
+-- r = do
+--   storeConnector<- StoreConnection.newStoreConnector
+--   conn <- StoreConnection.getSqliteConnection storeConnector "/home/sheep/temp/silver-brain/a.sqlite"

@@ -25,21 +25,22 @@ source-repository head
 
 library
   exposed-modules:
+      SilverBrain.Common.StoreConnection
       SilverBrain.ConceptMap
-      SilverBrain.ConceptMap.Core.Concept
-      SilverBrain.ConceptMap.Core.ConceptLink
-      SilverBrain.ConceptMap.Core.StoreOperation
-      SilverBrain.ConceptMap.Core.Types
+      SilverBrain.ConceptMap.Core
       SilverBrain.ConceptMap.Domain
       SilverBrain.ConceptMap.Store
-      SilverBrain.Util.RequestContext
-      SilverBrain.Util.ServerContext
-      SilverBrain.Util.StoreConnection
       SilverBrain.Web
   other-modules:
       Paths_silver_brain
   hs-source-dirs:
       src
+  default-extensions:
+      DuplicateRecordFields
+      ImportQualifiedPost
+      NamedFieldPuns
+      OverloadedStrings
+      OverloadedRecordDot
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -61,7 +62,7 @@ executable silver-brain-exe
       Paths_silver_brain
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -85,7 +86,7 @@ test-suite silver-brain-test
       Paths_silver_brain
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5

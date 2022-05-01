@@ -1,14 +1,10 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
-module SilverBrain.Util.StoreConnection where
+module SilverBrain.Common.StoreConnection where
 
 import Control.Concurrent.MVar (MVar)
-import qualified Control.Concurrent.MVar as MVar
-import Data.IORef (IORef)
-import qualified Data.IORef as IORef
+import Control.Concurrent.MVar qualified as MVar
 import Data.Map (Map)
-import qualified Data.Map as Map
-import qualified Database.SQLite.Simple as Sqlite
+import Data.Map qualified as Map
+import Database.SQLite.Simple qualified as Sqlite
 
 type StoreConnection = Sqlite.Connection
 
@@ -40,7 +36,7 @@ withTransaction connection stmt = do
 closeAllConnections :: StoreConnector -> IO ()
 closeAllConnections StoreConnector {connections} = do
   connMap <- MVar.readMVar connections
-  Map.traverseWithKey
+  _ <- Map.traverseWithKey
     (\_ conn -> Sqlite.close conn)
     connMap
   return ()

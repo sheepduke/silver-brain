@@ -35,12 +35,19 @@ dependencies:
 
 library:
   source-dirs: src
+  default-extensions:
+    - DuplicateRecordFields
+    - ImportQualifiedPost
+    - NamedFieldPuns
+    - OverloadedStrings
+    - OverloadedRecordDot
 
 executables:
   silver-brain-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
+    - -Wall
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
@@ -52,6 +59,7 @@ tests:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
+    - -Wall
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
