@@ -1,6 +1,7 @@
 module SilverBrain.Web where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import Data.List qualified as List
 import Data.String.Conversions
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -18,7 +19,7 @@ run = do
     get "/api/concepts/:uuid" $ do
       -- TODO Read HTTP header for store name.
       uuid <- param "uuid"
-      conceptProperties <- rescue (param "conceptProps") (\_ -> pure "")
+      conceptProperties <- splitQueryParameters <$> rescue (param "conceptProps") (\_ -> pure "")
       conceptMap <- newConceptMap storeConnector
       conceptResult <-
         liftIO $
@@ -66,6 +67,5 @@ requireParam key = do
       text msg
       finish
 
--- r = do
---   storeConnector<- StoreConnection.newStoreConnector
---   conn <- StoreConnection.getSqliteConnection storeConnector "/home/sheep/temp/silver-brain/a.sqlite"
+splitQueryParameters :: Text -> [Text]
+splitQueryParameters = List.delete Text.empty . Text.splitOn ","

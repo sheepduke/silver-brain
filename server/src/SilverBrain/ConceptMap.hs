@@ -1,6 +1,5 @@
 module SilverBrain.ConceptMap where
 
-import Data.List qualified as List
 import Data.Text (Text)
 import Data.Text qualified as Text
 import SilverBrain.Common.StoreConnection
@@ -16,7 +15,7 @@ newtype ConceptMap = ConceptMap
   }
 
 data GetConceptOptions = GetConceptOptions
-  { conceptProperties :: Text
+  { conceptProperties :: [Text]
   }
 
 getConceptByUuid ::
@@ -37,9 +36,8 @@ getConceptByUuid conceptMap uuid options =
         Just concept -> Right concept
         Nothing -> Left $ UuidNotFound uuid
 
-makeConceptPropertyList :: Text -> Either Text ConceptPropertyList
-makeConceptPropertyList param =
-  sequence . map stringToConceptProperty . List.delete Text.empty . Text.splitOn "," $ param
+makeConceptPropertyList :: [Text] -> Either Text ConceptPropertyList
+makeConceptPropertyList = sequence . map stringToConceptProperty
   where
     stringToConceptProperty "content" = Right ConceptContent
     stringToConceptProperty "time" = Right ConceptTime
