@@ -9,14 +9,6 @@ import GHC.Generics
 
 type Uuid = Text
 
-type ConceptPropertyList = [ConceptProperty]
-
-data ConceptProperty
-  = ConceptContent
-  | ConceptTime
-  | ConceptLinks
-  deriving (Eq, Ord, Show)
-
 data Concept = Concept
   { uuid :: Uuid,
     name :: Text,
@@ -47,7 +39,8 @@ newConcept uuid name =
 type InboundLinkList = [InboundLink]
 
 data InboundLink = InboundLink
-  { source :: Concept,
+  { uuid :: Uuid,
+    source :: Concept,
     relation :: Concept
   }
   deriving (Generic)
@@ -55,7 +48,8 @@ data InboundLink = InboundLink
 type OutboundLinkList = [OutboundLink]
 
 data OutboundLink = OutboundLink
-  { relation :: Concept,
+  { uuid :: Uuid,
+    relation :: Concept,
     target :: Concept
   }
   deriving (Generic)
@@ -63,7 +57,8 @@ data OutboundLink = OutboundLink
 type MutualLinkList = [MutualLink]
 
 data MutualLink = MutualLink
-  { relation :: Concept,
+  { uuid :: Uuid,
+    relation :: Concept,
     other :: Concept
   }
   deriving (Generic)

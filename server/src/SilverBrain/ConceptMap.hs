@@ -1,22 +1,35 @@
 module SilverBrain.ConceptMap where
 
+import Data.Maybe qualified as Maybe
 import Data.Text (Text)
 import Data.Text qualified as Text
 import SilverBrain.Common.StoreConnection
 import SilverBrain.ConceptMap.Core
+import SilverBrain.ConceptMap.Domain (populateConceptLinks)
+import SilverBrain.ConceptMap.Domain qualified as Domain
 import SilverBrain.ConceptMap.Store qualified as Store
 
 data ErrorType
   = UuidNotFound Text
   | InvalidArgument Text
+  | DatabaseError Text
 
 newtype ConceptMap = ConceptMap
   { storeConnection :: StoreConnection
   }
 
 data GetConceptOptions = GetConceptOptions
-  { conceptProperties :: [Text]
+  { conceptProps :: [Text],
+    linkConceptProps :: [Text]
   }
+
+type ConceptPropList = [ConceptProp]
+
+data ConceptProp
+  = ConceptContent
+  | ConceptTime
+  | ConceptLinks
+  deriving (Eq, Ord, Show)
 
 getConceptByUuid ::
   ConceptMap ->
@@ -24,22 +37,58 @@ getConceptByUuid ::
   GetConceptOptions ->
   IO (Either ErrorType Concept)
 getConceptByUuid conceptMap uuid options =
-  case makeConceptPropertyList options.conceptProperties of
-    Left reason -> pure $ Left (InvalidArgument reason)
-    Right propertyList -> do
-      maybeConcept <-
-        Store.getConceptByUuid
-          conceptMap.storeConnection
-          uuid
-          propertyList
-      return $ case maybeConcept of
-        Just concept -> Right concept
-        Nothing -> Left $ UuidNotFound uuid
-
-makeConceptPropertyList :: [Text] -> Either Text ConceptPropertyList
-makeConceptPropertyList = sequence . map stringToConceptProperty
+  withTransaction conceptMap.storeConnection $
+    -- Extract property list.
+    case makeConceptPropList options.conceptProps of
+      Left reason -> pure $ Left (InvalidArgument reason)
+      Right conceptPropList -> do
+        -- Get concept's basic information.
+        maybeConcept <- getConceptBasicInfo conn uuid conceptPropList
+        case maybeConcept of
+          Nothing -> pure . Left . UuidNotFound $ uuid
+          Just concept ->
+            -- Populate links when required.
+            if elem ConceptLinks conceptPropList
+              then case makeConceptPropList options.linkConceptProps of
+                Left reason -> return $ Left (InvalidArgument reason)
+                Right linkConceptPropList -> do
+                  getConceptLinkInfo conn concept linkConceptPropList
+              else return $ Right concept
   where
-    stringToConceptProperty "content" = Right ConceptContent
-    stringToConceptProperty "time" = Right ConceptTime
-    stringToConceptProperty "links" = Right ConceptLinks
-    stringToConceptProperty arg = Left $ Text.concat ["Invalid property ", arg]
+    conn = conceptMap.storeConnection
+
+getConceptBasicInfo :: StoreConnection -> Uuid -> ConceptPropList -> IO (Maybe Concept)
+getConceptBasicInfo conn uuid propList =
+  Store.getConceptByUuid conn uuid (isGetContent propList) (isGetTime propList)
+  where
+    isGetContent = elem ConceptContent
+    isGetTime = elem ConceptTime
+
+getConceptLinkInfo :: StoreConnection -> Concept -> ConceptPropList -> IO (Either ErrorType Concept)
+getConceptLinkInfo conn concept propList = do
+  links <- Store.getConceptLinksByUuid conn concept.uuid
+  let uuids = Domain.getAllUuidsFromLinkRows links
+  concepts <-
+    sequence
+      . map (\it -> getConceptBasicInfo conn it propList)
+      $ uuids
+  return $
+    if any Maybe.isNothing concepts
+      then
+        Left . DatabaseError $
+          Text.concat
+            [ "Invalid UUID found in: ",
+              Text.pack $ show uuids
+            ]
+      else
+        Right $
+          populateConceptLinks concept links $
+            map Maybe.fromJust concepts
+
+makeConceptPropList :: [Text] -> Either Text ConceptPropList
+makeConceptPropList = sequence . map stringToConceptProp
+  where
+    stringToConceptProp "content" = Right ConceptContent
+    stringToConceptProp "time" = Right ConceptTime
+    stringToConceptProp "links" = Right ConceptLinks
+    stringToConceptProp arg = Left $ Text.concat ["Invalid prop ", arg]

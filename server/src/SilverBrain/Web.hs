@@ -19,7 +19,8 @@ run = do
     get "/api/concepts/:uuid" $ do
       -- TODO Read HTTP header for store name.
       uuid <- param "uuid"
-      conceptProperties <- splitQueryParameters <$> rescue (param "conceptProps") (\_ -> pure "")
+      conceptProps <- splitQueryParameters <$> rescue (param "conceptProps") (\_ -> pure "")
+      linkConceptProps <- splitQueryParameters <$> rescue (param "linkConceptProps") (\_ -> pure "")
       conceptMap <- newConceptMap storeConnector
       conceptResult <-
         liftIO $
@@ -27,7 +28,8 @@ run = do
             conceptMap
             uuid
             GetConceptOptions
-              { conceptProperties
+              { conceptProps,
+                linkConceptProps
               }
       dataOrError conceptResult
   where
