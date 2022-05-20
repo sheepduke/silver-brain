@@ -2,7 +2,7 @@
 
 module SilverBrain.ConceptMap.Core where
 
-import Data.Aeson (ToJSON)
+import Data.Aeson
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics
@@ -63,10 +63,20 @@ data MutualLink = MutualLink
   }
   deriving (Generic)
 
-instance ToJSON Concept
+customOptions :: Options
+customOptions =
+  defaultOptions
+    { omitNothingFields = True
+    }
 
-instance ToJSON InboundLink
+instance ToJSON Concept where
+  toJSON = genericToJSON customOptions
 
-instance ToJSON OutboundLink
+instance ToJSON InboundLink where
+  toJSON = genericToJSON customOptions
 
-instance ToJSON MutualLink
+instance ToJSON OutboundLink where
+  toJSON = genericToJSON customOptions
+
+instance ToJSON MutualLink where
+  toJSON = genericToJSON customOptions
