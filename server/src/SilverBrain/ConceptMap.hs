@@ -26,7 +26,8 @@ data GetConceptOptions = GetConceptOptions
 type ConceptPropList = [ConceptProp]
 
 data ConceptProp
-  = ConceptContent
+  = ConceptName
+  | ConceptContent
   | ConceptTime
   | ConceptLinks
   deriving (Eq, Ord, Show)
@@ -86,8 +87,10 @@ getConceptLinkInfo conn concept propList = do
             map Maybe.fromJust concepts
 
 makeConceptPropList :: [Text] -> Either Text ConceptPropList
-makeConceptPropList = sequence . map stringToConceptProp
+makeConceptPropList [] = Right [ConceptContent, ConceptTime, ConceptLinks]
+makeConceptPropList propStrings = sequence . map stringToConceptProp $ propStrings
   where
+    stringToConceptProp "name" = Right ConceptName
     stringToConceptProp "content" = Right ConceptContent
     stringToConceptProp "time" = Right ConceptTime
     stringToConceptProp "links" = Right ConceptLinks
