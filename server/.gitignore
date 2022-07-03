@@ -1,19 +1,11 @@
-# bloop and metals
 .bloop
 .bsp
-
-# metals
-project/metals.sbt
-.metals
-
-# sbt
 .cache
 .history
 .lib/
+.metals
 dist/*
 lib_managed/
-project/boot/
-project/plugins/project/
-project/project
+project/**/metals.sbt
 src_managed/
 target/
