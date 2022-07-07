@@ -1,10 +1,7 @@
+package com.sheepduke.silver_brain
 package concept_map
 
 import com.github.nscala_time.time.Imports._
-
-enum ConceptProperty {
-  case Base, Content, Time, Links
-}
 
 case class Concept(
     uuid: String,
