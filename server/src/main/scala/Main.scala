@@ -2,14 +2,14 @@ package com.sheepduke.silver_brain
 
 import cask._
 import org.json4s._
+import org.json4s.ext.JodaTimeSerializers
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization as json
-import common.{DatabaseName, ServiceError}
+
+import common._
 
 object WebApplication extends MainRoutes {
   import AppContext.given
-
-  val databaseNameHeader = "X-Database"
 
   @get("/")
   def hello() = {
@@ -17,10 +17,23 @@ object WebApplication extends MainRoutes {
   }
 
   @get("/api/concepts/:uuid")
-  def getConceptByUuid(uuid: String, request: Request): Response[String] = {
+  def getConceptByUuid(
+      uuid: String,
+      conceptProps: String = "",
+      linkLevel: Int = 0,
+      linkedConceptProps: String = "",
+      request: Request
+  ): Response[String] = {
     given DatabaseName = request.databaseName
 
-    concept_map.Service().getConceptByUuid(uuid, "13242").toWebResponse()
+    AppContext.conceptMapService
+      .getConceptByUuid(
+        uuid,
+        conceptProps.commaSeparatedTokens,
+        linkLevel,
+        linkedConceptProps.commaSeparatedTokens
+      )
+      .toWebResponse()
   }
 
   initialize()
@@ -28,8 +41,8 @@ object WebApplication extends MainRoutes {
 
 extension (request: Request) {
   def databaseName: String = {
-    request.headers.get("X-Database") match {
-      case Some(list) => list.toString
+    request.headers.get("x-database") match {
+      case Some(list) => list.head
       case None       => AppContext.config.database.defaultDatabaseName
     }
   }
@@ -37,12 +50,12 @@ extension (request: Request) {
 
 extension [A](response: common.ServiceResponse[A]) {
   def toWebResponse(): Response[String] = {
-    given formats: Formats = Serialization.formats(NoTypeHints)
+    given formats: Formats = DefaultFormats ++ JodaTimeSerializers.all
 
     response match {
-      case Right(value)                  => Response(json.write(value))
-      case Left(ServiceError.BadRequest) => Abort(400)
-      case Left(ServiceError.NotFound)   => Abort(404)
+      case Right(value)             => Response(json.write(value))
+      case Left(BadRequestError(message)) => Response(message, 400)
+      case Left(NotFoundError(message))   => Response(message, 404)
     }
   }
 }
@@ -55,5 +68,7 @@ object AppContext {
 
   given storeConnector: StoreConnector = SqliteStoreConnector()
 
-  given concept_map.SqlStore = concept_map.SqlStore()
+  given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
+
+  given conceptMapService: concept_map.Service = concept_map.Service()
 }

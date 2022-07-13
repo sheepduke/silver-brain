@@ -2,7 +2,11 @@ ThisBuild / scalaVersion := "3.1.2"
 ThisBuild / organization := "com.sheepduke"
 
 // Library.
-val jsonLib = "org.json4s" %% "json4s-native" % "4.0.5"
+val jsonLibs = Seq(
+  "org.json4s" %% "json4s-native" % "4.0.5",
+  "org.json4s" %% "json4s-ext" % "4.0.5"
+)
+
 val timeLib = "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 val osLib = "com.lihaoyi" %% "os-lib" % "0.8.0"
 
@@ -15,8 +19,18 @@ val dbLibs = Seq(
 val webLib = "com.lihaoyi" %% "cask" % "0.8.3"
 
 libraryDependencies ++= Seq(
-  jsonLib,
   timeLib,
   osLib,
   webLib
-) ++ dbLibs
+) ++ jsonLibs ++ dbLibs
+
+// Flyway.
+enablePlugins(FlywayPlugin)
+
+flywayUrl := "jdbc:sqlite:/home/sheep/temp/silver-brain.sqlite"
+
+// Initial commands.
+console / initialCommands := """
+import com.sheepduke.silver_brain._
+import AppContext.given
+"""

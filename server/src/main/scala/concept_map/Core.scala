@@ -15,6 +15,8 @@ case class Concept(
     mutualLinks: Option[List[ConceptMutualLink]] = None
 )
 
+trait ConceptLink
+
 case class ConceptInboundLink(
     source: Concept,
     relation: Concept
