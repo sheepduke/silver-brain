@@ -10,9 +10,9 @@ case class Concept(
     content: Option[String] = None,
     createTime: Option[DateTime] = None,
     updateTime: Option[DateTime] = None,
-    inboundLinks: Option[List[ConceptInboundLink]] = None,
-    outboundLinks: Option[List[ConceptOutboundLink]] = None,
-    mutualLinks: Option[List[ConceptMutualLink]] = None
+    inboundLinks: Option[Seq[ConceptInboundLink]] = None,
+    outboundLinks: Option[Seq[ConceptOutboundLink]] = None,
+    mutualLinks: Option[Seq[ConceptMutualLink]] = None
 )
 
 trait ConceptLink

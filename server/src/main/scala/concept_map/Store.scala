@@ -10,42 +10,57 @@ enum ConceptProperty {
   case Content, Time
 }
 
+case class LoadConceptOption(
+    conceptProps: Seq[ConceptProperty] = Seq(),
+    loadLinkLevel: Int = 0,
+    linkedConceptProps: Seq[ConceptProperty] = Seq()
+)
+
 trait Store {
-  def getConceptByUuid(
-      uuid: String,
-      conceptProperties: Seq[ConceptProperty],
-      loadLinkLevel: Int,
-      linkedConceptProperties: Seq[ConceptProperty]
-  )(using DatabaseName): Option[Concept]
+  def getConceptByUuid(uuid: String)(using LoadConceptOption)(using
+      DatabaseName
+  ): Option[Concept]
+
+  def searchConcept(search: String)(using LoadConceptOption)(using
+      DatabaseName
+  ): Seq[Concept]
 }
 
 class SqlStore(using storeConnector: StoreConnector) extends Store {
-  def getConceptByUuid(
-      uuid: String,
-      conceptProperties: Seq[ConceptProperty],
-      loadLinkLevel: Int,
-      linkedConceptProperties: Seq[ConceptProperty]
-  )(using DatabaseName): Option[Concept] = {
+  def getConceptByUuid(uuid: String)(using LoadConceptOption)(using
+      DatabaseName
+  ): Option[Concept] = {
     storeConnector.withTransaction { session =>
       given DBSession = session
 
-      loadConceptByUuid(
-        uuid,
-        conceptProperties,
-        loadLinkLevel,
-        linkedConceptProperties
-      )
+      loadConceptByUuid(uuid)
+    }
+  }
+
+  def searchConcept(
+      search: String
+  )(using LoadConceptOption)(using DatabaseName): Seq[Concept] = {
+    storeConnector.withTransaction { session =>
+      given DBSession = session
+
+      val searchString = s"%$search%"
+      sql"select uuid from concept where name like $searchString"
+        .map(_.string("uuid"))
+        .list
+        .apply()
+        .map(loadConceptByUuid(_))
+        .filter(_.nonEmpty)
+        .map(_.get)
     }
   }
 
   private def loadConceptByUuid(
-      uuid: String,
-      conceptProperties: Seq[ConceptProperty],
-      loadLinkLevel: Int,
-      linkedConceptProperties: Seq[ConceptProperty]
-  )(using DatabaseName)(using DBSession) = {
-    val loadContent = conceptProperties.contains(ConceptProperty.Content)
-    val loadTime = conceptProperties.contains(ConceptProperty.Time)
+      uuid: String
+  )(using
+      option: LoadConceptOption
+  )(using DatabaseName)(using DBSession): Option[Concept] = {
+    val loadContent = option.conceptProps.contains(ConceptProperty.Content)
+    val loadTime = option.conceptProps.contains(ConceptProperty.Time)
 
     val contentSql =
       if loadContent then sqls",content_type,content" else sqls""
@@ -61,15 +76,15 @@ class SqlStore(using storeConnector: StoreConnector) extends Store {
 
     for c <- concept
     yield
-      if loadLinkLevel > 0 then
-        loadConceptLinks(c, linkedConceptProperties, loadLinkLevel - 1)
+      if option.loadLinkLevel > 0 then
+        loadConceptLinks(c)(using
+          option.copy(loadLinkLevel = option.loadLinkLevel - 1)
+        )
       else c
   }
 
-  private def loadConceptLinks(
-      concept: Concept,
-      conceptProperties: Seq[ConceptProperty],
-      loadLinkLevel: Int
+  private def loadConceptLinks(concept: Concept)(using
+      option: LoadConceptOption
   )(using DatabaseName)(using DBSession): Concept = {
     val uuid = concept.uuid
 
@@ -98,21 +113,11 @@ where source = $uuid or target = $uuid"""
     val getConcept = { (uuid: String) =>
       uuidConceptHashMap.getOrElseUpdate(
         uuid,
-        loadConceptByUuid(
-          uuid,
-          conceptProperties,
-          loadLinkLevel,
-          conceptProperties
-        ).get
+        loadConceptByUuid(uuid).get
       )
     }
 
-    links.foreach { link =>
-      val sourceUuid = link._1
-      val relationUuid = link._2
-      val targetUuid = link._3
-      val isMutual = link._4
-
+    links.foreach { (sourceUuid, relationUuid, targetUuid, isMutual) =>
       if isMutual then
         mutualLinks.append(
           ConceptMutualLink(
@@ -132,9 +137,9 @@ where source = $uuid or target = $uuid"""
 
     // Construct result concept.
     concept.copy(
-      inboundLinks = Some(inboundLinks.toList),
-      outboundLinks = Some(outboundLinks.toList),
-      mutualLinks = Some(mutualLinks.toList)
+      inboundLinks = Some(inboundLinks.toSeq),
+      outboundLinks = Some(outboundLinks.toSeq),
+      mutualLinks = Some(mutualLinks.toSeq)
     )
   }
 }

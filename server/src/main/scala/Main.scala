@@ -11,12 +11,14 @@ import common._
 object WebApplication extends MainRoutes {
   import AppContext.given
 
+  val context = AppContext
+
   @get("/")
   def hello() = {
     "Hello, world"
   }
 
-  @get("/api/concepts/:uuid")
+  @get("/concepts/:uuid")
   def getConceptByUuid(
       uuid: String,
       conceptProps: String = "",
@@ -26,14 +28,34 @@ object WebApplication extends MainRoutes {
   ): Response[String] = {
     given DatabaseName = request.databaseName
 
-    AppContext.conceptMapService
+    context.conceptMapService
       .getConceptByUuid(
         uuid,
         conceptProps.commaSeparatedTokens,
         linkLevel,
         linkedConceptProps.commaSeparatedTokens
       )
-      .toWebResponse()
+      .toWebResponse
+  }
+
+  @get("/concepts")
+  def searchConcept(
+      search: String,
+      conceptProps: String = "",
+      linkLevel: Int = 0,
+      linkedConceptProps: String = "",
+      request: Request
+  ): Response[String] = {
+    given DatabaseName = request.databaseName
+
+    context.conceptMapService
+      .searchConcept(
+        search,
+        conceptProps.commaSeparatedTokens,
+        linkLevel,
+        linkedConceptProps.commaSeparatedTokens
+      )
+      .toWebResponse
   }
 
   initialize()
@@ -49,11 +71,11 @@ extension (request: Request) {
 }
 
 extension [A](response: common.ServiceResponse[A]) {
-  def toWebResponse(): Response[String] = {
+  def toWebResponse: Response[String] = {
     given formats: Formats = DefaultFormats ++ JodaTimeSerializers.all
 
     response match {
-      case Right(value)             => Response(json.write(value))
+      case Right(value)                   => Response(json.write(value))
       case Left(BadRequestError(message)) => Response(message, 400)
       case Left(NotFoundError(message))   => Response(message, 404)
     }

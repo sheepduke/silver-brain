@@ -12,20 +12,38 @@ class Service(using store: Store) {
       properties: Seq[String] = Seq(),
       loadLinkLevel: Int = 0,
       linkedProperties: Seq[String] = Seq()
-  )(using dbName: DatabaseName): ServiceResponse[Concept] = {
+  )(using DatabaseName): ServiceResponse[Concept] = {
 
     for
-      conceptProperties <- properties.toConceptProperties
-      linkedConceptProperties <- linkedProperties.toConceptProperties
+      conceptProps <- properties.toConceptProperties
+      linkedConceptProps <- linkedProperties.toConceptProperties
+      option = LoadConceptOption(
+        conceptProps,
+        loadLinkLevel,
+        linkedConceptProps
+      )
       concept <- store
-        .getConceptByUuid(
-          uuid,
-          conceptProperties,
-          loadLinkLevel,
-          linkedConceptProperties
-        )
+        .getConceptByUuid(uuid)(using option)
         .toRight(NotFoundError())
     yield concept
+  }
+
+  def searchConcept(
+      search: String,
+      properties: Seq[String] = Seq(),
+      loadLinkLevel: Int = 0,
+      linkedProperties: Seq[String] = Seq()
+  )(using DatabaseName): ServiceResponse[Seq[Concept]] = {
+    for
+      conceptProps <- properties.toConceptProperties
+      linkedConceptProps <- linkedProperties.toConceptProperties
+      option = LoadConceptOption(
+        conceptProps,
+        loadLinkLevel,
+        linkedConceptProps
+      )
+      concepts = store.searchConcept(search)(using option)
+    yield concepts
   }
 }
 
