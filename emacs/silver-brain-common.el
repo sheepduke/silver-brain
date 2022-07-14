@@ -110,8 +110,8 @@ length to be removed."
   "Ask for a search string, search for concepts and select
 one. PROMPT is the prompt for search string."
   (let* ((result (silver-brain-api-search-concept (read-string prompt)))
-         (concepts (mapcar (lambda (alist) (cons (silver-brain-concept-summary-name alist)
-                                                 (silver-brain-concept-summary-uuid alist)))
+         (concepts (mapcar (lambda (alist) (cons (silver-brain-alist-name alist)
+                                                 (silver-brain-alist-uuid alist)))
                            result)))
     (and concepts
          (let ((key (completing-read "Choose concept: " concepts)))

@@ -44,8 +44,10 @@
   "Prepare the Silver Brain List buffer. The data is fetched
 using given SEARCH-STRING."
   (let ((concept-list (thread-first (silver-brain-api-search-concept search-string)
-                        (sort #'silver-brain-concept-summary-by-uuid-<)
-                        (sort #'silver-brain-concept-summary-by-name-<))))
+                        (sort (lambda (x y)
+                                (string< (silver-brain-alist-uuid x) (silver-brain-alist-uuid y))))
+                        (sort (lambda (x y)
+                                (string< (silver-brain-alist-name x) (silver-brain-alist-name y)))))))
     (silver-brain--with-widget-buffer silver-brain-list-buffer-name
       (silver-brain-list-mode)
       (setq silver-brain-list-search-string search-string)
@@ -68,8 +70,8 @@ using given SEARCH-STRING."
            (widget-create 'push-button
                           :notify (lambda (&rest _)
                                     (silver-brain-concept-open
-                                     (silver-brain-concept-summary-uuid concept)))
-                          (silver-brain-concept-summary-name concept)))
+                                     (silver-brain-alist-uuid concept)))
+                          (silver-brain-alist-name concept)))
           (widget-insert "\n"))
         concept-list))
 
