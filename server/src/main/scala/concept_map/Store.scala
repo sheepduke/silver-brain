@@ -32,7 +32,6 @@ class SqlStore(using storeConnector: StoreConnector) extends Store {
   ): Option[Concept] = {
     storeConnector.withTransaction { session =>
       given DBSession = session
-
       loadConceptByUuid(uuid)
     }
   }
@@ -78,7 +77,10 @@ class SqlStore(using storeConnector: StoreConnector) extends Store {
     yield
       if option.loadLinkLevel > 0 then
         loadConceptLinks(c)(using
-          option.copy(loadLinkLevel = option.loadLinkLevel - 1)
+          LoadConceptOption(
+            conceptProps = option.linkedConceptProps,
+            loadLinkLevel = option.loadLinkLevel - 1
+          )
         )
       else c
   }
