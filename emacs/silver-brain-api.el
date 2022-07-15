@@ -36,6 +36,7 @@
                                                       silver-brain-server-port
                                                       uri))))
       (with-current-buffer buffer
+        (set-buffer-multibyte t)
         (let ((code (silver-brain--api-status-code)))
           (unless (<= 200 code 299)
             (error (format "Server response %d: %s"
@@ -44,7 +45,7 @@
       buffer)))
 
 (cl-defun silver-brain--api-read-json (&key (object-type 'alist)
-                            (key-type 'string))
+                                (key-type 'string))
   "Read response body as JSON and parse it.
 OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (let ((json-object-type object-type)
