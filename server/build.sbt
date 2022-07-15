@@ -32,5 +32,6 @@ flywayUrl := "jdbc:sqlite:/home/sheep/temp/silver-brain.sqlite"
 // Initial commands.
 console / initialCommands := """
 import com.sheepduke.silver_brain._
-import AppContext.given
+import web.AppContext
+import web.AppContext.given
 """
