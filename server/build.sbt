@@ -16,12 +16,15 @@ val dbLibs = Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3"
 )
 
-val webLib = "com.lihaoyi" %% "cask" % "0.8.3"
+val httpServerLib = "com.lihaoyi" %% "cask" % "0.8.3"
+
+val httpClientLib = "com.lihaoyi" %% "requests" % "0.7.0"
 
 libraryDependencies ++= Seq(
   timeLib,
   osLib,
-  webLib
+  httpServerLib,
+  httpClientLib
 ) ++ jsonLibs ++ dbLibs
 
 // Flyway.
@@ -34,4 +37,7 @@ console / initialCommands := """
 import com.sheepduke.silver_brain._
 import web.AppContext
 import web.AppContext.given
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.native.JsonMethods._
 """

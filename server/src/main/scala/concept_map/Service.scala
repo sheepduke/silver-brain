@@ -1,31 +1,35 @@
 package com.sheepduke.silver_brain
 package concept_map
 
+import scalikejdbc.DBSession
+
 import javax.management.ServiceNotFoundException
 import scala.collection.mutable.ListBuffer
 
 import common._
 
-class Service(using store: Store) {
+class Service(using store: Store)(using storeConnector: StoreConnector) {
   def getConceptByUuid(
       uuid: String,
       properties: Seq[String] = Seq(),
       loadLinkLevel: Int = 0,
       linkedProperties: Seq[String] = Seq()
   )(using DatabaseName): ServiceResponse[Concept] = {
+    storeConnector.withTransaction { session =>
+      given DBSession = session
 
-    for
-      conceptProps <- properties.toConceptProperties
-      linkedConceptProps <- linkedProperties.toConceptProperties
-      option = LoadConceptOption(
-        conceptProps,
-        loadLinkLevel,
-        linkedConceptProps
-      )
-      concept <- store
-        .getConceptByUuid(uuid)(using option)
-        .toRight(NotFoundError())
-    yield concept
+      for
+        conceptProps <- properties.toConceptProperties
+        linkedConceptProps <- linkedProperties.toConceptProperties
+        option = LoadConceptOption(
+          conceptProps,
+          loadLinkLevel,
+          linkedConceptProps
+        )
+        conceptOpt <- store.getConceptByUuid(uuid)(using option)
+        concept <- conceptOpt.toRight(NotFoundError())
+      yield concept
+    }
   }
 
   def searchConcept(
@@ -42,8 +46,17 @@ class Service(using store: Store) {
         loadLinkLevel,
         linkedConceptProps
       )
-      concepts = store.searchConcept(search)(using option)
+      concepts <- store.searchConcept(search)(using option)
     yield concepts
+  }
+
+  def updateConcept(
+      uuid: String,
+      name: Option[String],
+      contentType: Option[String],
+      content: Option[String]
+  )(using DatabaseName): ServiceResponse[Concept] = {
+    Left(BadRequestError())
   }
 }
 

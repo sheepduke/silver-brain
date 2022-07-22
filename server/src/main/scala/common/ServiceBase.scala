@@ -1,13 +1,20 @@
 package com.sheepduke.silver_brain
 package common
 
-type ServiceError = NotFoundError | BadRequestError
+import scala.util.Success
+import scala.util.Try
+
+type ServiceError = NotFoundError | BadRequestError | DatabaseError
 
 case class NotFoundError(reason: String = "")
 
 case class BadRequestError(reason: String = "")
 
+case class DatabaseError(reason: String = "")
+
 type ServiceResponse[A] = Either[ServiceError, A]
+
+type DatabaseResponse[A] = Either[DatabaseError, A]
 
 extension (string: String) {
 
@@ -15,5 +22,11 @@ extension (string: String) {
     */
   def commaSeparatedTokens: Seq[String] = {
     string.split(",").map(_.trim).filterNot(_.isEmpty).map(_.toLowerCase)
+  }
+}
+
+extension [A](result: Try[A]) {
+  def toDatabaseResponse = {
+    result.toEither.left.map(it => DatabaseError(it.getMessage))
   }
 }

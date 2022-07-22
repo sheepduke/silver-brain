@@ -4,6 +4,8 @@ package concept_map
 import com.github.nscala_time.time.Imports._
 import scalikejdbc._
 
+import scala.util.Try
+
 import common._
 
 enum ConceptProperty {
@@ -17,40 +19,83 @@ case class LoadConceptOption(
 )
 
 trait Store {
+  def doesConceptExist(uuid: String)(using
+      DatabaseName
+  ): DatabaseResponse[Boolean]
+
   def getConceptByUuid(uuid: String)(using LoadConceptOption)(using
       DatabaseName
-  ): Option[Concept]
+  ): DatabaseResponse[Option[Concept]]
 
   def searchConcept(search: String)(using LoadConceptOption)(using
       DatabaseName
-  ): Seq[Concept]
+  ): DatabaseResponse[Seq[Concept]]
+
+  def updateConcept(
+      uuid: String,
+      name: Option[String],
+      contentType: Option[String],
+      content: Option[String]
+  ): DatabaseResponse[Concept]
 }
 
 class SqlStore(using storeConnector: StoreConnector) extends Store {
+  def doesConceptExist(
+      uuid: String
+  )(using DatabaseName): DatabaseResponse[Boolean] = {
+    storeConnector.withReadOnly { session =>
+      given DBSession = session
+
+      for conceptCount <- Try(
+          sql"select count(*) as count from concept where uuid = $uuid"
+            .map(_.int("count"))
+            .single
+            .apply()
+            .get
+        ).toDatabaseResponse
+      yield conceptCount > 0
+    }
+
+  }
+
   def getConceptByUuid(uuid: String)(using LoadConceptOption)(using
       DatabaseName
-  ): Option[Concept] = {
-    storeConnector.withTransaction { session =>
+  ): DatabaseResponse[Option[Concept]] = {
+    storeConnector.withReadOnly { session =>
       given DBSession = session
-      loadConceptByUuid(uuid)
+
+      Try(loadConceptByUuid(uuid)).toDatabaseResponse
     }
   }
 
   def searchConcept(
       search: String
-  )(using LoadConceptOption)(using DatabaseName): Seq[Concept] = {
-    storeConnector.withTransaction { session =>
+  )(using
+      LoadConceptOption
+  )(using DatabaseName): DatabaseResponse[Seq[Concept]] = {
+    storeConnector.withReadOnly { session =>
       given DBSession = session
 
       val searchString = s"%$search%"
-      sql"select uuid from concept where name like $searchString"
-        .map(_.string("uuid"))
-        .list
-        .apply()
-        .map(loadConceptByUuid(_))
-        .filter(_.nonEmpty)
-        .map(_.get)
+      Try(
+        sql"select uuid from concept where name like $searchString"
+          .map(_.string("uuid"))
+          .list
+          .apply()
+          .map(loadConceptByUuid(_))
+          .filter(_.nonEmpty)
+          .map(_.get)
+      ).toDatabaseResponse
     }
+  }
+
+  def updateConcept(
+      uuid: String,
+      name: Option[String],
+      contentType: Option[String],
+      content: Option[String]
+  ): Either[DatabaseError, Concept] = {
+    Left(DatabaseError())
   }
 
   private def loadConceptByUuid(
