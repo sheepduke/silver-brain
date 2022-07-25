@@ -20,12 +20,17 @@ val httpServerLib = "com.lihaoyi" %% "cask" % "0.8.3"
 
 val httpClientLib = "com.lihaoyi" %% "requests" % "0.7.0"
 
+val testLibs = Seq(
+  "com.lihaoyi" %% "utest" % "0.8.0" % "test"
+)
+testFrameworks += new TestFramework("utest.runner.Framework")
+
 libraryDependencies ++= Seq(
   timeLib,
   osLib,
   httpServerLib,
   httpClientLib
-) ++ jsonLibs ++ dbLibs
+) ++ jsonLibs ++ dbLibs ++ testLibs
 
 // Flyway.
 enablePlugins(FlywayPlugin)

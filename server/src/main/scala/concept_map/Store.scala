@@ -4,6 +4,7 @@ package concept_map
 import com.github.nscala_time.time.Imports._
 import scalikejdbc._
 
+import scala.collection.mutable
 import scala.util.Try
 
 import common._
@@ -204,5 +205,25 @@ extension (rs: WrappedResultSet) {
       updateTime =
         if loadTime then Some(rs.string("update_time").toDateTime) else None
     )
+  }
+}
+
+extension (keys: Seq[String]) {
+  def toSelectInSql = {
+    val builder = mutable.StringBuilder()
+
+    val iterator = keys.iterator
+
+    builder.append("(")
+
+    while iterator.hasNext do {
+      builder.append("'")
+      builder.append(iterator.next)
+      builder.append("'")
+
+      if iterator.hasNext then builder.append(",")
+    }
+
+    builder.toString
   }
 }
