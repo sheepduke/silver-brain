@@ -9,4 +9,8 @@ object WebApplication extends Main {
     HelloRoutes(),
     ConceptMapRoutes()
   )
+
+  override def main(args: Array[String]): Unit = {
+    super.main(args)
+  }
 }
