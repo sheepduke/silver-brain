@@ -9,6 +9,7 @@ val jsonLibs = Seq(
 
 val timeLib = "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 val osLib = "com.lihaoyi" %% "os-lib" % "0.8.0"
+val argLib = "com.github.scopt" %% "scopt" % "4.1.0"
 
 val dbLibs = Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
@@ -28,6 +29,7 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 libraryDependencies ++= Seq(
   timeLib,
   osLib,
+  argLib,
   httpServerLib,
   httpClientLib
 ) ++ jsonLibs ++ dbLibs ++ testLibs

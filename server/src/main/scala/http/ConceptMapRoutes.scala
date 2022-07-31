@@ -1,15 +1,15 @@
 package com.sheepduke.silver_brain
-package web
+package http
 
 import cask._
 
 import common._
 
-case class ConceptMapRoutes() extends MainRoutes {
-  import AppContext.given
-
-  val context = AppContext
-
+case class ConceptMapRoutes()(using conceptMapService: concept_map.Service)(
+    using
+    AppConfig,
+    DatabaseConfig
+) extends MainRoutes {
   @get("/concepts/:uuid")
   def getConceptByUuid(
       uuid: String,
@@ -20,7 +20,7 @@ case class ConceptMapRoutes() extends MainRoutes {
   ): Response[String] = {
     given DatabaseName = request.databaseName
 
-    context.conceptMapService
+    conceptMapService
       .getConceptByUuid(
         uuid,
         conceptProps.commaSeparatedTokens,
@@ -40,7 +40,7 @@ case class ConceptMapRoutes() extends MainRoutes {
   ): Response[String] = {
     given DatabaseName = request.databaseName
 
-    context.conceptMapService
+    conceptMapService
       .searchConcept(
         search,
         conceptProps.commaSeparatedTokens,
@@ -62,7 +62,7 @@ case class ConceptMapRoutes() extends MainRoutes {
 
     val result = for
       json <- request.parseJsonBody[UpdateConceptRequest]()
-      result <- context.conceptMapService
+      result <- conceptMapService
         .updateConcept(
           uuid,
           json.name,

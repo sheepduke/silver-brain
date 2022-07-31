@@ -1,5 +1,5 @@
 package com.sheepduke.silver_brain
-package web
+package http
 
 import cask._
 import org.json4s._
@@ -9,18 +9,20 @@ import org.json4s.native.Serialization._
 import scala.util.Success
 import scala.util.Try
 
-import AppContext.given
 import common._
 
-extension (request: Request) {
+given Formats = DefaultFormats ++ JodaTimeSerializers.all
+
+extension (request: Request)(using config: AppConfig) {
   def databaseName: String = {
     request.headers.get("x-database") match {
       case Some(list) => list.head
-      case None       => AppContext.config.database.defaultDatabaseName
+      case None       => config.database.defaultDatabaseName
     }
   }
 
   def parseJsonBody[A]()(using Manifest[A]): common.ServiceResponse[A] = {
+
     Try(read[A](request.text())).toEither.left
       .map(it =>
         BadRequestError("Failed to parse input JSON. " + it.getMessage)
@@ -30,8 +32,6 @@ extension (request: Request) {
 
 extension [A](response: common.ServiceResponse[A]) {
   def toWebResponse: Response[String] = {
-    given Formats = AppContext.jsonFormats
-
     response match {
       case Right(value)                   => Response(write(value))
       case Left(BadRequestError(message)) => Response(message, 400)
@@ -41,17 +41,17 @@ extension [A](response: common.ServiceResponse[A]) {
   }
 }
 
-object AppContext {
-  import common._
+// case class AppContext()(using appConfig: AppConfig) {
+//   import common._
 
-  given jsonFormats: Formats = DefaultFormats ++ JodaTimeSerializers.all
+//   given jsonFormats: Formats =
 
-  given config: AppConfig = AppConfig()
-  given DatabaseConfig = config.database
+//   given config: AppConfig = appConfig
+//   given DatabaseConfig = config.database
 
-  given storeConnector: StoreConnector = SqliteStoreConnector()
+//   given storeConnector: StoreConnector = SqliteStoreConnector()
 
-  given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
+//   given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
 
-  given conceptMapService: concept_map.Service = concept_map.Service()
-}
+//   given conceptMapService: concept_map.Service = concept_map.Service()
+// }

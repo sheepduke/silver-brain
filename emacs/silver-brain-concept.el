@@ -73,7 +73,7 @@
                  :size (silver-brain--get-textfield-length 6)
                  :value (silver-brain-alist-name concept)
                  :action (lambda (widget &rest _)
-                           (silver-brain--concept-rename (widget-value widget))))
+                           (silver-brain--rename-concept (widget-value widget))))
   (widget-insert "\n  Content Type: ")
   (widget-create 'editable-field
                  :size (silver-brain--get-textfield-length 14)
@@ -228,12 +228,10 @@ current concept, insert a button otherwise."
                       :notify (lambda (&rest _) (silver-brain-concept-open uuid))
                       (if (string-empty-p name) " " name))))))
 
-(defun silver-brain--concept-rename (new-name)
+(defun silver-brain--rename-concept (new-name)
   (let ((concept silver-brain-current-concept))
-    (silver-brain--api-send-request
-     (concat "concepts/" (silver-brain-alist-uuid concept))
-     :method :patch
-     :data `((:name . ,new-name)))
+    (silver-brain-api-update-concept (silver-brain-alist-uuid concept)
+                         :name new-name)
     (setf (silver-brain-alist-name silver-brain-current-concept) new-name)
     (rename-buffer (silver-brain--concept-get-buffer-name concept)))
   (run-hooks 'silver-brain-after-update-concept-hook))

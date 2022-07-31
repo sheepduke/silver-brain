@@ -1,5 +1,5 @@
 package com.sheepduke.silver_brain
-package web
+package http
 
 import cask._
 

@@ -3,10 +3,15 @@ package com.sheepduke.silver_brain
 package common
 
 case class AppConfig(
-    database: DatabaseConfig = DatabaseConfig()
+    server: ServerConfig,
+    database: DatabaseConfig
+)
+
+case class ServerConfig(
+    port: Int
 )
 
 case class DatabaseConfig(
-    rootDir: String = s"${os.home}/temp/silver-brain",
-    defaultDatabaseName: String = "silver-brain"
+    rootDir: os.FilePath,
+    defaultDatabaseName: String
 )
