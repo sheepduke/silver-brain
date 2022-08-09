@@ -1,9 +1,9 @@
-package com.sheepduke.silver_brain
+package silver_brain
 package http
 
 import cask.main.Routes
-import com.sheepduke.silver_brain.common.AppConfig
 import io.undertow.Undertow
+import silver_brain.common.AppConfig
 
 class HttpServer(routes: Seq[Routes])(using config: AppConfig)
     extends cask.main.Main {

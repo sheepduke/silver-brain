@@ -1,4 +1,4 @@
-package com.sheepduke.silver_brain
+package silver_brain
 package concept_map
 
 import com.github.nscala_time.time.Imports._

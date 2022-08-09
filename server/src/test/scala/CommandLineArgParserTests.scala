@@ -1,5 +1,4 @@
-package com.sheepduke.silver_brain
-package test
+package silver_brain
 
 import utest._
 

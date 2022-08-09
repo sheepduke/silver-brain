@@ -1,4 +1,4 @@
-package com.sheepduke.silver_brain
+package silver_brain
 
 package common
 

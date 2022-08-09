@@ -14,7 +14,9 @@ val argLib = "com.github.scopt" %% "scopt" % "4.1.0"
 val dbLibs = Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
   "org.xerial" % "sqlite-jdbc" % "3.36.0.3",
-  "ch.qos.logback" % "logback-classic" % "1.2.3"
+  // "org.skinny-framework" %% "skinny-assets" % "4.0.0",
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "org.flywaydb" % "flyway-core" % "9.0.4"
 )
 
 val httpServerLib = "com.lihaoyi" %% "cask" % "0.8.3"
@@ -37,7 +39,8 @@ libraryDependencies ++= Seq(
 // Flyway.
 enablePlugins(FlywayPlugin)
 
-flywayUrl := "jdbc:sqlite:/home/sheep/temp/silver-brain.sqlite"
+flywayUrl := "jdbc:sqlite:/home/sheep/temp/silver-brain/a.sqlite"
+flywayLocations += "classpath:db/migration"
 
 // Initial commands.
 console / initialCommands := """

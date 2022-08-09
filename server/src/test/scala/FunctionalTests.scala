@@ -1,11 +1,10 @@
-package com.sheepduke.silver_brain
+package silver_brain
 
-package test
-
-import com.sheepduke.silver_brain.common._
 import io.undertow.Undertow
 import scalikejdbc._
 import utest._
+
+import common._
 
 object FunctionalTests extends TestSuite {
   val host = "http://localhost:8081"

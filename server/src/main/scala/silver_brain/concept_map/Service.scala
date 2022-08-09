@@ -1,12 +1,11 @@
-package com.sheepduke.silver_brain
+package silver_brain
 package concept_map
 
+import common._
 import scalikejdbc.DBSession
 
 import javax.management.ServiceNotFoundException
 import scala.collection.mutable.ListBuffer
-
-import common._
 
 class Service(using store: Store)(using storeConnector: StoreConnector) {
   def getConceptByUuid(
@@ -46,7 +45,7 @@ class Service(using store: Store)(using storeConnector: StoreConnector) {
         loadLinkLevel,
         linkedConceptProps
       )
-      concepts <- store.searchConcept(search)(using option)
+      concepts <- store.searchConcepts(search)(using option)
     yield concepts
   }
 

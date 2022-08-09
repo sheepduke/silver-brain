@@ -1,15 +1,14 @@
-package com.sheepduke.silver_brain
+package silver_brain
 package http
 
 import cask._
+import common._
 import org.json4s._
 import org.json4s.ext.JodaTimeSerializers
 import org.json4s.native.Serialization._
 
 import scala.util.Success
 import scala.util.Try
-
-import common._
 
 given Formats = DefaultFormats ++ JodaTimeSerializers.all
 

@@ -1,13 +1,12 @@
-package com.sheepduke.silver_brain
+package silver_brain
 package concept_map
 
 import com.github.nscala_time.time.Imports._
+import common._
 import scalikejdbc._
 
 import scala.collection.mutable
 import scala.util.Try
-
-import common._
 
 enum ConceptProperty {
   case Content, Time
@@ -28,7 +27,7 @@ trait Store {
       DatabaseName
   ): DatabaseResponse[Option[Concept]]
 
-  def searchConcept(search: String)(using LoadConceptOption)(using
+  def searchConcepts(search: String)(using LoadConceptOption)(using
       DatabaseName
   ): DatabaseResponse[Seq[Concept]]
 
@@ -69,7 +68,7 @@ class SqlStore(using storeConnector: StoreConnector) extends Store {
     }
   }
 
-  def searchConcept(
+  def searchConcepts(
       search: String
   )(using
       LoadConceptOption

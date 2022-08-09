@@ -1,16 +1,28 @@
-package com.sheepduke.silver_brain
-
-// import cask._
+package silver_brain
 
 import cask.main.Routes
-import com.sheepduke.silver_brain.common._
-import com.sheepduke.silver_brain.http.ConceptMapRoutes
-import com.sheepduke.silver_brain.http.HelloRoutes
+import silver_brain.common._
+import silver_brain.http.ConceptMapRoutes
+import silver_brain.http.HelloRoutes
+import org.flywaydb.core.Flyway
 import scopt.OParser
 
-import http._
+import http.HttpServer
 
-@main def main(args: String*): Unit = {
+@main def run(args: String*): Unit = {
+  val flyway = Flyway
+    .configure()
+    .dataSource(
+      "jdbc:sqlite:/home/sheep/temp/silver-brain/a.sqlite",
+      null,
+      null
+    )
+    .load()
+
+  flyway.migrate()
+}
+
+def main(args: String*): Unit = {
   try {
     given config: AppConfig = generateAppConfig(args)
 

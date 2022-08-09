@@ -1,8 +1,7 @@
-package com.sheepduke.silver_brain
+package silver_brain
 package http
 
 import cask._
-
 import common._
 
 case class ConceptMapRoutes()(using conceptMapService: concept_map.Service)(
