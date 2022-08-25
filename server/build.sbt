@@ -1,5 +1,6 @@
-ThisBuild / scalaVersion := "3.1.2"
+ThisBuild / scalaVersion := "3.1.3"
 ThisBuild / organization := "com.sheepduke"
+Global / onChangedBuildSource := ReloadOnSourceChanges
 
 // Library.
 val jsonLibs = Seq(
@@ -14,7 +15,6 @@ val argLib = "com.github.scopt" %% "scopt" % "4.1.0"
 val dbLibs = Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
   "org.xerial" % "sqlite-jdbc" % "3.36.0.3",
-  // "org.skinny-framework" %% "skinny-assets" % "4.0.0",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.flywaydb" % "flyway-core" % "9.0.4"
 )
