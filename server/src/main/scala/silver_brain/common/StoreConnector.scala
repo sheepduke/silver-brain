@@ -20,16 +20,18 @@ trait StoreConnector {
 class SqliteStoreConnector(using config: DatabaseConfig)
     extends StoreConnector {
   def withReadOnly[A](fun: DBSession => A)(using dbName: DatabaseName): A = {
-    given DatabaseName = s"${dbName}_ro"
+    SqliteStoreConnector.ensureConnectionPoolInitialized()
 
-    SqliteStoreConnector.withDb { db =>
+    using(DB(ConnectionPool.borrow(dbName.readOnlyName))) { db =>
       db.readOnly { session => fun(session) }
     }
   }
 
-  def withTransaction[A](fun: DBSession => A)(using DatabaseName): A = {
-    SqliteStoreConnector.withDb { db =>
-      db.localTx { session => fun(session) }
+  def withTransaction[A](fun: DBSession => A)(using dbName: DatabaseName): A = {
+    SqliteStoreConnector.ensureConnectionPoolInitialized()
+
+    using(DB(ConnectionPool.borrow(dbName))) { db =>
+      db.readOnly { session => fun(session) }
     }
   }
 
@@ -45,16 +47,6 @@ class SqliteStoreConnector(using config: DatabaseConfig)
 }
 
 object SqliteStoreConnector {
-  private def withDb[A](
-      fun: DB => A
-  )(using dbName: DatabaseName)(using DatabaseConfig): A = {
-    ensureConnectionPoolInitialized()
-
-    using(DB(ConnectionPool.borrow(dbName))) { db =>
-      fun(db)
-    }
-  }
-
   private def ensureConnectionPoolInitialized()(using
       dbName: DatabaseName
   )(using config: DatabaseConfig) = {
@@ -67,7 +59,7 @@ object SqliteStoreConnector {
       )
 
       ConnectionPool.add(
-        s"${dbName}_ro", {
+        dbName.readOnlyName, {
           val conf = SQLiteConfig()
           conf.setReadOnly(true)
           val source = SQLiteDataSource(conf)
@@ -76,5 +68,11 @@ object SqliteStoreConnector {
         }
       )
     }
+  }
+}
+
+extension (dbName: DatabaseName) {
+  def readOnlyName = {
+    s"${dbName}__ro"
   }
 }

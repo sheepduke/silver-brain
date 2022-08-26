@@ -24,7 +24,8 @@ val httpServerLib = "com.lihaoyi" %% "cask" % "0.8.3"
 val httpClientLib = "com.lihaoyi" %% "requests" % "0.7.0"
 
 val testLibs = Seq(
-  "com.lihaoyi" %% "utest" % "0.8.0" % "test"
+  "org.scalatest" %% "scalatest" % "3.2.13" % "test",
+  "org.scalikejdbc" %% "scalikejdbc-test" % "4.0.0" % "test"
 )
 testFrameworks += new TestFramework("utest.runner.Framework")
 
@@ -56,6 +57,7 @@ import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 
 import scalikejdbc._
+import com.github.nscala_time.time.Imports._
 
 given config: AppConfig = AppConfig(
   server = ServerConfig(
