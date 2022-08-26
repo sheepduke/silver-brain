@@ -42,12 +42,33 @@ enablePlugins(FlywayPlugin)
 flywayUrl := "jdbc:sqlite:/home/sheep/temp/silver-brain/a.sqlite"
 flywayLocations += "classpath:db/migration"
 
+// ScalikeJDBC code generator.
+enablePlugins(ScalikejdbcPlugin)
+
 // Initial commands.
 console / initialCommands := """
-import com.sheepduke.silver_brain._
-import web.AppContext
-import web.AppContext.given
+import silver_brain._
+import silver_brain.common._
+import silver_brain.concept_map._
+
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
+
+import scalikejdbc._
+
+given config: AppConfig = AppConfig(
+  server = ServerConfig(
+    port = 8080
+  ),
+  database = DatabaseConfig(
+    rootDir = os.home / "temp" / "silver-brain",
+    defaultDatabaseName = "silver-brain"
+  )
+)
+
+given DatabaseConfig = config.database
+given storeConnector: StoreConnector = SqliteStoreConnector()
+given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
+given conceptMapService: concept_map.Service = concept_map.Service()
 """

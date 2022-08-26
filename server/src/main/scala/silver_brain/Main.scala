@@ -1,11 +1,11 @@
 package silver_brain
 
 import cask.main.Routes
+import org.flywaydb.core.Flyway
+import scopt.OParser
 import silver_brain.common._
 import silver_brain.http.ConceptMapRoutes
 import silver_brain.http.HelloRoutes
-import org.flywaydb.core.Flyway
-import scopt.OParser
 
 import http.HttpServer
 
