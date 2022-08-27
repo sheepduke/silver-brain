@@ -8,8 +8,6 @@ import scalikejdbc._
 import scalikejdbc.scalatest.AutoRollback
 
 class MigrationV1Spec extends FixtureAnyFlatSpec with AutoRollback {
-  private val v1ScriptName = "V1__Initial_version.sql"
-
   override def db() = tempSqliteDb()
 
   override def fixture(using DBSession) = {}
@@ -17,7 +15,7 @@ class MigrationV1Spec extends FixtureAnyFlatSpec with AutoRollback {
   behavior of "Empty database"
 
   it should "migrate successfully" in { implicit session =>
-    executeSqlMigration(v1ScriptName)
+    MigrationRunner.run("1")
 
     assertResult(0)(model.Concept.countAll())
     assertResult(0)(model.ConceptRelation.countAll())
@@ -26,10 +24,10 @@ class MigrationV1Spec extends FixtureAnyFlatSpec with AutoRollback {
   behavior of "Rows inserted after migration"
 
   it should "be read properly" in { implicit session =>
-    executeSqlMigration(v1ScriptName)
+    MigrationRunner.run("1")
 
-    insertV1ConceptRows()
-    insertV1ConceptRelationRows()
+    TestDataManager.insertV1ConceptRows()
+    TestDataManager.insertV1ConceptRelationRows()
 
     assertResult(3)(model.Concept.countAll())
 

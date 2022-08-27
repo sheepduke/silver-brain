@@ -1,17 +1,17 @@
-create table if not exists concept(
-  id integer primary key autoincrement,
-  uuid varchar(64) not null,
-  name varchar(1024) not null,
-  content varchar(1024) not null,
-  content_format varchar(16) not null,
-  created_at timestamp,
-  updated_at timestamp
+CREATE TABLE IF NOT EXISTS concept(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uuid VARCHAR(64) NOT NULL,
+  name VARCHAR(1024) NOT NULL,
+  content VARCHAR(1024) NOT NULL,
+  content_format VARCHAR(16) NOT NULL,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
 );
 
-create table if not exists concept_relation (
-  id integer primary key autoincrement,
-  source varchar(64) not null,
-  target varchar(64) not null,
-  created_at timestamp,
-  updated_at timestamp
+CREATE TABLE IF NOT EXISTS concept_relation (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source VARCHAR(64) NOT NULL,
+  target VARCHAR(64) NOT NULL,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
 );
