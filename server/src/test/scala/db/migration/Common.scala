@@ -8,6 +8,7 @@ def tempSqliteDb(): DB = {
   GlobalSettings.loggingSQLAndTime =
     LoggingSQLAndTimeSettings(enabled = false, singleLineMode = true)
   GlobalSettings.loggingConnections = false
+  GlobalSettings.loggingSQLErrors = false
 
   val tempFile = os.temp(suffix = ".sqlite")
   val baseName = tempFile.baseName

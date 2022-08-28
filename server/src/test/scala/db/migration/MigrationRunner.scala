@@ -9,7 +9,8 @@ import scala.util.Using
 object MigrationRunner {
   private val migrationTable: Map[String, DBSession => Unit] = SortedMap(
     "1" -> (implicit s => executeSqlMigration("V1__Initial_version.sql")),
-    "1.5" -> (implicit s => V1_5__Upgrade_schema().migrate())
+    "1.5" -> (implicit s => V1_5__Upgrade_schema().migrate()),
+    "1.6" -> (implicit s => executeSqlMigration("V1_6__Cleanup_old_tables.sql"))
   )
 
   def run(maxVersion: String)(using session: DBSession): Unit = {
