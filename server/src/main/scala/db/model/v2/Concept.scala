@@ -127,10 +127,11 @@ object Concept extends SQLSyntaxSupport[Concept] {
         "name" -> entity.name,
         "contentType" -> entity.contentType,
         "content" -> entity.content,
-        "create_time" -> entity.createTime,
-        "update_time" -> entity.updateTime
+        "createTime" -> entity.createTime.toString,
+        "updateTime" -> entity.updateTime.toString
       )
     )
+
     SQL("""insert into concept(
       uuid,
       name,

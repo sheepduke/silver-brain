@@ -139,9 +139,9 @@ object ConceptLink extends SQLSyntaxSupport[ConceptLink] {
         "source" -> entity.source,
         "relation" -> entity.relation,
         "target" -> entity.target,
-        "is_mutual" -> entity.isMutual,
-        "create_time" -> entity.createTime,
-        "update_time" -> entity.updateTime
+        "isMutual" -> entity.isMutual,
+        "createTime" -> entity.createTime.toString,
+        "updateTime" -> entity.updateTime.toString
       )
     )
     SQL("""insert into concept_link(

@@ -1,12 +1,13 @@
 package db.migration
 
+import db.common._
 import db.model.v2._
 import org.scalatest.flatspec.FixtureAnyFlatSpec
 import scalikejdbc._
 import scalikejdbc.scalatest.AutoRollback
 
 class MigrationV2Spec extends FixtureAnyFlatSpec with AutoRollback {
-  override def db(): DB = inMemorySqliteDb()
+  override def db(): DB = InMemorySqliteDb.create()
 
   override def fixture(implicit session: DBSession): Unit = {}
 

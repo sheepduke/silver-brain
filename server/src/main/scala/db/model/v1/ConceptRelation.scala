@@ -9,15 +9,7 @@ case class ConceptRelation(
     target: String,
     createdAt: DateTime,
     updatedAt: DateTime
-) {
-
-  def save()(implicit session: DBSession): ConceptRelation =
-    ConceptRelation.save(this)(session)
-
-  def destroy()(implicit session: DBSession): Int =
-    ConceptRelation.destroy(this)(session)
-
-}
+) {}
 
 object ConceptRelation extends SQLSyntaxSupport[ConceptRelation] {
 
@@ -86,79 +78,5 @@ object ConceptRelation extends SQLSyntaxSupport[ConceptRelation] {
     withSQL {
       select(sqls.count).from(ConceptRelation as cr).where.append(where)
     }.map(_.long(1)).single.apply().get
-  }
-
-  def create(
-      source: String,
-      target: String,
-      createdAt: DateTime,
-      updatedAt: DateTime
-  )(implicit session: DBSession): ConceptRelation = {
-    val generatedKey = withSQL {
-      insert
-        .into(ConceptRelation)
-        .namedValues(
-          column.source -> source,
-          column.target -> target,
-          column.createdAt -> createdAt.toString,
-          column.updatedAt -> updatedAt.toString
-        )
-    }.updateAndReturnGeneratedKey.apply()
-
-    ConceptRelation(
-      id = generatedKey,
-      source = source,
-      target = target,
-      createdAt = createdAt,
-      updatedAt = updatedAt
-    )
-  }
-
-  def batchInsert(
-      entities: collection.Seq[ConceptRelation]
-  )(implicit session: DBSession): List[Int] = {
-    val params: collection.Seq[Seq[(String, Any)]] = entities.map(entity =>
-      Seq(
-        "source" -> entity.source,
-        "target" -> entity.target,
-        "createdAt" -> entity.createdAt,
-        "updatedAt" -> entity.updatedAt
-      )
-    )
-    SQL("""insert into concept_relation(
-      source,
-      target,
-      created_at,
-      updated_at
-    ) values (
-      {source},
-      {target},
-      {createdAt},
-      {updatedAt}
-    )""").batchByName(params.toSeq: _*).apply[List]()
-  }
-
-  def save(
-      entity: ConceptRelation
-  )(implicit session: DBSession): ConceptRelation = {
-    withSQL {
-      update(ConceptRelation)
-        .set(
-          column.id -> entity.id,
-          column.source -> entity.source,
-          column.target -> entity.target,
-          column.createdAt -> entity.createdAt.toString,
-          column.updatedAt -> entity.updatedAt.toString
-        )
-        .where
-        .eq(column.id, entity.id)
-    }.update.apply()
-    entity
-  }
-
-  def destroy(entity: ConceptRelation)(implicit session: DBSession): Int = {
-    withSQL {
-      delete.from(ConceptRelation).where.eq(column.id, entity.id)
-    }.update.apply()
   }
 }

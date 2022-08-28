@@ -1,11 +1,12 @@
 package silver_brain
 package concept_map
 
-import common._
 import scalikejdbc.DBSession
 
 import javax.management.ServiceNotFoundException
 import scala.collection.mutable.ListBuffer
+
+import common._
 
 class Service(using store: Store)(using storeConnector: StoreConnector) {
   def getConceptByUuid(
@@ -14,21 +15,17 @@ class Service(using store: Store)(using storeConnector: StoreConnector) {
       loadLinkLevel: Int = 0,
       linkedProperties: Seq[String] = Seq()
   )(using DatabaseName): ServiceResponse[Concept] = {
-    storeConnector.withTransaction { session =>
-      given DBSession = session
-
-      for
-        conceptProps <- properties.toConceptProperties
-        linkedConceptProps <- linkedProperties.toConceptProperties
-        option = LoadConceptOption(
-          conceptProps,
-          loadLinkLevel,
-          linkedConceptProps
-        )
-        conceptOpt <- store.getConceptByUuid(uuid)(using option)
-        concept <- conceptOpt.toRight(NotFoundError())
-      yield concept
-    }
+    for
+      conceptProps <- properties.toConceptProperties
+      linkedConceptProps <- linkedProperties.toConceptProperties
+      option = LoadConceptOption(
+        conceptProps,
+        loadLinkLevel,
+        linkedConceptProps
+      )
+      conceptOpt <- store.getConceptByUuid(uuid, option)
+      concept <- conceptOpt.toRight(NotFoundError())
+    yield concept
   }
 
   def searchConcept(
@@ -45,7 +42,7 @@ class Service(using store: Store)(using storeConnector: StoreConnector) {
         loadLinkLevel,
         linkedConceptProps
       )
-      concepts <- store.searchConcepts(search)(using option)
+      concepts <- store.searchConcepts(search, option)
     yield concepts
   }
 

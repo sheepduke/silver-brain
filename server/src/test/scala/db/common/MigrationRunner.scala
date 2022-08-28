@@ -1,10 +1,11 @@
-package db.migration
+package db.common
 
 import scalikejdbc._
 
 import scala.collection.immutable.SortedMap
 import scala.io.Source
 import scala.util.Using
+import db.migration._
 
 object MigrationRunner {
   private val migrationTable: Map[String, DBSession => Unit] = SortedMap(
@@ -16,7 +17,11 @@ object MigrationRunner {
     "2" -> (implicit s => executeSqlMigration("V2__Adjust_columns.sql"))
   )
 
-  def run(maxVersion: String)(using session: DBSession): Unit = {
+  def run()(using DBSession): Unit = {
+    run(migrationTable.keys.last)
+  }
+
+  def run(maxVersion: String)(using DBSession): Unit = {
     val minVersion = migrationTable.keys.take(1).head
 
     run(minVersion, maxVersion)

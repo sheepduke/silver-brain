@@ -1,5 +1,7 @@
-package db.migration
+package db.common
 
+import com.github.nscala_time.time.Imports._
+import db.model.v2 as v2
 import scalikejdbc._
 
 object TestDataManager {
@@ -37,4 +39,23 @@ object TestDataManager {
  '2022-08-26 16:11:39.605569Z', '2022-08-26 16:11:39.605569Z')""".execute
       .apply()
   }
+
+  val v2ConceptRows: Seq[v2.Concept] = Seq(
+    v2.Concept("1", "Father", "text/plain", "", now(), now()),
+    v2.Concept("2", "Mother", "text/md", "", now(), now()),
+    v2.Concept("3", "Child", "text/org", "", now(), now()),
+    v2.Concept("4", "GrandChild", "text/md", "", now(), now()),
+    v2.Concept("fm", "FatherMother", "text/org", "", now(), now()),
+    v2.Concept("fs", "FatherSon", "text/org", "", now(), now()),
+    v2.Concept("ms", "MotherSon", "text/org", "", now(), now())
+  )
+
+  val v2ConceptLinkRows: Seq[v2.ConceptLink] = Seq(
+    v2.ConceptLink("12", "1", "fm", "2", true, now(), now()),
+    v2.ConceptLink("13", "1", "fs", "3", false, now(), now()),
+    v2.ConceptLink("23", "2", "ms", "3", false, now(), now()),
+    v2.ConceptLink("34", "3", "fs", "4", false, now(), now())
+  )
+
+  private def now(): DateTime = DateTime.now()
 }
