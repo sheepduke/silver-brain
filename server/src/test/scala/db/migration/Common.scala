@@ -3,7 +3,7 @@ package db.migration
 import scalikejdbc._
 import scalikejdbc.scalatest.AutoRollback
 
-def tempSqliteDb(): DB = {
+def inMemorySqliteDb(): DB = {
   // Disable logging.
   GlobalSettings.loggingSQLAndTime =
     LoggingSQLAndTimeSettings(enabled = false, singleLineMode = true)

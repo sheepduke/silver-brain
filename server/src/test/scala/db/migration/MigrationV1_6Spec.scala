@@ -7,7 +7,7 @@ import db.model.v1_5.ConceptLink
 import scalikejdbc._
 
 class MigrationV1_6Spec extends FixtureAnyFlatSpec with AutoRollback {
-  override def db() = tempSqliteDb()
+  override def db() = inMemorySqliteDb()
 
   override def fixture(using DBSession) = {}
 
