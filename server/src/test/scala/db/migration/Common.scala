@@ -10,13 +10,13 @@ def tempSqliteDb(): DB = {
   GlobalSettings.loggingConnections = false
   GlobalSettings.loggingSQLErrors = false
 
-  val tempFile = os.temp(suffix = ".sqlite")
-  val baseName = tempFile.baseName
+  val dbName = ":memory:"
+
   ConnectionPool.add(
-    baseName,
-    s"jdbc:sqlite:${tempFile}",
+    dbName,
+    s"jdbc:sqlite:$dbName",
     null,
     null
   )
-  NamedDB(baseName).toDB()
+  NamedDB(dbName).toDB()
 }
