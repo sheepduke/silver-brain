@@ -2,18 +2,47 @@ package silver_brain
 
 import cask.main.Routes
 import org.flywaydb.core.Flyway
+import os.FilePath
 import scopt.OParser
 import silver_brain.common._
 import silver_brain.http.ConceptMapRoutes
 import silver_brain.http.HelloRoutes
+import silver_brain.http.HttpServer
 
-import http.HttpServer
+@main def main(args: String*): Unit = {
+  try {
+    val globalSettings = generateAppConfig(args)
+    startServer(globalSettings)
+  } catch {
+    case _: Exception => ()
+  }
+}
 
-@main def run(args: String*): Unit = {
+def startServer(globalSettings: GlobalSettings): HttpServer = {
+  val storeConnector = SqliteStoreConnector(
+    globalSettings.database.rootDir
+  )
+  val conceptMapStore = concept_map.SqlStore(storeConnector)
+  val conceptMapService = concept_map.Service(conceptMapStore)
+
+  // Run migrations.
+  globalSettings.database.rootDir / "a.sqlite"
+
+  val routes = Seq(
+    HelloRoutes(),
+    ConceptMapRoutes(conceptMapService, globalSettings.database.defaultDbName)
+  )
+
+  val server = HttpServer(routes, globalSettings.server.port)
+  server.start()
+  server
+}
+
+def runMigrations(sqliteFile: FilePath): Unit = {
   val flyway = Flyway
     .configure()
     .dataSource(
-      "jdbc:sqlite:/home/sheep/temp/silver-brain/a.sqlite",
+      s"jdbc:sqlite:$sqliteFile",
       null,
       null
     )
@@ -22,26 +51,7 @@ import http.HttpServer
   flyway.migrate()
 }
 
-def main(args: String*): Unit = {
-  try {
-    given config: AppConfig = generateAppConfig(args)
-
-    given DatabaseConfig = config.database
-    given storeConnector: StoreConnector = SqliteStoreConnector()
-    given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
-    given conceptMapService: concept_map.Service = concept_map.Service()
-
-    val routes = Seq(
-      HelloRoutes(),
-      ConceptMapRoutes()
-    )
-
-    val server = HttpServer(routes)
-    server.start()
-  } catch { case _: Exception => () }
-}
-
-def generateAppConfig(args: Seq[String]): AppConfig = {
+def generateAppConfig(args: Seq[String]): GlobalSettings = {
   val parser = CommandLineArgsParser()
   parser.parse(args) match {
     case None => {
@@ -49,13 +59,13 @@ def generateAppConfig(args: Seq[String]): AppConfig = {
       throw new Exception()
     }
     case Some(cmdArgs) => {
-      AppConfig(
-        server = ServerConfig(
+      GlobalSettings(
+        server = ServerSettings(
           port = firstSome(cmdArgs.port, Some(8080))
         ),
-        database = DatabaseConfig(
+        database = DatabaseSettings(
           rootDir = firstSome(Some(os.home / "temp" / "silver-brain")),
-          defaultDatabaseName = "silver-brain"
+          defaultDbName = "silver-brain"
         )
       )
     }

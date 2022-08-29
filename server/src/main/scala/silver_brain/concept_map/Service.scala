@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 import common._
 
-class Service(using store: Store)(using storeConnector: StoreConnector) {
+class Service(store: Store) {
   def getConceptByUuid(
       uuid: String,
       properties: Seq[String] = Seq(),

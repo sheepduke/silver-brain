@@ -1,9 +1,7 @@
-package silver_brain
-package concept_map
+package silver_brain.concept_map
 
 import com.github.nscala_time.time.Imports._
-
-import common._
+import silver_brain.common._
 
 enum ConceptProperty {
   case Content, Time
@@ -18,16 +16,9 @@ case class LoadConceptOption(
 trait Store {
   def getConceptByUuid(uuid: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): DatabaseResponse[Option[Concept]]
+  ): ServiceResponse[Option[Concept]]
 
   def searchConcepts(search: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): DatabaseResponse[Seq[Concept]]
-
-  def updateConcept(
-      uuid: String,
-      name: Option[String],
-      contentType: Option[String],
-      content: Option[String]
-  ): DatabaseResponse[Concept]
+  ): ServiceResponse[Seq[Concept]]
 }

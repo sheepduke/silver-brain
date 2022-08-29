@@ -8,39 +8,28 @@ import silver_brain.common._
 import scala.collection.mutable
 import scala.util.Try
 
-class SqlStore(using storeConnector: StoreConnector) extends Store {
+class SqlStore(storeConnector: StoreConnector) extends Store {
   def getConceptByUuid(uuid: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): DatabaseResponse[Option[Concept]] = {
+  ): ServiceResponse[Option[Concept]] = {
     storeConnector.withReadOnly { implicit session =>
-      Try(loadConceptByUuid(uuid, loadOption)).toDatabaseResponse
+      Try(loadConceptByUuid(uuid, loadOption)).toServiceResponse
     }
   }
 
   def searchConcepts(
       search: String,
       loadOption: LoadConceptOption
-  )(using DatabaseName): DatabaseResponse[Seq[Concept]] = {
-    storeConnector.withReadOnly { implicit session =>
+  )(using DatabaseName): ServiceResponse[Seq[Concept]] = {
+    Try(storeConnector.withReadOnly { implicit session =>
       val searchString = s"%$search%"
 
-      Try(
-        dao.Concept
-          .findAllBy(sqls"name like $searchString")
-          .map(_.uuid)
-          .map(loadConceptByUuid(_, loadOption))
-          .map(_.get)
-      ).toDatabaseResponse
-    }
-  }
-
-  def updateConcept(
-      uuid: String,
-      name: Option[String],
-      contentType: Option[String],
-      content: Option[String]
-  ): Either[DatabaseError, Concept] = {
-    Left(DatabaseError())
+      dao.Concept
+        .findAllBy(sqls"name like $searchString")
+        .map(_.uuid)
+        .map(loadConceptByUuid(_, loadOption))
+        .map(_.get)
+    }).toServiceResponse
   }
 
   private def loadConceptByUuid(

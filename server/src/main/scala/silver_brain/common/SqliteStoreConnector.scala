@@ -3,12 +3,16 @@ package silver_brain.common
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import scalikejdbc._
+
 import java.sql.Connection
 
-class SqliteStoreConnector(using config: DatabaseConfig)
-    extends StoreConnector {
+case class DatabaseNotFoundException(file: os.Path) extends Throwable {
+  override def getMessage(): String = s"Database file '$file' does not exist"
+}
+
+class SqliteStoreConnector(rootDir: os.Path) extends StoreConnector {
   def withReadOnly[A](fun: DBSession => A)(using dbName: DatabaseName): A = {
-    SqliteStoreConnector.ensureConnectionPoolInitialized()
+    SqliteStoreConnector.ensureConnectionPoolInitialized(rootDir)
 
     using(DB(ConnectionPool.borrow(dbName.readOnlyName))) { db =>
       db.readOnly { session => fun(session) }
@@ -16,7 +20,7 @@ class SqliteStoreConnector(using config: DatabaseConfig)
   }
 
   def withTransaction[A](fun: DBSession => A)(using dbName: DatabaseName): A = {
-    SqliteStoreConnector.ensureConnectionPoolInitialized()
+    SqliteStoreConnector.ensureConnectionPoolInitialized(rootDir)
 
     using(DB(ConnectionPool.borrow(dbName))) { db =>
       db.readOnly { session => fun(session) }
@@ -26,7 +30,7 @@ class SqliteStoreConnector(using config: DatabaseConfig)
   def withRawConnection[A](
       fun: Connection => A
   )(using dbName: DatabaseName): A = {
-    SqliteStoreConnector.ensureConnectionPoolInitialized()
+    SqliteStoreConnector.ensureConnectionPoolInitialized(rootDir)
 
     using(ConnectionPool.borrow(dbName)) { connection =>
       fun(connection)
@@ -35,13 +39,17 @@ class SqliteStoreConnector(using config: DatabaseConfig)
 }
 
 object SqliteStoreConnector {
-  private def ensureConnectionPoolInitialized()(using
+  private def ensureConnectionPoolInitialized(rootDir: os.Path)(using
       dbName: DatabaseName
-  )(using config: DatabaseConfig) = {
+  ) = {
+    val dbPath = rootDir / s"$dbName.sqlite"
+
     if (!ConnectionPool.isInitialized(dbName)) {
+      if !os.exists(dbPath) then throw DatabaseNotFoundException(dbPath)
+
       ConnectionPool.add(
         dbName,
-        s"jdbc:sqlite:${config.rootDir}/$dbName.sqlite",
+        s"jdbc:sqlite:$dbPath",
         null,
         null
       )
@@ -51,7 +59,7 @@ object SqliteStoreConnector {
           val conf = SQLiteConfig()
           conf.setReadOnly(true)
           val source = SQLiteDataSource(conf)
-          source.setUrl(s"jdbc:sqlite:${config.rootDir}/$dbName.sqlite")
+          source.setUrl(s"jdbc:sqlite:$dbPath")
           DataSourceConnectionPool(source)
         }
       )

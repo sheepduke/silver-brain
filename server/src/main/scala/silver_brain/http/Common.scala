@@ -2,21 +2,21 @@ package silver_brain
 package http
 
 import cask._
-import common._
 import org.json4s._
 import org.json4s.ext.JodaTimeSerializers
 import org.json4s.native.Serialization._
+import silver_brain.common._
 
 import scala.util.Success
 import scala.util.Try
 
 given Formats = DefaultFormats ++ JodaTimeSerializers.all
 
-extension (request: Request)(using config: AppConfig) {
-  def databaseName: String = {
+extension (request: Request) {
+  def databaseNameOrDefault(defaultDatabaseName: String): String = {
     request.headers.get("x-database") match {
       case Some(list) => list.head
-      case None       => config.database.defaultDatabaseName
+      case None       => defaultDatabaseName
     }
   }
 
@@ -35,22 +35,7 @@ extension [A](response: common.ServiceResponse[A]) {
       case Right(value)                   => Response(write(value))
       case Left(BadRequestError(message)) => Response(message, 400)
       case Left(NotFoundError(message))   => Response(message, 404)
-      case Left(DatabaseError(message))   => Response(message, 500)
+      case Left(InternalError(message))   => Response(message, 500)
     }
   }
 }
-
-// case class AppContext()(using appConfig: AppConfig) {
-//   import common._
-
-//   given jsonFormats: Formats =
-
-//   given config: AppConfig = appConfig
-//   given DatabaseConfig = config.database
-
-//   given storeConnector: StoreConnector = SqliteStoreConnector()
-
-//   given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
-
-//   given conceptMapService: concept_map.Service = concept_map.Service()
-// }

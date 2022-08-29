@@ -2,12 +2,12 @@ package silver_brain
 package http
 
 import cask._
+
 import common._
 
-case class ConceptMapRoutes()(using conceptMapService: concept_map.Service)(
-    using
-    AppConfig,
-    DatabaseConfig
+case class ConceptMapRoutes(
+    conceptMapService: concept_map.Service,
+    defaultDatabaseName: String
 ) extends MainRoutes {
   @get("/concepts/:uuid")
   def getConceptByUuid(
@@ -17,7 +17,7 @@ case class ConceptMapRoutes()(using conceptMapService: concept_map.Service)(
       linkedConceptProps: String = "",
       request: Request
   ): Response[String] = {
-    given DatabaseName = request.databaseName
+    given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
     conceptMapService
       .getConceptByUuid(
@@ -37,7 +37,7 @@ case class ConceptMapRoutes()(using conceptMapService: concept_map.Service)(
       linkedConceptProps: String = "",
       request: Request
   ): Response[String] = {
-    given DatabaseName = request.databaseName
+    given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
     conceptMapService
       .searchConcept(
@@ -57,7 +57,7 @@ case class ConceptMapRoutes()(using conceptMapService: concept_map.Service)(
 
   @patch("/concepts/:uuid")
   def updateConcept(uuid: String, request: Request): Response[String] = {
-    given DatabaseName = request.databaseName
+    given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
     val result = for
       json <- request.parseJsonBody[UpdateConceptRequest]()

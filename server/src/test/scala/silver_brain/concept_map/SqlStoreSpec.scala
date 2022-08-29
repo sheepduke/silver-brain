@@ -152,7 +152,6 @@ object SqliteStoreSpec {
     if setupConceptLinks then
       dao.ConceptLink.batchInsert(TestDataManager.v2ConceptLinkRows)
 
-    given StoreConnector = DummyStoreConnector(session)
-    SqlStore()
+    SqlStore(DummyStoreConnector(session))
   }
 }
