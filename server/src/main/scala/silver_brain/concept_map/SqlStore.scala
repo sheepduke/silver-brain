@@ -9,15 +9,15 @@ import scala.collection.mutable
 import scala.util.Try
 
 class SqlStore(storeConnector: StoreConnector) extends Store {
-  def getConceptByUuid(uuid: String, loadOption: LoadConceptOption)(using
-      DatabaseName
+  override def getConceptByUuid(uuid: String, loadOption: LoadConceptOption)(
+      using DatabaseName
   ): ServiceResponse[Option[Concept]] = {
     storeConnector.withReadOnly { implicit session =>
-      Try(loadConceptByUuid(uuid, loadOption)).toServiceResponse
+      Try(SqlStore.loadConceptByUuid(uuid, loadOption)).toServiceResponse
     }
   }
 
-  def searchConcepts(
+  override def searchConcepts(
       search: String,
       loadOption: LoadConceptOption
   )(using DatabaseName): ServiceResponse[Seq[Concept]] = {
@@ -27,11 +27,28 @@ class SqlStore(storeConnector: StoreConnector) extends Store {
       dao.Concept
         .findAllBy(sqls"name like $searchString")
         .map(_.uuid)
-        .map(loadConceptByUuid(_, loadOption))
+        .map(SqlStore.loadConceptByUuid(_, loadOption))
         .map(_.get)
     }).toServiceResponse
   }
 
+  override def createConcept(
+      uuid: String,
+      name: String,
+      contentType: String,
+      content: String,
+      createTime: DateTime,
+      updateTime: DateTime
+  )(using DatabaseName): ServiceResponse[Concept] = {
+    Try(storeConnector.withTransaction { implicit session =>
+      dao.Concept
+        .create(uuid, name, contentType, content, createTime, updateTime)
+        .toCoreConcept()
+    }).toServiceResponse
+  }
+}
+
+object SqlStore {
   private def loadConceptByUuid(
       uuid: String,
       loadOption: LoadConceptOption
@@ -102,22 +119,6 @@ class SqlStore(storeConnector: StoreConnector) extends Store {
       inboundLinks = Some(inboundLinks.toSeq),
       outboundLinks = Some(outboundLinks.toSeq),
       mutualLinks = Some(mutualLinks.toSeq)
-    )
-  }
-}
-
-extension (concept: dao.Concept) {
-  def toCoreConcept(loadOption: LoadConceptOption): Concept = {
-    val loadContent = loadOption.conceptProps.contains(ConceptProperty.Content)
-    val loadTime = loadOption.conceptProps.contains(ConceptProperty.Time)
-
-    Concept(
-      uuid = concept.uuid,
-      name = concept.name,
-      contentType = if loadContent then Some(concept.contentType) else None,
-      content = if loadContent then Some(concept.content) else None,
-      createTime = if loadTime then Some(concept.createTime) else None,
-      updateTime = if loadTime then Some(concept.updateTime) else None
     )
   }
 }

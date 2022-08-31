@@ -1,8 +1,10 @@
 package silver_brain
 package concept_map
 
+import com.github.nscala_time.time.Imports._
 import scalikejdbc.DBSession
 
+import java.util.UUID
 import javax.management.ServiceNotFoundException
 import scala.collection.mutable.ListBuffer
 
@@ -44,6 +46,28 @@ class Service(store: Store) {
       )
       concepts <- store.searchConcepts(search, option)
     yield concepts
+  }
+
+  /** Create a concept and return its UUID.
+    */
+  def createConcept(
+      name: String,
+      contentType: Option[String],
+      content: Option[String]
+  )(using DatabaseName): ServiceResponse[String] = {
+    val uuid = UUID.randomUUID().toString
+    val createTime = DateTime.now()
+    val updateTime = createTime
+
+    for concept <- store.createConcept(
+        uuid,
+        name,
+        contentType.getOrElse(""),
+        content.getOrElse(""),
+        createTime,
+        updateTime
+      )
+    yield concept.uuid
   }
 
   def updateConcept(

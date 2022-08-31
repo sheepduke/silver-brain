@@ -5,7 +5,13 @@ import cask._
 
 import common._
 
-case class ConceptMapRoutes(
+case class CreateConceptRequest(
+    name: String,
+    contentType: Option[String],
+    content: Option[String]
+)
+
+class ConceptMapRoutes(
     conceptMapService: concept_map.Service,
     defaultDatabaseName: String
 ) extends MainRoutes {
@@ -26,7 +32,7 @@ case class ConceptMapRoutes(
         linkLevel,
         linkedConceptProps.commaSeparatedTokens
       )
-      .toWebResponse
+      .toWebResponse()
   }
 
   @get("/concepts")
@@ -46,7 +52,22 @@ case class ConceptMapRoutes(
         linkLevel,
         linkedConceptProps.commaSeparatedTokens
       )
-      .toWebResponse
+      .toWebResponse()
+  }
+  @post("/concepts")
+  def createConcept(
+      request: Request
+  ): Response[String] = {
+    given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
+
+    (for
+      json <- request.parseJsonBody[CreateConceptRequest]()
+      result <- conceptMapService.createConcept(
+        json.name,
+        json.contentType,
+        json.content
+      )
+    yield result).toWebResponse(201)
   }
 
   case class UpdateConceptRequest(
@@ -59,7 +80,7 @@ case class ConceptMapRoutes(
   def updateConcept(uuid: String, request: Request): Response[String] = {
     given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
-    val result = for
+    (for
       json <- request.parseJsonBody[UpdateConceptRequest]()
       result <- conceptMapService
         .updateConcept(
@@ -68,9 +89,7 @@ case class ConceptMapRoutes(
           json.contentType,
           json.content
         )
-    yield result
-
-    result.toWebResponse
+    yield result).toWebResponse()
   }
 
   initialize()

@@ -50,27 +50,29 @@ enablePlugins(ScalikejdbcPlugin)
 console / initialCommands := """
 import silver_brain._
 import silver_brain.common._
-import silver_brain.concept_map._
+import silver_brain.concept_map
 
 import org.json4s._
+import org.json4s.ext.JodaTimeSerializers
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 
-import scalikejdbc._
+import scalikejdbc.{GlobalSettings as _, *}
 import com.github.nscala_time.time.Imports._
 
-given config: AppConfig = AppConfig(
-  server = ServerConfig(
+val settings = GlobalSettings(
+  server = ServerSettings(
     port = 8080
   ),
-  database = DatabaseConfig(
+  database = DatabaseSettings(
     rootDir = os.home / "temp" / "silver-brain",
-    defaultDatabaseName = "silver-brain"
+    defaultDbName = "silver-brain"
   )
 )
 
-given DatabaseConfig = config.database
-given storeConnector: StoreConnector = SqliteStoreConnector()
-given conceptMapStore: concept_map.SqlStore = concept_map.SqlStore()
-given conceptMapService: concept_map.Service = concept_map.Service()
+val storeConnector = SqliteStoreConnector(settings.database.rootDir)
+val conceptMapStore = concept_map.SqlStore(storeConnector)
+val conceptMapService = concept_map.Service(conceptMapStore)
+
+given Formats = DefaultFormats ++ JodaTimeSerializers.all
 """

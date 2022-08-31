@@ -23,7 +23,7 @@ class SqliteStoreConnector(rootDir: os.Path) extends StoreConnector {
     SqliteStoreConnector.ensureConnectionPoolInitialized(rootDir)
 
     using(DB(ConnectionPool.borrow(dbName))) { db =>
-      db.readOnly { session => fun(session) }
+      db.localTx { session => fun(session) }
     }
   }
 
