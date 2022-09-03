@@ -35,7 +35,9 @@ extension [A](response: ServiceResponse[A]) {
       case Left(BadRequestError(message)) => Response(message, 400)
       case Left(NotFoundError(message))   => Response(message, 404)
       case Left(InternalError(message))   => Response(message, 500)
-      case Right(value)                   => Response(write(value), statusCode)
+      case Right(value) if value.isInstanceOf[String] =>
+        Response(value.asInstanceOf[String], statusCode)
+      case Right(value) => Response(write(value), statusCode)
     }
   }
 }

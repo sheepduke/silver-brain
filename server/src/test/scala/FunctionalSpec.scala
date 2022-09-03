@@ -1,15 +1,13 @@
 package silver_brain
 
 import io.undertow.Undertow
-import org.json4s.JsonDSL._
-import org.json4s._
-import org.json4s.native.JsonMethods._
 import org.scalactic.source.Position
 import org.scalatest.BeforeAndAfter
+import org.scalatest.GivenWhenThen
+import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.flatspec.AnyFlatSpec
-import requests.Response
 import silver_brain.common._
-import silver_brain.common.given_Formats
+import silver_brain.http.CreateConceptRequest
 import silver_brain.http.HttpServer
 
 import java.net.ServerSocket
@@ -18,103 +16,118 @@ import scala.util.Using
 
 import common._
 
-class FunctionalSpec extends AnyFlatSpec with BeforeAndAfter {
-  extension (uri: String) {
-    def expandUrl = {
-      s"$baseUrl:$port$uri"
-    }
-  }
+class FunctionalSpec
+    extends AnyFeatureSpec
+    with BeforeAndAfter
+    with GivenWhenThen {
 
   private var server: HttpServer = null
 
-  private var port: Int = -1
-
-  private val baseUrl: String = "http://localhost"
-
-  private val defaultDbName = "silver-brain"
-
-  private def get(uri: String, dbName: Option[String] = None): Response = {
-    requests.get(uri.expandUrl, check = false, headers = getHeaders(dbName))
-  }
-
-  private def post(
-      uri: String,
-      data: JValue,
-      dbName: Option[String] = None
-  ): Response = {
-    requests.post(
-      uri.expandUrl,
-      check = false,
-      data = compact(render(data)),
-      headers = getHeaders(dbName)
+  private val settings = GlobalSettings(
+    server = ServerSettings(
+      port = Using(ServerSocket(0))(_.getLocalPort()).get
+    ),
+    database = DatabaseSettings(
+      rootDir = os.temp.dir(prefix = "silver-brain_"),
+      defaultDbName = "silver-brain"
     )
-  }
+  )
 
-  private def getUrl(uri: String) = {
-    s"$baseUrl:$port$uri"
-  }
-
-  private def getHeaders(dbName: Option[String] = None) = {
-    dbName match {
-      case Some(name) => Seq(("X-Database", name))
-      case None       => Seq()
-    }
-  }
+  private val httpClient = HttpApiClient(port = settings.server.port)
 
   // ----------------------------------------------------------------------
 
   before {
-    val rootDir = os.temp.dir(prefix = "silver-brain_")
-
-    silver_brain.runMigrations(rootDir / s"$defaultDbName.sqlite")
-
-    port = Using(ServerSocket(0))(_.getLocalPort()).get
-
-    server = silver_brain.startServer(
-      GlobalSettings(
-        server = ServerSettings(
-          port = port
-        ),
-        database = DatabaseSettings(
-          rootDir = rootDir,
-          defaultDbName = "silver-brain"
-        )
-      )
+    silver_brain.runMigrations(
+      settings.database.rootDir / s"${settings.database.defaultDbName}.sqlite"
     )
+
+    server = silver_brain.startServer(settings)
   }
 
   after {
     server.stop()
   }
 
-  "GET /" should "return hello world string" in {
-    assertResult("Hello, world")(get("/").data.toString)
+  // ----------------------------------------------------------------------
+
+  Feature("GET /") {
+    Scenario("Just return 'Hello, world' text") {
+      When("called")
+      val response = httpClient.hello()
+
+      Then("return expected text")
+      assertResult(200)(response.statusCode)
+      assertResult("Hello, world")(response.readContentAsString)
+    }
   }
 
-  "GET /concepts?search=" should "return empty list" in {
-    assertResult("[]")(get("/concepts?search=").data.toString)
+  Feature("Get concepty by UUID") {
+    Scenario("Database is empty") {
+      When("called with any uuid")
+      val response = httpClient.getConcept("1234")
+
+      Then("return 404")
+      assertResult(404)(response.statusCode)
+    }
   }
 
-  it should "return 404 when given invalid db name" in {
-    assertResult(404)(get("/concepts?search=", dbName = Some("a")).statusCode)
+  Feature("Create concept") {
+    Scenario("Create concept with valid arguments") {
+      Given("no existing concept")
+
+      When("create a new concept")
+      val response =
+        httpClient.createConcept(
+          CreateConceptRequest(
+            name = "First Concept",
+            contentType = Some("org/text")
+          )
+        )
+
+      Then("return UUID of newly created concept")
+      assertResult(201)(response.statusCode)
+      val uuid = response.readContentAsString
+
+      assertResult(36)(uuid.length)
+
+      And("get concept uuid returns right value")
+      val concept = httpClient.getConcept(uuid).readContentAsConcept
+
+      assertResult(uuid)(concept.uuid)
+      assertResult("First Concept")(concept.name)
+    }
   }
 
-  "POST /concept" should "return 201 and UUID" in {
-    val json = ("name" -> "1") ~ ("contentType" -> "org/text")
+  Feature("Search concept") {
+    Scenario("Search all with empty search string") {
+      Given("there is one concept created before")
 
-    val response = post("/concepts", json)
+      When("search with empty search string")
+      val response = httpClient.searchConcepts("")
 
-    assertResult(201)(response.statusCode)
-    assertResult(38)(response.data.toString.length)
-  }
+      Then("return a list of one concept")
+      val concepts = response.readContentAsConceptSeq
+      assertResult(1)(concepts.length)
+      assertResult("First Concept")(concepts.head.name)
+    }
 
-  "GET /concept?search=test" should "return 1 concept" in {
-    val request = ("name" -> "TestConcept")
-    post("/concepts", request)
-    val response = parse(get("/concepts?search=test").data.toString)
-    assertResult(1)(response.children.length)
-    assertResult("TestConcept")(
-      (response.children.head \ "name").extract[String]
-    )
+    Scenario("Search with non-existing search string") {
+      Given("there is one concept with name 'First Concept'")
+
+      When("search with string 'invalid'")
+      val response = httpClient.searchConcepts("invalid")
+
+      Then("return empty list")
+      assertResult("[]")(response.readContentAsString)
+    }
+
+    Scenario("Call with invalid db name in header") {
+      When("search with non-existing database name 'a'")
+      val response = httpClient.get("/concepts?search=", dbName = Some("a"))
+
+      Then("return 404")
+      assertResult(404)(response.statusCode)
+    }
   }
 }

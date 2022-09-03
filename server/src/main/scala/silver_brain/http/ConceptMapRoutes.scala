@@ -1,18 +1,17 @@
-package silver_brain
-package http
+package silver_brain.http
 
 import cask._
-
-import common._
+import silver_brain.common._
+import silver_brain.concept_map.Service
 
 case class CreateConceptRequest(
     name: String,
-    contentType: Option[String],
-    content: Option[String]
+    contentType: Option[String] = None,
+    content: Option[String] = None
 )
 
 class ConceptMapRoutes(
-    conceptMapService: concept_map.Service,
+    conceptMapService: Service,
     defaultDatabaseName: String
 ) extends MainRoutes {
   @get("/concepts/:uuid")
