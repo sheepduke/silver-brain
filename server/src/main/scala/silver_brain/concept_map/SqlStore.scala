@@ -44,6 +44,28 @@ class SqlStore(storeConnector: StoreConnector) extends Store {
       uuid
     })
   }
+
+  override def updateConcept(
+      uuid: String,
+      name: Option[String],
+      contentType: Option[String],
+      content: Option[String]
+  )(using DatabaseName): Try[Unit] = {
+    Try(storeConnector.withTransaction { implicit session =>
+      dao.Concept.find(uuid) match {
+        case None => throw UuidNotFoundException(uuid)
+        case Some(concept) => {
+          concept
+            .copy(
+              name = name.getOrElse(concept.name),
+              contentType = contentType.getOrElse(concept.contentType),
+              content = content.getOrElse(concept.content)
+            )
+            .save()
+        }
+      }
+    })
+  }
 }
 
 object SqlStore {

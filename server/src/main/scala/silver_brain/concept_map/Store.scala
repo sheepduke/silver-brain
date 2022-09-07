@@ -4,6 +4,7 @@ import com.github.nscala_time.time.Imports._
 import db.model.v2 as dao
 import silver_brain.common._
 import java.util.UUID
+import java.lang.Throwable
 import scala.util.Try
 
 enum ConceptProperty {
@@ -15,6 +16,8 @@ case class LoadConceptOption(
     loadLinkLevel: Int = 0,
     linkedConceptProps: Seq[ConceptProperty] = Seq()
 )
+
+case class UuidNotFoundException(uuid: String) extends Throwable
 
 trait Store {
   def getConcept(uuid: String, loadOption: LoadConceptOption)(using
@@ -30,6 +33,13 @@ trait Store {
       contentType: String,
       content: String
   )(using DatabaseName): Try[String]
+
+  def updateConcept(
+      uuid: String,
+      name: Option[String],
+      contentType: Option[String],
+      content: Option[String]
+  )(using DatabaseName): Try[Unit]
 }
 
 object Store {

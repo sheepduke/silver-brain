@@ -64,9 +64,8 @@ class Service(store: Store) {
       name: Option[String],
       contentType: Option[String],
       content: Option[String]
-  )(using DatabaseName): ServiceResponse[Concept] = {
-
-    Left(BadRequestError())
+  )(using DatabaseName): ServiceResponse[Unit] = {
+    store.updateConcept(uuid, name, contentType, content).toServiceResponse
   }
 }
 

@@ -80,17 +80,28 @@ class ConceptMapRoutes(
   def updateConcept(uuid: String, request: Request): Response[String] = {
     given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
+    println(request.text())
+
     (for
       json <- request.parseJsonBody[UpdateConceptRequest]()
-      result <- conceptMapService
+      _ <- conceptMapService
         .updateConcept(
           uuid,
           json.name,
           json.contentType,
           json.content
         )
-    yield result).toWebResponse()
+    yield "").toWebResponse(204)
   }
 
   initialize()
 }
+
+// import silver_brain.http._
+
+// requests.post(
+//   "http://localhost:8080/concepts",
+//   data = write(CreateConceptRequest(name = "Snow", contentType = Some("text/org")))).data.toString
+
+// requests.get("http://localhost:8080/concepts?search=").data.toString
+// requests.patch("http://localhost:8080/concepts/ece15b78-c507-4baf-ba4b-6c3cf7557547", data = write(UpdateConceptRequest(name = Some("Danny"))))

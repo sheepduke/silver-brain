@@ -21,7 +21,7 @@ val dbLibs = Seq(
 
 val httpServerLib = "com.lihaoyi" %% "cask" % "0.8.3"
 
-val httpClientLib = "com.lihaoyi" %% "requests" % "0.7.0"
+val httpClientLib = "com.lihaoyi" %% "requests" % "0.7.1"
 
 val testLibs = Seq(
   "org.scalatest" %% "scalatest" % "3.2.13" % "test",
@@ -50,12 +50,15 @@ enablePlugins(ScalikejdbcPlugin)
 console / initialCommands := """
 import silver_brain._
 import silver_brain.common._
-import silver_brain.concept_map
+import silver_brain.concept_map._
+import silver_brain.http._
 
 import org.json4s._
 import org.json4s.ext.JodaTimeSerializers
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
+import org.json4s.native.Serialization.read
+import org.json4s.native.Serialization.write
 
 import scalikejdbc.{GlobalSettings as _, *}
 import com.github.nscala_time.time.Imports._

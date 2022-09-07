@@ -7,8 +7,7 @@ import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.flatspec.AnyFlatSpec
 import silver_brain.common._
-import silver_brain.http.CreateConceptRequest
-import silver_brain.http.HttpServer
+import silver_brain.http._
 
 import java.net.ServerSocket
 import scala.util.Try
@@ -96,6 +95,36 @@ class FunctionalSpec
 
       assertResult(uuid)(concept.uuid)
       assertResult("First Concept")(concept.name)
+    }
+  }
+
+  Feature("Update concept") {
+    Scenario("Search concept and update it") {
+      Given("concept name is 'First Concept'")
+      val oldConcept =
+        httpClient
+          .searchConcepts("", "conceptProps=content,time")
+          .readContentAsConceptSeq
+          .head
+      val uuid = oldConcept.uuid
+
+      When("update the name to 'First Updated Concept'")
+      httpClient.updateConcept(
+        uuid,
+        UpdateConceptRequest(
+          name = Some("First Updated Concept"),
+          content = Some("updated content")
+        )
+      )
+
+      Then("get this concept returns updated value")
+      val newConcept = httpClient
+        .getConcept(uuid, "conceptProps=content,time")
+        .readContentAsConcept
+
+      assertResult("First Updated Concept")(newConcept.name)
+      assertResult(oldConcept.contentType)(newConcept.contentType)
+      assertResult("updated content")(newConcept.content.get)
     }
   }
 

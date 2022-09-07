@@ -8,7 +8,7 @@ import org.json4s.native.Serialization.write
 import requests.Response
 import silver_brain.common.given_Formats
 import silver_brain.concept_map.Concept
-import silver_brain.http.CreateConceptRequest
+import silver_brain.http._
 
 class HttpApiClient(host: String = "localhost", port: Int) {
   extension (uri: String) {
@@ -25,16 +25,25 @@ class HttpApiClient(host: String = "localhost", port: Int) {
 
   def hello(): Response = get("/")
 
-  def getConcept(uuid: String): Response = get(s"/concepts/$uuid")
+  def getConcept(uuid: String, queryParams: String = ""): Response = get(
+    s"/concepts/$uuid" + (if queryParams.length > 0 then s"?${queryParams}"
+                          else "")
+  )
 
-  def searchConcepts(search: String): Response = {
+  def searchConcepts(search: String, queryParams: String = ""): Response = {
     get(
-      s"/concepts?search=$search"
+      s"/concepts?search=$search" + (if queryParams.length > 0 then
+                                       s"&${queryParams}"
+                                     else "")
     )
   }
 
   def createConcept(request: CreateConceptRequest): Response = {
     post("/concepts", request)
+  }
+
+  def updateConcept(uuid: String, request: UpdateConceptRequest): Response = {
+    patch(s"/concepts/$uuid", request)
   }
 
   def get(uri: String, dbName: Option[String] = None): Response = {
@@ -47,6 +56,19 @@ class HttpApiClient(host: String = "localhost", port: Int) {
       dbName: Option[String] = None
   ): Response = {
     requests.post(
+      uri.expandUrl,
+      check = false,
+      data = write(data),
+      headers = makeHeaders(dbName)
+    )
+  }
+
+  def patch(
+      uri: String,
+      data: Any,
+      dbName: Option[String] = None
+  ): Response = {
+    requests.patch(
       uri.expandUrl,
       check = false,
       data = write(data),
