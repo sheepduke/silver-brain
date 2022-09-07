@@ -4,23 +4,22 @@ import com.github.nscala_time.time.Imports._
 import db.model.v2 as dao
 import scalikejdbc._
 import silver_brain.common._
-
 import scala.collection.mutable
 import scala.util.Try
 
 class SqlStore(storeConnector: StoreConnector) extends Store {
-  override def getConceptByUuid(uuid: String, loadOption: LoadConceptOption)(
-      using DatabaseName
-  ): ServiceResponse[Option[Concept]] = {
-    storeConnector.withReadOnly { implicit session =>
-      Try(SqlStore.loadConceptByUuid(uuid, loadOption)).toServiceResponse
-    }
+  override def getConcept(uuid: String, loadOption: LoadConceptOption)(using
+      DatabaseName
+  ): Try[Option[Concept]] = {
+    Try(storeConnector.withReadOnly { implicit session =>
+      SqlStore.loadConceptByUuid(uuid, loadOption)
+    })
   }
 
   override def searchConcepts(
       search: String,
       loadOption: LoadConceptOption
-  )(using DatabaseName): ServiceResponse[Seq[Concept]] = {
+  )(using DatabaseName): Try[Seq[Concept]] = {
     Try(storeConnector.withReadOnly { implicit session =>
       val searchString = s"%$search%"
 
@@ -29,22 +28,21 @@ class SqlStore(storeConnector: StoreConnector) extends Store {
         .map(_.uuid)
         .map(SqlStore.loadConceptByUuid(_, loadOption))
         .map(_.get)
-    }).toServiceResponse
+    })
   }
 
   override def createConcept(
-      uuid: String,
       name: String,
       contentType: String,
-      content: String,
-      createTime: DateTime,
-      updateTime: DateTime
-  )(using DatabaseName): ServiceResponse[Concept] = {
+      content: String
+  )(using DatabaseName): Try[String] = {
     Try(storeConnector.withTransaction { implicit session =>
-      dao.Concept
-        .create(uuid, name, contentType, content, createTime, updateTime)
-        .toCoreConcept()
-    }).toServiceResponse
+      val uuid = Store.createUuid()
+      val nowTime = DateTime.now()
+
+      dao.Concept.create(uuid, name, contentType, content, nowTime, nowTime)
+      uuid
+    })
   }
 }
 

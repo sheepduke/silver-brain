@@ -10,12 +10,18 @@ case class CreateConceptRequest(
     content: Option[String] = None
 )
 
+case class UpdateConceptRequest(
+    name: Option[String] = None,
+    contentType: Option[String] = None,
+    content: Option[String] = None
+)
+
 class ConceptMapRoutes(
     conceptMapService: Service,
     defaultDatabaseName: String
 ) extends MainRoutes {
   @get("/concepts/:uuid")
-  def getConceptByUuid(
+  def getConcept(
       uuid: String,
       conceptProps: String = "",
       linkLevel: Int = 0,
@@ -25,7 +31,7 @@ class ConceptMapRoutes(
     given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
     conceptMapService
-      .getConceptByUuid(
+      .getConcept(
         uuid,
         conceptProps.commaSeparatedTokens,
         linkLevel,
@@ -45,7 +51,7 @@ class ConceptMapRoutes(
     given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
     conceptMapService
-      .searchConcept(
+      .searchConcepts(
         search,
         conceptProps.commaSeparatedTokens,
         linkLevel,
@@ -53,6 +59,7 @@ class ConceptMapRoutes(
       )
       .toWebResponse()
   }
+
   @post("/concepts")
   def createConcept(
       request: Request
@@ -68,12 +75,6 @@ class ConceptMapRoutes(
       )
     yield result).toWebResponse(201)
   }
-
-  case class UpdateConceptRequest(
-      name: Option[String],
-      contentType: Option[String],
-      content: Option[String]
-  )
 
   @patch("/concepts/:uuid")
   def updateConcept(uuid: String, request: Request): Response[String] = {

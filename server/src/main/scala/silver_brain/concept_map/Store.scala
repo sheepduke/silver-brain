@@ -3,6 +3,8 @@ package silver_brain.concept_map
 import com.github.nscala_time.time.Imports._
 import db.model.v2 as dao
 import silver_brain.common._
+import java.util.UUID
+import scala.util.Try
 
 enum ConceptProperty {
   case Content, Time
@@ -15,22 +17,25 @@ case class LoadConceptOption(
 )
 
 trait Store {
-  def getConceptByUuid(uuid: String, loadOption: LoadConceptOption)(using
+  def getConcept(uuid: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): ServiceResponse[Option[Concept]]
+  ): Try[Option[Concept]]
 
   def searchConcepts(search: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): ServiceResponse[Seq[Concept]]
+  ): Try[Seq[Concept]]
 
   def createConcept(
-      uuid: String,
       name: String,
       contentType: String,
-      content: String,
-      createTime: DateTime,
-      updateTime: DateTime
-  )(using DatabaseName): ServiceResponse[Concept]
+      content: String
+  )(using DatabaseName): Try[String]
+}
+
+object Store {
+  def createUuid(): String = {
+    UUID.randomUUID().toString
+  }
 }
 
 extension (concept: dao.Concept) {

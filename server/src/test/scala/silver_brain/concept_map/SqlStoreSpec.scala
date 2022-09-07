@@ -15,13 +15,13 @@ class SqliteStoreSpec extends FixtureAnyFlatSpec with AutoRollback {
 
   given DatabaseName = ""
 
-  behavior of "getConceptByUuid"
+  behavior of "getConcept"
 
   it should "return only uuid and name by default" in { implicit session =>
     val store = SqliteStoreSpec.createSqlStore(setupConcepts = true)
 
     val father =
-      store.getConceptByUuid("1", LoadConceptOption()).getOrElse(None).get
+      store.getConcept("1", LoadConceptOption()).getOrElse(None).get
 
     assertResult("1")(father.uuid)
     assertResult("Father")(father.name)
@@ -38,7 +38,7 @@ class SqliteStoreSpec extends FixtureAnyFlatSpec with AutoRollback {
     val store = SqliteStoreSpec.createSqlStore(setupConcepts = true)
 
     val mother = store
-      .getConceptByUuid(
+      .getConcept(
         "2",
         LoadConceptOption(conceptProps =
           Seq(ConceptProperty.Content, ConceptProperty.Time)
@@ -63,7 +63,7 @@ class SqliteStoreSpec extends FixtureAnyFlatSpec with AutoRollback {
 
     val father =
       store
-        .getConceptByUuid("1", LoadConceptOption(loadLinkLevel = 1))
+        .getConcept("1", LoadConceptOption(loadLinkLevel = 1))
         .getOrElse(None)
         .get
 
@@ -95,7 +95,7 @@ class SqliteStoreSpec extends FixtureAnyFlatSpec with AutoRollback {
     )
 
     val child = store
-      .getConceptByUuid(
+      .getConcept(
         "3",
         LoadConceptOption(
           conceptProps = Seq(ConceptProperty.Content),
@@ -121,7 +121,7 @@ class SqliteStoreSpec extends FixtureAnyFlatSpec with AutoRollback {
 
     val grandChild =
       store
-        .getConceptByUuid(
+        .getConcept(
           "4",
           LoadConceptOption(
             loadLinkLevel = 2,

@@ -4,14 +4,13 @@ package concept_map
 import com.github.nscala_time.time.Imports._
 import scalikejdbc.DBSession
 
-import java.util.UUID
 import javax.management.ServiceNotFoundException
 import scala.collection.mutable.ListBuffer
 
 import common._
 
 class Service(store: Store) {
-  def getConceptByUuid(
+  def getConcept(
       uuid: String,
       properties: Seq[String] = Seq(),
       loadLinkLevel: Int = 0,
@@ -25,12 +24,12 @@ class Service(store: Store) {
         loadLinkLevel,
         linkedConceptProps
       )
-      conceptOpt <- store.getConceptByUuid(uuid, option)
+      conceptOpt <- store.getConcept(uuid, option).toServiceResponse
       concept <- conceptOpt.toRight(NotFoundError())
     yield concept
   }
 
-  def searchConcept(
+  def searchConcepts(
       search: String,
       properties: Seq[String] = Seq(),
       loadLinkLevel: Int = 0,
@@ -44,7 +43,7 @@ class Service(store: Store) {
         loadLinkLevel,
         linkedConceptProps
       )
-      concepts <- store.searchConcepts(search, option)
+      concepts <- store.searchConcepts(search, option).toServiceResponse
     yield concepts
   }
 
@@ -55,19 +54,9 @@ class Service(store: Store) {
       contentType: Option[String],
       content: Option[String]
   )(using DatabaseName): ServiceResponse[String] = {
-    val uuid = UUID.randomUUID().toString
-    val createTime = DateTime.now()
-    val updateTime = createTime
-
-    for concept <- store.createConcept(
-        uuid,
-        name,
-        contentType.getOrElse(""),
-        content.getOrElse(""),
-        createTime,
-        updateTime
-      )
-    yield concept.uuid
+    store
+      .createConcept(name, contentType.getOrElse(""), content.getOrElse(""))
+      .toServiceResponse
   }
 
   def updateConcept(
@@ -76,6 +65,7 @@ class Service(store: Store) {
       contentType: Option[String],
       content: Option[String]
   )(using DatabaseName): ServiceResponse[Concept] = {
+
     Left(BadRequestError())
   }
 }
