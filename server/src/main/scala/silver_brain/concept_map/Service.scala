@@ -24,8 +24,7 @@ class Service(store: Store) {
         loadLinkLevel,
         linkedConceptProps
       )
-      conceptOpt <- store.getConcept(uuid, option).toServiceResponse
-      concept <- conceptOpt.toRight(NotFoundError())
+      concept <- store.getConcept(uuid, option).toServiceResponse
     yield concept
   }
 

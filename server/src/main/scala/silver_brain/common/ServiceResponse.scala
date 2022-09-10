@@ -1,5 +1,7 @@
 package silver_brain.common
 
+import silver_brain.concept_map.ItemNotFoundException
+
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -27,10 +29,20 @@ extension [A](result: Try[A]) {
   def toServiceResponse: ServiceResponse[A] = {
     result match {
       case Success(value) => Right(value)
-      case Failure(exception)
-          if exception.isInstanceOf[DatabaseNotFoundException] =>
-        Left(NotFoundError(exception.getMessage))
-      case Failure(exception) => Left(InternalError(exception.getMessage))
+      case Failure(exception) =>
+        exception match {
+          case ex @ DatabaseNotFoundException(dbName) =>
+            Left(NotFoundError(s"Database '$dbName' not found"))
+          case ex @ ItemNotFoundException(uuid) =>
+            Left(NotFoundError(s"Item with UUID '$uuid' not found"))
+          case _ => Left(InternalError(s"""Internal server error.
+Message:
+${exception.getMessage()}
+
+Call stack:
+${exception.getStackTrace()}
+"""))
+        }
     }
   }
 }

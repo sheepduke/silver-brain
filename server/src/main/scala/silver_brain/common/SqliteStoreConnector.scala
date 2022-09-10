@@ -6,9 +6,7 @@ import scalikejdbc._
 
 import java.sql.Connection
 
-case class DatabaseNotFoundException(file: os.Path) extends Throwable {
-  override def getMessage(): String = s"Database file '$file' does not exist"
-}
+case class DatabaseNotFoundException(file: os.Path) extends Throwable
 
 class SqliteStoreConnector(rootDir: os.Path) extends StoreConnector {
   def withReadOnly[A](fun: DBSession => A)(using dbName: DatabaseName): A = {

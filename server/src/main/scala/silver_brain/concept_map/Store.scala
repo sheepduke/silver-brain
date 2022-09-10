@@ -3,8 +3,9 @@ package silver_brain.concept_map
 import com.github.nscala_time.time.Imports._
 import db.model.v2 as dao
 import silver_brain.common._
-import java.util.UUID
+
 import java.lang.Throwable
+import java.util.UUID
 import scala.util.Try
 
 enum ConceptProperty {
@@ -17,12 +18,12 @@ case class LoadConceptOption(
     linkedConceptProps: Seq[ConceptProperty] = Seq()
 )
 
-case class UuidNotFoundException(uuid: String) extends Throwable
+case class ItemNotFoundException(uuid: String) extends Throwable
 
 trait Store {
   def getConcept(uuid: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): Try[Option[Concept]]
+  ): Try[Concept]
 
   def searchConcepts(search: String, loadOption: LoadConceptOption)(using
       DatabaseName

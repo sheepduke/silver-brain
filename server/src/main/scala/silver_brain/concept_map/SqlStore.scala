@@ -10,7 +10,7 @@ import scala.util.Try
 class SqlStore(storeConnector: StoreConnector) extends Store {
   override def getConcept(uuid: String, loadOption: LoadConceptOption)(using
       DatabaseName
-  ): Try[Option[Concept]] = {
+  ): Try[Concept] = {
     Try(storeConnector.withReadOnly { implicit session =>
       SqlStore.loadConceptByUuid(uuid, loadOption)
     })
@@ -27,7 +27,6 @@ class SqlStore(storeConnector: StoreConnector) extends Store {
         .findAllBy(sqls"name like $searchString")
         .map(_.uuid)
         .map(SqlStore.loadConceptByUuid(_, loadOption))
-        .map(_.get)
     })
   }
 
@@ -53,7 +52,7 @@ class SqlStore(storeConnector: StoreConnector) extends Store {
   )(using DatabaseName): Try[Unit] = {
     Try(storeConnector.withTransaction { implicit session =>
       dao.Concept.find(uuid) match {
-        case None => throw UuidNotFoundException(uuid)
+        case None => throw ItemNotFoundException(uuid)
         case Some(concept) => {
           concept
             .copy(
@@ -72,10 +71,9 @@ object SqlStore {
   private def loadConceptByUuid(
       uuid: String,
       loadOption: LoadConceptOption
-  )(using DatabaseName)(using DBSession): Option[Concept] = {
-    dao.Concept
-      .find(uuid)
-      .map { conceptDao =>
+  )(using DatabaseName)(using DBSession): Concept = {
+    dao.Concept.find(uuid) match {
+      case Some(conceptDao) =>
         val concept = conceptDao.toCoreConcept(loadOption)
 
         if loadOption.loadLinkLevel > 0 then
@@ -87,7 +85,8 @@ object SqlStore {
             )
           )
         else concept
-      }
+      case None => throw ItemNotFoundException(uuid)
+    }
   }
 
   private def loadConceptLinks(concept: Concept, loadOption: LoadConceptOption)(
@@ -109,7 +108,7 @@ object SqlStore {
     val getConcept = { (uuid: String) =>
       uuidConceptHashMap.getOrElseUpdate(
         uuid,
-        loadConceptByUuid(uuid, loadOption).get
+        loadConceptByUuid(uuid, loadOption)
       )
     }
 

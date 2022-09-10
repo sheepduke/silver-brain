@@ -80,8 +80,6 @@ class ConceptMapRoutes(
   def updateConcept(uuid: String, request: Request): Response[String] = {
     given DatabaseName = request.databaseNameOrDefault(defaultDatabaseName)
 
-    println(request.text())
-
     (for
       json <- request.parseJsonBody[UpdateConceptRequest]()
       _ <- conceptMapService
