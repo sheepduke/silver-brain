@@ -2,40 +2,40 @@ ThisBuild / scalaVersion := "3.1.3"
 ThisBuild / organization := "com.sheepduke"
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-// Library.
-val jsonLibs = Seq(
-  "org.json4s" %% "json4s-native" % "4.0.5",
-  "org.json4s" %% "json4s-ext" % "4.0.5"
+val dbLibs = Seq(
 )
 
-val timeLib = "com.github.nscala-time" %% "nscala-time" % "2.30.0"
-val osLib = "com.lihaoyi" %% "os-lib" % "0.8.0"
-val argLib = "com.github.scopt" %% "scopt" % "4.1.0"
+libraryDependencies ++= Seq(
+  // JSON.
+  "org.json4s" %% "json4s-native" % "4.0.5",
+  "org.json4s" %% "json4s-ext" % "4.0.5",
 
-val dbLibs = Seq(
+  // Time.
+  "com.github.nscala-time" %% "nscala-time" % "2.30.0",
+
+  // OS interaction.
+  "com.lihaoyi" %% "os-lib" % "0.8.0",
+
+  // Argument parser.
+  "com.github.scopt" %% "scopt" % "4.1.0",
+
+  // HTTP server.
+  "com.lihaoyi" %% "cask" % "0.8.3",
+
+  // Database access.
   "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
   "org.xerial" % "sqlite-jdbc" % "3.36.0.3",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "org.flywaydb" % "flyway-core" % "9.0.4"
-)
+  "org.flywaydb" % "flyway-core" % "9.0.4",
 
-val httpServerLib = "com.lihaoyi" %% "cask" % "0.8.3"
+  // HTTP client.
+  "com.lihaoyi" %% "requests" % "0.7.1",
+  "com.softwaremill.sttp.client3" %% "core" % "3.7.6",
 
-val httpClientLib = "com.lihaoyi" %% "requests" % "0.7.1"
-
-val testLibs = Seq(
+  // Test.
   "org.scalatest" %% "scalatest" % "3.2.13" % "test",
   "org.scalikejdbc" %% "scalikejdbc-test" % "4.0.0" % "test"
 )
-testFrameworks += new TestFramework("utest.runner.Framework")
-
-libraryDependencies ++= Seq(
-  timeLib,
-  osLib,
-  argLib,
-  httpServerLib,
-  httpClientLib
-) ++ jsonLibs ++ dbLibs ++ testLibs
 
 // Flyway.
 enablePlugins(FlywayPlugin)
