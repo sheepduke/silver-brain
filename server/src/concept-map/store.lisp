@@ -84,8 +84,7 @@
     (and name (setf (store:name dao) name))
     (and content (setf (store:content dao) content))
     (and content-type (setf (store:content-type dao) content-type))
-    (store:save dao)
-    (cache:update-if-exists uuid name)))
+    (store:save dao)))
 
 (-> delete-concept (string) t)
 (defun delete-concept (uuid)
@@ -94,8 +93,7 @@
       (store:delete-by 'store:concept :id uuid)
     (store:delete-by 'store:concept-link :source uuid)
     (store:delete-by 'store:concept-link :relation uuid)
-    (store:delete-by 'store:concept-link :target uuid))
-  (cache:invalidate-if-exists uuid))
+    (store:delete-by 'store:concept-link :target uuid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Concept Link                         ;;;;
@@ -142,4 +140,7 @@
 (defun make-concept-summary (uuid)
   (make-instance 'concept-summary
                  :uuid uuid
-                 :name (cache:get-concept-name uuid)))
+                 :name (get-concept-name uuid)))
+
+(defun get-concept-name (uuid)
+  (store:name (mito:find-dao 'concept :uuid uuid)))

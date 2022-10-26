@@ -27,11 +27,9 @@
 
 (in-package silver-brain.concept-map)
 
-(defun start ()
-  (silver-brain.concept-map.cache:start))
+(defun start ())
 
-(defun stop ()
-  (silver-brain.concept-map.cache:stop))
+(defun stop ())
 
 (-> create-database (string) t)
 (defun create-database (name)
