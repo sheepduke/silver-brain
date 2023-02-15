@@ -13,7 +13,6 @@
                #:uuid
                #:jsown
                #:flexi-streams
-               #:cl-gserver
                #:mitogrator
                #:mito
                #:dbd-sqlite3
@@ -46,7 +45,6 @@
                    (:file "store")))
                  (:module "concept-map"
                   :components ((:file "model")
-                               (:file "cache")
                                (:file "store")
                                (:file "concept-map")))
                  (:file "web")

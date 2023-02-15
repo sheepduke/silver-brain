@@ -11,7 +11,6 @@
                 #:->)
   (:import-from #:alexandria
                 #:if-let)
-  (:local-nicknames (#:cache #:silver-brain.concept-map.cache))
   (:export #:get-concept-by-uuid
            #:search-concept-by-string
            #:concept-uuid-exists-p
