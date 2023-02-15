@@ -18,7 +18,8 @@
                #:dbd-sqlite3
                #:ningle
                #:clack
-               ;; #:str #:trivial-types
+               #:str
+               ;; #:trivial-types
                ;; #:uuid #:unix-opts
                ;; Logging.
                #:log4cl

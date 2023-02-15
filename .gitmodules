@@ -1,0 +1,3 @@
+[submodule "mitogrator"]
+	path = mitogrator
+	url = git@github.com:/sheepduke/mitogrator
