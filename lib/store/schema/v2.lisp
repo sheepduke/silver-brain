@@ -6,6 +6,8 @@
 
 (unlisp.dev:setup-package-local-nicknames)
 
+(export '(created-at updated-at))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Concept                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -24,14 +26,12 @@
            :reader name))
     (:metaclass mito:dao-table-class)
     (:primary-key uuid)
-    (:keys name)
-    (:auto-pk nil)
-    (:record-timestamps nil))
+    (:keys name))
 
-  (defmethod io:print-object ((concept concept) stream)
-    (format stream "#Concept[~a|~a]"
-            (uuid concept)
-            (name concept)))
+  (defmethod io:print-object ((object concept) stream)
+    (format stream "#<Concept[~a|~a]>"
+            (uuid object)
+            (name object)))
 
   (define-clone-object-method concept uuid name))
 
@@ -49,14 +49,14 @@
            :reader uuid
            :references (concept uuid))
      (alias :col-type :text
-            :initarg :uuid
+            :initarg :alias
             :initform (error "Slot ALIAS is unbound")
             :reader alias))
     (:metaclass mito:dao-table-class)
     (:keys uuid alias))
 
-  (defmethod io:print-object ((object concept) stream)
-    (format stream "#ConceptAlias[~a|~a]"
+  (defmethod io:print-object ((object concept-alias) stream)
+    (format stream "#<ConceptAlias[~a|~a]>"
             (uuid object)
             (alias object)))
 
@@ -89,10 +89,10 @@
                  :reader hyperlink?
                  :inflate (op (if (= _ 1) t nil))
                  :deflate (op (if _ 1 0))))
-    (:metaclass mito.dao:dao-table-class))
+    (:metaclass mito:dao-table-class))
 
   (defmethod io:print-object ((object concept-attachment) stream)
-    (format stream "#ConceptAttachment[~a|~a|~a]"
+    (format stream "#<ConceptAttachment[~a|~a|~a]>"
             (uuid object)
             (content-type object)
             (if (hyperlink? object) "Hyperlink" "Embedded")))
@@ -130,7 +130,7 @@
               (values other uuid)))))
 
   (defmethod io:print-object ((relation concept-relation) stream)
-    (format stream "#Concept Relation[~a|~a]"
+    (format stream "#<ConceptRelation [~a|~a]>"
             (uuid relation)
             (other relation)))
 
@@ -147,7 +147,7 @@
     ((left :col-type :text
            :initarg :left
            :initform (error "Slot LEFT is unbound")
-           :relation left
+           :reader left
            :references (concept uuid))
      (relation :col-type :text
                :initarg :relation
