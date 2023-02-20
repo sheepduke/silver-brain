@@ -6,15 +6,28 @@
 
 (unlisp.dev:setup-package-local-nicknames)
 
-(export '(created-at updated-at))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                        Schema Version                        ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(with-auto-export ()
+  (defclass meta-info ()
+    ((data-version :col-type :text
+                   :initarg :data-version
+                   :initform (error "Slot DATA-VERSION is unbound")
+                   :reader data-version))
+    (:metaclass mito:dao-table-class))
+
+  (defmethod io:print-object ((object meta-info) stream)
+    (format stream "#<MetaInfo Ver=~a>" (data-version object)))
+
+  (define-clone-object-method meta-info data-version))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Concept                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-auto-export ()
-  (export '(uuid name))
-  
   (defclass concept ()
     ((uuid :col-type :text
            :initarg :uuid
@@ -97,7 +110,7 @@
             (content-type object)
             (if (hyperlink? object) "Hyperlink" "Embedded")))
 
-  (define-clone-method concept-attachment uuid content-type content hyperlink?))
+  (define-clone-object-method concept-attachment uuid content-type content hyperlink?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                       Concept Relation                       ;;;;
