@@ -53,8 +53,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-auto-export ()
-  (export '(uuid alias))
-
   (defclass concept-alias ()
     ((uuid :col-type :text
            :initarg :uuid
@@ -80,8 +78,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-auto-export ()
-  (export '(uuid content-type content hyperlink?))
-
   (defclass concept-attachment ()
     ((uuid :col-type :text
            :initarg :uuid
@@ -117,8 +113,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-auto-export ()
-  (export '(uuid other))
-
   (defclass concept-relation ()
     ((uuid :col-type :text
            :initarg :uuid
@@ -154,8 +148,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-auto-export ()
-  (export '(left relation right))
-  
   (defclass concept-link ()
     ((left :col-type :text
            :initarg :left
