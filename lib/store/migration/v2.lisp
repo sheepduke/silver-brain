@@ -31,11 +31,14 @@
 
 (with-auto-export ()
   (defun run ()
-    ;; TOOD: add checks for meta_info
-    (rename-legacy-tables)
-    (create-new-tables)
-    (migrate-legacy-data)
-    (drop-legacy-tables)))
+    (when (and (not (table-exists? "meta_info"))
+               (table-exists? "concept")
+               (table-exists? "concept_"))
+
+      (rename-legacy-tables)
+      (create-new-tables)
+      (migrate-legacy-data)
+      (drop-legacy-tables))))
 
 (defun rename-legacy-tables ()
   (mito:execute-sql "alter table concept rename to legacy_concept")
@@ -83,7 +86,6 @@
                      :uuid (v2:uuid friend-relation)
                      :other (v2:uuid friend-relation))
 
-    ;; TODO: remove duplicated links.
     ;; For each legacy relation, turn it into a link.
     (list:doeach (legacy-relation (mito:select-dao 'legacy-relation))
       (ematch legacy-relation
@@ -98,7 +100,17 @@
                               :relation relation
                               :target target
                               :created-at created-at
-                              :updated-at updated-at))))))))
+                              :updated-at updated-at))))))
+
+    ;; Remove duplicated friend links.
+    (let ((processed (htbl:make)))
+      (list:doeach (link (mito:select-dao 'v2:concept-link
+                           (sxql:where (:= :relation friend-relation))))
+        (ematch link
+          ((v2:concept-link :source source :target target)
+           (if (htbl:contains? processed (cons target source))
+               (mito:delete-dao link)
+               (htbl:put processed (cons source target) t))))))))
 
 (defun valid-legacy-uuid? (uuid)
   (>= (mito:count-dao 'legacy-concept :uuid uuid) 1))
