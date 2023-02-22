@@ -1,4 +1,4 @@
-(unlisp.prelude:define-package #:silver-brain.store.schema.v1
+(unlisp.prelude:defpackage #:silver-brain.store.schema.v1
   (:use #:unlisp.prelude))
 
 (in-package #:silver-brain.store.schema.v1)

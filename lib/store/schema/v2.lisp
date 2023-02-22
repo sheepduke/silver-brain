@@ -1,6 +1,11 @@
-(unlisp.prelude:define-package #:silver-brain.store.schema.v2
+(unlisp.prelude:defpackage #:silver-brain.store.schema.v2
   (:use #:unlisp.prelude
-        #:silver-brain.store.schema.shared))
+        #:silver-brain.store.schema.shared)
+  (:import-from #:mito.dao.mixin
+                #:created-at
+                #:updated-at)
+  (:export #:created-at
+           #:updated-at))
 
 (in-package #:silver-brain.store.schema.v2)
 
@@ -113,7 +118,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (with-auto-export ()
-  (defclass concept-relation ()
+  (defclass concept-pair ()
     ((uuid :col-type :text
            :initarg :uuid
            :initform (error "Slot UUID is unbound")
@@ -128,7 +133,7 @@
     (:keys (uuid other))
     (:documentation "Uuid is always smaller than other by dictionary order."))
 
-  (defmethod initialize-instance :after ((object concept-relation) &rest initargs
+  (defmethod initialize-instance :after ((object concept-pair) &rest initargs
                                          &key &allow-other-keys)
     (declare (ignore initargs))
     (with-slots (uuid other) object
@@ -136,10 +141,10 @@
         (setf (values uuid other)
               (values other uuid)))))
 
-  (defmethod io:print-object ((relation concept-relation) stream)
-    (format stream "#<ConceptRelation [~a|~a]>"
-            (uuid relation)
-            (other relation)))
+  (defmethod io:print-object ((pair concept-pair) stream)
+    (format stream "#<ConceptPair [~a|~a]>"
+            (uuid pair)
+            (other pair)))
 
   (define-clone-object-method concept-relation uuid other))
 
@@ -149,27 +154,26 @@
 
 (with-auto-export ()
   (defclass concept-link ()
-    ((left :col-type :text
-           :initarg :left
-           :initform (error "Slot LEFT is unbound")
-           :reader left
+    ((source :col-type :text
+           :initarg :source
+           :initform (error "Slot SOURCE is unbound")
+           :reader source
            :references (concept uuid))
      (relation :col-type :text
                :initarg :relation
                :initform (error "Slot RELATION is unbound")
                :reader relation
                :references (concept uuid))
-     (right :col-type :text
-            :initarg :right
-            :initform (error "Slot RIGHT is unbound")
-            :reader right
+     (target :col-type :text
+            :initarg :target
+            :initform (error "Slot TARGET is unbound")
+            :reader target
             :references (concept uuid)))
     (:metaclass mito:dao-table-class)
-    (:keys left right))
+    (:keys source target))
 
   (defmethod io:print-object ((object concept-link) stream)
-    (format stream "#ConceptLink[~a<~a|~a|~a>]"
-            (uuid object)
-            (left object)
+    (format stream "#<ConceptLink[~a|~a|~a]>"
+            (source object)
             (relation object)
-            (right object))))
+            (target object))))
