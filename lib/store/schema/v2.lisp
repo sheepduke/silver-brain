@@ -26,7 +26,7 @@
   (defmethod io:print-object ((object meta-info) stream)
     (format stream "#<MetaInfo Ver=~a>" (data-version object)))
 
-  (define-clone-object-method meta-info data-version))
+  (define-clone-object-method meta-info (data-version)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                           Concept                            ;;;;
@@ -51,7 +51,7 @@
             (uuid object)
             (name object)))
 
-  (define-clone-object-method concept uuid name))
+  (define-clone-object-method concept (uuid name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                        Concept Alias                         ;;;;
@@ -76,7 +76,7 @@
             (uuid object)
             (alias object)))
 
-  (define-clone-object-method concept-alias uuid alias))
+  (define-clone-object-method concept-alias (uuid alias)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                      Concept Attachment                      ;;;;
@@ -111,7 +111,8 @@
             (content-type object)
             (if (hyperlink? object) "Hyperlink" "Embedded")))
 
-  (define-clone-object-method concept-attachment uuid content-type content hyperlink?))
+  (define-clone-object-method concept-attachment
+      (uuid content-type content hyperlink?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                       Concept Relation                       ;;;;
@@ -146,7 +147,7 @@
             (uuid pair)
             (other pair)))
 
-  (define-clone-object-method concept-relation uuid other))
+  (define-clone-object-method concept-relation (uuid other)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Concept Link                         ;;;;
