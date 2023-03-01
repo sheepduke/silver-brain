@@ -1,7 +1,10 @@
 (unlisp.prelude:defpackage #:silver-brain.store.migration.v2
   (:use #:unlisp.prelude
         #:silver-brain.store.migration.util)
-  (:local-nicknames (#:v2 #:silver-brain.store.schema.v2))
+  (:local-nicknames (#:schema #:silver-brain.store.schema)
+                    (#:v1 #:silver-brain.store.schema.v1)
+                    (#:v2 #:silver-brain.store.schema.v2)
+                    (#:migration.v1 #:silver-brain.store.migration.v1))
   (:import-from #:mito.dao.mixin
                 #:created-at
                 #:updated-at))
@@ -9,6 +12,10 @@
 (in-package #:silver-brain.store.migration.v2)
 
 (unlisp.dev:setup-package-local-nicknames)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                    Renamed Legacy Tables                     ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass legacy-concept ()
   ((uuid :col-type (:varchar 64)
@@ -29,30 +36,42 @@
              :initarg :target))
     (:metaclass mito:dao-table-class))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                       Migration Logic                        ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (with-auto-export ()
   (defun run ()
-    (when (and (not (table-exists? "meta_info"))
-               (table-exists? "concept")
-               (table-exists? "concept_"))
-
-      (rename-legacy-tables)
-      (create-new-tables)
-      (migrate-legacy-data)
-      (drop-legacy-tables))))
+    (let ((current-data-version (fetch-data-version)))
+      (cond 
+        ;; For a new database, just create the new schema.
+        ((string:= current-data-version schema:new-schema-version)
+         (dbi:with-transaction mito:*connection*
+           (create-new-tables)
+           (update-data-version)))
+        ;; For database with old data, migrate it.
+        ((string:= current-data-version v1:schema-version)
+         (dbi:with-transaction mito:*connection*
+           (rename-legacy-tables)
+           (create-new-tables)
+           (migrate-legacy-data)
+           (drop-legacy-tables)
+           (update-data-version)))))))
 
 (defun rename-legacy-tables ()
   (mito:execute-sql "alter table concept rename to legacy_concept")
   (mito:execute-sql "alter table concept_relation rename to legacy_relation"))
 
 (defun create-new-tables ()
-  (let ((tables '(v2:meta-info v2:concept v2:concept-alias v2:concept-attachment
+  (let ((tables '(v2:concept v2:concept-alias v2:concept-attachment
                   v2:concept-pair v2:concept-link)))
     (list:doeach (table tables)
       (mito:ensure-table-exists table))))
 
 (defun migrate-legacy-data ()
   (migrate-legacy-concepts)
-  (migrate-legacy-relations))
+  (when (> (mito:count-dao 'v2:concept) 0)
+    (migrate-legacy-relations)))
 
 (defun migrate-legacy-concepts ()
   (list:doeach (concept (mito:select-dao 'legacy-concept))
@@ -63,28 +82,30 @@
                         :name name
                         :created-at created-at
                         :updated-at updated-at)
-       (mito:create-dao 'v2:concept-attachment
-                        :uuid uuid
-                        :content-type content-format
-                        :content content
-                        :hyperlink? nil
-                        :created-at created-at
-                        :updated-at updated-at)))))
+       ;; If the concept has any content, create an attachment for it.
+       (unless (string:empty? content)
+         (mito:create-dao 'v2:concept-attachment
+                          :concept-uuid uuid
+                          :content-type content-format
+                          :content content
+                          :hyperlink? nil
+                          :created-at created-at
+                          :updated-at updated-at))))))
 
 (defun migrate-legacy-relations ()
   (let (;; Create necessary relations.
-        (parent-relation (mito:create-dao 'v2:concept :name "Is parent of"))
-        (child-relation (mito:create-dao 'v2:concept :name "Is child of"))
-        (friend-relation (mito:create-dao 'v2:concept :name "Relates to")))
-    
+        (parent (mito:create-dao 'v2:concept :name "Is parent of"))
+        (child (mito:create-dao 'v2:concept :name "Is child of"))
+        (friend (mito:create-dao 'v2:concept :name "Relates to")))
+
     ;; Make parent and child a pair.
     (mito:create-dao 'v2:concept-pair
-                     :uuid (v2:uuid parent-relation)
-                     :other (v2:uuid child-relation))
+                     :concept parent
+                     :other child)
     ;; Make friend and friend a pair (self pair).
     (mito:create-dao 'v2:concept-pair
-                     :uuid (v2:uuid friend-relation)
-                     :other (v2:uuid friend-relation))
+                     :concept friend
+                     :other friend)
 
     ;; For each legacy relation, turn it into a link.
     (list:doeach (legacy-relation (mito:select-dao 'legacy-relation))
@@ -93,21 +114,21 @@
          (when (and (valid-legacy-uuid? source)
                     (valid-legacy-uuid? target))
            (let ((relation (if (friend? source target)
-                               friend-relation
-                               parent-relation)))
+                               friend
+                               parent)))
              (mito:create-dao 'v2:concept-link
-                              :source source
+                              :source-uuid source
                               :relation relation
-                              :target target
+                              :target-uuid target
                               :created-at created-at
                               :updated-at updated-at))))))
 
     ;; Remove duplicated friend links.
     (let ((processed (htbl:make)))
       (list:doeach (link (mito:select-dao 'v2:concept-link
-                           (sxql:where (:= :relation friend-relation))))
+                           (sxql:where (:= :relation friend))))
         (ematch link
-          ((v2:concept-link :source source :target target)
+          ((v2:concept-link :source-uuid source :target-uuid target)
            (if (htbl:contains? processed (cons target source))
                (mito:delete-dao link)
                (htbl:put processed (cons source target) t))))))))
@@ -123,36 +144,6 @@
   (mito:execute-sql "drop table legacy_concept")
   (mito:execute-sql "drop table legacy_relation"))
 
-;; (mito:connect-toplevel :sqlite3
-;;                        :database-name (path:join (path:user-home)
-;;                                                  "temp/silver-brain/v1.sqlite"))
-
-;; (mito:create-dao 'silver-brain.store.schema.v1:concept
-;;                  :uuid "11"
-;;                  :name "AA"
-;;                  :content "Content"
-;;                  :content-format "text/org")
-
-;; (mito:create-dao 'silver-brain.store.schema.v1:concept
-;;                  :uuid "22"
-;;                  :name "BB")
-
-;; (mito:create-dao 'silver-brain.store.schema.v1:concept
-;;                  :uuid "33"
-;;                  :name "CC"
-;;                  :content-format "text/md")
-
-;; (mito:create-dao 'silver-brain.store.schema.v1:concept-relation
-;;                  :source "11"
-;;                  :target "22")
-
-;; (mito:create-dao 'silver-brain.store.schema.v1:concept-relation
-;;                  :source "11"
-;;                  :target "33")
-
-;; (mito:create-dao 'silver-brain.store.schema.v1:concept-relation
-;;                  :source "33"
-;;                  :target "11")
-
-;; (mito:select-dao 'v2:concept)
-;; (mito:select-dao 'v2:concept-pair)
+(defun update-data-version ()
+  (mito:update-dao (clone-object (mito:find-dao 'v2:meta-info)
+                                 :data-version v2:schema-version)))

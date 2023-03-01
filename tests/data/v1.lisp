@@ -1,8 +1,11 @@
-(unlisp.prelude:defpackage #:silver-brain-tests.shared.data.v1
+(unlisp.prelude:defpackage #:silver-brain-tests.data.v1
   (:use #:unlisp.prelude)
-  (:local-nicknames (#:v1 #:silver-brain.store.schema.v1)))
+  (:local-nicknames (#:v1 #:silver-brain.store.schema.v1)
+                    (#:migration.v1 #:silver-brain.store.migration.v1)))
 
-(in-package #:silver-brain-tests.shared.data.v1)
+(in-package #:silver-brain-tests.data.v1)
+
+(unlisp.dev:setup-package-local-nicknames)
 
 (with-auto-export ()
   (def mock-concept-01 (make-instance 'v1:concept
@@ -37,4 +40,10 @@
 
   (def mock-concept-relations (list mock-relation-01->02
                                     mock-relation-01->03
-                                    mock-relation-03->01)))
+                                    mock-relation-03->01))
+
+  (defun context (fun)
+    (migration.v1:run)
+    (list:foreach mock-concepts #'mito:insert-dao)
+    (list:foreach mock-concept-relations #'mito:insert-dao)
+    (funcall fun)))

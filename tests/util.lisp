@@ -1,9 +1,10 @@
-(unlisp:defpackage #:silver-brain-tests.shared.context
+(unlisp:defpackage #:silver-brain-tests.util
   (:use #:unlisp)
   (:local-nicknames (#:v1 #:silver-brain.store.schema.v1)
-                    (#:data-v1 #:silver-brain-tests.shared.data.v1)))
+                    (#:data.v1 #:silver-brain-tests.shared.data.v1)
+                    (#:migration.v1 #:silver-brain.store.migration.v1)))
 
-(in-package #:silver-brain-tests.shared.context)
+(in-package #:silver-brain-tests.util)
 
 (unlisp.dev:setup-package-local-nicknames)
 
@@ -20,11 +21,4 @@
              (dbi:with-connection (mito:*connection* :sqlite3
                                                      :database-name filepath)
                (funcall fun)))
-        (os:ensure-file-deleted filepath))))
-
-  (defun v1-test-data-context (fun)
-    (mito:ensure-table-exists 'v1:concept)
-    (mito:ensure-table-exists 'v1:concept-relation)
-    (list:foreach data-v1:mock-concepts #'mito:insert-dao)
-    (list:foreach data-v1:mock-concept-relations #'mito:insert-dao)
-    (funcall fun)))
+        (os:ensure-file-deleted filepath)))))
