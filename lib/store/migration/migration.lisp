@@ -9,10 +9,11 @@
 
 (in-package #:silver-brain.store.migration)
 
-(unlisp.dev:setup-package-local-nicknames)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unlisp.dev:setup-package-local-nicknames))
 
 (with-auto-export ()
-  (defun migrate (&key (upto schema:schema-version))
+  (defun migrate (&key (upto schema:latest-schema-version))
     ;; Initialize the database if it is empty.
     (unless (table-exists? "meta_info")
       (mito:ensure-table-exists 'schema:meta-info)

@@ -11,7 +11,8 @@
 
 (in-package #:silver-brain.store.migration.v2)
 
-(unlisp.dev:setup-package-local-nicknames)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unlisp.dev:setup-package-local-nicknames))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                    Renamed Legacy Tables                     ;;;;
@@ -49,6 +50,7 @@
          (dbi:with-transaction mito:*connection*
            (create-new-tables)
            (update-data-version)))
+        
         ;; For database with old data, migrate it.
         ((string:= current-data-version v1:schema-version)
          (dbi:with-transaction mito:*connection*

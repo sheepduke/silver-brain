@@ -8,7 +8,8 @@
 
 (in-package #:silver-brain.store.schema.v1)
 
-(unlisp.dev:setup-package-local-nicknames)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unlisp.dev:setup-package-local-nicknames))
 
 (with-auto-export ()
   (def schema-version "V1"))

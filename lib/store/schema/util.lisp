@@ -4,7 +4,8 @@
 
 (in-package #:silver-brain.store.schema.util)
 
-(unlisp.dev:setup-package-local-nicknames)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unlisp.dev:setup-package-local-nicknames))
 
 (with-auto-export ()
   (defun make-uuid ()
