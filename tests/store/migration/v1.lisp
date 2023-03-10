@@ -1,16 +1,17 @@
 (unlisp:defpackage #:silver-brain-tests.store.migration.v1
   (:use #:unlisp
         #:lisp-unit2
-        #:silver-brain-tests.util)
+        #:silver-brain-tests.common.util)
   (:local-nicknames (#:migration #:silver-brain.store.migration)
                     (#:v1 #:silver-brain.store.schema.v1)
-                    (#:data.v1 #:silver-brain-tests.data.v1)))
+                    (#:data.v1 #:silver-brain-tests.common.data.v1)))
 
 (in-package #:silver-brain-tests.store.migration.v1)
 
-(unlisp.dev:setup-package-local-nicknames)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unlisp.dev:setup-package-local-nicknames))
 
-(define-test run (:tags 'silver-brain.store
+(define-test run (:tags :silver-brain.store
                   :contexts #'temp-db-context)
   (migration:migrate :upto v1:schema-version)
 

@@ -12,6 +12,10 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unlisp.dev:setup-package-local-nicknames))
 
+(def migration-map
+  (list (cons v2:schema-version #'migration.v2:run)
+        (cons v1:schema-version #'migration.v1:run)))
+
 (with-auto-export ()
   (defun migrate (&key (upto schema:latest-schema-version))
     ;; Initialize the database if it is empty.
@@ -27,7 +31,3 @@
 
 (reexport-from #:silver-brain.store.migration.util
   #:table-exists? #:fetch-data-version)
-
-(def migration-map
-  (list (cons v2:schema-version #'migration.v2:run)
-        (cons v1:schema-version #'migration.v1:run)))

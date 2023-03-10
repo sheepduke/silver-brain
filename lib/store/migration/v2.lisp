@@ -31,11 +31,11 @@
   (:metaclass mito:dao-table-class))
 
 (defclass legacy-relation ()
-    ((source :col-type (:varchar 64)
-             :initarg :source)
-     (target :col-type (:varchar 64)
-             :initarg :target))
-    (:metaclass mito:dao-table-class))
+  ((source :col-type (:varchar 64)
+           :initarg :source)
+   (target :col-type (:varchar 64)
+           :initarg :target))
+  (:metaclass mito:dao-table-class))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                       Migration Logic                        ;;;;
@@ -77,22 +77,21 @@
 
 (defun migrate-legacy-concepts ()
   (list:doeach (concept (mito:select-dao 'legacy-concept))
-    (ematch concept
-      ((legacy-concept uuid name content content-format created-at updated-at)
-       (mito:create-dao 'v2:concept
-                        :uuid uuid
-                        :name name
-                        :created-at created-at
-                        :updated-at updated-at)
-       ;; If the concept has any content, create an attachment for it.
-       (unless (string:empty? content)
-         (mito:create-dao 'v2:concept-attachment
-                          :concept-uuid uuid
-                          :content-type content-format
-                          :content content
-                          :hyperlink? nil
-                          :created-at created-at
-                          :updated-at updated-at))))))
+    (with-slots (uuid name content content-format created-at updated-at) concept
+      (mito:create-dao 'v2:concept
+                       :uuid uuid
+                       :name name
+                       :created-at created-at
+                       :updated-at updated-at)
+      ;; If the concept has any content, create an attachment for it.
+      (unless (string:empty? content)
+        (mito:create-dao 'v2:concept-attachment
+                         :concept-uuid uuid
+                         :content-type content-format
+                         :content content
+                         :hyperlink? nil
+                         :created-at created-at
+                         :updated-at updated-at)))))
 
 (defun migrate-legacy-relations ()
   (let (;; Create necessary relations.
@@ -111,19 +110,18 @@
 
     ;; For each legacy relation, turn it into a link.
     (list:doeach (legacy-relation (mito:select-dao 'legacy-relation))
-      (ematch legacy-relation
-        ((legacy-relation source target created-at updated-at)
-         (when (and (valid-legacy-uuid? source)
-                    (valid-legacy-uuid? target))
-           (let ((relation (if (friend? source target)
-                               friend
-                               parent)))
-             (mito:create-dao 'v2:concept-link
-                              :source-uuid source
-                              :relation relation
-                              :target-uuid target
-                              :created-at created-at
-                              :updated-at updated-at))))))
+      (with-slots (source target created-at updated-at) legacy-relation
+        (when (and (valid-legacy-uuid? source)
+                   (valid-legacy-uuid? target))
+          (let ((relation (if (friend? source target)
+                              friend
+                              parent)))
+            (mito:create-dao 'v2:concept-link
+                             :source-uuid source
+                             :relation relation
+                             :target-uuid target
+                             :created-at created-at
+                             :updated-at updated-at)))))
 
     ;; Remove duplicated friend links.
     (let ((processed (htbl:make)))

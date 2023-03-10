@@ -4,7 +4,8 @@
   :license "MIT"
   :author "YUE Daian"
   :depends-on (#:unlisp
-               #:local-time)
+               #:uuid #:local-time
+               #:mito)
   :serial t
   :components ((:module "schema"
                 :components
