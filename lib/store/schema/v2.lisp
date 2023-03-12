@@ -77,7 +77,7 @@
           (if (hyperlink? object) "Hyperlink" "Embedded")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                       Concept Relation                       ;;;;
+;;;;                         Concept Pair                         ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (export '(concept-pair concept concept-uuid other other-uuid))
