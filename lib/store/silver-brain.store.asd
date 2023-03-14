@@ -18,5 +18,6 @@
                 ((:file "util")
                  (:file "v1")
                  (:file "v2")
-                 (:file "migration"))))
+                 (:file "migration")))
+               (:file "store"))
   :in-order-to ((test-op (test-op :silver-brain-tests.store))))
