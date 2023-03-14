@@ -51,7 +51,8 @@
   (def attachment-emacs
     (make-instance 'v2:concept-attachment
                    :concept concept-emacs :concept-uuid "0002"
-                   :content-type "text/org" :content "Emacs, free software."))
+                   :content-type "text/org" :content "Emacs, free software."
+                   :size 1))
 
   (def attachment-vim-content "This is Vim editor.")
 
@@ -62,6 +63,7 @@
                    :content (path:full-namestring
                              (path:join (path:temporary-directory)
                                         "silver-brain-tests/attachment-vim.txt"))
+                   :size 10
                    :hyperlink? t))
 
   (def attachments (list attachment-emacs attachment-vim))

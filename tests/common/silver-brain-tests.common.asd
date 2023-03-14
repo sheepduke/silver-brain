@@ -7,5 +7,6 @@
   :serial t
   :components ((:module "data"
                 :components
-                ((:file "v1")))
+                ((:file "v1")
+                 (:file "v2")))
                (:file "util")))

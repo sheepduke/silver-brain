@@ -2,7 +2,8 @@
   (:use #:unlisp)
   (:local-nicknames (#:v1 #:silver-brain.store.schema.v1)
                     (#:data.v1 #:silver-brain-tests.common.data.v1)
-                    (#:migration.v1 #:silver-brain.store.migration.v1)))
+                    (#:migration.v1 #:silver-brain.store.migration.v1))
+  (:shadow run-tests))
 
 (in-package #:silver-brain-tests.common.util)
 
@@ -22,4 +23,8 @@
              (dbi:with-connection (mito:*connection* :sqlite3
                                                      :database-name filepath)
                (funcall fun)))
-        (os:ensure-file-deleted filepath)))))
+        (os:ensure-file-deleted filepath))))
+
+  (defun run-tagged-tests (tag)
+    (lisp-unit2:with-summary ()
+      (lisp-unit2:run-tests :tags (list tag)))))

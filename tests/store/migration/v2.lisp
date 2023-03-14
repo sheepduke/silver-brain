@@ -68,12 +68,11 @@
            (friend-uuid (v2:uuid friend)))
 
       ;; Check pairs.
-      (let ((expected (list (cons (min parent-uuid child-uuid)
-                                  (max parent-uuid child-uuid))
-                            (cons friend-uuid friend-uuid)))
-            (actual (list:map pairs
-                              (fun (pair) (cons (v2:concept-uuid pair)
-                                                (v2:other-uuid pair))))))
+      (let ((expected (list:sort! (list (cons parent-uuid child-uuid)
+                                        (cons friend-uuid friend-uuid))))
+            (actual (list:sort! (list:map pairs
+                                          (fun (pair) (cons (v2:concept-uuid pair)
+                                                            (v2:other-uuid pair)))))))
         (assert-true (equal? expected actual)))
       
       ;; Check links.

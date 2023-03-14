@@ -57,7 +57,7 @@
 ;;;;                      Concept Attachment                      ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(export '(concept-attachment concept content-type content hyperlink?))
+(export '(concept-attachment concept content-type content hyperlink? size))
 (mito:deftable concept-attachment ()
   ((concept :col-type concept)
    (content-type :col-type :text
@@ -67,7 +67,9 @@
    (hyperlink? :col-type :integer
                :initform nil
                :inflate (op (if (= _ 1) t nil))
-               :deflate (op (if _ 1 0))))
+               :deflate (op (if _ 1 0)))
+   (size :col-type :integer
+         :initform 0))
   (:conc-name ""))
 
 (defmethod io:print-object ((object concept-attachment) stream)
@@ -87,15 +89,6 @@
   (:keys (concept other))
   (:conc-name "")
   (:documentation "Uuid is always smaller than other by dictionary order."))
-
-(defmethod initialize-instance :after ((object concept-pair) &rest initargs
-                                       &key &allow-other-keys)
-  (declare (ignore initargs))
-  (let ((concept-uuid (uuid (concept object)))
-        (other-uuid (uuid (other object))))
-    (when (string:>= concept-uuid other-uuid)
-      (setf (values concept-uuid other-uuid)
-            (values other-uuid concept-uuid)))))
 
 (defmethod io:print-object ((pair concept-pair) stream)
   (format stream "#<ConceptPair [~a|~a]>" (concept pair) (other pair)))
