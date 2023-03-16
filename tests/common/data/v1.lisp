@@ -44,7 +44,9 @@
                                     mock-relation-03->01))
 
   (defun context (fun)
-    (migration.v1:run)
+     (migration.v1:run)
     (list:foreach mock-concepts #'mito:insert-dao)
     (list:foreach mock-concept-relations #'mito:insert-dao)
     (funcall fun)))
+
+

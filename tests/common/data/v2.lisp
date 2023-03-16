@@ -1,6 +1,7 @@
 (unlisp:defpackage #:silver-brain-tests.common.data.v2
   (:use #:unlisp)
-  (:local-nicknames (#:v2 #:silver-brain.store.schema.v2)))
+  (:local-nicknames (#:global #:silver-brain.global)
+                    (#:v2 #:silver-brain.store.schema.v2)))
 
 (in-package #:silver-brain-tests.common.data.v2)
 
@@ -50,22 +51,19 @@
   ;; Attachments.
   (def attachment-emacs
     (make-instance 'v2:concept-attachment
+                   :name "Introduction"
                    :concept concept-emacs :concept-uuid "0002"
-                   :content-type "text/org" :content "Emacs, free software."
-                   :size 1))
+                   :content-type "text/org" :content-length 21))
 
-  (def attachment-vim-content "This is Vim editor.")
+  (def attachment-emacs-content "Emacs, free software.")
 
   (def attachment-vim
     (make-instance 'v2:concept-attachment
                    :concept concept-vim :concept-uuid "0003"
-                   :content-type "text/md"
-                   :content (path:full-namestring
-                             (path:join (path:temporary-directory)
-                                        "silver-brain-tests/attachment-vim.txt"))
-                   :size 10
-                   :hyperlink? t))
+                   :content-type "text/md" :content-length 13))
 
+  (def attachment-vim-content "Vim 编辑器")
+  
   (def attachments (list attachment-emacs attachment-vim))
 
   ;; Links.
@@ -96,4 +94,16 @@
     (list:foreach pairs #'mito:insert-dao)
     (list:foreach attachments #'mito:insert-dao)
     (list:foreach link #'mito:insert-dao)
+
+    (let ((attachment-emacs-path (path:join (global:store/attachments-path
+                                             global:*runtime-settings*)
+                                            "1-Body.org"))
+          (attachment-vim-path (path:join (global:store/attachments-path
+                                           global:*runtime-settings*)
+                                          "2-Body.md")))
+      (io:write-string-into-file attachment-emacs-content attachment-emacs-path
+                                 :if-exists :overwrite)
+      (io:write-string-into-file attachment-vim-content attachment-vim-path
+                                 :if-exists :overwrite))
+
     (funcall fun)))

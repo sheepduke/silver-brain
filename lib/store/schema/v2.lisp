@@ -57,24 +57,21 @@
 ;;;;                      Concept Attachment                      ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(export '(concept-attachment concept content-type content hyperlink? size))
+(export '(concept-attachment concept concept-uuid content-type content-length))
 (mito:deftable concept-attachment ()
   ((concept :col-type concept)
+   (name :col-type :text
+         :initform "Body")
    (content-type :col-type :text
                  :initform (error "Slot CONTENT-TYPE is unbound"))
-   (content :col-type :text
-            :initform (error "Slot CONTENT is unbound"))
-   (hyperlink? :col-type :integer
-               :initform nil
-               :inflate (op (if (= _ 1) t nil))
-               :deflate (op (if _ 1 0)))
-   (size :col-type :integer
-         :initform 0))
+   (content-length :col-type :integer
+                   :initform (error "Slot CONTENT-LENGTH is unbound")))
   (:conc-name ""))
 
 (defmethod io:print-object ((object concept-attachment) stream)
-  (format stream "#<ConceptAttachment[~a|~a|~a]>"
+  (format stream "#<ConceptAttachment[~a|~a|~a|~a]>"
           (concept object)
+          (name object)
           (content-type object)
           (if (hyperlink? object) "Hyperlink" "Embedded")))
 

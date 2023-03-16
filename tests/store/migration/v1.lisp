@@ -12,7 +12,7 @@
   (unlisp.dev:setup-package-local-nicknames))
 
 (define-test run (:tags :silver-brain.store
-                  :contexts #'temp-db-context)
+                  :contexts #'test-context)
   (migration:migrate :upto v1:schema-version)
 
   ;; Check if meta_info is created.

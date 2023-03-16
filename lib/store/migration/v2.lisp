@@ -4,7 +4,8 @@
   (:local-nicknames (#:schema #:silver-brain.store.schema)
                     (#:v1 #:silver-brain.store.schema.v1)
                     (#:v2 #:silver-brain.store.schema.v2)
-                    (#:migration.v1 #:silver-brain.store.migration.v1))
+                    (#:migration.v1 #:silver-brain.store.migration.v1)
+                    (#:global #:silver-brain.global))
   (:import-from #:mito.dao.mixin
                 #:created-at
                 #:updated-at))
@@ -78,20 +79,38 @@
 (defun migrate-legacy-concepts ()
   (list:doeach (concept (mito:select-dao 'legacy-concept))
     (with-slots (uuid name content content-format created-at updated-at) concept
+      ;; Write a `concept' row in the database.
       (mito:create-dao 'v2:concept
                        :uuid uuid
                        :name name
                        :created-at created-at
                        :updated-at updated-at)
+      
       ;; If the concept has any content, create an attachment for it.
       (unless (string:empty? content)
-        (mito:create-dao 'v2:concept-attachment
-                         :concept-uuid uuid
-                         :content-type content-format
-                         :content content
-                         :hyperlink? nil
-                         :created-at created-at
-                         :updated-at updated-at)))))
+        (local
+
+          ;; Write the attachment table.
+          (def content-length
+            (vec:length (flex:string-to-octets content :external-format :utf-8)))
+          
+          (def attachment
+            (mito:create-dao 'v2:concept-attachment
+                             :name "Body"
+                             :concept-uuid uuid
+                             :content-type content-format
+                             :content-length content-length
+                             :created-at created-at
+                             :updated-at updated-at))
+
+          ;; Create an attachment file.
+          (def attachment-path
+            (path:join (global:store/attachments-path global:*runtime-settings*)
+                       (format nil "~a-Body.~a"
+                               (mito:object-id attachment)
+                               (file-extension content-format))))
+
+          (io:write-string-into-file content attachment-path))))))
 
 (defun migrate-legacy-relations ()
   (let (;; Create necessary relations.
@@ -147,3 +166,8 @@
 (defun update-data-version ()
   (mito:update-dao (clone-object (mito:find-dao 'v2:meta-info)
                                  :data-version v2:schema-version)))
+
+(defun file-extension (content-type)
+  (match content-type
+    ("text/plain" "txt")
+    (_ (list:elt (string:split content-type #\/) 1))))

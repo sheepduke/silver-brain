@@ -4,8 +4,8 @@
   :license "MIT"
   :author "YUE Daian"
   :depends-on (#:unlisp
-               #:uuid #:local-time
-               #:mito)
+               #:uuid #:local-time #:mito #:flexi-streams
+               #:silver-brain.global)
   :serial t
   :components ((:module "schema"
                 :components
