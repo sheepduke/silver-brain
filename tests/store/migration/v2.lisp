@@ -1,20 +1,7 @@
-(unlisp:defpackage #:silver-brain-tests.store.migration.v2
-  (:use #:unlisp
-        #:lisp-unit2
-        #:silver-brain-tests.common.util)
-  (:local-nicknames (#:global #:silver-brain.global)
-                    (#:migration #:silver-brain.store.migration)
-                    (#:data.v1 #:silver-brain-tests.common.data.v1)
-                    (#:v1 #:silver-brain.store.schema.v1)
-                    (#:v2 #:silver-brain.store.schema.v2)))
+(in-package #:silver-brain-tests.store)
 
-(in-package #:silver-brain-tests.store.migration.v2)
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (unlisp.dev:setup-package-local-nicknames))
-
-(define-test run-with-empty-database (:tags :silver-brain.store
-                                      :contexts #'test-context)
+(define-test migrate/v0->v2 (:tags :silver-brain.store
+                             :contexts #'test-context)
   (migration:migrate :upto v2:schema-version)
   (assert-equal 0 (mito:count-dao 'v2:concept))
   (assert-equal 0 (mito:count-dao 'v2:concept-pair))
@@ -23,9 +10,9 @@
   (assert-equal 0 (mito:count-dao 'v2:concept-attachment))
   (assert-equal v2:schema-version (migration:fetch-data-version)))
 
-(define-test run-with-v1-data (:tags :silver-brain.store
-                               :contexts '(test-context
-                                           data.v1:context))
+(define-test migrate/v1->v2 (:tags :silver-brain.store
+                                      :contexts '(test-context
+                                                  data.v1:context))
   (unwind-protect
        (progn
          (migration:migrate :upto v2:schema-version)

@@ -27,8 +27,4 @@
              (dbi:with-connection (mito:*connection* :sqlite3
                                                      :database-name filepath)
                (funcall fun)))
-        (os:ensure-file-deleted filepath))))
-  
-  (defun run-tagged-tests (tag)
-    (lisp-unit2:with-summary ()
-      (lisp-unit2:run-tests :tags (list tag)))))
+        (os:ensure-file-deleted filepath)))))
