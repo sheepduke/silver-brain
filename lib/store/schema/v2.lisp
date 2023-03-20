@@ -69,11 +69,9 @@
   (:conc-name ""))
 
 (defmethod io:print-object ((object concept-attachment) stream)
-  (format stream "#<ConceptAttachment[~a|~a|~a|~a]>"
+  (format stream "#<ConceptAttachment[~a|~a]>"
           (concept object)
-          (name object)
-          (content-type object)
-          (if (hyperlink? object) "Hyperlink" "Embedded")))
+          (name object)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                         Concept Pair                         ;;;;

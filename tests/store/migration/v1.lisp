@@ -1,7 +1,6 @@
 (in-package #:silver-brain-tests.store)
 
-(define-test migrate/v0->v1 (:tags :silver-brain.store
-                  :contexts #'test-context)
+(define-test migrate/v0->v1 (:contexts #'test-context)
   (migration:migrate :upto v1:schema-version)
 
   ;; Check if meta_info is created.
