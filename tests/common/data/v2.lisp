@@ -103,7 +103,7 @@
 
   (def attachment-vim2 (make-attachment "Body" concept-vim "text/plain" 15))
 
-  (def atttachment-vim-content2 "Another content")
+  (def attachment-vim-content2 "Another content")
 
   (def attachments (list attachment-emacs attachment-vim1 attachment-vim2))
 
@@ -138,14 +138,21 @@
     (let ((attachment-emacs-path (path:join (global:store/attachments-path
                                              global:*runtime-settings*)
                                             "1-Introduction.org"))
-          (attachment-vim-path (path:join (global:store/attachments-path
-                                           global:*runtime-settings*)
-                                          "2-Body.md")))
-      (io:write-string-into-file attachment-emacs-content attachment-emacs-path
-                                 :if-does-not-exist :create
-                                 :if-exists :overwrite)
-      (io:write-string-into-file attachment-vim-content attachment-vim-path
-                                 :if-does-not-exist :create
-                                 :if-exists :overwrite))
+          (attachment-vim-path1 (path:join (global:store/attachments-path
+                                            global:*runtime-settings*)
+                                           "2-Body.md"))
+          (attachment-vim-path2 (path:join (global:store/attachments-path
+                                            global:*runtime-settings*)
+                                           "3-Body.txt")))
+      (loop for pair in (list (cons attachment-emacs-path attachment-emacs-content)
+                              (cons attachment-vim-path1 attachment-vim-content1)
+                              (cons attachment-vim-path2 attachment-vim-content2))
+            do (io:write-string-into-file (cdr pair) (car pair)
+                                          :if-does-not-exist :create
+                                          :if-exists :overwrite))
 
-    (funcall fun)))
+      (unwind-protect (funcall fun)
+        (loop for file in (list attachment-emacs-path
+                                attachment-vim-path1
+                                attachment-vim-path2)
+              do (os:ensure-file-deleted file))))))
