@@ -10,5 +10,7 @@
                 ((:file "v1")
                  (:file "v2"))))
   :perform (test-op (op c)
-                    (lisp-unit2:with-summary ()
-                      (lisp-unit2:run-tests :package :silver-brain-tests.store))))
+                    (symbol-call
+                     :silver-brain-tests.common
+                     :run-tests-in-package
+                     :silver-brain-tests.store)))

@@ -1,7 +1,7 @@
 (unlisp:defpackage #:silver-brain-tests.store
   (:use #:unlisp
         #:lisp-unit2
-        #:silver-brain-tests.common.util)
+        #:silver-brain-tests.common)
   (:local-nicknames (#:global #:silver-brain.global)
                     (#:migration #:silver-brain.store.migration)
                     (#:migration #:silver-brain.store.migration)
