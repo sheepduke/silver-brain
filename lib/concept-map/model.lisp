@@ -10,10 +10,6 @@
               :accessor aliases)
      (attachments :initarg attachments
                   :accessor attachments)
-     (links :initarg :links
-            :accessor links)
-     (linked-concepts :initarg :linked-concepts
-                      :accessor linked-concepts)
      (created-at :initarg :created-at
                  :accessor created-at)
      (updated-at :initarg :updated-at
@@ -34,6 +30,14 @@ ATTACHMENTS is a list of `concept-attachment'."))
                    :accessor content-type)
      (content-length :initarg :content-length
                      :accessor content-length)))
+
+  (defclass concept-links ()
+    ((links :initarg :links
+            :accessor links
+            :initform '())
+     (concepts :initarg :concepts
+               :accessor concepts
+               :initform '())))
 
   (defclass concept-link ()
     ((id :initarg id

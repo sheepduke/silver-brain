@@ -1,50 +1,58 @@
 (in-package #:silver-brain.concept-map)
 
 (with-auto-export ()
-  (defun load-concept (uuid &key load-aliases? load-attachments? load-times?
-                               (link-level 0) load-linked-aliases?
-                               load-linked-attachments? load-linked-times?)
-    (match (load-concept* uuid load-aliases? load-attachments? load-times?)
-      (nil nil)
-      (concept
-       (when (> link-level 0)
-         (setf (links concept)
-               (load-concept-links* uuid link-level))
+  (-> get-concept (string &key (:load-aliases? boolean)
+                          (:load-attachments? boolean)
+                          (:load-times? boolean))
+      (nullable concept))
+  (defun get-concept (uuid &key load-aliases? load-attachments? load-times?)
+    (let* ((dao (mito:find-dao 'store:concept :uuid uuid))
+           (concept (make-instance 'concept
+                                   :uuid (store:uuid dao)
+                                   :name (store:name dao))))
+      (when load-aliases?
+        (setf (aliases concept) (get-aliases uuid)))
 
-         (setf (linked-concepts concept)
-               (pipe (links concept)
-                     (links-source-target-uuids)
-                     (list:map (fun (uuid)
-                                 (cons uuid
-                                       (load-concept* uuid
-                                                      load-linked-aliases?
-                                                      load-linked-attachments?
-                                                      load-linked-times?)))))))
-       concept))))
+      (when load-attachments?
+        (setf (attachments concept) (get-attachments* uuid)))
 
-(defun load-concept* (uuid load-aliases? load-attachments? load-times?)
-  (let* ((dao (mito:find-dao 'store:concept :uuid uuid))
-         (concept (make-instance 'concept
-                                 :uuid (store:uuid dao)
-                                 :name (store:name dao))))
-    (when load-aliases?
-      (setf (aliases concept) (load-aliases uuid)))
+      (when load-times?
+        (setf (created-at concept) (mito:object-created-at dao))
+        (setf (updated-at concept) (mito:object-updated-at dao)))
 
-    (when load-attachments?
-      (setf (attachments concept) (load-attachments* uuid)))
+      concept))
 
-    (when load-times?
-      (setf (created-at concept) (mito:object-created-at dao))
-      (setf (updated-at concept) (mito:object-updated-at dao)))
+  (-> get-concept-links (string &key (:link-level integer)
+                                (:load-aliases? boolean)
+                                (:load-attachments? boolean)
+                                (:load-times? boolean))
+      concept-links)
+  (defun get-concept-links (uuid &key (link-level 1) load-aliases?
+                                   load-attachments? load-times?)
+    (assert (>= link-level 0) (link-level)
+            "LINK-LEVEL must not be negative.")
 
-    concept))
+    (let* ((links (get-concept-links* uuid link-level))
+           (concepts (pipe links 
+                           (links-source-target-uuids)
+                           (list:map
+                            (fun (uuid)
+                              (cons uuid
+                                    (get-concept
+                                     uuid
+                                     :load-aliases? load-aliases?
+                                     :load-attachments? load-attachments?
+                                     :load-times? load-times?)))))))
+      (make-instance 'concept-links
+                     :links links
+                     :concepts concepts))))
 
-(defun load-aliases (uuid)
+(defun get-aliases (uuid)
   (pipe (mito:select-dao 'store:concept-alias
           (sxql:where (:= :concept-uuid uuid)))
         (list:map #'store:alias)))
 
-(defun load-attachments* (uuid)
+(defun get-attachments* (uuid)
   (pipe (mito:select-dao 'store:concept-attachment
           (sxql:where (:= :concept-uuid uuid)))
         (list:map (fun (dao)
@@ -55,8 +63,8 @@
                                    :content-type (store:content-type dao)
                                    :content-length (store:content-length dao))))))
 
-(-> load-concept-links* (string integer) (concept-link-list))
-(defun load-concept-links* (uuid link-level)
+(-> get-concept-links* (string integer) (concept-link-list))
+(defun get-concept-links* (uuid link-level)
   (local
     (defun dao->link (dao)
       (make-instance 'concept-link

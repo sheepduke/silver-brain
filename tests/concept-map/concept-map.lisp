@@ -5,7 +5,7 @@
         #:silver-brain.concept-map)
   (:local-nicknames (#:store #:silver-brain.store)
                     (#:concept-map #:silver-brain.concept-map)
-                    (#:data.v2 #:silver-brain-tests.common.data.v2)))
+                    (#:data #:silver-brain-tests.common.data.v2)))
 
 (in-package #:silver-brain-tests.concept-map)
 
@@ -27,10 +27,6 @@
   (and (string:= (uuid concept) (store:uuid dao))
        (string:= (name concept) (store:name dao))))
 
-(defmethod equal? ((concept concept) (dao store:concept))
-  (and (string:= (uuid concept) (store:uuid dao))
-       (string:= (name concept) (store:name dao))))
-
 (defmethod equal? ((dao store:concept-attachment) (attachment concept-attachment))
   (and (equal? (id attachment) (mito:object-id dao))
        (equal? (name attachment) (store:name dao))
@@ -38,34 +34,46 @@
        (equal? (content-type attachment) (store:content-type dao))
        (equal? (content-length attachment) (store:content-length dao))))
 
-(defmethod equal? ((attachment concept-attachment) (dao store:concept-attachment))
-  (and (equal? (id attachment) (mito:object-id dao))
-       (equal? (name attachment) (store:name dao))
-       (equal? (concept-uuid attachment) (store:concept-uuid dao))
-       (equal? (content-type attachment) (store:content-type dao))
-       (equal? (content-length attachment) (store:content-length dao))))
+(defmethod equal? ((dao store:concept-alias) (alias string))
+  (equal? (store:alias dao) alias))
 
-(define-test load-concept/no-extra-props (:contexts '(test-context
-                                                      data.v2:context))
-  (let* ((expected data.v2:concept-emacs)
-         (actual (load-concept (store:uuid expected))))
+(define-test get-concept/no-extra-props (:contexts '(test-context data:context))
+  (let* ((expected data:concept-emacs)
+         (actual (get-concept (store:uuid expected))))
     (assert-true (equal? expected actual))
     (assert-concept-map-slots-unbound
-     actual '(aliases attachments links linked-concepts created-at updated-at))    ))
+     actual '(aliases attachments created-at updated-at))))
 
-(define-test load-concept/attachments (:contexts '(test-context data.v2:context))
-  (let* ((uuid (store:uuid data.v2:concept-emacs))
-         (concept (load-concept uuid :load-attachments? t))
-         (attachments (attachments concept)))
-    (assert-equal 1 (list:length attachments))
-    (assert-true (equal? data.v2:attachment-emacs
-                         (list:first attachments)))))
+(define-test get-concept/aliases (:contexts '(test-context data:context))
+  (let* ((uuid (store:uuid data:concept-kubernates))
+         (concept (get-concept uuid :load-aliases? t)))
+    (assert-true (equal? (list data:alias-kubernates) (aliases concept)))))
 
-(define-test load-concept/times (:contexts '(test-context
-                                             data.v2:context))
-  (let* ((expected data.v2:concept-vim)
-         (actual (load-concept (store:uuid expected) :load-times? t)))
-    (assert-slots-equal-to-schema expected actual '(uuid name))
-    (assert-concept-map-slots-bound actual '(created-at updated-at))
-    (assert-concept-map-slots-unbound
-     actual '(aliases attachments links linked-concepts))))
+(define-test get-concept/attachments (:contexts '(test-context data:context))
+  (let ((test-cases `((,data:concept-emacs . (,data:attachment-emacs))
+                      (,data:concept-vim . (,data:attachment-vim1
+                                            ,data:attachment-vim2)))))
+    (loop for test-case in test-cases
+          do (let* ((uuid (store:uuid (car test-case)))
+                    (concept (get-concept uuid :load-attachments? t)))
+               (assert-true (equal? (cdr test-case)
+                                    (attachments concept)))))))
+
+(define-test get-concept/times (:contexts '(test-context data:context))
+  (let* ((expected data:concept-vim)
+         (concept (get-concept (store:uuid expected) :load-times? t)))
+    (assert-slots-equal-to-schema expected concept '(uuid name))
+    (assert-concept-map-slots-bound concept '(created-at updated-at))
+    (assert-concept-map-slots-unbound concept '(aliases attachments))))
+
+(define-test get-concept/all-props (:contexts '(test-context data:context))
+  (let* ((expected data:concept-vim)
+         (concept (get-concept (store:uuid expected)
+                               :load-aliases? t
+                               :load-attachments? t
+                               :load-times? t)))
+    (assert-slots-equal-to-schema expected concept '(uuid name))
+    (assert-true (equal? (list data:attachment-vim1 data:attachment-vim2)
+                         (attachments concept)))
+    (assert-concept-map-slots-bound concept '(created-at updated-at))))
+
