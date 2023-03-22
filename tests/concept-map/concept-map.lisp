@@ -12,30 +12,9 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unlisp.dev:setup-package-local-nicknames))
 
-(defun assert-slots-equal-to-schema (expected actual slot-names)
-  (assert-multiple-slots-equal expected 'silver-brain.store
-                               actual 'silver-brain.concept-map
-                               slot-names))
-
-(defun assert-concept-map-slots-bound (object slot-names)
-  (assert-slots-bound object 'silver-brain.concept-map slot-names))
-
-(defun assert-concept-map-slots-unbound (object slot-names)
-  (assert-slots-unbound object 'silver-brain.concept-map slot-names))
-
-(defmethod equal? ((dao store:concept) (concept concept))
-  (and (string:= (uuid concept) (store:uuid dao))
-       (string:= (name concept) (store:name dao))))
-
-(defmethod equal? ((dao store:concept-attachment) (attachment concept-attachment))
-  (and (equal? (id attachment) (mito:object-id dao))
-       (equal? (name attachment) (store:name dao))
-       (equal? (concept-uuid attachment) (store:concept-uuid dao))
-       (equal? (content-type attachment) (store:content-type dao))
-       (equal? (content-length attachment) (store:content-length dao))))
-
-(defmethod equal? ((dao store:concept-alias) (alias string))
-  (equal? (store:alias dao) alias))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                            Tests                             ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-test get-concept/no-extra-props (:contexts '(test-context data:context))
   (let* ((expected data:concept-emacs)
@@ -77,3 +56,94 @@
                          (attachments concept)))
     (assert-concept-map-slots-bound concept '(created-at updated-at))))
 
+(define-test get-concept-links/all-props (:contexts '(test-context data:context))
+  (let* ((expected-links (pipe (list data:link-emacs-editor
+                                     data:link-emacs-vim)
+                               (sort-by #'mito:object-id)))
+         (expected-concepts (list data:concept-vim
+                                  data:concept-editor))
+         (expected-attachments (list data:attachment-vim1
+                                     data:attachment-vim2))
+         (concept-links (get-concept-links (store:uuid data:concept-emacs)
+                                           :link-level 1
+                                           :load-aliases? t
+                                           :load-attachments? t
+                                           :load-times? t)))
+    (assert-true (equal? expected-links (sort-by (links concept-links) #'id)))
+
+    (loop for expected-concept in expected-concepts
+          for uuid = (store:uuid expected-concept)
+          for concept = (alist:elt (concepts concept-links) uuid)
+          do (assert-slots-equal-to-schema expected-concept concept '(uuid name))
+          do (assert-concept-map-slots-bound concept '(created-at updated-at)))
+
+    (assert-true (equal? expected-attachments
+                         (attachments (alist:elt (concepts concept-links)
+                                                 (store:uuid data:concept-vim)))))))
+
+(define-test get-concept-links/level-n (:contexts '(test-context data:context))
+  (let ((link-levels '(2 3 4 5 1000)))
+    (loop for link-level in link-levels
+          do (let* ((expected-links (pipe (list data:link-vim-dockerfile
+                                                data:link-docker-dockerfile
+                                                data:link-emacs-vim
+                                                data:link-editor-vim
+                                                data:link-docker-kubernates)
+                                          (sort-by #'mito:object-id)))
+                    (expected-concepts (list data:concept-vim
+                                             data:concept-docker
+                                             data:concept-emacs
+                                             data:concept-editor
+                                             data:concept-kubernates))
+                    (concept-links (get-concept-links
+                                    (store:uuid data:concept-dockerfile)
+                                    :link-level 2)))
+               (assert-true (equal? expected-links
+                                    (sort-by (links concept-links) #'id)))
+               (loop for expected-concept in expected-concepts
+                     for uuid = (store:uuid expected-concept)
+                     for concept = (alist:elt (concepts concept-links) uuid)
+                     do (assert-slots-equal-to-schema
+                         expected-concept concept '(uuid name))
+                     do (assert-concept-map-slots-unbound
+                         concept '(aliases attachments created-at updated-at)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                           Helpers                            ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun assert-slots-equal-to-schema (expected actual slot-names)
+  (assert-multiple-slots-equal expected 'silver-brain.store
+                               actual 'silver-brain.concept-map
+                               slot-names))
+
+(defun assert-concept-map-slots-bound (object slot-names)
+  (assert-slots-bound object 'silver-brain.concept-map slot-names))
+
+(defun assert-concept-map-slots-unbound (object slot-names)
+  (assert-slots-unbound object 'silver-brain.concept-map slot-names))
+
+(defmethod equal? ((dao store:concept) (concept concept))
+  (and (string:= (uuid concept) (store:uuid dao))
+       (string:= (name concept) (store:name dao))))
+
+(defmethod equal? ((dao store:concept-attachment) (attachment concept-attachment))
+  (and (equal? (id attachment) (mito:object-id dao))
+       (equal? (name attachment) (store:name dao))
+       (equal? (concept-uuid attachment) (store:concept-uuid dao))
+       (equal? (content-type attachment) (store:content-type dao))
+       (equal? (content-length attachment) (store:content-length dao))))
+
+(defmethod equal? ((dao store:concept-alias) (alias string))
+  (equal? (store:alias dao) alias))
+
+(defmethod equal? ((dao store:concept-link) (link concept-link))
+  (and (string:= (store:source-uuid dao) (source link))
+       (string:= (store:relation-uuid dao) (relation link))
+       (string:= (store:target-uuid dao) (target link))))
+
+(defun sort-by (list accessor)
+  (list:sort! list (op (less? (funcall accessor _1)
+                              (funcall accessor _2)))))
+
+(with-summary () (run-tests))

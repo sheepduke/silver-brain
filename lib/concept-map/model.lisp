@@ -40,7 +40,7 @@ ATTACHMENTS is a list of `concept-attachment'."))
                :initform '())))
 
   (defclass concept-link ()
-    ((id :initarg id
+    ((id :initarg :id
          :accessor id)
      (source :initarg :source
              :accessor source)

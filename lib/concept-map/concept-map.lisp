@@ -35,6 +35,7 @@
     (let* ((links (get-concept-links* uuid link-level))
            (concepts (pipe links 
                            (links-source-target-uuids)
+                           (list:filter (op (string:/= _ uuid)))
                            (list:map
                             (fun (uuid)
                               (cons uuid
