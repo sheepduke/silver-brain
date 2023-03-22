@@ -145,5 +145,3 @@
 (defun sort-by (list accessor)
   (list:sort! list (op (less? (funcall accessor _1)
                               (funcall accessor _2)))))
-
-(with-summary () (run-tests))
