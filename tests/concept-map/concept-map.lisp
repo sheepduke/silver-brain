@@ -59,7 +59,7 @@
 (define-test get-concept-links/all-props (:contexts '(test-context data:context))
   (let* ((expected-links (pipe (list data:link-emacs-editor
                                      data:link-emacs-vim)
-                               (sort-by #'mito:object-id)))
+                               (list:sort! :accessor #'mito:object-id)))
          (expected-concepts (list data:concept-vim
                                   data:concept-editor))
          (expected-attachments (list data:attachment-vim1
@@ -69,7 +69,8 @@
                                            :load-aliases? t
                                            :load-attachments? t
                                            :load-times? t)))
-    (assert-true (equal? expected-links (sort-by (links concept-links) #'id)))
+    (assert-true (equal? expected-links (list:sort! (links concept-links)
+                                                    :accessor #'id)))
 
     (loop for expected-concept in expected-concepts
           for uuid = (store:uuid expected-concept)
@@ -89,7 +90,7 @@
                                                 data:link-emacs-vim
                                                 data:link-editor-vim
                                                 data:link-docker-kubernates)
-                                          (sort-by #'mito:object-id)))
+                                          (list:sort! :accessor #'mito:object-id)))
                     (expected-concepts (list data:concept-vim
                                              data:concept-docker
                                              data:concept-emacs
@@ -99,7 +100,8 @@
                                     (store:uuid data:concept-dockerfile)
                                     :link-level 2)))
                (assert-true (equal? expected-links
-                                    (sort-by (links concept-links) #'id)))
+                                    (list:sort! (links concept-links)
+                                                :accessor #'id)))
                (loop for expected-concept in expected-concepts
                      for uuid = (store:uuid expected-concept)
                      for concept = (alist:elt (concepts concept-links) uuid)
@@ -141,7 +143,3 @@
   (and (string:= (store:source-uuid dao) (source link))
        (string:= (store:relation-uuid dao) (relation link))
        (string:= (store:target-uuid dao) (target link))))
-
-(defun sort-by (list accessor)
-  (list:sort! list (op (less? (funcall accessor _1)
-                              (funcall accessor _2)))))
