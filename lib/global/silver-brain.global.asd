@@ -2,7 +2,7 @@
   :description "Global variables"
   :author "YUE Daian"
   :license "MIT"
-  :depends-on (#:unlisp #:shasht)
+  :depends-on (#:unlisp #:shasht #:chameleon)
   :serial t
   :components ((:file "package")
-               (:file "runtime-settings")))
+               (:file "config")))
