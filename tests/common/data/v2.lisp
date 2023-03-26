@@ -135,14 +135,11 @@
     (list:foreach attachments #'mito:insert-dao)
     (list:foreach link #'mito:insert-dao)
 
-    (let ((attachment-emacs-path (path:join (global:store/attachments-path
-                                             global:*runtime-settings*)
+    (let ((attachment-emacs-path (path:join (global:store/attachments-path)
                                             "1-Introduction.org"))
-          (attachment-vim-path1 (path:join (global:store/attachments-path
-                                            global:*runtime-settings*)
+          (attachment-vim-path1 (path:join (global:store/attachments-path)
                                            "2-Body.md"))
-          (attachment-vim-path2 (path:join (global:store/attachments-path
-                                            global:*runtime-settings*)
+          (attachment-vim-path2 (path:join (global:store/attachments-path)
                                            "3-Body.txt")))
       (loop for pair in (list (cons attachment-emacs-path attachment-emacs-content)
                               (cons attachment-vim-path1 attachment-vim-content1)

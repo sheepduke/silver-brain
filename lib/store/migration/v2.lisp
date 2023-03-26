@@ -105,7 +105,7 @@
 
           ;; Create an attachment file.
           (def attachment-path
-            (path:join (global:store/attachments-path global:*runtime-settings*)
+            (path:join (global:store/attachments-path)
                        (format nil "~a-Body.~a"
                                (mito:object-id attachment)
                                (file-extension content-format))))

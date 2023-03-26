@@ -12,8 +12,7 @@
 (define-test migrate/v1->v2 (:contexts '(test-context
                                          data.v1:context))
   (let ((attachment-files (list:map (list "1-Body.org" "2-Body.md")
-                                    (op (path:join (global:store/attachments-path
-                                                    global:*runtime-settings*)
+                                    (op (path:join (global:store/attachments-path)
                                                    _)))))
     (unwind-protect
          (progn
