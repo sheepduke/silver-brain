@@ -11,15 +11,18 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unlisp.dev:setup-package-local-nicknames))
 
+(def test-settings
+  (make-instance 'global:settings
+                 :store/root-path (path:join (path:temporary-directory)
+                                             "silver-brain-tests/")))
 (with-auto-export ()
   (defun test-context (fun)
-    (let* ((root-path (path:join (path:temporary-directory) "silver-brain-tests/"))
-           (filepath (format nil "~A/~A.sqlite" root-path (uuid:make-v4-uuid)))
-           (global:*runtime-settings* (make-instance 'global:runtime-settings
-                                                     :store/root-path root-path)))
-      (os:ensure-directories-exist root-path)
-      (os:ensure-directories-exist (global:store/attachments-path
-                                    global:*runtime-settings*))
+    (let* ((global:*settings* test-settings)
+           (filepath (format nil "~A/~A.sqlite"
+                             (global:store/root-path)
+                             (uuid:make-v4-uuid))))
+      (os:ensure-directories-exist (global:store/root-path))
+      (os:ensure-directories-exist (global:store/attachments-path))
 
       (unwind-protect
            (let ((mito:*connection* nil)
