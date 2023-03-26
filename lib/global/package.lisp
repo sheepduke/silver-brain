@@ -1,6 +1,8 @@
 (unlisp:defpackage #:silver-brain.global
-  (:use #:unlisp))
+  (:use #:unlisp
+        #:chameleon))
 
 (in-package #:silver-brain.global)
 
-(unlisp.dev:setup-package-local-nicknames)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unlisp.dev:setup-package-local-nicknames))
