@@ -1,6 +1,5 @@
 (unlisp:defpackage #:silver-brain.global
-  (:use #:unlisp
-        #:chameleon))
+  (:use #:unlisp))
 
 (in-package #:silver-brain.global)
 

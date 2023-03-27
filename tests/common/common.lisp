@@ -11,11 +11,11 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unlisp.dev:setup-package-local-nicknames))
 
-(def test-settings
-  (make-instance 'global:settings
-                 :store/root-path (path:join (path:temporary-directory)
-                                             "silver-brain-tests/")))
 (with-auto-export ()
+  (def test-settings
+    (make-instance 'global:settings
+                   :store/root-path (path:join (path:temporary-directory)
+                                               "silver-brain.tests/")))
   (defun test-context (fun)
     (let* ((global:*settings* test-settings)
            (filepath (format nil "~A/~A.sqlite"
@@ -63,7 +63,7 @@
 
   (defun assert-slot-bound (object package slot-name)
     (assert-true (slot-bound? object
-                               (pack:find-symbol slot-name :package package))))
+                              (pack:find-symbol slot-name :package package))))
 
   (defun assert-slots-bound (object package slot-names)
     (loop for slot-name in slot-names
