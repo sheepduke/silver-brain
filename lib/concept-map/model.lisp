@@ -26,7 +26,7 @@ LINKED-CONCEPTS is a list of `concept'.
 ATTACHMENTS is a list of `concept-attachment'."))
 
   (defclass concept-attachment ()
-    ((id :type string
+    ((id :type integer
          :initarg :id
          :accessor id)
      (name :type string
@@ -53,7 +53,7 @@ ATTACHMENTS is a list of `concept-attachment'."))
                :initform '())))
 
   (defclass concept-link ()
-    ((id :type string
+    ((id :type integer
          :initarg :id
          :accessor id)
      (source :type string
@@ -81,3 +81,4 @@ ATTACHMENTS is a list of `concept-attachment'."))
 
 (defun concept-link-list? (links)
   (list:every? links (op (type? _ 'concept-link))))
+

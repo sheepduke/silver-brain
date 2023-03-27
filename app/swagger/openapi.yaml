@@ -1,0 +1,131 @@
+openapi: 3.0.0
+info:
+  title: Silver Brain API Specification
+  description: |-
+    API specification of Silver Brain project.
+    Checkout the GitHub [sheepduke/silver-brain](https://github.com/sheepduke/silver-brain) repo for more details.
+  contact:
+    email: sheepduke@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/mit
+  version: 2.0.0
+
+tags:
+  - name: concept
+    description: Concept related API endpoints
+
+paths:
+  /api/v2/concepts/{uuid}:
+    get:
+      tags:
+        - concept
+      summary: Get a concept by its UUID.
+      description: Get a concept by its UUID.
+      operationId: getConcept
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+        - name: load-aliases
+          in: query
+          schema:
+            type: boolean
+        - name: load-attachments
+          in: query
+          schema:
+            type: boolean
+        - name: load-times
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Concept"
+        "404":
+          description: Not found
+
+components:
+  schemas:
+    DatabaseNameHeader:
+      name: X-DatabaseName
+      in: header
+      description: The name of database to operate on. Defaults to "silver-brain".
+      required: false
+      schema:
+        type: string
+
+    Concept:
+      type: object
+      properties:
+        uuid:
+          $ref: "#/components/schemas/Uuid"
+        name:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConceptAttachment"
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+        updatedAt:
+          $ref: "#/components/schemas/DateTime"
+
+    ConceptAttachment:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        conceptUuid:
+          $ref: "#/components/schemas/Uuid"
+        contentType:
+          type: string
+        contentLength:
+          description: The count of bytes of this attachment.
+          type: integer
+
+    ConceptLinks:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConceptLink"
+        concepts:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Concept"
+            
+    Uuid:
+      type: string
+      format: 00000000-0000-0000-0000-000000000000
+
+    DateTime:
+      type: string
+      format: RFC 3339
+      description: Check https://www.rfc-editor.org/rfc/rfc3339
+      example: 2023-03-27T23:46:26.148865+08:00
+
+    ConceptLink:
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          $ref: "#/components/schemas/Uuid"
+        relation:
+          $ref: "#/components/schemas/Uuid"
+        target:
+          $ref: "#/components/schemas/Uuid"

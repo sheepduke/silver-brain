@@ -61,10 +61,6 @@
                  (funcall middleware acc))
                :initial-value handler))
 
-(defun hello (args)
-  (declare (ignore args))
-  "Hello, world!")
-
 (defun get-concept (params)
   (let ((uuid (jingle:get-request-param params :uuid))
         (load-aliases? (true? params "load-aliases"))
@@ -76,9 +72,12 @@
                              :load-times? load-times?)))
 
 (defun register-request-handlers (app)
-  (setf (jingle:route app "/")
-        (apply-custom-middlewares #'hello))
-  (setf (jingle:route app "/concepts/:uuid")
+  ;; FIXME Change to the right dir.
+  (jingle:serve-directory app "/swagger"
+                          (path:join (global:store/root-path) "swagger/"))
+  (jingle:redirect-route app "/" "/swagger")
+
+  (setf (jingle:route app "/api/v2/concepts/:uuid")
         (apply-custom-middlewares #'get-concept)))
 
 (def dev-settings
@@ -105,7 +104,7 @@
 
 ;; (dex:get "http://localhost:5050/concepts/0001?load-aliases=true")
 ;; (dex:get "http://localhost:5050/concepts/0002?load-aliases=true")
-;; (dex:get "http://localhost:5050/concepts/0011?load-aliases=true&load-times=true")
+;; (dex:get "http://localhost:5050/api/v2/concepts/0011?load-aliases=true&load-times=true")
 ;; (start-dev-server)
 ;; (stop-dev-server)
 ;; (dex:get "http://localhost:5050/")
