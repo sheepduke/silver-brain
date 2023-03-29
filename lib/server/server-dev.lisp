@@ -36,7 +36,7 @@
     (jingle:stop web-dev-app)))
 
 ;; (register-routes web-dev-app)
-;; (dex:get "http://localhost:5050/hello")
+;; (dex:get "http://localhost:5050")
 ;; (dex:get "http://localhost:5050/api/v2/concepts/0011?load-aliases=true&load-times=true")
 ;; (start-dev-server)
 ;; (stop-dev-server)

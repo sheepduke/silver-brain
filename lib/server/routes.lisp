@@ -17,10 +17,12 @@
                              :load-times? load-times?)))
 
 (defun register-routes (app)
+  ;; Redirects.
+  (jingle:redirect-route app "/" "/swagger/")
+
   ;; Swagger.
   (jingle:serve-directory app "/swagger"
                           (path:join (global:store/root-path) "swagger/"))
-  (jingle:redirect-route app "/" "/swagger")
 
   ;; Concept.
   (setf (jingle:route app "/api/v2/concepts/:uuid") #'get-concept))
