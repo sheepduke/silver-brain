@@ -7,6 +7,8 @@
                #:silver-brain.global)
   :serial t
   :components ((:file "package")
+               (:file "middlewares")
+               (:file "routes")
                (:file "server-dev"))
   :in-order-to ((test-op (test-op :silver-brain-tests.server))))
 

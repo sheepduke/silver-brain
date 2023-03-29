@@ -12,7 +12,7 @@
   (unlisp.dev:setup-package-local-nicknames))
 
 (with-auto-export ()
-  (defun ensure-data-hierarchy-exists ()
+  (defun ensure-data-directories-exist ()
     (os:ensure-directories-exist (global:store/attachments-path)))
 
   (defun call-with-database (database-name function)
