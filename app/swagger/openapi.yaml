@@ -16,6 +16,28 @@ tags:
     description: Concept related API endpoints
 
 paths:
+  /api/v2/concepts:
+    get:
+      tags:
+        - concept
+      summary: Get a list of concepts by optional search string.
+      operationId: listConcepts
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: A string splitted by spaces.
+        - name: load-aliases
+          in: query
+          schema:
+            type: boolean
+        - name: load-times
+          in: query
+          schema:
+            type: boolean
+
   /api/v2/concepts/{uuid}:
     get:
       tags:
