@@ -25,6 +25,9 @@ LINKS is a list of `concept-link'.
 LINKED-CONCEPTS is a list of `concept'.
 ATTACHMENTS is a list of `concept-attachment'."))
 
+  (deftype concept-list ()
+    `(and list (satisfies concept-list?)))
+
   (defclass concept-attachment ()
     ((id :type integer
          :initarg :id
@@ -79,6 +82,9 @@ ATTACHMENTS is a list of `concept-attachment'."))
   (defun signal-uuid-not-found-error (uuid)
     (error 'uuid-not-found :uuid uuid)))
 
-(defun concept-link-list? (links)
-  (list:every? links (op (type? _ 'concept-link))))
+(defun concept-list? (list)
+  (list:every? list (op (type? _ 'concept))))
+
+(defun concept-link-list? (list)
+  (list:every? list (op (type? _ 'concept-link))))
 

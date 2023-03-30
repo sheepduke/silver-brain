@@ -1,7 +1,8 @@
 (unlisp:defpackage #:silver-brain.concept-map
   (:use #:unlisp)
   (:local-nicknames (#:store #:silver-brain.store)
-                    (#:time #:local-time)))
+                    (#:time #:local-time)
+                    (#:global #:silver-brain.global)))
 
 (in-package #:silver-brain.concept-map)
 
