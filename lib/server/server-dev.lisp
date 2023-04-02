@@ -38,6 +38,7 @@
 ;; (register-routes web-dev-app)
 ;; (dex:get "http://localhost:5050")
 ;; (dex:get "http://localhost:5050/api/v2/concepts/0011?load-aliases=true&load-times=true")
+;; (dex:get "http://localhost:5050/api/v2/concept-links/0011")
 ;; (start-dev-server)
 ;; (stop-dev-server)
 ;; (dex:get "http://localhost:5050/")
