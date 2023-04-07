@@ -1,13 +1,5 @@
 (in-package #:silver-brain.server)
 
-(def web-dev-app
-  (jingle:make-app :address "127.0.0.1"
-                   :port 5050
-                   :middlewares middlewares
-                   :debug-mode t
-                   :silent-mode nil
-                   :use-thread t))
-
 (def dev-settings
   (make-instance 'global:settings
                  :store/root-path (path:join (path:temporary-directory)
@@ -17,6 +9,14 @@
   (list:concat (list lack.middleware.accesslog:*lack-middleware-accesslog*
                      lack.middleware.backtrace:*lack-middleware-backtrace*)
                custom-middlewares))
+
+(def web-dev-app
+  (jingle:make-app :address "127.0.0.1"
+                   :port 5050
+                   :middlewares middlewares
+                   :debug-mode t
+                   :silent-mode nil
+                   :use-thread t))
 
 (defun start-dev-server ()
   (asdf:load-system 'silver-brain-tests.common)

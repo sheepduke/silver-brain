@@ -2,7 +2,10 @@
   :version "0.1.0"
   :license "MIT"
   :author "YUE Daian"
-  :depends-on (#:unlisp #:jingle #:lack-middleware-accesslog
+  :depends-on (#:unlisp
+               #:jingle
+               #:lack-middleware-accesslog
+               #:log4cl
                #:silver-brain.concept-map
                #:silver-brain.global)
   :serial t

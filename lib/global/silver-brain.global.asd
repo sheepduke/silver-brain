@@ -5,4 +5,5 @@
   :depends-on (#:unlisp #:shasht)
   :serial t
   :components ((:file "package")
+               (:file "conditions")
                (:file "config")))
