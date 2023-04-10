@@ -2,8 +2,8 @@
 
 (def dev-settings
   (make-instance 'global:settings
-                 :store/root-path (path:join (path:temporary-directory)
-                                             "silver-brain.dev/")))
+                 :store/root-path (path:join (path:user-home)
+                                             ".silver-brain.dev/")))
 
 (def middlewares
   (list:concat (list lack.middleware.accesslog:*lack-middleware-accesslog*
