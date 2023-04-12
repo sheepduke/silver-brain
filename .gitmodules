@@ -1,3 +1,0 @@
-[submodule "lib/cl-jingle"]
-	path = lib/cl-jingle
-	url = git@github.com:dnaeon/cl-jingle.git
