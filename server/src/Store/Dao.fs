@@ -1,0 +1,37 @@
+namespace SilverBrain.Store
+
+open System.Data
+open Microsoft.Data.Sqlite
+
+module Dao =
+    type Uuid = Uuid of string
+    type SerialId = SerialId of uint
+
+    type Concept =
+        { Uuid: Uuid
+          Name: string
+          CreatedAt: System.DateTime
+          UpdatedAt: System.DateTime }
+
+    type ConceptAlias =
+        { Id: SerialId
+          ConceptUuid: Uuid
+          Alias: string }
+
+    type ConceptAttachment =
+        { Id: SerialId
+          ConceptUuid: Uuid
+          Name: string
+          ContentType: string
+          ContentLength: uint }
+
+    type ConceptRelationPair = { ConceptUuid: Uuid; OtherUuid: Uuid }
+
+    type ConceptLink =
+        { Id: SerialId
+          SourceUuid: Uuid
+          RelationUuid: Uuid
+          TargetUuid: Uuid }
+
+    let conn () =
+        new Microsoft.Data.Sqlite.SqliteConnection("Data Source=/home/sheep/temp/silver-brain.dev/v1.5.sqlite")
