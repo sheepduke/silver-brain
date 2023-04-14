@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="src/Store/Scripts/**/*.sql" />
+    <EmbeddedResource Include="src/Store/Scripts/Migration/02.00.00_InitializeV2Schema.sql" />
+    <EmbeddedResource Include="src/Store/Scripts/TestData/1_Emacs_Introduction.org" />
+    <EmbeddedResource Include="src/Store/Scripts/TestData/2_Vim_Body.md" />
+    <EmbeddedResource Include="src/Store/Scripts/TestData/3_Vim_Second.txt" />
+    <EmbeddedResource Include="src/Store/Scripts/TestData/V2.sql" />
   </ItemGroup>
 
 </Project>
