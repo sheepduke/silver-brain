@@ -5,3 +5,7 @@
 #r "nuget:RepoDb.Sqlite.Microsoft"
 
 open FSharpPlus
+
+#load "src/Store/Dao.fs"
+#load "src/Store/Migration.fs"
+#load "src/Program.fs"

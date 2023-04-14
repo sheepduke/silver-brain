@@ -35,7 +35,7 @@ INSERT INTO [ConceptAttachment] (ConceptUuid, Name, ContentType, ContentLength)
 INSERT INTO [ConceptAttachment] (ConceptUuid, Name, ContentType, ContentLength)
     VALUES ('0003', 'Body', 'text/md', 13);
 INSERT INTO [ConceptAttachment] (ConceptUuid, Name, ContentType, ContentLength)
-    VALUES ('0003', 'Body', 'text/plain', 15);
+    VALUES ('0003', 'Second', 'text/plain', 15);
 
 -- ConceptRelationPair
 INSERT INTO [ConceptRelationPair] (ConceptUuid, OtherUuid) VALUES ('1001', '1002');
