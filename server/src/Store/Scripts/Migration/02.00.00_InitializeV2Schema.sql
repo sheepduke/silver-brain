@@ -22,11 +22,12 @@ CREATE TABLE if not exists [ConceptAttachment] (
 );
  
 CREATE TABLE IF NOT EXISTS [ConceptRelationPair] (
+    [Id] INTEGER PRIMARY KEY,
     [ConceptUuid] TEXT NOT NULL,
     [OtherUuid] TEXT NOT NULL,
     UNIQUE (ConceptUuid, OtherUuid),
-    FOREIGN KEY (ConceptUuid, OtherUuid)
-        REFERENCES [Concept] (Uuid, OtherUuid)
+    FOREIGN KEY (ConceptUuid) REFERENCES [Concept] (Uuid),
+    FOREIGN KEY (OtherUuid) REFERENCES [Concept] (Uuid)
 );
 
 CREATE TABLE IF NOT EXISTS [ConceptLink] (

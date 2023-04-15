@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="src/Store/Dao.fs" />
     <Compile Include="src/Store/Migration.fs" />
+    <Compile Include="src/Store/TestData.fs" />
     <Compile Include="src/Program.fs" />
   </ItemGroup>
 

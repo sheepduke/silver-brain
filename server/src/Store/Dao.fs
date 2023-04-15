@@ -1,8 +1,5 @@
 namespace SilverBrain.Store
 
-open System.Data
-open Microsoft.Data.Sqlite
-
 module Dao =
     type Uuid = Uuid of string
     type SerialId = SerialId of uint
@@ -32,6 +29,3 @@ module Dao =
           SourceUuid: Uuid
           RelationUuid: Uuid
           TargetUuid: Uuid }
-
-    let conn () =
-        new Microsoft.Data.Sqlite.SqliteConnection("Data Source=/home/sheep/temp/silver-brain.dev/v1.5.sqlite")
