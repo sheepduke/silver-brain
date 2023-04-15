@@ -1,31 +1,36 @@
-namespace SilverBrain.Store.Migration
+namespace SilverBrain.Store
 
 open DbUp
-open DbUp.SQLite
 open FSharpPlus
 
-module Runner =
-    let run seedTestData databasePaths =
-        let assembly = System.Reflection.Assembly.GetExecutingAssembly()
+module Migration =
+    type SqlLoadPolicy =
+        | LoadSqlFromLocalDirectory of string
+        | LoadSqlFromEmbeddedResource
 
-        let isScript =
-            (fun name ->
-                printfn $"Name is: {name}"
-                String.endsWith "sql" name)
+    type DbUp.Builder.UpgradeEngineBuilder with
 
+        member this.WithSqlLoadPolicy sqlLoadPolicy =
+            let isSqlScript name =
+                String.isSubString "Migration" name && String.endsWith "sql" name
+
+            match sqlLoadPolicy with
+            | LoadSqlFromLocalDirectory directory -> this.WithScriptsFromFileSystem(directory)
+
+            | LoadSqlFromEmbeddedResource ->
+                this.WithScriptsEmbeddedInAssembly(System.Reflection.Assembly.GetExecutingAssembly(), isSqlScript)
+
+        member this.WithOptionalConsoleLogger shouldLogToConsole =
+            match shouldLogToConsole with
+            | true -> this.LogToConsole()
+            | false -> this
+
+    let run sqlLoadPolicy shouldLogToConsole databasePaths =
         for databasePath in databasePaths do
-            let migrationEngine =
-                DeployChanges.To
-                    .SQLiteDatabase($"Data Source={databasePath}")
-                    // .WithScriptsEmbeddedInAssembly(assembly, isScript)
-                    .WithScriptsFromFileSystem("/home/sheep/projects/fsharp/src/Store/Migration/TestData")
-                    .LogToConsole()
-                    .Build()
-
-            for script in migrationEngine.GetDiscoveredScripts() do
-                printfn $"Script: {script}"
-
-// migrationEngine.PerformUpgrade()
-
-
-// Runner.run false [ "/home/sheep/temp/silver-brain.dev/new.sqlite" ]
+            DeployChanges.To
+                .SQLiteDatabase($"Data Source={databasePath}")
+                .WithSqlLoadPolicy(sqlLoadPolicy)
+                .WithOptionalConsoleLogger(shouldLogToConsole)
+                .Build()
+                .PerformUpgrade()
+            |> ignore
