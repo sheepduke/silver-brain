@@ -1,3 +1,4 @@
+#r "nuget:Argu"
 #r "nuget:FSharpPlus"
 #r "nuget:Microsoft.Data.Sqlite"
 #r "nuget:DbUp"

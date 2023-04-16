@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>SilverBrain</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,12 +14,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DbUp" Version="5.0.8"/>
-    <PackageReference Include="DbUp-Sqlite" Version="5.0.8"/>
+    <PackageReference Include="Argu" Version="6.1.1" />
+    <PackageReference Include="DbUp" Version="5.0.8" />
+    <PackageReference Include="DbUp-Sqlite" Version="5.0.8" />
     <PackageReference Include="FSharpPlus" Version="1.4.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.4" />
-    <PackageReference Include="RepoDb" Version="1.13.1"/>
-    <PackageReference Include="RepoDb.Sqlite.Microsoft" Version="1.13.1"/>
+    <PackageReference Include="RepoDb" Version="1.13.1" />
+    <PackageReference Include="RepoDb.Sqlite.Microsoft" Version="1.13.1" />
   </ItemGroup>
 
   <ItemGroup>
