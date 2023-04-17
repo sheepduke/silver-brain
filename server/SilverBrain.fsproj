@@ -4,12 +4,16 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>SilverBrain</RootNamespace>
+    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <AssemblyFileVersion>2.0.0</AssemblyFileVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="src/Util.fs" />
     <Compile Include="src/Store/Dao.fs" />
     <Compile Include="src/Store/Migration.fs" />
     <Compile Include="src/Store/TestData.fs" />
+    <Compile Include="src/Cli/Dev.fs" />
     <Compile Include="src/Program.fs" />
   </ItemGroup>
 

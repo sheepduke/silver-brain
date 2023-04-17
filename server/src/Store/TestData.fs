@@ -35,7 +35,7 @@ module TestData =
 
     let setupFromLocalFile projectRoot rootDataFolder =
         let scriptsRoot =
-            Path.Combine([| projectRoot; "server"; "src"; "Store"; "Scripts" |])
+            Path.Combine([| projectRoot; "src"; "Store"; "Scripts" |])
 
         let migrationSqlRoot = Path.Combine(scriptsRoot, "Migration")
         let testDataRoot = Path.Combine(scriptsRoot, "TestData")
