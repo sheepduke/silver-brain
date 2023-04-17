@@ -1,45 +1,47 @@
 namespace SilverBrain
 
 open Argu
+open System.Reflection
+open SilverBrain
 
-#if DEBUG
-type DevArgs =
-    | Init
-    | Start
-
-    interface IArgParserTemplate with
-        member this.Usage =
-            match this with
-            | Init -> "Initialize test data and others"
-            | Start -> "Start the application server"
-#endif
-
+type LogLevel = None | Error  | Info | Debug | Verbose
 
 type MainArgs =
-    | Version
-    | [<AltCommandLine("-l")>] Log_Level
-#if DEBUG
-    | [<CliPrefix(CliPrefix.None)>] Dev of ParseResults<DevArgs>
+    | [<AltCommandLine("-v")>] Version
+    | [<AltCommandLine("-l")>] Log_Level of LogLevel
+#if DEBUG || INTERACTIVE
+    | [<CliPrefix(CliPrefix.None)>] Dev of ParseResults<Cli.Dev.Args>
 #endif
 
     interface IArgParserTemplate with
         member this.Usage =
             match this with
             | Version -> "Prints the version of silver-brain"
-            | Log_Level -> "Sets log level, can be one of NONE, INFO, DEBUG, VERBOSE (case insensitive)"
-#if DEBUG
+            | Log_Level _ -> "Sets log level"
+#if DEBUG || INTERACTIVE
             | Dev _ -> "Development related commands, only used in Debug mode"
 #endif
 
 module Main =
+    let printAppVersion () =
+        let appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString()
+        printfn "Silver Brain %s" appVersion
+
     [<EntryPoint>]
     let main args =
         let parser = ArgumentParser.Create<MainArgs>(programName = "silver-brain")
 
         try 
             let options = parser.ParseCommandLine(inputs = args)
+
+            match options.TryGetResult Version with
+                | Some Version -> printAppVersion ()
+                | _ -> match options.GetSubCommand() with
+#if DEBUG || INTERACTIVE
+                       | Dev devOptions -> Cli.Dev.run devOptions
+#endif
             0
         with
-            | :? ArguParseException ->
-                printfn "%s" <| parser.PrintUsage()
+            | :? ArguParseException as e ->
+                printfn "%s" <| e.Message
                 1
