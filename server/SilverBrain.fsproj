@@ -18,21 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Argu" Version="6.1.1" />
-    <PackageReference Include="DbUp" Version="5.0.8" />
-    <PackageReference Include="DbUp-Sqlite" Version="5.0.8" />
-    <PackageReference Include="FSharpPlus" Version="1.4.1" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.4" />
-    <PackageReference Include="RepoDb" Version="1.13.1" />
-    <PackageReference Include="RepoDb.Sqlite.Microsoft" Version="1.13.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="src/Store/Scripts/Migration/02.00.00_InitializeV2Schema.sql" />
     <EmbeddedResource Include="src/Store/Scripts/TestData/1_Emacs_Introduction.org" />
     <EmbeddedResource Include="src/Store/Scripts/TestData/2_Vim_Body.md" />
     <EmbeddedResource Include="src/Store/Scripts/TestData/3_Vim_Second.txt" />
     <EmbeddedResource Include="src/Store/Scripts/TestData/InitData.sql" />
   </ItemGroup>
+
+  <Import Project=".paket\Paket.Restore.targets" />
 
 </Project>
