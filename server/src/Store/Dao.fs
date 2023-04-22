@@ -1,38 +1,30 @@
 namespace SilverBrain.Store
 
-open SilverBrain.Core
+[<CLIMutable>]
+type Concept =
+    { Uuid: string
+      Name: string
+      CreatedAt: System.DateTime
+      UpdatedAt: System.DateTime }
 
-module Concept =
-    type T =
-        { Uuid: Uuid
-          Name: string
-          CreatedAt: System.DateTime
-          UpdatedAt: System.DateTime }
+type ConceptAlias =
+    { Id: uint
+      ConceptUuid: string
+      Alias: string }
 
-module Dao =
+type ConceptAttachment =
+    { Id: uint
+      ConceptUuid: string
+      Name: string
+      ContentType: string
+      ContentLength: uint }
 
-    type Concept =
-        { Uuid: Uuid
-          Name: string
-          CreatedAt: System.DateTime
-          UpdatedAt: System.DateTime }
+type ConceptRelationPair =
+    { ConceptUuid: string
+      OtherUuid: string }
 
-    type ConceptAlias =
-        { Id: SerialId
-          ConceptUuid: Uuid
-          Alias: string }
-
-    type ConceptAttachment =
-        { Id: SerialId
-          ConceptUuid: Uuid
-          Name: string
-          ContentType: string
-          ContentLength: uint }
-
-    type ConceptRelationPair = { ConceptUuid: Uuid; OtherUuid: Uuid }
-
-    type ConceptLink =
-        { Id: SerialId
-          SourceUuid: Uuid
-          RelationUuid: Uuid
-          TargetUuid: Uuid }
+type ConceptLink =
+    { Id: uint
+      SourceUuid: string
+      RelationUuid: string
+      TargetUuid: string }

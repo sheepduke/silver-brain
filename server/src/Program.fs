@@ -29,6 +29,8 @@ module Main =
 
     [<EntryPoint>]
     let main args =
+        Dapper.FSharp.SQLite.OptionTypes.register ()
+
         let parser = ArgumentParser.Create<MainArgs>(programName = "silver-brain")
 
         try 
