@@ -36,17 +36,10 @@ module Dev =
         | Some projectRoot -> Store.TestData.setupFromLocalFile projectRoot dataDirectory
         | None -> Store.TestData.setupFromEmbeddedResource dataDirectory
 
-    let private runServer () : unit =
-        async {
-            let! result = SilverBrain.Domain.Test.run ()
+    let private runServer () : unit = ()
 
-            for r in result do
-                printfn "%A" result
-        }
-        |> Async.RunSynchronously
-
-let run (options: ParseResults<Args>) : unit =
-    match options.GetSubCommand() with
-    | Init initOptions -> runInit initOptions
-    | Start _ -> runServer ()
+    let run (options: ParseResults<Args>) : unit =
+        match options.GetSubCommand() with
+        | Init initOptions -> runInit initOptions
+        | Start _ -> runServer ()
 #endif

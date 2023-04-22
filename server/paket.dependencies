@@ -10,3 +10,10 @@ nuget DbUp-Core
 nuget DbUp-Sqlite
 nuget Microsoft.Data.Sqlite
 nuget FSharp.SystemTextJson 
+
+group Test
+  source https://api.nuget.org/v3/index.json
+
+  nuget FsUnit
+  nuget NUnit3TestAdapter
+  nuget Microsoft.NET.Test.Sdk
