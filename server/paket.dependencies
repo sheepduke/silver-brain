@@ -9,3 +9,4 @@ nuget FSharpPlus
 nuget DbUp-Core
 nuget DbUp-Sqlite
 nuget Microsoft.Data.Sqlite
+nuget FSharp.SystemTextJson 

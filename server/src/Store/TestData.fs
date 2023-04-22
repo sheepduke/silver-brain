@@ -4,6 +4,7 @@ open System.IO
 open System.Reflection
 open System.Text
 open Microsoft.Data.Sqlite
+open Dapper.FSharp;
 
 module TestData =
     let private internalSetup migrationSqlLoadPolicy initDataSql rootDataFolder =
@@ -16,7 +17,7 @@ module TestData =
         let conn = new SqliteConnection($"Data Source={databasePath}")
 
         Migration.run migrationSqlLoadPolicy true [ Path.Combine(databasePath) ]
-        // conn.ExecuteNonQuery initDataSql |> ignore
+        // conn.ExecuteAsync initDataSql |> ignore
 
     let setupFromEmbeddedResource rootDataFolder =
         let currentAssembly = Assembly.GetExecutingAssembly()
