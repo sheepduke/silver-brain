@@ -3,7 +3,6 @@ namespace SilverBrain.Store
 open System.IO
 open System.Reflection
 open System.Text
-open RepoDb
 open Microsoft.Data.Sqlite
 
 module TestData =
@@ -17,7 +16,7 @@ module TestData =
         let conn = new SqliteConnection($"Data Source={databasePath}")
 
         Migration.run migrationSqlLoadPolicy true [ Path.Combine(databasePath) ]
-        conn.ExecuteNonQuery initDataSql |> ignore
+        // conn.ExecuteNonQuery initDataSql |> ignore
 
     let setupFromEmbeddedResource rootDataFolder =
         let currentAssembly = Assembly.GetExecutingAssembly()

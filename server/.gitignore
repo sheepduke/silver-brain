@@ -2,3 +2,4 @@ bin/
 obj/
 paket-files/
 .fake
+packages/

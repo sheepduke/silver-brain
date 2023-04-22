@@ -1,8 +1,15 @@
 namespace SilverBrain.Store
 
+open SilverBrain.Core
+
+module Concept =
+    type T =
+        { Uuid: Uuid
+          Name: string
+          CreatedAt: System.DateTime
+          UpdatedAt: System.DateTime }
+
 module Dao =
-    type Uuid = Uuid of string
-    type SerialId = SerialId of uint
 
     type Concept =
         { Uuid: Uuid

@@ -1,7 +1,6 @@
-Argu
 DbUp-Core
 DbUp-Sqlite
+Argu
 FSharpPlus
+Dapper.FSharp
 Microsoft.Data.Sqlite
-RepoDb
-RepoDb.Sqlite.Microsoft
