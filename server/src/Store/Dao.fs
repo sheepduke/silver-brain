@@ -1,4 +1,4 @@
-namespace SilverBrain.Store
+namespace SilverBrain.Store.Dao
 
 [<CLIMutable>]
 type Concept =

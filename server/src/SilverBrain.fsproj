@@ -13,7 +13,9 @@
     <Compile Include="Store/Migration.fs" />
     <Compile Include="Store/TestData.fs" />
     <Compile Include="Domain/CoreType.fs" />
-    <Compile Include="Domain/ConceptMap.fs" />
+    <Compile Include="Domain/ConceptMap/Type.fs" />
+    <Compile Include="Domain/ConceptMap/Store.fs" />
+    <Compile Include="Domain/ConceptMap/ConceptMap.fs" />
     <Compile Include="Cli/Dev.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
