@@ -3,7 +3,6 @@ namespace SilverBrain.Domain.ConceptMap
 open FSharpPlus
 open System.Data
 
-[<AutoOpen>]
 module ConceptMap =
     type ConceptLoadOption =
         | Aliases

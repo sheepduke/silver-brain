@@ -33,8 +33,10 @@ module Dev =
             options.GetResult(Data_Directory, sprintf "%s/.silver-brain.dev" userHomeDirectory)
 
         match options.TryGetResult(Project_Root) with
-        | Some projectRoot -> Store.TestData.setupFromLocalFile projectRoot dataDirectory
-        | None -> Store.TestData.setupFromEmbeddedResource dataDirectory
+        | Some projectRoot ->
+            Store.TestData.setupFromLocalFile projectRoot dataDirectory
+            |> Async.RunSynchronously
+        | None -> Store.TestData.setupFromEmbeddedResource dataDirectory |> Async.RunSynchronously
 
     let private runServer () : unit = ()
 

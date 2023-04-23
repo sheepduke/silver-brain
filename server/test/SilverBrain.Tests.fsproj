@@ -6,7 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Test.fs" />
+    <Compile Include="TestUtil.fs" />
+    <Compile Include="ConceptMap/GetConcept.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../src/SilverBrain.fsproj" />
   </ItemGroup>
 
   <Import Project="..\.paket\Paket.Restore.targets" />
