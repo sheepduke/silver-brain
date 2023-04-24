@@ -1,22 +1,23 @@
 namespace SilverBrain.Domain.ConceptMap
 
 open FSharpPlus
-open System.Data
+open SilverBrain.Domain
+
+type GetConceptCallContext =
+    { GetConceptBase: Uuid -> Async<Option<Concept>>
+      GetConceptAliases: Option<Uuid -> Async<seq<string>>>
+      GetConceptAttachments: Option<Uuid -> Async<seq<ConceptAttachment>>> }
+
+    static member create getConceptBase =
+        { GetConceptBase = getConceptBase
+          GetConceptAliases = None
+          GetConceptAttachments = None }
 
 module ConceptMap =
-    type ConceptLoadOption =
-        | Aliases
-        | Attachments
-        | Times
-
-    type T = { Store: Store.T }
-
-    let create (conn: IDbConnection) = { Store = Store.create conn }
-
-    let getConcept (t: T) (options: ConceptLoadOption list) uuid : Async<Option<Concept>> =
+    let getConcept (context: GetConceptCallContext) uuid shouldLoadTimes : Async<Option<Concept>> =
         async {
             // Set basic information.
-            let! conceptOpt = Store.getConcept t.Store uuid (List.contains Times options)
+            let! conceptOpt = context.GetConceptBase uuid
 
             match conceptOpt with
             | None -> return None
@@ -24,20 +25,29 @@ module ConceptMap =
                 let mutable concept = conceptResult
 
                 // Optionally set aliases.
-                if List.contains Aliases options then
-                    let! aliases = Store.getConceptAliases t.Store uuid
+                if context.GetConceptAliases.IsSome then
+                    let! aliases = context.GetConceptAliases.Value uuid
 
                     concept <-
                         { concept with
                             Aliases = Some <| Seq.toList aliases }
 
                 // Optionally set attachments.
-                if List.contains Attachments options then
-                    let! attachments = Store.getConceptAttachments t.Store uuid
+                if context.GetConceptAttachments.IsSome then
+                    let! attachments = context.GetConceptAttachments.Value uuid
 
                     concept <-
                         { concept with
                             Attachments = Some <| Seq.toList attachments }
+
+                // Optionally set times to None.
+                if not shouldLoadTimes then
+                    concept <-
+                        { concept with
+                            CreatedAt = None
+                            UpdatedAt = None }
+                else
+                    ()
 
                 return Some concept
         }

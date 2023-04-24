@@ -7,26 +7,26 @@ open SilverBrain.Domain
 open SilverBrain.Domain.ConceptMap
 
 module ``ConceptMap - getConcept`` =
-    //     let withTestContext uuid fn =
-    //         TestSqliteContext.withTempDatabase (fun context ->
-    //                                             let conn = createDbConnection context.DatabaseFilePath
-    //                                             let conceptMap = ConceptMap.create conn
-    //                                             async {
-    // let! conceptOpt = ConceptMap.getConcept conceptMap
-    // })
+    let callContext conn =
+        { GetConceptBase = Store.getConcept conn
+          GetConceptAliases = Some <| Store.getConceptAliases conn
+          GetConceptAttachments = Some <| Store.getConceptAttachments conn }
 
     [<Test>]
     let ``Basic info only`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let conceptMap = ConceptMap.create conn
+            let callContext = GetConceptCallContext.create (Store.getConcept conn)
 
             async {
-                let! conceptOpt = ConceptMap.getConcept conceptMap [] (Uuid "0002")
+
+                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0002") false
 
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
+                concept.Uuid |> should equal (Uuid "0002")
+                concept.Name |> should equal "Emacs"
                 concept.Aliases.IsNone |> should be True
                 concept.Attachments.IsNone |> should be True
                 concept.CreatedAt.IsNone |> should be True
@@ -34,14 +34,20 @@ module ``ConceptMap - getConcept`` =
             })
 
     [<Test>]
-    let ``With aliases`` () =
+    let ``With times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let conceptMap = ConceptMap.create conn
+            let callContext = GetConceptCallContext.create (Store.getConcept conn)
 
             async {
-                let! conceptOpt =
-                    ConceptMap.getConcept conceptMap [ ConceptMap.ConceptLoadOption.Aliases ] (Uuid "0003")
+                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0003") true
 
                 conceptOpt.IsSome |> should be True
+                let concept = conceptOpt.Value
+                concept.Uuid |> should equal (Uuid "0003")
+                concept.Name |> should equal "Vim"
+                concept.Aliases.IsNone |> should be True
+                concept.Attachments.IsNone |> should be True
+                concept.CreatedAt.IsSome |> should be True
+                concept.UpdatedAt.IsSome |> should be True
             })
