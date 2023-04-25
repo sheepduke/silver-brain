@@ -46,7 +46,7 @@ module Store =
                       ContentLength = dao.ContentLength })
         }
 
-    let getConcept (conn: IDbConnection) (Uuid uuidString as uuid) : Async<Option<Concept>> =
+    let getBaseConcept (conn: IDbConnection) (Uuid uuidString as uuid) : Async<Option<Concept>> =
         async {
             let! result =
                 select {

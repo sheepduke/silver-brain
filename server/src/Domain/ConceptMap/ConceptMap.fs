@@ -14,7 +14,7 @@ type GetConceptCallContext =
           GetConceptAttachments = None }
 
     static member createDefault conn shouldGetAliases shouldGetAttachments =
-        { GetConceptBase = Store.getConcept conn
+        { GetConceptBase = Store.getBaseConcept conn
           GetConceptAliases =
             if shouldGetAliases then
                 Some(Store.getConceptAliases conn)
