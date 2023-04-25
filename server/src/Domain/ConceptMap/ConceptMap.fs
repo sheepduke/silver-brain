@@ -13,6 +13,19 @@ type GetConceptCallContext =
           GetConceptAliases = None
           GetConceptAttachments = None }
 
+    static member createDefault conn shouldGetAliases shouldGetAttachments =
+        { GetConceptBase = Store.getConcept conn
+          GetConceptAliases =
+            if shouldGetAliases then
+                Some(Store.getConceptAliases conn)
+            else
+                None
+          GetConceptAttachments =
+            if shouldGetAttachments then
+                Some(Store.getConceptAttachments conn)
+            else
+                None }
+
 module ConceptMap =
     let getConcept (context: GetConceptCallContext) uuid shouldLoadTimes : Async<Option<Concept>> =
         async {
