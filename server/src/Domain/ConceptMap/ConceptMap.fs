@@ -8,6 +8,11 @@ type IGetConceptDeps =
     abstract GetConceptAliases: Uuid -> Async<seq<string>>
     abstract GetConceptAttachments: Uuid -> Async<seq<ConceptAttachment>>
 
+type IGetConceptLinksDeps =
+    inherit IGetConceptDeps
+
+    abstract GetConceptLinks: Uuid -> Async<seq<ConceptLink>>
+
 type GetConceptOptions =
     { LoadAliases: bool
       LoadAttachments: bool
@@ -21,6 +26,20 @@ module ConceptMap =
 
             member _.GetConceptAliases uuid = Store.getConceptAliases conn uuid
             member _.GetConceptAttachments uuid = Store.getConceptAttachments conn uuid }
+
+    let defaultGetConcetpLinksDeps conn =
+        let getConceptDeps = defaultGetConceptDeps conn
+
+        { new IGetConceptLinksDeps with
+            member _.GetConceptLinks uuid = Store.getConceptLinks conn uuid
+          interface IGetConceptDeps with
+              member _.GetConceptBase uuid loadTimes =
+                  getConceptDeps.GetConceptBase uuid loadTimes
+
+              member _.GetConceptAliases uuid = getConceptDeps.GetConceptAliases uuid
+
+              member _.GetConceptAttachments uuid =
+                  getConceptDeps.GetConceptAttachments uuid }
 
     let getConcept (deps: IGetConceptDeps) (options: GetConceptOptions) (uuid: Uuid) : Async<Option<Concept>> =
         async {
