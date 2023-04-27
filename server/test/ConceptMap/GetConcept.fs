@@ -11,10 +11,15 @@ module ``ConceptMap - getConcept`` =
     let ``Basic info only`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let callContext = GetConceptCallContext.createDefault conn false false
+            let deps = ConceptMap.defaultGetConceptDeps conn
+
+            let options =
+                { LoadAliases = false
+                  LoadAttachments = false
+                  LoadTimes = false }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0002") false
+                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0002")
 
                 conceptOpt.IsSome |> should be True
 
@@ -31,10 +36,15 @@ module ``ConceptMap - getConcept`` =
     let ``With times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let callContext = GetConceptCallContext.createDefault conn false false
+            let deps = ConceptMap.defaultGetConceptDeps conn
+
+            let options =
+                { LoadAliases = false
+                  LoadAttachments = false
+                  LoadTimes = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0003") true
+                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0003")
 
                 conceptOpt.IsSome |> should be True
                 let concept = conceptOpt.Value
@@ -50,10 +60,15 @@ module ``ConceptMap - getConcept`` =
     let ``With aliases`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let callContext = GetConceptCallContext.createDefault conn true false
+            let deps = ConceptMap.defaultGetConceptDeps conn
+
+            let options =
+                { LoadAliases = true
+                  LoadAttachments = false
+                  LoadTimes = false }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0002") false
+                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0002")
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
@@ -70,10 +85,15 @@ module ``ConceptMap - getConcept`` =
     let ``With attachments`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let callContext = GetConceptCallContext.createDefault conn false true
+            let deps = ConceptMap.defaultGetConceptDeps conn
+
+            let options =
+                { LoadAliases = false
+                  LoadAttachments = true
+                  LoadTimes = false }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0003") false
+                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0003")
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
@@ -90,10 +110,15 @@ module ``ConceptMap - getConcept`` =
     let ``With all`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let conn = createDbConnection context.DatabaseFilePath
-            let callContext = GetConceptCallContext.createDefault conn true true
+            let deps = ConceptMap.defaultGetConceptDeps conn
+
+            let options =
+                { LoadAliases = true
+                  LoadAttachments = true
+                  LoadTimes = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept callContext (Uuid "0010") true
+                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0010")
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value

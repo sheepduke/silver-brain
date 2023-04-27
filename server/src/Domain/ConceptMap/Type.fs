@@ -25,3 +25,13 @@ type Concept =
           Attachments = None
           CreatedAt = None
           UpdatedAt = None }
+
+type ConceptLink =
+    { Id: Id
+      SourceUuid: Uuid
+      RelationUuid: Uuid
+      TargetUuid: Uuid }
+
+type ConceptLinks =
+    { Concepts: Map<Uuid, Concept>
+      Links: ConceptLink list }

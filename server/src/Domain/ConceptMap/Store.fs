@@ -46,7 +46,7 @@ module Store =
                       ContentLength = dao.ContentLength })
         }
 
-    let getBaseConcept (conn: IDbConnection) (Uuid uuidString as uuid) : Async<Option<Concept>> =
+    let getConceptBase (conn: IDbConnection) (Uuid uuidString as uuid) (loadTimes: bool) : Async<Option<Concept>> =
         async {
             let! result =
                 select {
@@ -60,10 +60,52 @@ module Store =
                 return None
             else
                 let dao = Seq.head result
+                let concept = Concept.create uuid dao.Name
 
                 return
                     Some
-                    <| { Concept.create uuid dao.Name with
-                           CreatedAt = Some dao.CreatedAt
-                           UpdatedAt = Some dao.UpdatedAt }
+                    <| if loadTimes then
+                           { concept with
+                               CreatedAt = Some dao.CreatedAt
+                               UpdatedAt = Some dao.UpdatedAt }
+                       else
+                           concept
+
         }
+
+    let getConceptLink (conn: IDbConnection) (Uuid uuidString as conceptUuid) : Async<List<ConceptLink>> =
+        async {
+            let! result =
+                select {
+                    for link in Table.conceptLink do
+                        where (link.SourceUuid = uuidString || link.TargetUuid = uuidString)
+                }
+                |> conn.SelectAsync<Dao.ConceptLink>
+                |> Async.AwaitTask
+
+            return
+                (result
+                 |> Seq.toList
+                 |> List.map (fun (dao: Dao.ConceptLink) ->
+                     { Id = Id dao.Id
+                       SourceUuid = Uuid dao.SourceUuid
+                       RelationUuid = Uuid dao.RelationUuid
+                       TargetUuid = Uuid dao.TargetUuid }))
+        }
+
+// let getConceptLink (Uuid uuidString as uuid): Async<Option<ConceptLinks>> =
+//     let mutable conceptCache = Map.empty
+
+//     let getCachedConcept uuidString =
+//         match Map.tryFind uuidString conceptCache with
+//             | None -> getBaseConcept
+
+//     async {
+//         let! result = select {
+//             for link in Table.conceptLink do
+//                 where (link.SourceUuid = uuidString || link.TargetUuid = uuidString)
+//             } |> conn.SelectAsync<Dao.ConceptLink>
+
+
+
+//     }
