@@ -11,7 +11,7 @@ type IGetConceptDeps =
 type IGetConceptLinksDeps =
     inherit IGetConceptDeps
 
-    abstract GetConceptLinks: Uuid -> Async<seq<ConceptLink>>
+    abstract GetConceptLinks: Uuid -> uint -> Async<seq<ConceptLink>>
 
 type GetConceptOptions =
     { LoadAliases: bool
@@ -31,7 +31,7 @@ module ConceptMap =
         let getConceptDeps = defaultGetConceptDeps conn
 
         { new IGetConceptLinksDeps with
-            member _.GetConceptLinks uuid = Store.getConceptLinks conn uuid
+            member _.GetConceptLinks uuid level = Store.getConceptLinks conn uuid level
           interface IGetConceptDeps with
               member _.GetConceptBase uuid loadTimes =
                   getConceptDeps.GetConceptBase uuid loadTimes
@@ -68,4 +68,11 @@ module ConceptMap =
                             Attachments = Some <| Seq.toList attachments }
 
                 return Some concept
+        }
+
+    let getConceptLinks (deps: IGetConceptLinksDeps) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
+        async {
+            let! links = deps.GetConceptLinks uuid level
+
+            return links
         }

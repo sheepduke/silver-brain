@@ -1,6 +1,7 @@
 namespace SilverBrain.Domain.ConceptMap
 
 open System.Data
+open FSharpPlus
 open Dapper.FSharp.SQLite
 open SilverBrain.Store
 open SilverBrain.Domain
@@ -73,24 +74,48 @@ module Store =
 
         }
 
-    let getConceptLinks (conn: IDbConnection) (Uuid uuidString) : Async<seq<ConceptLink>> =
+    let getConceptLinks (conn: IDbConnection) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
+        let getLevelOneLinks (Uuid uuidString) =
+            async {
+                let! result =
+                    select {
+                        for link in Table.conceptLink do
+                            where (link.SourceUuid = uuidString || link.TargetUuid = uuidString)
+                    }
+                    |> conn.SelectAsync<Dao.ConceptLink>
+                    |> Async.AwaitTask
+
+                let links =
+                    Seq.map
+                        (fun (dao: Dao.ConceptLink) ->
+                            { Id = Id dao.Id
+                              SourceUuid = Uuid dao.SourceUuid
+                              RelationUuid = Uuid dao.RelationUuid
+                              TargetUuid = Uuid dao.TargetUuid })
+                        result
+
+                return (Seq.toList links)
+            }
+
+        let extractUuidsFromLink link = [ link.SourceUuid; link.TargetUuid ]
+
+        let mutable processedUuids = Set.empty
+        let mutable nextUuids = Set.singleton uuid
+        let mutable allLinks = List.empty
+
         async {
-            let! result =
-                select {
-                    for link in Table.conceptLink do
-                        where (link.SourceUuid = uuidString || link.TargetUuid = uuidString)
-                }
-                |> conn.SelectAsync<Dao.ConceptLink>
-                |> Async.AwaitTask
+            for _ in 1u .. level do
+                for uuid in nextUuids do
+                    let! links = getLevelOneLinks uuid
 
-            let links =
-                Seq.map
-                    (fun (dao: Dao.ConceptLink) ->
-                        { Id = Id dao.Id
-                          SourceUuid = Uuid dao.SourceUuid
-                          RelationUuid = Uuid dao.RelationUuid
-                          TargetUuid = Uuid dao.TargetUuid })
-                    result
+                    nextUuids <-
+                        links
+                        |> map extractUuidsFromLink
+                        |> List.concat
+                        |> Set.ofList
+                        |> Set.difference processedUuids
 
-            return links
+                    allLinks <- links @ allLinks
+
+            return allLinks
         }
