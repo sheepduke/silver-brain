@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="TestUtil.fs" />
     <Compile Include="ConceptMap/GetConcept.fs" />
+    <Compile Include="ConceptMap/GetConceptLinks.fs" />
   </ItemGroup>
 
   <ItemGroup>
