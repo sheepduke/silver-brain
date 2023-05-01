@@ -3,18 +3,18 @@ namespace SilverBrain.Domain.ConceptMap
 open System
 open SilverBrain.Domain
 
-type ConceptAttachment =
+type Attachment =
     { Id: Id
-      ConceptUuid: Uuid
       Name: string
       ContentType: string
-      ContentLength: uint }
+      ContentLength: uint
+      FilePath: FilePath }
 
 type Concept =
     { Uuid: Uuid
       Name: string
       Aliases: string list option
-      Attachments: ConceptAttachment list option
+      Attachments: Attachment list option
       CreatedAt: DateTime option
       UpdatedAt: DateTime option }
 

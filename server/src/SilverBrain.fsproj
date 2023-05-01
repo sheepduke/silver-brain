@@ -21,9 +21,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Store/Scripts/Migration/02.00.00_InitializeV2Schema.sql" />
-    <EmbeddedResource Include="Store/Scripts/TestData/1_Emacs_Introduction.org" />
-    <EmbeddedResource Include="Store/Scripts/TestData/2_Vim_Body.md" />
-    <EmbeddedResource Include="Store/Scripts/TestData/3_Vim_Second.txt" />
+    <EmbeddedResource Include="Store/Scripts/TestData/1_Introduction.org" />
+    <EmbeddedResource Include="Store/Scripts/TestData/2_Body.md" />
+    <EmbeddedResource Include="Store/Scripts/TestData/3_.txt" />
     <EmbeddedResource Include="Store/Scripts/TestData/InitData.sql" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />

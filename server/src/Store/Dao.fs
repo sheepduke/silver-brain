@@ -14,12 +14,18 @@ type ConceptAlias =
       Alias: string }
 
 [<CLIMutable>]
-type ConceptAttachment =
+type Attachment =
     { Id: uint
-      ConceptUuid: string
       Name: string
       ContentType: string
-      ContentLength: uint }
+      ContentLength: uint
+      FilePath: string }
+
+[<CLIMutable>]
+type ConceptAttachment =
+    { AttachmentId: uint
+      ConceptUuid: string }
+
 
 [<CLIMutable>]
 type ConceptRelationPair =

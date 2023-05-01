@@ -6,7 +6,7 @@ open SilverBrain.Domain
 type IGetConceptDeps =
     abstract GetConceptBase: Uuid -> bool -> Async<Option<Concept>>
     abstract GetConceptAliases: Uuid -> Async<seq<string>>
-    abstract GetConceptAttachments: Uuid -> Async<seq<ConceptAttachment>>
+    abstract GetConceptAttachments: Uuid -> Async<seq<Attachment>>
 
 type IGetConceptLinksDeps =
     inherit IGetConceptDeps

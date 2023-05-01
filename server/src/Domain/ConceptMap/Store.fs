@@ -10,6 +10,7 @@ module Store =
     module private Table =
         let concept = table<Dao.Concept>
         let conceptAlias = table<Dao.ConceptAlias>
+        let attachment = table<Dao.Attachment>
         let conceptAttachment = table<Dao.ConceptAttachment>
         let conceptRelationPair = table<Dao.ConceptRelationPair>
         let conceptLink = table<Dao.ConceptLink>
@@ -27,24 +28,28 @@ module Store =
             return Seq.map (fun (dao: Dao.ConceptAlias) -> dao.Alias) result
         }
 
-    let getConceptAttachments (conn: IDbConnection) (Uuid uuid) : Async<seq<ConceptAttachment>> =
+    let getConceptAttachments (conn: IDbConnection) (Uuid uuid) : Async<seq<Attachment>> =
         async {
             let! result =
                 select {
-                    for attachment in Table.conceptAttachment do
-                        where (attachment.ConceptUuid = uuid)
+                    for attachment in Table.attachment do
+                        innerJoin conceptAttachment in Table.conceptAttachment
+                                                           on
+                                                           (attachment.Id = conceptAttachment.AttachmentId)
+
+                        where (conceptAttachment.ConceptUuid = uuid)
                 }
-                |> conn.SelectAsync<Dao.ConceptAttachment>
+                |> conn.SelectAsync<Dao.Attachment>
                 |> Async.AwaitTask
 
             return
                 result
-                |> Seq.map (fun (dao: Dao.ConceptAttachment) ->
+                |> Seq.map (fun (dao: Dao.Attachment) ->
                     { Id = Id dao.Id
-                      ConceptUuid = Uuid dao.ConceptUuid
                       Name = dao.Name
                       ContentType = dao.ContentType
-                      ContentLength = dao.ContentLength })
+                      ContentLength = dao.ContentLength
+                      FilePath = FilePath dao.FilePath })
         }
 
     let getConceptBase (conn: IDbConnection) (Uuid uuidString as uuid) (loadTimes: bool) : Async<Option<Concept>> =
@@ -117,9 +122,6 @@ module Store =
                         |> (flip Set.difference) processedUuids
 
                     allLinks <- Set.union (Set.ofList links) allLinks
-
-                    printfn "Processed: %A" processedUuids
-                    printfn "Next: %A" nextUuids
 
             return allLinks
         }
