@@ -23,7 +23,7 @@ module Migration =
         member this.WithOptionalConsoleLogger shouldLogToConsole =
             match shouldLogToConsole with
             | true -> this.LogToConsole()
-            | false -> this
+            | false -> this.LogToNowhere()
 
     let run sqlLoadPolicy shouldLogToConsole databasePaths =
         for databasePath in databasePaths do

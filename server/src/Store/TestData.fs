@@ -18,8 +18,11 @@ module TestData =
         let conn = new SqliteConnection($"Data Source={databasePath}")
 
         async {
-            Migration.run migrationSqlLoadPolicy true [ Path.Combine(databasePath) ]
-            conn.ExecuteAsync(new CommandDefinition(initDataSql)) |> Async.AwaitTask |> ignore
+            Migration.run migrationSqlLoadPolicy false [ Path.Combine(databasePath) ]
+
+            conn.ExecuteAsync(new CommandDefinition(initDataSql))
+            |> Async.AwaitTask
+            |> ignore
         }
 
     let setupFromEmbeddedResource rootDataFolder =
@@ -32,9 +35,7 @@ module TestData =
         initDataSqlStream.CopyTo(memoryStream)
         let initDataSql = Encoding.UTF8.GetString(memoryStream.ToArray())
 
-        async {
-            do! internalSetup Migration.LoadSqlFromEmbeddedResource initDataSql rootDataFolder
-        }
+        async { do! internalSetup Migration.LoadSqlFromEmbeddedResource initDataSql rootDataFolder }
 
 
     let setupFromLocalFile projectRoot rootDataFolder =
@@ -47,6 +48,4 @@ module TestData =
         let dataSqlPath = Path.Combine(testDataRoot, "InitData.sql")
         let initDataSql = File.ReadAllText(dataSqlPath)
 
-        async {
-            do! internalSetup (Migration.LoadSqlFromLocalDirectory migrationSqlRoot) initDataSql rootDataFolder
-        }
+        async { do! internalSetup (Migration.LoadSqlFromLocalDirectory migrationSqlRoot) initDataSql rootDataFolder }

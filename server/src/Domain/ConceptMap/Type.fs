@@ -32,6 +32,8 @@ type ConceptLink =
       RelationUuid: Uuid
       TargetUuid: Uuid }
 
-type ConceptLinks =
-    { Concepts: Map<Uuid, Concept>
-      Links: ConceptLink list }
+    static member create id source relation target =
+        { Id = Id id
+          SourceUuid = Uuid source
+          RelationUuid = Uuid relation
+          TargetUuid = Uuid target }
