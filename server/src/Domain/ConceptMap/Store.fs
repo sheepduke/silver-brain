@@ -101,21 +101,25 @@ module Store =
 
         let mutable processedUuids = Set.empty
         let mutable nextUuids = Set.singleton uuid
-        let mutable allLinks = List.empty
+        let mutable allLinks = Set.empty
 
         async {
             for _ in 1u .. level do
                 for uuid in nextUuids do
                     let! links = getLevelOneLinks uuid
+                    processedUuids <- Set.add uuid processedUuids
 
                     nextUuids <-
                         links
                         |> map extractUuidsFromLink
                         |> List.concat
                         |> Set.ofList
-                        |> Set.difference processedUuids
+                        |> (flip Set.difference) processedUuids
 
-                    allLinks <- links @ allLinks
+                    allLinks <- Set.union (Set.ofList links) allLinks
+
+                    printfn "Processed: %A" processedUuids
+                    printfn "Next: %A" nextUuids
 
             return allLinks
         }
