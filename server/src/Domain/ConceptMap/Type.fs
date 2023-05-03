@@ -15,7 +15,6 @@ type Concept =
     { Uuid: Uuid
       Name: string
       Aliases: string list option
-      Attachments: Attachment list option
       CreatedAt: DateTime option
       UpdatedAt: DateTime option }
 
@@ -23,7 +22,6 @@ type Concept =
         { Uuid = uuid
           Name = name
           Aliases = None
-          Attachments = None
           CreatedAt = None
           UpdatedAt = None }
 
