@@ -1,50 +1,140 @@
 namespace SilverBrain.Domain.ConceptMap
 
 open FSharpPlus
+open System.Data
+open Dapper.FSharp.SQLite
+open SilverBrain.Core
+open SilverBrain.Store
 open SilverBrain.Domain
-
-type IGetConceptDeps =
-    abstract GetConceptBase: Uuid -> bool -> Async<Option<Concept>>
-    abstract GetConceptAliases: Uuid -> Async<seq<string>>
-    abstract GetConceptAttachments: Uuid -> Async<seq<Attachment>>
-
-type IGetConceptLinksDeps =
-    inherit IGetConceptDeps
-
-    abstract GetConceptLinks: Uuid -> uint -> Async<seq<ConceptLink>>
 
 type GetConceptOptions =
     { LoadAliases: bool
       LoadAttachments: bool
       LoadTimes: bool }
 
+type RequestContext =
+    { RootDataDirectory: FilePath
+      DatabaseName: DatabaseName }
+
 module ConceptMap =
-    let defaultGetConceptDeps conn =
-        { new IGetConceptDeps with
-            member _.GetConceptBase uuid loadTimes =
-                Store.getConceptBase conn uuid loadTimes
+    module private Internal =
+        let getConceptAliases (conn: IDbConnection) (Uuid uuid) : Async<seq<string>> =
+            async {
+                let! result =
+                    select {
+                        for alias in Table.conceptAlias do
+                            where (alias.ConceptUuid = uuid)
+                    }
+                    |> conn.SelectAsync<Dao.ConceptAlias>
+                    |> Async.AwaitTask
 
-            member _.GetConceptAliases uuid = Store.getConceptAliases conn uuid
-            member _.GetConceptAttachments uuid = Store.getConceptAttachments conn uuid }
+                return Seq.map (fun (dao: Dao.ConceptAlias) -> dao.Alias) result
+            }
 
-    let defaultGetConcetpLinksDeps conn =
-        let getConceptDeps = defaultGetConceptDeps conn
+        let getConceptAttachments (conn: IDbConnection) (Uuid uuid) : Async<seq<Attachment>> =
+            async {
+                let! result =
+                    select {
+                        for attachment in Table.attachment do
+                            innerJoin cm in Table.conceptAttachment on (attachment.Id = cm.AttachmentId)
+                            where (cm.ConceptUuid = uuid)
+                    }
+                    |> conn.SelectAsync<Dao.Attachment>
+                    |> Async.AwaitTask
 
-        { new IGetConceptLinksDeps with
-            member _.GetConceptLinks uuid level = Store.getConceptLinks conn uuid level
-          interface IGetConceptDeps with
-              member _.GetConceptBase uuid loadTimes =
-                  getConceptDeps.GetConceptBase uuid loadTimes
+                return
+                    result
+                    |> Seq.map (fun (dao: Dao.Attachment) ->
+                        { Id = Id dao.Id
+                          Name = dao.Name
+                          ContentType = dao.ContentType
+                          ContentLength = dao.ContentLength
+                          FilePath = FilePath dao.FilePath })
+            }
 
-              member _.GetConceptAliases uuid = getConceptDeps.GetConceptAliases uuid
+        let getConceptBase (conn: IDbConnection) (Uuid uuidString as uuid) (loadTimes: bool) : Async<Option<Concept>> =
+            async {
+                let! result =
+                    select {
+                        for concept in Table.concept do
+                            where (concept.Uuid = uuidString)
+                    }
+                    |> conn.SelectAsync<Dao.Concept>
+                    |> Async.AwaitTask
 
-              member _.GetConceptAttachments uuid =
-                  getConceptDeps.GetConceptAttachments uuid }
+                if Seq.length result < 1 then
+                    return None
+                else
+                    let dao = Seq.head result
+                    let concept = Concept.create uuid dao.Name
 
-    let getConcept (deps: IGetConceptDeps) (options: GetConceptOptions) (uuid: Uuid) : Async<Option<Concept>> =
+                    return
+                        Some
+                        <| if loadTimes then
+                               { concept with
+                                   CreatedAt = Some dao.CreatedAt
+                                   UpdatedAt = Some dao.UpdatedAt }
+                           else
+                               concept
+
+            }
+
+        let getConceptLinks (conn: IDbConnection) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
+            let getLevelOneLinks (Uuid uuidString) =
+                async {
+                    let! result =
+                        select {
+                            for link in Table.conceptLink do
+                                where (link.SourceUuid = uuidString || link.TargetUuid = uuidString)
+                        }
+                        |> conn.SelectAsync<Dao.ConceptLink>
+                        |> Async.AwaitTask
+
+                    let links =
+                        Seq.map
+                            (fun (dao: Dao.ConceptLink) ->
+                                { Id = Id dao.Id
+                                  SourceUuid = Uuid dao.SourceUuid
+                                  RelationUuid = Uuid dao.RelationUuid
+                                  TargetUuid = Uuid dao.TargetUuid })
+                            result
+
+                    return (Seq.toList links)
+                }
+
+            let extractUuidsFromLink link = [ link.SourceUuid; link.TargetUuid ]
+
+            let mutable processedUuids = Set.empty
+            let mutable nextUuids = Set.singleton uuid
+            let mutable allLinks = Set.empty
+
+            async {
+                for _ in 1u .. level do
+                    for uuid in nextUuids do
+                        let! links = getLevelOneLinks uuid
+                        processedUuids <- Set.add uuid processedUuids
+
+                        nextUuids <-
+                            links
+                            |> map extractUuidsFromLink
+                            |> List.concat
+                            |> Set.ofList
+                            |> (flip Set.difference) processedUuids
+
+                        allLinks <- Set.union (Set.ofList links) allLinks
+
+                return allLinks
+            }
+
+    // ----------------------------------------------------------------------
+    //  End of Internal
+    // ----------------------------------------------------------------------
+
+    let getConcept (context: RequestContext) (options: GetConceptOptions) (uuid: Uuid) : Async<Option<Concept>> =
         async {
             // Set basic information.
-            let! conceptOpt = deps.GetConceptBase uuid options.LoadTimes
+            use conn = Store.createConnection context.RootDataDirectory context.DatabaseName
+            let! conceptOpt = Internal.getConceptBase conn uuid options.LoadTimes
 
             match conceptOpt with
             | None -> return None
@@ -53,7 +143,7 @@ module ConceptMap =
 
                 // Optionally set aliases.
                 if options.LoadAliases then
-                    let! aliases = deps.GetConceptAliases uuid
+                    let! aliases = Internal.getConceptAliases conn uuid
 
                     concept <-
                         { concept with
@@ -61,7 +151,7 @@ module ConceptMap =
 
                 // Optionally set attachments.
                 if options.LoadAttachments then
-                    let! attachments = deps.GetConceptAttachments uuid
+                    let! attachments = Internal.getConceptAttachments conn uuid
 
                     concept <-
                         { concept with
@@ -70,9 +160,10 @@ module ConceptMap =
                 return Some concept
         }
 
-    let getConceptLinks (deps: IGetConceptLinksDeps) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
+    let getConceptLinks (context: RequestContext) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
         async {
-            let! links = deps.GetConceptLinks uuid level
+            use conn = Store.createConnection context.RootDataDirectory context.DatabaseName
+            let! links = Internal.getConceptLinks conn uuid level
 
             return links
         }

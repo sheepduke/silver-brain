@@ -4,22 +4,26 @@ open NUnit.Framework
 open FsUnit
 
 open SilverBrain.Domain
+open SilverBrain.Store
 open SilverBrain.Domain.ConceptMap
 
-module ``ConceptMap - getConcept`` =
-    [<Test>]
-    let ``Basic info only`` () =
-        TestSqliteContext.withTempDatabase (fun context ->
-            let conn = createDbConnection context.DatabaseFilePath
-            let deps = ConceptMap.defaultGetConceptDeps conn
+module ``ConceptMap`` =
+    type TestSqliteContext.T with
 
+        member this.ToRequestContext =
+            { RootDataDirectory = this.RootDataDirectory
+              DatabaseName = this.DatabaseName }
+
+    [<Test>]
+    let ``getConcept - Basic info only`` () =
+        TestSqliteContext.withTempDatabase (fun context ->
             let options =
                 { LoadAliases = false
                   LoadAttachments = false
                   LoadTimes = false }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0002")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0002")
 
                 conceptOpt.IsSome |> should be True
 
@@ -33,18 +37,15 @@ module ``ConceptMap - getConcept`` =
             })
 
     [<Test>]
-    let ``With times`` () =
+    let ``getConcept - With times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let conn = createDbConnection context.DatabaseFilePath
-            let deps = ConceptMap.defaultGetConceptDeps conn
-
             let options =
                 { LoadAliases = false
                   LoadAttachments = false
                   LoadTimes = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0003")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0003")
 
                 conceptOpt.IsSome |> should be True
                 let concept = conceptOpt.Value
@@ -57,18 +58,15 @@ module ``ConceptMap - getConcept`` =
             })
 
     [<Test>]
-    let ``With aliases`` () =
+    let ``getConcept - With aliases`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let conn = createDbConnection context.DatabaseFilePath
-            let deps = ConceptMap.defaultGetConceptDeps conn
-
             let options =
                 { LoadAliases = true
                   LoadAttachments = false
                   LoadTimes = false }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0002")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0002")
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
@@ -82,18 +80,15 @@ module ``ConceptMap - getConcept`` =
             })
 
     [<Test>]
-    let ``With attachments`` () =
+    let ``getConcept - With attachments`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let conn = createDbConnection context.DatabaseFilePath
-            let deps = ConceptMap.defaultGetConceptDeps conn
-
             let options =
                 { LoadAliases = false
                   LoadAttachments = true
                   LoadTimes = false }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0003")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0003")
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
@@ -107,18 +102,15 @@ module ``ConceptMap - getConcept`` =
             })
 
     [<Test>]
-    let ``With all`` () =
+    let ``getConcept - With all`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let conn = createDbConnection context.DatabaseFilePath
-            let deps = ConceptMap.defaultGetConceptDeps conn
-
             let options =
                 { LoadAliases = true
                   LoadAttachments = true
                   LoadTimes = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept deps options (Uuid "0010")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0010")
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
@@ -131,4 +123,32 @@ module ``ConceptMap - getConcept`` =
                 concept.Attachments.Value |> should haveLength 0
                 concept.CreatedAt.IsSome |> should be True
                 concept.UpdatedAt.IsSome |> should be True
+            })
+
+    [<Test>]
+    let ``getCoceptLinks - Level 1`` () =
+        TestSqliteContext.withTempDatabase (fun context ->
+            async {
+                let! links = ConceptMap.getConceptLinks context.ToRequestContext (Uuid "0002") 1u
+
+                let expected =
+                    [ ConceptLink.create 1u "0002" "1001" "0001"
+                      ConceptLink.create 3u "0002" "1003" "0003" ]
+
+                links |> should equivalent expected
+            })
+
+    [<Test>]
+    let ``getConceptLinks - Level 2`` () =
+        TestSqliteContext.withTempDatabase (fun context ->
+            async {
+                let! links = ConceptMap.getConceptLinks context.ToRequestContext (Uuid "0001") 2u
+
+                let expected =
+                    [ ConceptLink.create 1u "0002" "1001" "0001"
+                      ConceptLink.create 2u "0001" "1002" "0003"
+                      ConceptLink.create 3u "0002" "1003" "0003"
+                      ConceptLink.create 6u "0003" "1004" "0012" ]
+
+                links |> should equivalent expected
             })

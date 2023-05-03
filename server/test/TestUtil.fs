@@ -3,39 +3,34 @@ namespace SilverBrain.Test
 open FsUnit
 open System
 open System.IO
-open Microsoft.Data.Sqlite
 
-open SilverBrain
-open SilverBrain.Domain.ConceptMap
+open SilverBrain.Core
+open SilverBrain.Store
 
 type InitMsgUtils() =
     inherit FSharpCustomMessageFormatter()
 
-[<AutoOpen>]
-module TestUtil =
-    let createDbConnection filePath =
-        let connString = sprintf "Data Source=%s" filePath
-        new SqliteConnection(connString)
-
-
 module TestSqliteContext =
     type T =
-        { RootDataDir: string
-          DatabaseFilePath: string }
+        { RootDataDirectory: FilePath
+          DatabaseName: DatabaseName }
 
     let withTempDatabase asyncFun =
-        let rootDataDir =
-            Path.Join [| Path.GetTempPath(); "SilverBrain.Tests"; Guid.NewGuid().ToString() |]
+        let rootDataDirectory =
+            FilePath
+            <| Path.Join [| Path.GetTempPath(); "SilverBrain.Tests"; Guid.NewGuid().ToString() |]
+
+        let databaseName = DatabaseName "silver-brain.sqlite"
 
         async {
             try
-                do! Store.TestData.setupFromEmbeddedResource rootDataDir
+                do! TestData.setupFromEmbeddedResource rootDataDirectory
 
                 do!
                     asyncFun
-                        { RootDataDir = rootDataDir
-                          DatabaseFilePath = Path.Join [| rootDataDir; "silver-brain.sqlite" |] }
+                        { RootDataDirectory = rootDataDirectory
+                          DatabaseName = databaseName }
             finally
-                Directory.Delete(rootDataDir, true)
+                Directory.Delete(rootDataDirectory.Value, true)
         }
         |> Async.StartAsTask
