@@ -4,17 +4,12 @@ open System
 open SilverBrain.Core
 open SilverBrain.Domain
 
-type Attachment =
-    { Id: Id
-      Name: string
-      ContentType: string
-      ContentLength: uint
-      FilePath: FilePath }
+type ConceptAlias = { Id: Id; Alias: string }
 
 type Concept =
     { Uuid: Uuid
       Name: string
-      Aliases: string list option
+      Aliases: ConceptAlias list option
       CreatedAt: DateTime option
       UpdatedAt: DateTime option }
 
@@ -24,6 +19,13 @@ type Concept =
           Aliases = None
           CreatedAt = None
           UpdatedAt = None }
+
+type Attachment =
+    { Id: Id
+      Name: string
+      ContentType: string
+      ContentLength: uint
+      FilePath: FilePath }
 
 type ConceptLink =
     { Id: Id
