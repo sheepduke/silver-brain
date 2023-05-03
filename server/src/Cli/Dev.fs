@@ -1,7 +1,8 @@
 namespace SilverBrain.Cli
 
 open Argu
-open SilverBrain
+open SilverBrain.Core
+open SilverBrain.Store
 
 #if DEBUG || INTERACTIVE
 
@@ -34,9 +35,9 @@ module Dev =
 
         match options.TryGetResult(Project_Root) with
         | Some projectRoot ->
-            Store.TestData.setupFromLocalFile projectRoot dataDirectory
+            TestData.setupFromLocalFile projectRoot dataDirectory
             |> Async.RunSynchronously
-        | None -> Store.TestData.setupFromEmbeddedResource dataDirectory |> Async.RunSynchronously
+        | None -> TestData.setupFromEmbeddedResource (FilePath dataDirectory) |> Async.RunSynchronously
 
     let private runServer () : unit = ()
 

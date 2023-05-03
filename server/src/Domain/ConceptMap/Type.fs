@@ -1,6 +1,7 @@
 namespace SilverBrain.Domain.ConceptMap
 
 open System
+open SilverBrain.Core
 open SilverBrain.Domain
 
 type Attachment =

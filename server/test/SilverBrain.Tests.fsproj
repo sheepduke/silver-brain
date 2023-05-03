@@ -7,8 +7,7 @@
 
   <ItemGroup>
     <Compile Include="TestUtil.fs" />
-    <Compile Include="ConceptMap/GetConcept.fs" />
-    <Compile Include="ConceptMap/GetConceptLinks.fs" />
+    <Compile Include="ConceptMap.fs" />
   </ItemGroup>
 
   <ItemGroup>

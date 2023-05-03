@@ -6,6 +6,7 @@ open System.Text
 open Microsoft.Data.Sqlite
 open Dapper
 open Dapper.FSharp
+open SilverBrain.Core
 
 module TestData =
     let private internalSetup migrationSqlLoadPolicy initDataSql rootDataFolder =
@@ -25,7 +26,7 @@ module TestData =
             |> ignore
         }
 
-    let setupFromEmbeddedResource rootDataFolder =
+    let setupFromEmbeddedResource (FilePath rootDataFolder) =
         let currentAssembly = Assembly.GetExecutingAssembly()
 
         use initDataSqlStream =
