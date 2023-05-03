@@ -68,6 +68,7 @@ module ``ConceptMap`` =
                 concept.Name |> should equal "Emacs"
                 concept.Aliases.IsSome |> should be True
                 concept.Aliases.Value |> should haveLength 1
+                concept.Aliases.Value.Head.Id |> should equal (Id 1u)
                 concept.CreatedAt.IsNone |> should be True
                 concept.UpdatedAt.IsNone |> should be True
             })
@@ -86,7 +87,7 @@ module ``ConceptMap`` =
                 concept.Name |> should equal "Kubernates"
                 concept.Aliases.IsSome |> should be True
                 concept.Aliases.Value |> should haveLength 1
-                concept.Aliases.Value.Head |> should equal "K8s"
+                concept.Aliases.Value.Head.Alias |> should equal "K8s"
                 concept.CreatedAt.IsSome |> should be True
                 concept.UpdatedAt.IsSome |> should be True
             })

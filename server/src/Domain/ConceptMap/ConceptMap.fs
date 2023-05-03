@@ -15,7 +15,7 @@ type RequestContext =
 
 module ConceptMap =
     module private Internal =
-        let getConceptAliases (conn: IDbConnection) (Uuid uuid) : Async<seq<string>> =
+        let getConceptAliases (conn: IDbConnection) (Uuid uuid) : Async<seq<ConceptAlias>> =
             async {
                 let! result =
                     select {
@@ -25,7 +25,7 @@ module ConceptMap =
                     |> conn.SelectAsync<Dao.ConceptAlias>
                     |> Async.AwaitTask
 
-                return Seq.map (fun (dao: Dao.ConceptAlias) -> dao.Alias) result
+                return Seq.map (fun (dao: Dao.ConceptAlias) -> { Id = Id dao.Id; Alias = dao.Alias }) result
             }
 
         let getConceptAttachments (conn: IDbConnection) (Uuid uuid) : Async<seq<Attachment>> =
