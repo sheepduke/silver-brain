@@ -7,10 +7,7 @@ open SilverBrain.Core
 open SilverBrain.Store
 open SilverBrain.Domain
 
-type GetConceptOptions =
-    { LoadAliases: bool
-      LoadAttachments: bool
-      LoadTimes: bool }
+type GetConceptOptions = { LoadAliases: bool; LoadTimes: bool }
 
 type RequestContext =
     { RootDataDirectory: FilePath
@@ -148,14 +145,6 @@ module ConceptMap =
                     concept <-
                         { concept with
                             Aliases = Some <| Seq.toList aliases }
-
-                // Optionally set attachments.
-                if options.LoadAttachments then
-                    let! attachments = Internal.getConceptAttachments conn uuid
-
-                    concept <-
-                        { concept with
-                            Attachments = Some <| Seq.toList attachments }
 
                 return Some concept
         }
