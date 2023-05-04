@@ -12,6 +12,7 @@ type GetConceptOptions = { LoadAliases: bool; LoadTimes: bool }
 type RequestContext =
     { RootDataDirectory: FilePath
       DatabaseName: DatabaseName }
+    member this.CreateDbConnection = Store.createConnection this.RootDataDirectory this.DatabaseName
 
 module ConceptMap =
     module private Internal =
@@ -26,27 +27,6 @@ module ConceptMap =
                     |> Async.AwaitTask
 
                 return Seq.map (fun (dao: Dao.ConceptAlias) -> { Id = Id dao.Id; Alias = dao.Alias }) result
-            }
-
-        let getConceptAttachments (conn: IDbConnection) (Uuid uuid) : Async<seq<Attachment>> =
-            async {
-                let! result =
-                    select {
-                        for attachment in Table.attachment do
-                            innerJoin cm in Table.conceptAttachment on (attachment.Id = cm.AttachmentId)
-                            where (cm.ConceptUuid = uuid)
-                    }
-                    |> conn.SelectAsync<Dao.Attachment>
-                    |> Async.AwaitTask
-
-                return
-                    result
-                    |> Seq.map (fun (dao: Dao.Attachment) ->
-                        { Id = Id dao.Id
-                          Name = dao.Name
-                          ContentType = dao.ContentType
-                          ContentLength = dao.ContentLength
-                          FilePath = FilePath dao.FilePath })
             }
 
         let getConceptBase (conn: IDbConnection) (Uuid uuidString as uuid) (loadTimes: bool) : Async<Option<Concept>> =
@@ -130,7 +110,7 @@ module ConceptMap =
     let getConcept (context: RequestContext) (options: GetConceptOptions) (uuid: Uuid) : Async<Option<Concept>> =
         async {
             // Set basic information.
-            use conn = Store.createConnection context.RootDataDirectory context.DatabaseName
+            use conn = context.CreateDbConnection
             let! conceptOpt = Internal.getConceptBase conn uuid options.LoadTimes
 
             match conceptOpt with
@@ -151,8 +131,31 @@ module ConceptMap =
 
     let getConceptLinks (context: RequestContext) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
         async {
-            use conn = Store.createConnection context.RootDataDirectory context.DatabaseName
+            use conn = context.CreateDbConnection
             let! links = Internal.getConceptLinks conn uuid level
 
             return links
         }
+
+    let getConceptAttachments (context: RequestContext) (uuid: Uuid): Async<seq<Attachment>> =
+        async {
+            use conn = context.CreateDbConnection
+
+            let! result =
+                select {
+                    for attachment in Table.attachment do
+                        innerJoin cm in Table.conceptAttachment on (attachment.Id = cm.AttachmentId)
+                        where (cm.ConceptUuid = uuid.Value)
+                }
+                |> conn.SelectAsync<Dao.Attachment>
+                |> Async.AwaitTask
+
+            return
+                result
+                |> Seq.map (fun (dao: Dao.Attachment) ->
+                    { Id = Id dao.Id
+                      Name = dao.Name
+                      ContentType = dao.ContentType
+                      ContentLength = dao.ContentLength
+                      FilePath = FilePath dao.FilePath })
+    }

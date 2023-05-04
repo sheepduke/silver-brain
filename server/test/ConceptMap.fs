@@ -3,10 +3,11 @@ namespace SilverBrain.Test
 open NUnit.Framework
 open FsUnit
 
+open SilverBrain.Core
 open SilverBrain.Domain
 open SilverBrain.Domain.ConceptMap
 
-module ``ConceptMap`` =
+module ConceptMapTests =
     type TestSqliteContext.T with
 
         member this.ToRequestContext =
@@ -118,4 +119,25 @@ module ``ConceptMap`` =
                       ConceptLink.create 6u "0003" "1004" "0012" ]
 
                 links |> should equivalent expected
+            })
+
+    [<Test>]
+    let ``getConceptAttachments`` () =
+        TestSqliteContext.withTempDatabase (fun context ->
+            async {
+                let! attachments = ConceptMap.getConceptAttachments context.ToRequestContext (Uuid "0003")
+
+                let expected =
+                    [ { Id = Id 2u
+                        Name = "Body"
+                        ContentType = "text/md"
+                        ContentLength = 13u
+                        FilePath = FilePath "2" }
+                      { Id = Id 3u
+                        Name = ""
+                        ContentType = "text/plain"
+                        ContentLength = 15u
+                        FilePath = FilePath "3" } ]
+
+                attachments |> should equivalent expected
             })
