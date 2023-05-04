@@ -31,11 +31,11 @@ INSERT INTO ConceptAlias (ConceptUuid, Alias) VALUES ('0010', 'K8s');
 
 -- ConceptAttachment
 INSERT INTO Attachment (Name, ContentType, ContentLength, FilePath)
-    VALUES ('Introduction', 'text/org', 21, '1_Introduction.org');
+    VALUES ('Introduction', 'text/org', 21, '1');
 INSERT INTO Attachment (Name, ContentType, ContentLength, FilePath)
-    VALUES ('Body', 'text/md', 13, '2_Body.md');
+    VALUES ('Body', 'text/md', 13, '2');
 INSERT INTO Attachment (Name, ContentType, ContentLength, FilePath)
-    VALUES ('', 'text/plain', 15, '3_.txt');
+    VALUES ('', 'text/plain', 15, '3');
 
 INSERT INTO ConceptAttachment (AttachmentId, ConceptUuid) VALUES (1, '0002');
 INSERT INTO ConceptAttachment (AttachmentId, ConceptUuid) VALUES (2, '0003');
