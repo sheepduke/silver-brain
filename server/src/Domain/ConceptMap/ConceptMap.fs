@@ -2,6 +2,7 @@ namespace SilverBrain.Domain.ConceptMap
 
 open FSharpPlus
 open System.Data
+open Dapper
 open Dapper.FSharp.SQLite
 open SilverBrain.Core
 open SilverBrain.Store
@@ -12,7 +13,9 @@ type GetConceptOptions = { LoadAliases: bool; LoadTimes: bool }
 type RequestContext =
     { RootDataDirectory: FilePath
       DatabaseName: DatabaseName }
-    member this.CreateDbConnection = Store.createConnection this.RootDataDirectory this.DatabaseName
+
+    member this.CreateDbConnection =
+        Store.createConnection this.RootDataDirectory this.DatabaseName
 
 module ConceptMap =
     module private Internal =
@@ -129,6 +132,44 @@ module ConceptMap =
                 return Some concept
         }
 
+    let getManyConcepts (context: RequestContext) (options: GetConceptOptions) (uuids: Uuid seq) : Async<seq<Concept>> =
+        use conn = context.CreateDbConnection
+
+        let updateAliases concept =
+            async {
+                if options.LoadAliases then
+                    let! aliases = Internal.getConceptAliases conn concept.Uuid
+
+                    return
+                        { concept with
+                            Aliases = Some(Seq.toList aliases) }
+                else
+                    return concept
+            }
+
+        let daoToConcept (dao: Dao.Concept) =
+            { Uuid = Uuid dao.Uuid
+              Name = dao.Name
+              Aliases = None
+              CreatedAt = if options.LoadTimes then Some dao.CreatedAt else None
+              UpdatedAt = if options.LoadTimes then Some dao.UpdatedAt else None }
+
+        let uuidFilterClause =
+            uuids
+            |> map (fun uuid -> uuid.Value)
+            |> map (sprintf "'%s'")
+            |> String.concat ","
+
+        let sql = sprintf "SELECT * FROM Concept WHERE Uuid in (%s)" uuidFilterClause
+
+        async {
+            let! result = conn.QueryAsync<Dao.Concept>(sql) |> Async.AwaitTask
+            let concepts = (result |> map daoToConcept)
+            let! concepts' = concepts |> map updateAliases |> Async.Parallel
+
+            return concepts'
+        }
+
     let getConceptLinks (context: RequestContext) (uuid: Uuid) (level: uint) : Async<seq<ConceptLink>> =
         async {
             use conn = context.CreateDbConnection
@@ -137,7 +178,7 @@ module ConceptMap =
             return links
         }
 
-    let getConceptAttachments (context: RequestContext) (uuid: Uuid): Async<seq<Attachment>> =
+    let getConceptAttachments (context: RequestContext) (uuid: Uuid) : Async<seq<Attachment>> =
         async {
             use conn = context.CreateDbConnection
 
@@ -158,4 +199,4 @@ module ConceptMap =
                       ContentType = dao.ContentType
                       ContentLength = dao.ContentLength
                       FilePath = FilePath dao.FilePath })
-    }
+        }

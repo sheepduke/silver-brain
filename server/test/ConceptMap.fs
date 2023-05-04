@@ -94,6 +94,45 @@ module ConceptMapTests =
             })
 
     [<Test>]
+    let ``getManyConcepts - Basic info`` () =
+        TestSqliteContext.withTempDatabase (fun context ->
+            let options =
+                { LoadAliases = false
+                  LoadTimes = false }
+
+            async {
+                let! concepts =
+                    ConceptMap.getManyConcepts context.ToRequestContext options [ Uuid "0002"; Uuid "0003" ]
+
+                let expected =
+                    [ Concept.create (Uuid "0002") "Emacs"; Concept.create (Uuid "0003") "Vim" ]
+
+                concepts |> should equivalent expected
+            })
+
+    [<Test>]
+    let ``getManyConcepts - With aliases and times`` () =
+        TestSqliteContext.withTempDatabase (fun context ->
+            let options = { LoadAliases = true; LoadTimes = true }
+
+            async {
+                let! concepts = ConceptMap.getManyConcepts context.ToRequestContext options [ Uuid "0010" ]
+
+                concepts |> should haveLength 1
+
+                let concept = Seq.head concepts
+                concept.Name |> should equal "Kubernates"
+                concept.CreatedAt.IsSome |> should equal true
+                concept.UpdatedAt.IsSome |> should equal true
+
+                match concept.Aliases with
+                | Some aliases ->
+                    aliases |> should haveLength 1
+                    aliases.Head |> should equal { Id = Id 3u; Alias = "K8s" }
+                | None -> failwith "Aliases should be loaded"
+            })
+
+    [<Test>]
     let ``getConceptLinks - Level 1`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
