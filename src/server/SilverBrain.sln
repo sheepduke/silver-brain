@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SilverBrain", "src\SilverBrain.fsproj", "{DC600BD2-2E1D-48B9-B1BC-4443C11B4FB8}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SilverBrain", "dev\SilverBrain.fsproj", "{DC600BD2-2E1D-48B9-B1BC-4443C11B4FB8}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SilverBrain.Tests", "test\SilverBrain.Tests.fsproj", "{EB8EF217-1108-457A-BC8A-75CACF84121F}"
 EndProject

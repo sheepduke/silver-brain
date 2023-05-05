@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../src/SilverBrain.fsproj" />
+    <ProjectReference Include="../dev/SilverBrain.fsproj" />
   </ItemGroup>
 
   <Import Project="..\.paket\Paket.Restore.targets" />
