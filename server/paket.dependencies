@@ -3,17 +3,17 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: net6.0
 
+# Dev
 nuget Argu
 nuget Dapper.FSharp
 nuget FSharpPlus
 nuget DbUp-Core
 nuget DbUp-Sqlite
+nuget Giraffe
 nuget Microsoft.Data.Sqlite
 nuget FSharp.SystemTextJson 
 
-group Test
-  source https://api.nuget.org/v3/index.json
-
-  nuget FsUnit
-  nuget NUnit3TestAdapter
-  nuget Microsoft.NET.Test.Sdk
+# Test
+nuget FsUnit
+nuget NUnit3TestAdapter
+nuget Microsoft.NET.Test.Sdk

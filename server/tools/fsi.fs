@@ -5,6 +5,11 @@
 #r "nuget:DbUp"
 #r "nuget:DbUp-Sqlite"
 #r "nuget:FSharp.SystemTextJson"
+#r "nuget:Giraffe"
+#r "nuget:Microsoft.AspNetCore"
+#r "nuget:Microsoft.AspNetCore.Mvc"
+#r "nuget:Microsoft.Extensions.DependencyInjection"
+
 
 open FSharpPlus
 open System.IO
@@ -18,7 +23,8 @@ open System.Text.Json.Serialization
 #load "../src/Domain/CoreType.fs"
 #load "../src/Domain/ConceptMap/Type.fs"
 #load "../src/Domain/ConceptMap/ConceptMap.fs"
+#load "../src/RestApi/RestApi.fs"
 #load "../src/Cli/Dev.fs"
-#load "../src/Program.fs"
+#load "../src/Cli/Server.fs"
 
 Dapper.FSharp.SQLite.OptionTypes.register ()
