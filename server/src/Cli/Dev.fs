@@ -4,10 +4,7 @@ open Argu
 open SilverBrain.Core
 open SilverBrain.Store
 
-#if DEBUG || INTERACTIVE
-
 module Dev =
-
     type InitArgs =
         | [<AltCommandLine("-p")>] Project_Root of directory: string
         | [<AltCommandLine("-d")>] Data_Directory of directory: string
@@ -21,28 +18,22 @@ module Dev =
 
     type Args =
         | [<CliPrefix(CliPrefix.None)>] Init of ParseResults<InitArgs>
-        | [<CliPrefix(CliPrefix.None)>] Start
 
         interface IArgParserTemplate with
             member this.Usage =
                 match this with
                 | Init _ -> "Initialize test data and others"
-                | Start -> "Start the application server"
 
     let private runInit (options: ParseResults<InitArgs>) : unit =
         let dataDirectory: string =
             options.GetResult(Data_Directory, sprintf "%s/.silver-brain.dev" userHomeDirectory)
 
         match options.TryGetResult(Project_Root) with
-        | Some projectRoot ->
-            TestData.setupFromLocalFile projectRoot dataDirectory
+        | Some projectRoot -> TestData.setupFromLocalFile projectRoot dataDirectory |> Async.RunSynchronously
+        | None ->
+            TestData.setupFromEmbeddedResource (FilePath dataDirectory)
             |> Async.RunSynchronously
-        | None -> TestData.setupFromEmbeddedResource (FilePath dataDirectory) |> Async.RunSynchronously
-
-    let private runServer () : unit = ()
 
     let run (options: ParseResults<Args>) : unit =
         match options.GetSubCommand() with
         | Init initOptions -> runInit initOptions
-        | Start _ -> runServer ()
-#endif

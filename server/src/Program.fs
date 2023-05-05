@@ -4,23 +4,26 @@ open Argu
 open System.Reflection
 open SilverBrain
 
-type LogLevel = None | Error  | Info | Debug | Verbose
+type LogLevel =
+    | None
+    | Error
+    | Info
+    | Debug
+    | Verbose
 
 type MainArgs =
     | [<AltCommandLine("-v")>] Version
     | [<AltCommandLine("-l")>] Log_Level of LogLevel
-#if DEBUG || INTERACTIVE
     | [<CliPrefix(CliPrefix.None)>] Dev of ParseResults<Cli.Dev.Args>
-#endif
+    | [<CliPrefix(CliPrefix.None)>] Server of ParseResults<Cli.Server.Args>
 
     interface IArgParserTemplate with
         member this.Usage =
             match this with
             | Version -> "Prints the version of silver-brain"
             | Log_Level _ -> "Sets log level"
-#if DEBUG || INTERACTIVE
             | Dev _ -> "Development related commands, only used in Debug mode"
-#endif
+            | Server _ -> "Start REST API server"
 
 module Main =
     let printAppVersion () =
@@ -33,17 +36,17 @@ module Main =
 
         let parser = ArgumentParser.Create<MainArgs>(programName = "silver-brain")
 
-        try 
+        try
             let options = parser.ParseCommandLine(inputs = args)
 
             match options.TryGetResult Version with
-                | Some Version -> printAppVersion ()
-                | _ -> match options.GetSubCommand() with
-#if DEBUG || INTERACTIVE
-                       | Dev devOptions -> Cli.Dev.run devOptions
-#endif
+            | Some Version -> printAppVersion ()
+            | _ ->
+                match options.GetSubCommand() with
+                | Dev devOptions -> Cli.Dev.run devOptions
+                | Server serverOptions -> Cli.Server.run serverOptions
+
             0
-        with
-            | :? ArguParseException as e ->
-                printfn "%s" <| e.Message
-                1
+        with :? ArguParseException as e ->
+            printfn "%s" <| e.Message
+            1

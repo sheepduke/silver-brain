@@ -19,7 +19,7 @@ module Store =
         FilePath <| Path.Join [| userHomeDirectory; ".silver-brain" |]
 
     let createConnection (FilePath rootDataDirectory) (DatabaseName databaseName) : IDbConnection =
-        let databasePath = Path.Join [| rootDataDirectory; databaseName |]
+        let databasePath = Path.Join [| rootDataDirectory; sprintf "%s.sqlite" databaseName |]
         let connectionString = sprintf "Data Source=%s;Foreign Keys=true" databasePath
         new SqliteConnection(connectionString)
 
