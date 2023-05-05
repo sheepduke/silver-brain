@@ -1,11 +1,14 @@
 namespace SilverBrain.Server
 
+open System.IO
+
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
+open Microsoft.Extensions.FileProviders
 open Giraffe
 
 open SilverBrain.Core
@@ -48,7 +51,17 @@ module RestApi =
     let webApp = choose [ routef "/api/v2/concepts/%s" getConcept ]
 
     let start settings =
-        let configureApp (app: IApplicationBuilder) = app.UseGiraffe webApp
+        let configureApp (app: IApplicationBuilder) =
+            app.UseGiraffe webApp
+
+            let fileProvider =
+                new PhysicalFileProvider(Path.Join [| settings.RootDataDirectory.Value; "web" |])
+
+            let staticFileOptions = StaticFileOptions()
+            staticFileOptions.FileProvider <- fileProvider
+            staticFileOptions.ServeUnknownFileTypes <- true
+
+            app.UseStaticFiles(staticFileOptions) |> ignore
 
         let configureServices (services: IServiceCollection) =
             services.AddGiraffe() |> ignore
