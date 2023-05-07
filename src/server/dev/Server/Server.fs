@@ -11,6 +11,9 @@ open Microsoft.Extensions.Options
 open Microsoft.Extensions.FileProviders
 open Giraffe
 
+open System.Text.Json
+open System.Text.Json.Serialization
+
 open SilverBrain.Core
 open SilverBrain.Store
 open SilverBrain.Domain
@@ -37,9 +40,7 @@ module RestApi =
         fun (next: HttpFunc) (context: HttpContext) ->
             let requestContext = createRequestContext context
 
-            let options =
-                { LoadAliases = false
-                  LoadTimes = true }
+            let options = { LoadAliases = true; LoadTimes = true }
 
             task {
                 let! concept = ConceptMap.getConcept requestContext options (Uuid uuid)
@@ -66,6 +67,13 @@ module RestApi =
         let configureServices (services: IServiceCollection) =
             services.AddGiraffe() |> ignore
 
+            // Configure JSON serializer.
+            let jsonOptions = JsonFSharpOptions.Default().ToJsonSerializerOptions()
+
+            services.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(jsonOptions))
+            |> ignore
+
+            // Configure settings provider.
             services.AddSingleton<IOptions<ServerSettings>>(Options.Create(settings))
             |> ignore
 
