@@ -13,76 +13,330 @@ info:
 
 tags:
   - name: concept
-    description: Concept related API endpoints
+    description: Concept related API endpoints.
+
+  - name: concept-alias
+    description: Concept alias related API endpoints.
+
+  - name: concept-attachment
+    description: Concept attachment related API endpoints.
+
+  - name: concept-link
+    description: Concept link related API endpoints.
+
+  - name: create
+    description: Create operation.
+
+  - name: read
+    description: Get operation.
+
+  - name: update
+    description: Update operation.
+
+  - name: delete
+    description: Delete operation.
 
 paths:
+  # Concept.
   /api/v2/concepts:
-    get:
+    post:
       tags:
         - concept
-      summary: Get a list of concepts by optional search string.
-      operationId: listConcepts
+        - create
+      summary: Create a concept.
+      operationId: createConcept
       parameters:
         - $ref: "#/components/schemas/DatabaseNameHeader"
-        - name: search
-          in: query
-          schema:
-            type: string
-            description: A string splitted by spaces.
-        - name: load-aliases
-          in: query
-          schema:
-            type: boolean
-        - name: load-times
-          in: query
-          schema:
-            type: boolean
+      requestBody:
+        content: 
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConceptSaveRequest"
 
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptSaveResponse"
+              
   /api/v2/concepts/{uuid}:
     get:
       tags:
         - concept
-      summary: Get a concept by its UUID.
-      description: Get a concept by its UUID.
-      operationId: getConcept
+        - read
+      summary: Get a concept.
       parameters:
         - $ref: "#/components/schemas/DatabaseNameHeader"
-        - name: uuid
-          in: path
-          required: true
-          schema:
-            $ref: "#/components/schemas/Uuid"
-        - name: load-aliases
-          in: query
-          schema:
-            type: boolean
-        - name: load-attachments
-          in: query
-          schema:
-            type: boolean
-        - name: load-times
-          in: query
-          schema:
-            type: boolean
+        - $ref: "#/components/schemas/UuidPathParameter"
+        - $ref: "#/components/schemas/ConceptSelectQueryParameter"
       responses:
-        "200":
+        200:
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Concept"
-        "404":
-          description: Not found
+
+    patch:
+      tags:
+        - concept
+        - update
+      summary: Updates a concept.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConceptSaveRequest"
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Concept"
+        
+    delete:
+      tags:
+        - concept
+        - delete
+      summary: Delete a concept.
+      operationId: deleteConcept
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+      responses:
+        204:
+          content: 
+
+  /api/v2/concepts/list:
+    post:
+      tags:
+        - concept
+        - read
+      summary: Get a concept list by UUID list or search string
+      operationId: getConceptList
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/ConceptSelectQueryParameter"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    uuids:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/Uuid"
+                - type: object
+                  properties:
+                    search:
+                      type: string
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Concept"
+
+  # Alias.
+  /api/v2/concepts/{uuid}/aliases:
+    post:
+      tags:
+        - concept-alias
+        - create
+      summary: Create a new alias for concept.
+      operationId: createConceptAlias
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConceptAliasUpdateRequest"
+      responses:
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptAlias"
+
+    patch:
+      tags:
+        - concept-alias
+        - update
+      summary: Update an alias of concept.
+      operationId: updateConceptAlias
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+      requestBody:
+        content:
+          application/json:
+            schema:
+               $ref: "#/components/schemas/ConceptAliasUpdateRequest"             
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptAlias"
+
+    delete:
+      tags:
+        - concept-alias
+        - delete
+      summary: Delete an alias of concept.
+      operationId: deleteConceptAlias
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+      responses:
+        204:
+          content:
+
+  # Attachment file.
+  /api/v2/attachments:
+    post:
+      tags:
+        - concept-attachment
+        - create
+      summary: Create an attachment.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachmentSaveRequest"
+      responses:
+        201:
+          content: 
+
+  /api/v2/attachments/{id}:
+    get:
+      tags:
+        - concept-attachment
+        - read
+      summary: Get information of an attachment file.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/IdPathParameter"
+      responses:
+        200:
+          content:
+            application/json:
+              $ref: "#/components/schemas/Attachment"
+
+    patch:
+      tags:
+        - concept-attachment
+        - create
+      summary: Updates an existing attachment file.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/IdPathParameter"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachmentSaveRequest"
+      responses:
+        200:
+          content:
+            $ref: "#/components/schemas/Attachment"
+
+    delete:
+      tags:
+        - concept-attachment
+        - delete
+      summary: Delete an attachment file.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/IdPathParameter"
+      responses:
+        204:
+          content:
+
+  /api/v2/concepts/{uuid}/attachments:
+    post:
+      tags:
+        - concept-attachment
+        - create
+      summary: Attach an attachment file to a concept.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attachmentId:
+                  type: integer
+                  required: true
+      responses:
+        201:
+          content:
+
+  /api/v2/concepts/{uuid}/attachments/{id}:
+    delete:
+      tags:
+        - concept-attachment
+        - delete
+      summary: Detach an attachment file from a concept.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/UuidPathParameter"
+        - $ref: "#/components/schemas/IdPathParameter"
+      responses:
+        204:
+          content:
+
+  # Link.
+  /api/v2/links:
+    post:
+      tags:
+        - concept-link
+        - create
+      summary: Create a link betweeen 2 concepts.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConceptLinkSaveRequest"
+      responses:
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptLink"
+
+  /api/v2/links/{id}:
+    delete:
+      tags:
+        - concept-link
+        - delete
+      summary: Delete a link between 2 concepts.
+      parameters:
+        - $ref: "#/components/schemas/DatabaseNameHeader"
+        - $ref: "#/components/schemas/IdPathParameter"
+      responses:
+        204:
+          content:
 
 components:
   schemas:
-    DatabaseNameHeader:
-      name: X-DatabaseName
-      in: header
-      description: The name of database to operate on. Defaults to "silver-brain".
-      required: false
-      schema:
-        type: string
-
+    # Concept.
     Concept:
       type: object
       properties:
@@ -90,55 +344,103 @@ components:
           $ref: "#/components/schemas/Uuid"
         name:
           type: string
+        summary:
+          type: string
+        contentType:
+          type: string
+        content:
+          type: string
         aliases:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ConceptAlias"
         attachments:
           type: array
           items:
-            $ref: "#/components/schemas/ConceptAttachment"
+            $ref: "#/components/schemas/Attachment"
         createdAt:
           $ref: "#/components/schemas/DateTime"
         updatedAt:
           $ref: "#/components/schemas/DateTime"
 
-    ConceptAttachment:
+    ConceptSaveRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          required: true
+        summary:
+          type: string
+          required: false
+        contentType:
+          type: string
+          required: false
+        content:
+          type: string
+          required: false
+      
+    ConceptSaveResponse:
+      type: object
+      properties:
+        uuid:
+          $ref: "#/components/schemas/Uuid"
+        name:
+          type: string
+        summary:
+          type: string
+        contentType:
+          type: string
+        content:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/DateTime"
+        updatedAt:
+          $ref: "#/components/schemas/DateTime"
+
+    ConceptAlias:
+      type: object
+      properties:
+        id:
+          type: integer
+        alias:
+          type: string
+
+    ConceptAliasSaveRequest:
+      type: object
+      properties:
+        alias:
+          type: string
+          required: true
+
+    Attachment:
       type: object
       properties:
         id:
           type: integer
         name:
           type: string
-        conceptUuid:
-          $ref: "#/components/schemas/Uuid"
-        contentType:
+          description: The name of this attachment. Not necessarily the name of file.
+        filePath:
           type: string
-        contentLength:
-          description: The count of bytes of this attachment.
-          type: integer
+          description: The path (usually a name) of attachment file.
 
-    ConceptLinks:
+    AttachmentSaveRequest:
       type: object
       properties:
-        links:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConceptLink"
-        concepts:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/Concept"
-            
-    Uuid:
-      type: string
-      format: 00000000-0000-0000-0000-000000000000
+        name:
+          type: string
+        filePath:
+          type: string
 
-    DateTime:
-      type: string
-      format: RFC 3339
-      description: Check https://www.rfc-editor.org/rfc/rfc3339
-      example: 2023-03-27T23:46:26.148865+08:00
+    ConceptAttachmentSaveRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          required: false
+        filePath:
+          type: string
+          required: false
 
     ConceptLink:
       type: object
@@ -151,3 +453,58 @@ components:
           $ref: "#/components/schemas/Uuid"
         target:
           $ref: "#/components/schemas/Uuid"
+
+    ConceptLinkSaveRequest:
+      type: object
+      properties:
+        source:
+          $ref: "#/components/schemas/Uuid"
+        relation:
+          $ref: "#/components/schemas/Uuid"
+        target:
+          $ref: "#/components/schemas/Uuid"
+
+    Uuid:
+      type: string
+      format: 00000000-0000-0000-0000-000000000000
+
+    DateTime:
+      type: string
+      format: RFC 3339
+      description: Check https://www.rfc-editor.org/rfc/rfc3339
+      example: 2023-03-27T23:46:26.148865+08:00
+
+    # Parameters.
+    DatabaseNameHeader:
+      name: X-SB-DatabaseName
+      in: header
+      description: The name of database to operate on. Defaults to "silver-brain".
+      required: false
+      schema:
+        type: string
+
+    UuidPathParameter:
+      name: uuid
+      in: path
+      description: The UUID of concept.
+      required: true
+      schema:
+        $ref: "#/components/schemas/Uuid"
+
+    IdPathParameter:
+      name: id
+      in: path
+      description: The ID of resource.
+      required: true
+      schema:
+        type: integer
+
+    ConceptSelectQueryParameter:
+      name: select
+      in: query
+      description: Select which properties to be loaded.
+      schema:
+        type: array
+        items:
+          type: string
+          enum: [aliases, attachments, times]
