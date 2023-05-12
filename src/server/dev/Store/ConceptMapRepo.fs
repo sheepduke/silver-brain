@@ -95,7 +95,7 @@ module Dao =
         [<CLIMutable>]
         type T = { ConceptId: string }
 
-        let table = table'<T> "ConceptRelation"
+        let table = table'<T> "ConceptPropertyIsRelation"
 
 module ConceptRepo =
     let getbyId (conn: IDbConnection) (options: ConceptRepoLoadOptions.T) (ConceptId id) : Concept.T option Async =
