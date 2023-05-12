@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS Concept (
-    Uuid TEXT PRIMARY KEY,
+    Id TEXT PRIMARY KEY,
     Name TEXT NOT NULL,
     Summary TEXT NOT NULL,
     ContentType TEXT NOT NULL,
@@ -9,34 +9,34 @@ CREATE TABLE IF NOT EXISTS Concept (
 );
 
 CREATE TABLE IF NOT EXISTS ConceptAlias (
-    Id INTEGER PRIMARY KEY,
-    ConceptUuid TEXT NOT NULL,
+    Id TEXT PRIMARY KEY,
+    ConceptId TEXT NOT NULL,
     Alias TEXT NOT NULL,
-    FOREIGN KEY (ConceptUuid) REFERENCES Concept (Uuid)
-);
+    FOREIGN KEY (ConceptId) REFERENCES Concept (Id)
+) WITHOUT ROWID;
 
 CREATE TABLE if NOT EXISTS Attachment (
-    Id INTEGER PRIMARY KEY,
+    Id TEXT PRIMARY KEY,
     Name TEXT NOT NULL,
     FilePath TEXT NOT NULL
-);
+) WITHOUT ROWID;
 
 CREATE TABLE if NOT EXISTS ConceptAttachment (
-    AttachmentId INTEGER NOT NULL,
-    ConceptUuid TEXT NOT NULL,
-    PRIMARY KEY (AttachmentId, ConceptUuid),
+    AttachmentId TEXT NOT NULL,
+    ConceptId TEXT NOT NULL,
+    PRIMARY KEY (AttachmentId, ConceptId),
     FOREIGN KEY (AttachmentId) REFERENCES Attachment (Id),
-    FOREIGN KEY (ConceptUuid) REFERENCES Concept (Uuid)
-);
-
-CREATE TABLE IF NOT EXISTS ConceptRelation (
-    ConceptUuid TEXT PRIMARY KEY,
-    FOREIGN KEY (ConceptUuid) REFERENCES Concept (Uuid)
-);
+    FOREIGN KEY (ConceptId) REFERENCES Concept (Id)
+) WITHOUT ROWID;
 
 CREATE TABLE IF NOT EXISTS ConceptLink (
     Id INTEGER PRIMARY KEY,
-    SourceUuid TEXT NOT NULL,
-    RelationUuid TEXT NOT NULL,
-    TargetUuid TEXT NOT NULL
-);
+    SourceId TEXT NOT NULL,
+    RelationId TEXT NOT NULL,
+    TargetId TEXT NOT NULL
+) WITHOUT ROWID;
+
+CREATE TABLE IF NOT EXISTS ConceptPropertyIsRelation(
+    ConceptId TEXT PRIMARY KEY,
+    FOREIGN KEY (ConceptId) REFERENCES Concept (Id)
+) WITHOUT ROWID;
