@@ -4,6 +4,8 @@ open Argu
 open System.Reflection
 open SilverBrain
 
+exception SuccessExitSignal
+
 type LogLevel =
     | None
     | Error
@@ -39,14 +41,21 @@ module Main =
         try
             let options = parser.ParseCommandLine(inputs = args)
 
+            // Early quit when version is specified.
             match options.TryGetResult Version with
-            | Some Version -> printAppVersion ()
-            | _ ->
-                match options.GetSubCommand() with
-                | Dev devOptions -> Cli.Dev.run devOptions
-                | Server serverOptions -> Cli.Server.run serverOptions
+            | Some Version ->
+                printAppVersion ()
+                raise SuccessExitSignal
+            | _ -> ()
+
+            match options.GetSubCommand() with
+            | Dev devOptions -> Cli.Dev.run devOptions
+            | Server serverOptions -> Cli.Server.run serverOptions
+            | _ -> ()
 
             0
-        with :? ArguParseException as e ->
+        with
+        | :? SuccessExitSignal -> 0
+        | :? ArguParseException as e ->
             printfn "%s" <| e.Message
             1

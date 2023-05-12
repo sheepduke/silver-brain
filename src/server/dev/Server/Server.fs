@@ -19,13 +19,14 @@ open SilverBrain.Store
 open SilverBrain.Domain
 open SilverBrain.Domain.ConceptMap
 
-type ServerSettings =
-    { RootDataDirectory: FilePath
-      DefaultDatabaseName: DatabaseName }
+module ServerSettings =
+    type T =
+        { RootDataDirectory: FilePath
+          DefaultDatabaseName: DatabaseName }
 
 module RestApi =
     let private createRequestContext (context: HttpContext) =
-        let settings = context.GetService<IOptions<ServerSettings>>().Value
+        let settings = context.GetService<IOptions<ServerSettings.T>>().Value
 
         let databaseName =
             match context.TryGetRequestHeader "X-SilverBrain-DatabaseName" with
@@ -35,15 +36,17 @@ module RestApi =
         { RootDataDirectory = settings.RootDataDirectory
           DatabaseName = databaseName }
 
-
-    let private getConcept (uuid: string) =
+    let private getConcept (id: string) =
         fun (next: HttpFunc) (context: HttpContext) ->
             let requestContext = createRequestContext context
 
-            let options = { LoadAliases = true; LoadTimes = true }
+            let options =
+                { GetConceptOptions.create with
+                    GetConceptOptions.LoadAliases = true
+                    GetConceptOptions.LoadTimes = true }
 
             task {
-                let! concept = ConceptMap.getConcept requestContext options (Uuid uuid)
+                let! concept = ConceptMap.getConcept requestContext options (ConceptId id)
 
                 let result = json concept next context
                 return! result
@@ -51,7 +54,7 @@ module RestApi =
 
     let webApp = choose [ routef "/api/v2/concepts/%s" getConcept ]
 
-    let start settings =
+    let start (settings: ServerSettings.T) =
         let configureApp (app: IApplicationBuilder) =
             app.UseGiraffe webApp
 
@@ -74,7 +77,7 @@ module RestApi =
             |> ignore
 
             // Configure settings provider.
-            services.AddSingleton<IOptions<ServerSettings>>(Options.Create(settings))
+            services.AddSingleton<IOptions<ServerSettings.T>>(Options.Create(settings))
             |> ignore
 
 
