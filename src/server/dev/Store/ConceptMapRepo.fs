@@ -72,6 +72,11 @@ module Dao =
 
         let table = table'<T> "ConceptAlias"
 
+        let create id conceptId alias =
+            { Id = id
+              ConceptId = conceptId
+              Alias = alias }
+
         let toDomainType (t: T) : Concept.Alias.T = Concept.Alias.create (Id t.Id) t.Alias
 
     module Attachment =
@@ -104,6 +109,12 @@ module Dao =
 
         let table = table'<T> "ConceptLink"
 
+        let create id sourceId relationId targetId =
+            { Id = id
+              SourceId = sourceId
+              RelationId = relationId
+              TargetId = targetId }
+
         let toDomainType (t: T) : ConceptLink.T =
             { Id = Id t.Id
               Source = ConceptId t.SourceId
@@ -115,6 +126,8 @@ module Dao =
         type T = { ConceptId: string }
 
         let table = table'<T> "ConceptPropertyIsRelation"
+
+        let create conceptId = { ConceptId = conceptId }
 
 module ConceptRepo =
     let create (conn: IDbConnection) (concept: Concept.T) : unit Async =

@@ -27,7 +27,6 @@
     <EmbeddedResource Include="Store/Scripts/TestData/1_Introduction.org" />
     <EmbeddedResource Include="Store/Scripts/TestData/2_Body.md" />
     <EmbeddedResource Include="Store/Scripts/TestData/3_.txt" />
-    <EmbeddedResource Include="Store/Scripts/TestData/InitData.sql" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
