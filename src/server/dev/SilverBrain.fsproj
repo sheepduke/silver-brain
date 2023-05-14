@@ -12,9 +12,11 @@
     <Compile Include="DomainType/ConceptMap.fs" />
     <Compile Include="Store/Store.fs" />
     <Compile Include="Store/Migration.fs" />
-    <Compile Include="Store/TestData.fs" />
     <Compile Include="Store/ConceptMapRepo.fs" />
+    <Compile Include="Store/TestData.fs" />
     <Compile Include="Domain/ConceptMap.fs" />
+    <Compile Include="Server/Common.fs" />
+    <Compile Include="Server/ConceptMapRoute.fs" />
     <Compile Include="Server/Server.fs" />
     <Compile Include="Cli/Dev.fs" />
     <Compile Include="Cli/Server.fs" />

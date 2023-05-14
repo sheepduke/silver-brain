@@ -8,6 +8,13 @@ open SilverBrain
 open SilverBrain.Core
 open SilverBrain.Store
 
+type RequestContext =
+    { RootDataDirectory: FilePath
+      DatabaseName: DatabaseName }
+
+    member this.CreateDbConnection =
+        Store.createConnection this.RootDataDirectory this.DatabaseName
+
 module GetConceptOptions =
     type T =
         { LoadSummary: bool
@@ -30,12 +37,12 @@ module GetConceptOptions =
           ConceptRepoLoadOptions.LoadContent = t.LoadContent
           ConceptRepoLoadOptions.LoadTimes = t.LoadTimes }
 
-type RequestContext =
-    { RootDataDirectory: FilePath
-      DatabaseName: DatabaseName }
-
-    member this.CreateDbConnection =
-        Store.createConnection this.RootDataDirectory this.DatabaseName
+module SaveConceptRequest =
+    type T =
+        { Name: string
+          Summary: string option
+          ContentType: string option
+          Content: string option }
 
 module ConceptMap =
     let private updateConceptOptionalProps
@@ -64,6 +71,17 @@ module ConceptMap =
             return concept
         }
 
+    let createConcept (context: RequestContext) (request: SaveConceptRequest.T) : ConceptId Async =
+        async {
+            use conn = context.CreateDbConnection
+            let id = KSUID.Ksuid.Generate.ToString() |> ConceptId
+            let concept = Concept.create id request.Name
+
+            ConceptRepo.create conn concept |> ignore
+
+            return id
+        }
+
     let getConcept (context: RequestContext) (options: GetConceptOptions.T) (id: ConceptId) : Concept.T option Async =
         async {
             // Set basic information.
@@ -90,12 +108,14 @@ module ConceptMap =
             return concepts
         }
 
-    let getConceptLinks (conn: IDbConnection) (id: ConceptId) (level: uint) : ConceptLink.T seq Async =
+    let getConceptLinks (context: RequestContext) (level: uint) (id: ConceptId) : ConceptLink.T seq Async =
         let extractIdsFromLink (link: ConceptLink.T) = [ link.Source; link.Target ]
 
         let mutable processedIds = Set.empty
         let mutable nextIds = Set.singleton id
         let mutable allLinks = Set.empty
+
+        use conn = context.CreateDbConnection
 
         async {
             for _ in 1u .. level do
