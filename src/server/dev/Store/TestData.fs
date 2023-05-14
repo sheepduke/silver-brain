@@ -10,7 +10,7 @@ open SilverBrain.Core
 open SilverBrain.Store
 
 module TestData =
-    let now = DateTime.Now
+    let now = DateTime.UtcNow
 
     module Concept =
         let editor = Dao.Concept.create "0001" "Editor" "" "" "" now now

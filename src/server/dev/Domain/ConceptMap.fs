@@ -2,6 +2,7 @@ namespace SilverBrain.Domain.ConceptMap
 
 open FSharpPlus
 
+open System
 open System.Data
 
 open SilverBrain
@@ -56,28 +57,35 @@ module ConceptMap =
             // Optionally load aliases.
             if options.LoadAliases then
                 let! aliases = ConceptAliasRepo.getByConceptId conn concept.Id
-                concept <- Concept.withAliases concept aliases
+                concept <- Concept.withAliases aliases concept
 
             // Optionally load attachments.
             if options.LoadAttachments then
                 let! attachments = ConceptAttachmentRepo.getByConceptId conn concept.Id
-                concept <- Concept.withAttachments concept attachments
+                concept <- Concept.withAttachments attachments concept
 
             // Optionally load properties.
             if options.LoadProperties then
                 let! isRelation = ConceptPropertyRepo.isRelation conn concept.Id
-                concept <- Concept.withProperties concept { ConceptProperty.IsRelation = Some isRelation }
+                concept <- Concept.withProperties { ConceptProperty.IsRelation = Some isRelation } concept
 
             return concept
         }
 
     let createConcept (context: RequestContext) (request: SaveConceptRequest.T) : ConceptId Async =
         async {
-            use conn = context.CreateDbConnection
             let id = KSUID.Ksuid.Generate.ToString() |> ConceptId
-            let concept = Concept.create id request.Name
+            let now = DateTime.UtcNow
 
-            ConceptRepo.create conn concept |> ignore
+            let concept =
+                { Concept.create id request.Name with
+                    Concept.Summary = request.Summary
+                    Concept.ContentType = request.ContentType
+                    Concept.Content = request.Content }
+                |> Concept.withTimes now now
+
+            use conn = context.CreateDbConnection
+            do! ConceptRepo.create conn concept
 
             return id
         }
