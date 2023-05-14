@@ -46,22 +46,23 @@ module Dao =
               Summary = concept.Summary.ValueOrElse ""
               ContentType = concept.ContentType.ValueOrElse ""
               Content = concept.Content.ValueOrElse ""
-              CreatedAt = concept.CreatedAt.ValueOrElse(DateTime.Now)
-              UpdatedAt = concept.UpdatedAt.ValueOrElse(DateTime.Now) }
+              CreatedAt = concept.CreatedAt.ValueOrElse(DateTime.UtcNow)
+              UpdatedAt = concept.UpdatedAt.ValueOrElse(DateTime.UtcNow) }
 
         let toDomainType (options: ConceptRepoLoadOptions.T) (t: T) : Concept.T =
-            let mutable concept = Concept.create (ConceptId t.Id) t.Name
-
-            if options.LoadSummary then
-                concept <- Concept.withSummary concept t.Summary
-
-            if options.LoadContent then
-                concept <- Concept.withContent concept t.ContentType t.Content
-
-            if options.LoadTimes then
-                concept <- Concept.withTimes concept t.CreatedAt t.UpdatedAt
-
-            concept
+            Concept.create (ConceptId t.Id) t.Name
+            |> if options.LoadSummary then
+                   Concept.withSummary t.Summary
+               else
+                   Concept.withoutSummary
+            |> if options.LoadContent then
+                   Concept.withContent t.ContentType t.Content
+               else
+                   Concept.withoutContent
+            |> if options.LoadTimes then
+                   Concept.withTimes t.CreatedAt t.UpdatedAt
+               else
+                   Concept.withoutTimes
 
     module ConceptAlias =
         [<CLIMutable>]

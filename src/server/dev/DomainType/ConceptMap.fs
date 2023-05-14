@@ -57,11 +57,11 @@ module Concept =
           Attachments = None
           Properties = None }
 
-    let withSummary concept summary = { concept with Summary = Some summary }
+    let withSummary summary concept = { concept with Summary = Some summary }
 
     let withoutSummary concept = { concept with Summary = None }
 
-    let withContent concept contentType content =
+    let withContent contentType content concept =
         { concept with
             ContentType = Some contentType
             Content = Some content }
@@ -71,7 +71,7 @@ module Concept =
             ContentType = None
             Content = None }
 
-    let withTimes concept createdAt updatedAt =
+    let withTimes createdAt updatedAt concept =
         { concept with
             CreatedAt = Some createdAt
             UpdatedAt = Some updatedAt }
@@ -81,15 +81,15 @@ module Concept =
             CreatedAt = None
             UpdatedAt = None }
 
-    let withAliases concept aliases = { concept with Aliases = Some aliases }
+    let withAliases aliases concept = { concept with Aliases = Some aliases }
 
-    let withAttachments concept attachments =
+    let withAttachments attachments concept =
         { concept with
             Attachments = Some attachments }
 
-    let withProperties concept property =
+    let withProperties properties concept =
         { concept with
-            Properties = Some property }
+            Properties = Some properties }
 
 module ConceptLink =
     type T =
