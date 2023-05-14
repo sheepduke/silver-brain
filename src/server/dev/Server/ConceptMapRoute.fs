@@ -36,7 +36,10 @@ module ConceptMapRoute =
             let selectProps =
                 context.TryGetQueryStringValue("select").ValueOrElse "" |> String.split [ "," ]
 
-            let isSelected prop = Seq.contains prop selectProps
+            let isSelectAll = Seq.contains "all" selectProps
+
+            let isSelected prop =
+                isSelectAll || Seq.contains prop selectProps
 
             let options =
                 { GetConceptOptions.create with
