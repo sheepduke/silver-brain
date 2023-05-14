@@ -29,6 +29,20 @@ module ConceptMapRoute =
         { RootDataDirectory = context.RootDataDirectory
           DatabaseName = databaseName }
 
+    let createConcept: HttpHandler =
+        handleContext (fun context ->
+            let requestContext = createRequestContext context
+
+            task {
+                let! request = context.BindJsonAsync<SaveConceptRequest.T>()
+
+                let! id = ConceptMap.createConcept requestContext request
+
+                context.SetStatusCode StatusCodes.Status201Created
+                printfn "%A" {| Id = id.Value |}
+                return! context.WriteJsonAsync {| Id = id.Value |}
+            })
+
     let getConcept (id: string) : HttpHandler =
         handleContext (fun context ->
             let requestContext = createRequestContext context
@@ -55,14 +69,14 @@ module ConceptMapRoute =
 
                 return!
                     match conceptOpt with
-                    | Some concept -> context.WriteJsonAsync(concept)
+                    | Some concept -> context.WriteJsonAsync concept
                     | None ->
-                        context.SetStatusCode(StatusCodes.Status404NotFound)
+                        context.SetStatusCode StatusCodes.Status404NotFound
                         context.WriteTextAsync ""
             })
 
     let getConceptLink (id: string) =
-        fun (next: HttpFunc) (context: HttpContext) ->
+        handleContext (fun context ->
             let requestContext = createRequestContext context
 
             let level =
@@ -72,6 +86,5 @@ module ConceptMapRoute =
 
             task {
                 let! links = ConceptMap.getConceptLinks requestContext level (ConceptId id)
-
-                return! (json links next context)
-            }
+                return! context.WriteJsonAsync links
+            })

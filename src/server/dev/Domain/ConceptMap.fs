@@ -39,6 +39,7 @@ module GetConceptOptions =
           ConceptRepoLoadOptions.LoadTimes = t.LoadTimes }
 
 module SaveConceptRequest =
+    [<CLIMutable>]
     type T =
         { Name: string
           Summary: string option
@@ -74,7 +75,7 @@ module ConceptMap =
 
     let createConcept (context: RequestContext) (request: SaveConceptRequest.T) : ConceptId Async =
         async {
-            let id = KSUID.Ksuid.Generate.ToString() |> ConceptId
+            let id = KSUID.Ksuid.Generate().ToString() |> ConceptId
             let now = DateTime.UtcNow
 
             let concept =
