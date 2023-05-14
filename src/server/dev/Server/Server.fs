@@ -16,8 +16,6 @@ open System.Text.Json.Serialization
 
 open SilverBrain.Core
 open SilverBrain.Store
-open SilverBrain.Domain
-open SilverBrain.Domain.ConceptMap
 
 module ServerSettings =
     type T =
@@ -35,7 +33,8 @@ module RestApi =
                     [ GET
                       >=> choose
                           [ routef "/concepts/%s" ConceptMapRoute.getConcept
-                            routef "/concepts/%s/links" ConceptMapRoute.getConceptLink ] ])
+                            routef "/concepts/%s/links" ConceptMapRoute.getConceptLink ]
+                      POST >=> choose [ route "/concepts" >=> ConceptMapRoute.createConcept ] ])
 
         let configureApp (app: IApplicationBuilder) =
             app.UseGiraffe endpoints
@@ -52,7 +51,13 @@ module RestApi =
             services.AddGiraffe() |> ignore
 
             // Configure JSON serializer.
-            let jsonOptions = JsonFSharpOptions.Default().ToJsonSerializerOptions()
+            let jsonOptions =
+                JsonFSharpOptions
+                    .FSharpLuLike()
+                    .WithSkippableOptionFields()
+                    .ToJsonSerializerOptions()
+
+            jsonOptions.AllowTrailingCommas <- true
             jsonOptions.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
 
             services.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(jsonOptions))
