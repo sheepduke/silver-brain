@@ -24,7 +24,7 @@ module TestSqliteContext =
 
         async {
             try
-                do! TestData.setupFromEmbeddedResource rootDataDirectory
+                do! TestData.setup rootDataDirectory
 
                 do!
                     asyncFun

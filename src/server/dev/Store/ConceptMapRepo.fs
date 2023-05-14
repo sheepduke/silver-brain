@@ -31,6 +31,24 @@ module Dao =
 
         let table = table'<T> "Concept"
 
+        let create id name summary contentType content createdAt updatedAt =
+            { Id = id
+              Name = name
+              Summary = summary
+              ContentType = contentType
+              Content = content
+              CreatedAt = createdAt
+              UpdatedAt = updatedAt }
+
+        let ofDomainType (concept: Concept.T) : T =
+            { Id = concept.Id.Value
+              Name = concept.Name
+              Summary = concept.Summary.ValueOrElse ""
+              ContentType = concept.ContentType.ValueOrElse ""
+              Content = concept.Content.ValueOrElse ""
+              CreatedAt = concept.CreatedAt.ValueOrElse(DateTime.Now)
+              UpdatedAt = concept.UpdatedAt.ValueOrElse(DateTime.Now) }
+
         let toDomainType (options: ConceptRepoLoadOptions.T) (t: T) : Concept.T =
             let mutable concept = Concept.create (ConceptId t.Id) t.Name
 
@@ -54,6 +72,7 @@ module Dao =
 
         let table = table'<T> "ConceptAlias"
 
+        let toDomainType (t: T) : Concept.Alias.T = Concept.Alias.create (Id t.Id) t.Alias
 
     module Attachment =
         [<CLIMutable>]
@@ -98,6 +117,9 @@ module Dao =
         let table = table'<T> "ConceptPropertyIsRelation"
 
 module ConceptRepo =
+    let create (conn: IDbConnection) (concept: Concept.T) : unit Async =
+        Store.save conn Dao.Concept.table (Dao.Concept.ofDomainType concept)
+
     let getbyId (conn: IDbConnection) (options: ConceptRepoLoadOptions.T) (ConceptId id) : Concept.T option Async =
         let query =
             select {
@@ -107,7 +129,7 @@ module ConceptRepo =
 
         async {
             let! result = Store.getSingle<Dao.Concept.T> conn query
-            return (result |> map (Dao.Concept.toDomainType options))
+            return result |> map (Dao.Concept.toDomainType options)
         }
 
     let getByIds (conn: IDbConnection) (options: ConceptRepoLoadOptions.T) (ids: ConceptId seq) : Concept.T seq Async =
@@ -119,7 +141,7 @@ module ConceptRepo =
 
         async {
             let! result = Store.getMany conn query
-            return (result |> map (Dao.Concept.toDomainType options))
+            return result |> map (Dao.Concept.toDomainType options)
         }
 
 module ConceptLinkRepo =
@@ -133,7 +155,7 @@ module ConceptLinkRepo =
         async {
             let! daos = Store.getMany<Dao.ConceptLink.T> conn query
 
-            return (daos |> map Dao.ConceptLink.toDomainType)
+            return daos |> map Dao.ConceptLink.toDomainType
         }
 
 module ConceptAliasRepo =
@@ -144,7 +166,10 @@ module ConceptAliasRepo =
                     where (dao.ConceptId = id)
             }
 
-        Store.getMany conn query
+        async {
+            let! result = Store.getMany<Dao.ConceptAlias.T> conn query
+            return result |> map Dao.ConceptAlias.toDomainType
+        }
 
 module ConceptAttachmentRepo =
     let getByConceptId (conn: IDbConnection) (ConceptId id) : Attachment.T seq Async =
@@ -166,7 +191,7 @@ module ConceptAttachmentRepo =
                 }
 
             let! result = Store.getMany<Dao.Attachment.T> conn getAttachmentsQuery
-            return (result |> map Dao.Attachment.toDomainType)
+            return result |> map Dao.Attachment.toDomainType
         }
 
 module ConceptPropertyRepo =

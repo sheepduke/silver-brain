@@ -25,41 +25,22 @@ module ServerSettings =
           DefaultDatabaseName: DatabaseName }
 
 module RestApi =
-    let private createRequestContext (context: HttpContext) =
-        let settings = context.GetService<IOptions<ServerSettings.T>>().Value
-
-        let databaseName =
-            match context.TryGetRequestHeader "X-SilverBrain-DatabaseName" with
-            | None -> settings.DefaultDatabaseName
-            | Some value -> DatabaseName value
-
-        { RootDataDirectory = settings.RootDataDirectory
-          DatabaseName = databaseName }
-
-    let private getConcept (id: string) =
-        fun (next: HttpFunc) (context: HttpContext) ->
-            let requestContext = createRequestContext context
-
-            let options =
-                { GetConceptOptions.create with
-                    GetConceptOptions.LoadAliases = true
-                    GetConceptOptions.LoadTimes = true }
-
-            task {
-                let! concept = ConceptMap.getConcept requestContext options (ConceptId id)
-
-                let result = json concept next context
-                return! result
-            }
-
-    let webApp = choose [ routef "/api/v2/concepts/%s" getConcept ]
-
     let start (settings: ServerSettings.T) =
-        let configureApp (app: IApplicationBuilder) =
-            app.UseGiraffe webApp
+        let staticFileDirectory = Path.Join [| settings.RootDataDirectory.Value; "web" |]
 
-            let fileProvider =
-                new PhysicalFileProvider(Path.Join [| settings.RootDataDirectory.Value; "web" |])
+        let endpoints =
+            subRoute
+                "/api/v2"
+                (choose
+                    [ GET
+                      >=> choose
+                          [ routef "/concepts/%s" ConceptMapRoute.getConcept
+                            routef "/concepts/%s/links" ConceptMapRoute.getConceptLink ] ])
+
+        let configureApp (app: IApplicationBuilder) =
+            app.UseGiraffe endpoints
+
+            let fileProvider = new PhysicalFileProvider(staticFileDirectory)
 
             let staticFileOptions = StaticFileOptions()
             staticFileOptions.FileProvider <- fileProvider
@@ -72,16 +53,33 @@ module RestApi =
 
             // Configure JSON serializer.
             let jsonOptions = JsonFSharpOptions.Default().ToJsonSerializerOptions()
+            jsonOptions.PropertyNamingPolicy <- JsonNamingPolicy.CamelCase
 
             services.AddSingleton<Json.ISerializer>(SystemTextJson.Serializer(jsonOptions))
             |> ignore
 
             // Configure settings provider.
-            services.AddSingleton<IOptions<ServerSettings.T>>(Options.Create(settings))
+            services.AddSingleton<IOptions<RootDataDirectory>>(
+                Options.Create(RootDataDirectory settings.RootDataDirectory)
+            )
+            |> ignore
+
+            services.AddSingleton<IOptions<DefaultDatabaseName>>(
+                Options.Create(DefaultDatabaseName settings.DefaultDatabaseName)
+            )
             |> ignore
 
 
-        // For all
+        // Create data directories.
+        Directory.CreateDirectory(settings.RootDataDirectory.Value) |> ignore
+
+        Directory.CreateDirectory(Path.Combine(settings.RootDataDirectory.Value, "attachments"))
+        |> ignore
+
+        // TODO Initialize SQLite databases.
+
+        // Create static file directory.
+        Directory.CreateDirectory staticFileDirectory |> ignore
 
         // Start the web server.
         Host

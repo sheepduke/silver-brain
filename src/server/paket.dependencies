@@ -9,6 +9,7 @@ nuget Argu
 nuget Dapper.FSharp
 nuget DbUp-Core
 nuget DbUp-Sqlite
+nuget Ksuid
 nuget Microsoft.Data.Sqlite
 nuget FSharp.SystemTextJson 
 nuget Giraffe
