@@ -1,5 +1,7 @@
 namespace SilverBrain.Server
 
+open FSharpPlus
+
 open System.IO
 
 open Microsoft.AspNetCore.Builder
@@ -43,3 +45,12 @@ module HttpContextExtensions =
 
         member this.DefaultDatabaseName: DatabaseName =
             this.GetService<IOptions<DefaultDatabaseName>>().Value.DatabaseName
+
+        member this.GetQueryStringSeq(key: string) : string seq =
+            match this.TryGetQueryStringValue key with
+            | None -> Seq.empty
+            | Some value ->
+                value
+                |> String.split [ "," ]
+                |> Seq.map String.trimWhiteSpaces
+                |> Seq.filter (fun x -> (String.length x) > 0)

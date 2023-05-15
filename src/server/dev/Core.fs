@@ -10,6 +10,8 @@ module Util =
 
 type Id = Id of string
 
+type IdNotFoundError = IdNotFoundError of Id
+
 type FilePath =
     | FilePath of string
 
@@ -17,11 +19,10 @@ type FilePath =
         match this with
         | FilePath value -> value
 
-[<AutoOpen>]
-module OptionExtensions =
-    type Option<'a> with
+namespace System
 
-        member this.ValueOrElse(defaultValue: 'a) =
-            match this with
-            | None -> defaultValue
-            | Some value -> value
+module DateTime =
+    let toIsoString (dateTime: DateTime) = dateTime.ToString("o")
+
+    let ofIsoString (string: String) =
+        DateTime.Parse(string, null, Globalization.DateTimeStyles.RoundtripKind)

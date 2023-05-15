@@ -32,7 +32,8 @@ module RestApi =
                 (choose
                     [ GET
                       >=> choose
-                          [ routef "/concepts/%s" ConceptMapRoute.getConcept
+                          [ route "/concepts" >=> ConceptMapRoute.getManyConcept
+                            routef "/concepts/%s" ConceptMapRoute.getConcept
                             routef "/concepts/%s/links" ConceptMapRoute.getConceptLink ]
                       POST >=> choose [ route "/concepts" >=> ConceptMapRoute.createConcept ] ])
 

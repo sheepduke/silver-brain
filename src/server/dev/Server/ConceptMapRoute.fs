@@ -26,46 +26,47 @@ module ConceptMapRoute =
             | None -> context.DefaultDatabaseName
             | Some value -> DatabaseName value
 
-        { RootDataDirectory = context.RootDataDirectory
-          DatabaseName = databaseName }
+        { RequestContext.RootDataDirectory = context.RootDataDirectory
+          RequestContext.DatabaseName = databaseName }
+
+    let private createGetConceptOptions (context: HttpContext) : GetConceptOptions.T =
+        let selectProps = context.GetQueryStringSeq "select"
+        let isSelectAll = Seq.contains "all" selectProps
+
+        let isSelected prop =
+            isSelectAll || Seq.contains prop selectProps
+
+        { GetConceptOptions.create with
+            GetConceptOptions.LoadSummary = isSelected "summary"
+            GetConceptOptions.LoadContent = isSelected "content"
+            GetConceptOptions.LoadAliases = isSelected "aliases"
+            GetConceptOptions.LoadAttachments = isSelected "attachments"
+            GetConceptOptions.LoadTimes = isSelected "times"
+            GetConceptOptions.LoadProperties = isSelected "properties" }
+
 
     let createConcept: HttpHandler =
         handleContext (fun context ->
             let requestContext = createRequestContext context
 
             task {
-                let! request = context.BindJsonAsync<SaveConceptRequest.T>()
+                let! request = context.BindJsonAsync<CreateConceptRequest.T>()
 
                 let! id = ConceptMap.createConcept requestContext request
 
                 context.SetStatusCode StatusCodes.Status201Created
-                printfn "%A" {| Id = id.Value |}
                 return! context.WriteJsonAsync {| Id = id.Value |}
             })
 
     let getConcept (id: string) : HttpHandler =
         handleContext (fun context ->
             let requestContext = createRequestContext context
-
-            let selectProps =
-                context.TryGetQueryStringValue("select").ValueOrElse "" |> String.split [ "," ]
-
-            let isSelectAll = Seq.contains "all" selectProps
-
-            let isSelected prop =
-                isSelectAll || Seq.contains prop selectProps
-
-            let options =
-                { GetConceptOptions.create with
-                    GetConceptOptions.LoadSummary = isSelected "summary"
-                    GetConceptOptions.LoadContent = isSelected "content"
-                    GetConceptOptions.LoadAliases = isSelected "aliases"
-                    GetConceptOptions.LoadAttachments = isSelected "attachments"
-                    GetConceptOptions.LoadTimes = isSelected "times"
-                    GetConceptOptions.LoadProperties = isSelected "properties" }
+            let options = createGetConceptOptions context
 
             task {
                 let! conceptOpt = ConceptMap.getConcept requestContext options (ConceptId id)
+
+                printfn "%A" conceptOpt
 
                 return!
                     match conceptOpt with
@@ -73,6 +74,17 @@ module ConceptMapRoute =
                     | None ->
                         context.SetStatusCode StatusCodes.Status404NotFound
                         context.WriteTextAsync ""
+            })
+
+    let getManyConcept: HttpHandler =
+        handleContext (fun context ->
+            let requestContext = createRequestContext context
+            let options = createGetConceptOptions context
+            let ids = context.GetQueryStringSeq "ids" |> map ConceptId
+
+            task {
+                let! concepts = ConceptMap.getManyConcepts requestContext options ids
+                return! context.WriteJsonAsync concepts
             })
 
     let getConceptLink (id: string) =

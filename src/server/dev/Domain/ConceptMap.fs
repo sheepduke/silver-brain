@@ -9,12 +9,13 @@ open SilverBrain
 open SilverBrain.Core
 open SilverBrain.Store
 
-type RequestContext =
-    { RootDataDirectory: FilePath
-      DatabaseName: DatabaseName }
+module RequestContext =
+    type T =
+        { RootDataDirectory: FilePath
+          DatabaseName: DatabaseName }
 
-    member this.CreateDbConnection =
-        Store.createConnection this.RootDataDirectory this.DatabaseName
+    let createDbConnection (t: T) : IDbConnection =
+        Store.createConnection t.RootDataDirectory t.DatabaseName
 
 module GetConceptOptions =
     type T =
@@ -38,10 +39,18 @@ module GetConceptOptions =
           ConceptRepoLoadOptions.LoadContent = t.LoadContent
           ConceptRepoLoadOptions.LoadTimes = t.LoadTimes }
 
-module SaveConceptRequest =
+module CreateConceptRequest =
     [<CLIMutable>]
     type T =
         { Name: string
+          Summary: string option
+          ContentType: string option
+          Content: string option }
+
+module UpdateConceptRequest =
+    [<CLIMutable>]
+    type T =
+        { Name: string option
           Summary: string option
           ContentType: string option
           Content: string option }
@@ -73,7 +82,7 @@ module ConceptMap =
             return concept
         }
 
-    let createConcept (context: RequestContext) (request: SaveConceptRequest.T) : ConceptId Async =
+    let createConcept (context: RequestContext.T) (request: CreateConceptRequest.T) : ConceptId Async =
         async {
             let id = KSUID.Ksuid.Generate().ToString() |> ConceptId
             let now = DateTime.UtcNow
@@ -85,16 +94,16 @@ module ConceptMap =
                     Concept.Content = request.Content }
                 |> Concept.withTimes now now
 
-            use conn = context.CreateDbConnection
-            do! ConceptRepo.create conn concept
+            use conn = RequestContext.createDbConnection context
+            do! ConceptRepo.save conn concept
 
             return id
         }
 
-    let getConcept (context: RequestContext) (options: GetConceptOptions.T) (id: ConceptId) : Concept.T option Async =
+    let getConcept (context: RequestContext.T) (options: GetConceptOptions.T) (id: ConceptId) : Concept.T option Async =
         async {
             // Set basic information.
-            use conn = context.CreateDbConnection
+            use conn = RequestContext.createDbConnection context
             let! result = ConceptRepo.getbyId conn (GetConceptOptions.toRepoLoadOptions options) id
 
             match result with
@@ -105,26 +114,66 @@ module ConceptMap =
         }
 
     let getManyConcepts
-        (context: RequestContext)
+        (context: RequestContext.T)
         (options: GetConceptOptions.T)
         (ids: ConceptId seq)
         : Concept.T seq Async =
-        use conn = context.CreateDbConnection
 
         async {
+            use conn = RequestContext.createDbConnection context
+
             let! result = ConceptRepo.getByIds conn (GetConceptOptions.toRepoLoadOptions options) ids
-            let! concepts = result |> map (updateConceptOptionalProps conn options) |> Async.Parallel
+
+            let mutable concepts = List.empty
+
+            for concept in result do
+                let! concept' = updateConceptOptionalProps conn options concept
+                concepts <- List.append concepts [ concept' ]
+
             return concepts
         }
 
-    let getConceptLinks (context: RequestContext) (level: uint) (id: ConceptId) : ConceptLink.T seq Async =
+    let updateConcept
+        (context: RequestContext.T)
+        (request: UpdateConceptRequest.T)
+        (id: ConceptId)
+        : Result<unit, ConceptIdNotFoundError> Async =
+        use conn = RequestContext.createDbConnection context
+
+        let options =
+            { GetConceptOptions.create with
+                LoadSummary = true
+                LoadContent = true
+                LoadTimes = true
+                LoadProperties = true }
+            |> GetConceptOptions.toRepoLoadOptions
+
+        Store.withTransaction (fun () ->
+            async {
+                let! conceptOpt = ConceptRepo.getbyId conn options id
+
+                match conceptOpt with
+                | None -> return Error <| ConceptIdNotFoundError id
+                | Some concept ->
+                    let concept': Concept.T =
+                        { concept with
+                            Concept.Name = Option.defaultValue concept.Name request.Name
+                            Concept.Summary = Option.defaultValue concept.Summary <| Some request.Summary
+                            Concept.ContentType = Option.defaultValue concept.ContentType <| Some request.ContentType
+                            Concept.Content = Option.defaultValue concept.Content <| Some request.Content }
+
+                    do! ConceptRepo.save conn concept'
+                    return Ok()
+            })
+
+    let getConceptLinks (context: RequestContext.T) (level: uint) (id: ConceptId) : ConceptLink.T seq Async =
         let extractIdsFromLink (link: ConceptLink.T) = [ link.Source; link.Target ]
 
         let mutable processedIds = Set.empty
         let mutable nextIds = Set.singleton id
         let mutable allLinks = Set.empty
 
-        use conn = context.CreateDbConnection
+        use conn = RequestContext.createDbConnection context
 
         async {
             for _ in 1u .. level do

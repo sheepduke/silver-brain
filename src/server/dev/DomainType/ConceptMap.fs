@@ -11,6 +11,8 @@ type ConceptId =
         match this with
         | ConceptId value -> value
 
+type ConceptIdNotFoundError = ConceptIdNotFoundError of ConceptId
+
 module Attachment =
     type T =
         { Id: Id
@@ -56,6 +58,8 @@ module Concept =
           Aliases = None
           Attachments = None
           Properties = None }
+
+    let withName name concept = { concept with Name = name }
 
     let withSummary summary concept = { concept with Summary = Some summary }
 
