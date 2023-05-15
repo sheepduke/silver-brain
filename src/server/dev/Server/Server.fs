@@ -54,6 +54,9 @@ module RestApi =
             let jsonOptions =
                 JsonFSharpOptions
                     .FSharpLuLike()
+                    .WithUnionUntagged()
+                    .WithUnionUnwrapSingleCaseUnions()
+                    .WithUnionUnwrapFieldlessTags()
                     .WithSkippableOptionFields()
                     .ToJsonSerializerOptions()
 
