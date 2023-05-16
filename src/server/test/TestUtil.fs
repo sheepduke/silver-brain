@@ -18,13 +18,13 @@ module TestSqliteContext =
     let withTempDatabase asyncFun =
         let rootDataDirectory =
             FilePath
-            <| Path.Join [| Path.GetTempPath(); "SilverBrain.Tests"; Guid.NewGuid().ToString() |]
+            <| Path.Join [| Path.GetTempPath(); "SilverBrain.Tests"; KSUID.Ksuid.Generate().ToString() |]
 
-        let databaseName = DatabaseName "silver-brain.sqlite"
+        let databaseName = DatabaseName "silver-brain"
 
         async {
             try
-                do! TestData.setup rootDataDirectory
+                do! TestData.setup false rootDataDirectory
 
                 do!
                     asyncFun

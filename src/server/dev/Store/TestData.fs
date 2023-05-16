@@ -105,7 +105,6 @@ module TestData =
         use conn = new SqliteConnection($"Data Source={databasePath}")
 
         async {
-
             insert {
                 into Dao.Concept.table
 
