@@ -8,14 +8,14 @@ module Util =
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
 
 
-module Id =
-    type T = T of string
+type Id =
+    | Id of string
 
-    let generateString () : string = KSUID.Ksuid.Generate().ToString()
+    static member generateString() : string = KSUID.Ksuid.Generate().ToString()
 
-    let generate () : T = T <| generateString ()
+    static member generate() : Id = Id <| Id.generateString ()
 
-type IdNotFoundError = IdNotFoundError of Id.T
+type IdNotFoundError = IdNotFoundError of Id
 
 type FilePath =
     | FilePath of string
