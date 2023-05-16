@@ -155,7 +155,7 @@ module ConceptMapTests =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
                 let! links =
-                    ConceptMap.getConceptLinks context.ToRequestContext 1u (ConceptId.T TestData.Concept.emacs.Id)
+                    ConceptMap.getConceptLinks context.ToRequestContext 1 (ConceptId.T TestData.Concept.emacs.Id)
 
                 let expected =
                     [ TestData.ConceptLink.emacsRelatesVim; TestData.ConceptLink.emacsIsEditor ]
@@ -169,7 +169,7 @@ module ConceptMapTests =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
                 let! links =
-                    ConceptMap.getConceptLinks context.ToRequestContext 2u (ConceptId.T TestData.Concept.emacs.Id)
+                    ConceptMap.getConceptLinks context.ToRequestContext 2 (ConceptId.T TestData.Concept.emacs.Id)
 
                 let expected =
                     [ TestData.ConceptLink.emacsIsEditor
