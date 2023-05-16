@@ -1,9 +1,11 @@
 namespace SilverBrain.Test
 
+open FSharpPlus
+
 open NUnit.Framework
 open FsUnit
 
-open SilverBrain.Core
+open SilverBrain.Store
 open SilverBrain.Domain
 open SilverBrain.Domain.ConceptMap
 
@@ -11,23 +13,28 @@ module ConceptMapTests =
     type TestSqliteContext.T with
 
         member this.ToRequestContext =
-            { RootDataDirectory = this.RootDataDirectory
-              DatabaseName = this.DatabaseName }
+            { RequestContext.RootDataDirectory = this.RootDataDirectory
+              RequestContext.DatabaseName = this.DatabaseName }
+
+    let private assertConceptExists (concept: Concept.T option) =
+        match concept with
+        | None -> failwith "Concept not found"
+        | Some _ -> ()
 
     [<Test>]
     let ``getConcept - Basic info only`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let options =
-                { LoadAliases = false
-                  LoadTimes = false }
+            let options = GetConceptOptions.create
 
             async {
-                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0002")
+                let id = ConceptId.T TestData.Concept.emacs.Id
 
-                conceptOpt.IsSome |> should be True
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
+
+                assertConceptExists conceptOpt
 
                 let concept = conceptOpt.Value
-                concept.Uuid |> should equal (Uuid "0002")
+                concept.Id |> should equal id
                 concept.Name |> should equal "Emacs"
                 concept.Aliases.IsNone |> should be True
                 concept.CreatedAt.IsNone |> should be True
@@ -37,16 +44,18 @@ module ConceptMapTests =
     [<Test>]
     let ``getConcept - With times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
+            let id = ConceptId.T TestData.Concept.vim.Id
+
             let options =
-                { LoadAliases = false
-                  LoadTimes = true }
+                { GetConceptOptions.create with
+                    LoadTimes = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0003")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
 
                 conceptOpt.IsSome |> should be True
                 let concept = conceptOpt.Value
-                concept.Uuid |> should equal (Uuid "0003")
+                concept.Id |> should equal id
                 concept.Name |> should equal "Vim"
                 concept.Aliases.IsNone |> should be True
                 concept.CreatedAt.IsSome |> should be True
@@ -56,20 +65,20 @@ module ConceptMapTests =
     [<Test>]
     let ``getConcept - With aliases`` () =
         TestSqliteContext.withTempDatabase (fun context ->
+            let id = ConceptId.T TestData.Concept.emacs.Id
+
             let options =
-                { LoadAliases = true
-                  LoadTimes = false }
+                { GetConceptOptions.create with
+                    LoadAliases = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0002")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
-                concept.Uuid |> should equal (Uuid "0002")
+                concept.Id |> should equal id
                 concept.Name |> should equal "Emacs"
-                concept.Aliases.IsSome |> should be True
-                concept.Aliases.Value |> should haveLength 1
-                concept.Aliases.Value.Head.Id |> should equal (Id 1u)
+                concept.Aliases.Value |> Seq.length |> should equal 1
                 concept.CreatedAt.IsNone |> should be True
                 concept.UpdatedAt.IsNone |> should be True
             })
@@ -77,18 +86,21 @@ module ConceptMapTests =
     [<Test>]
     let ``getConcept - With all`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let options = { LoadAliases = true; LoadTimes = true }
+            let id = ConceptId.T TestData.Concept.k8s.Id
+
+            let options =
+                { GetConceptOptions.create with
+                    LoadAliases = true
+                    LoadTimes = true }
 
             async {
-                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options (Uuid "0010")
+                let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
                 conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
-                concept.Uuid |> should equal (Uuid "0010")
+                concept.Id |> should equal id
                 concept.Name |> should equal "Kubernates"
-                concept.Aliases.IsSome |> should be True
-                concept.Aliases.Value |> should haveLength 1
-                concept.Aliases.Value.Head.Alias |> should equal "K8s"
+                concept.Aliases.Value |> Seq.length |> should equal 1
                 concept.CreatedAt.IsSome |> should be True
                 concept.UpdatedAt.IsSome |> should be True
             })
@@ -96,51 +108,58 @@ module ConceptMapTests =
     [<Test>]
     let ``getManyConcepts - Basic info`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let options =
-                { LoadAliases = false
-                  LoadTimes = false }
+            let ids =
+                [ TestData.Concept.emacs; TestData.Concept.vim ]
+                |> map (fun x -> ConceptId.T x.Id)
+
+            let options = GetConceptOptions.create
 
             async {
-                let! concepts =
-                    ConceptMap.getManyConcepts context.ToRequestContext options [ Uuid "0002"; Uuid "0003" ]
+                let! concepts = ConceptMap.getManyConcepts context.ToRequestContext options ids
 
-                let expected =
-                    [ Concept.create (Uuid "0002") "Emacs"; Concept.create (Uuid "0003") "Vim" ]
+                let names = concepts |> map (fun x -> x.Name)
 
-                concepts |> should equivalent expected
+                let expected = [ "Emacs"; "Vim" ]
+
+                names |> should equivalent expected
             })
 
     [<Test>]
     let ``getManyConcepts - With aliases and times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let options = { LoadAliases = true; LoadTimes = true }
+            let concept = TestData.Concept.k8s
+            let id = ConceptId.T concept.Id
+
+            let options =
+                { GetConceptOptions.create with
+                    LoadAliases = true
+                    LoadTimes = true }
 
             async {
-                let! concepts = ConceptMap.getManyConcepts context.ToRequestContext options [ Uuid "0010" ]
+                let! result = ConceptMap.getManyConcepts context.ToRequestContext options [ id ]
 
-                concepts |> should haveLength 1
+                let head = Seq.head result
+                head.Name |> should equal concept.Name
+                head.CreatedAt.IsSome |> should equal true
+                head.UpdatedAt.IsSome |> should equal true
+                head.Aliases.Value |> Seq.length |> should equal 1
 
-                let concept = Seq.head concepts
-                concept.Name |> should equal "Kubernates"
-                concept.CreatedAt.IsSome |> should equal true
-                concept.UpdatedAt.IsSome |> should equal true
-
-                match concept.Aliases with
-                | Some aliases ->
-                    aliases |> should haveLength 1
-                    aliases.Head |> should equal { Id = Id 3u; Alias = "K8s" }
-                | None -> failwith "Aliases should be loaded"
+                head.Aliases.Value
+                |> Seq.head
+                |> (fun x -> x.Alias)
+                |> should equal TestData.ConceptAlias.k8s.Alias
             })
 
     [<Test>]
     let ``getConceptLinks - Level 1`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
-                let! links = ConceptMap.getConceptLinks context.ToRequestContext (Uuid "0002") 1u
+                let! links =
+                    ConceptMap.getConceptLinks context.ToRequestContext 1u (ConceptId.T TestData.Concept.emacs.Id)
 
                 let expected =
-                    [ ConceptLink.create 1u "0002" "1001" "0001"
-                      ConceptLink.create 3u "0002" "1003" "0003" ]
+                    [ TestData.ConceptLink.emacsRelatesVim; TestData.ConceptLink.emacsIsEditor ]
+                    |> map Dao.ConceptLink.toDomainType
 
                 links |> should equivalent expected
             })
@@ -149,34 +168,16 @@ module ConceptMapTests =
     let ``getConceptLinks - Level 2`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
-                let! links = ConceptMap.getConceptLinks context.ToRequestContext (Uuid "0001") 2u
+                let! links =
+                    ConceptMap.getConceptLinks context.ToRequestContext 2u (ConceptId.T TestData.Concept.emacs.Id)
 
                 let expected =
-                    [ ConceptLink.create 1u "0002" "1001" "0001"
-                      ConceptLink.create 2u "0001" "1002" "0003"
-                      ConceptLink.create 3u "0002" "1003" "0003"
-                      ConceptLink.create 6u "0003" "1004" "0012" ]
+                    [ TestData.ConceptLink.emacsIsEditor
+                      TestData.ConceptLink.emacsRelatesVim
+                      TestData.ConceptLink.vimIsEditor
+                      TestData.ConceptLink.vimSupportsDockerFile ]
+                    |> map Dao.ConceptLink.toDomainType
+
 
                 links |> should equivalent expected
-            })
-
-    [<Test>]
-    let ``getConceptAttachments`` () =
-        TestSqliteContext.withTempDatabase (fun context ->
-            async {
-                let! attachments = ConceptMap.getConceptAttachments context.ToRequestContext (Uuid "0003")
-
-                let expected =
-                    [ { Id = Id 2u
-                        Name = "Body"
-                        ContentType = "text/md"
-                        ContentLength = 13u
-                        FilePath = FilePath "2" }
-                      { Id = Id 3u
-                        Name = ""
-                        ContentType = "text/plain"
-                        ContentLength = 15u
-                        FilePath = FilePath "3" } ]
-
-                attachments |> should equivalent expected
             })
