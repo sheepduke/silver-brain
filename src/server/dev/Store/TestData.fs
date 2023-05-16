@@ -61,11 +61,13 @@ module TestData =
             Dao.Concept.create (ConceptId.generateString ()) "Supports" "" "" "" now now
 
     module ConceptAlias =
-        let emacs = Dao.ConceptAlias.create "1001" Concept.emacs.Id "Editor MACroS"
+        let emacs =
+            Dao.ConceptAlias.create (Id.generateString ()) Concept.emacs.Id "Editor MACroS"
 
-        let vim = Dao.ConceptAlias.create "1002" Concept.vim.Id "Vi IMitation"
+        let vim =
+            Dao.ConceptAlias.create (Id.generateString ()) Concept.vim.Id "Vi IMitation"
 
-        let k8s = Dao.ConceptAlias.create "1003" Concept.k8s.Id "K8s"
+        let k8s = Dao.ConceptAlias.create (Id.generateString ()) Concept.k8s.Id "K8s"
 
     module ConceptPropertyIsRelation =
         let isA = Dao.ConceptPropertyIsRelation.create Concept.isA.Id
@@ -76,22 +78,26 @@ module TestData =
 
     module ConceptLink =
         let emacsIsEditor =
-            Dao.ConceptLink.create "2001" Concept.emacs.Id Concept.isA.Id Concept.editor.Id
+            Dao.ConceptLink.create (Id.generateString ()) Concept.emacs.Id Concept.isA.Id Concept.editor.Id
 
         let vimIsEditor =
-            Dao.ConceptLink.create "2002" Concept.vim.Id Concept.isA.Id Concept.editor.Id
+            Dao.ConceptLink.create (Id.generateString ()) Concept.vim.Id Concept.isA.Id Concept.editor.Id
 
         let emacsRelatesVim =
-            Dao.ConceptLink.create "2003" Concept.emacs.Id Concept.relatesTo.Id Concept.vim.Id
+            Dao.ConceptLink.create (Id.generateString ()) Concept.emacs.Id Concept.relatesTo.Id Concept.vim.Id
 
         let vimSupportsDockerFile =
-            Dao.ConceptLink.create "2004" Concept.vim.Id Concept.supports.Id Concept.dockerFile.Id
+            Dao.ConceptLink.create (Id.generateString ()) Concept.vim.Id Concept.supports.Id Concept.dockerFile.Id
 
         let dockerFileIsConfigurationFile =
-            Dao.ConceptLink.create "2005" Concept.dockerFile.Id Concept.isA.Id Concept.configurationFile.Id
+            Dao.ConceptLink.create
+                (Id.generateString ())
+                Concept.dockerFile.Id
+                Concept.isA.Id
+                Concept.configurationFile.Id
 
         let dockerFileIsPartOfDocker =
-            Dao.ConceptLink.create "2006" Concept.dockerFile.Id Concept.isPartOf.Id Concept.docker.Id
+            Dao.ConceptLink.create (Id.generateString ()) Concept.dockerFile.Id Concept.isPartOf.Id Concept.docker.Id
 
     let setup shouldLogToConsole (FilePath rootDataPath) =
 
