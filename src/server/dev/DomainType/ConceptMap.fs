@@ -11,9 +11,9 @@ module ConceptId =
         match t with
         | T string -> string
 
-    let generateString: string = KSUID.Ksuid.Generate().ToString()
+    let generateString () : string = KSUID.Ksuid.Generate().ToString()
 
-    let generate: T = T generateString
+    let generate () : T = generateString () |> T
 
 module ConceptIdNotFoundError =
     type T = T of ConceptId.T
