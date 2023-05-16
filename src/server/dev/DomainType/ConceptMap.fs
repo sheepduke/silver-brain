@@ -4,14 +4,19 @@ open System
 
 open SilverBrain.Core
 
-type ConceptId =
-    | ConceptId of string
+module ConceptId =
+    type T = T of string
 
-    member this.Value =
-        match this with
-        | ConceptId value -> value
+    let toString (t: T) : string =
+        match t with
+        | T string -> string
 
-type ConceptIdNotFoundError = ConceptIdNotFoundError of ConceptId
+    let generateString: string = KSUID.Ksuid.Generate().ToString()
+
+    let generate: T = T generateString
+
+module ConceptIdNotFoundError =
+    type T = T of ConceptId.T
 
 module Attachment =
     type T =
@@ -36,7 +41,7 @@ module Concept =
         let create id alias = { Id = id; Alias = alias }
 
     type T =
-        { Id: ConceptId
+        { Id: ConceptId.T
           Name: string
           Summary: string option
           ContentType: string option
@@ -98,9 +103,9 @@ module Concept =
 module ConceptLink =
     type T =
         { Id: Id
-          Source: ConceptId
-          Relation: ConceptId
-          Target: ConceptId }
+          Source: ConceptId.T
+          Relation: ConceptId.T
+          Target: ConceptId.T }
 
     let create id source relation target =
         { Id = id

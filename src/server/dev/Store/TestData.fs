@@ -8,35 +8,54 @@ open Dapper.FSharp.SQLite
 
 open SilverBrain.Core
 open SilverBrain.Store
+open SilverBrain.Domain.ConceptMap
 
 module TestData =
     let now = DateTime.UtcNow |> DateTime.toIsoString
 
     module Concept =
-        let editor = Dao.Concept.create "0001" "Editor" "" "" "" now now
+        let editor = Dao.Concept.create ConceptId.generateString "Editor" "" "" "" now now
 
         let emacs =
-            Dao.Concept.create "0002" "Emacs" "The Emacs editor." "text/org" "* Title\nThe editor of gods" now now
+            Dao.Concept.create
+                ConceptId.generateString
+                "Emacs"
+                "The Emacs eingditor."
+                "text/org"
+                "* Title\nThe editor of gods"
+                now
+                now
 
         let vim =
-            Dao.Concept.create "0003" "Vim" "The Vim editor." "text/md" "# Title\nThe god of editors" now now
+            Dao.Concept.create
+                ConceptId.generateString
+                "Vim"
+                "The Vim editor."
+                "text/md"
+                "# Title\nThe god of editors"
+                now
+                now
 
-        let k8s = Dao.Concept.create "0004" "Kubernates" "" "" "" now now
+        let k8s = Dao.Concept.create ConceptId.generateString "Kubernates" "" "" "" now now
 
-        let docker = Dao.Concept.create "0005" "Docker" "" "" "" now now
+        let docker = Dao.Concept.create ConceptId.generateString "Docker" "" "" "" now now
 
-        let dockerFile = Dao.Concept.create "0006" "DockerFile" "" "" "" now now
+        let dockerFile =
+            Dao.Concept.create ConceptId.generateString "DockerFile" "" "" "" now now
 
         let configurationFile =
-            Dao.Concept.create "0007" "Configuration File" "" "" "" now now
+            Dao.Concept.create ConceptId.generateString "Configuration File" "" "" "" now now
 
-        let isA = Dao.Concept.create "0008" "Is a" "" "" "" now now
+        let isA = Dao.Concept.create ConceptId.generateString "Is a" "" "" "" now now
 
-        let isPartOf = Dao.Concept.create "0009" "Is Part of" "" "" "" now now
+        let isPartOf =
+            Dao.Concept.create ConceptId.generateString "Is Part of" "" "" "" now now
 
-        let relatesTo = Dao.Concept.create "0010" "Relates To" "" "" "" now now
+        let relatesTo =
+            Dao.Concept.create ConceptId.generateString "Relates To" "" "" "" now now
 
-        let supports = Dao.Concept.create "0011" "Supports" "" "" "" now now
+        let supports =
+            Dao.Concept.create ConceptId.generateString "Supports" "" "" "" now now
 
     module ConceptAlias =
         let emacs = Dao.ConceptAlias.create "1001" Concept.emacs.Id "Editor MACroS"

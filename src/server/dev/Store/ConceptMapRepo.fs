@@ -41,7 +41,7 @@ module Dao =
               UpdatedAt = updatedAt }
 
         let ofDomainType (concept: Concept.T) : T =
-            { Id = concept.Id.Value
+            { Id = concept.Id |> ConceptId.toString
               Name = concept.Name
               Summary = Option.defaultValue "" concept.Summary
               ContentType = Option.defaultValue "" concept.ContentType
@@ -50,7 +50,7 @@ module Dao =
               UpdatedAt = Option.defaultValue DateTime.UtcNow concept.UpdatedAt |> DateTime.toIsoString }
 
         let toDomainType (options: ConceptRepoLoadOptions.T) (t: T) : Concept.T =
-            Concept.create (ConceptId t.Id) t.Name
+            Concept.create (ConceptId.T t.Id) t.Name
             |> if options.LoadSummary then
                    Concept.withSummary t.Summary
                else
@@ -118,9 +118,9 @@ module Dao =
 
         let toDomainType (t: T) : ConceptLink.T =
             { Id = Id t.Id
-              Source = ConceptId t.SourceId
-              Relation = ConceptId t.RelationId
-              Target = ConceptId t.TargetId }
+              Source = ConceptId.T t.SourceId
+              Relation = ConceptId.T t.RelationId
+              Target = ConceptId.T t.TargetId }
 
     module ConceptPropertyIsRelation =
         [<CLIMutable>]
@@ -134,7 +134,7 @@ module ConceptRepo =
     let save (conn: IDbConnection) (concept: Concept.T) : unit Async =
         Store.save conn Dao.Concept.table (Dao.Concept.ofDomainType concept)
 
-    let getbyId (conn: IDbConnection) (options: ConceptRepoLoadOptions.T) (ConceptId id) : Concept.T option Async =
+    let getbyId (conn: IDbConnection) (options: ConceptRepoLoadOptions.T) (ConceptId.T id) : Concept.T option Async =
         let query =
             select {
                 for dao in Dao.Concept.table do
@@ -146,8 +146,12 @@ module ConceptRepo =
             return result |> map (Dao.Concept.toDomainType options)
         }
 
-    let getByIds (conn: IDbConnection) (options: ConceptRepoLoadOptions.T) (ids: ConceptId seq) : Concept.T seq Async =
-        let ids' = ids |> Seq.toList |> map (fun it -> it.Value)
+    let getByIds
+        (conn: IDbConnection)
+        (options: ConceptRepoLoadOptions.T)
+        (ids: ConceptId.T seq)
+        : Concept.T seq Async =
+        let ids' = ids |> Seq.toList |> map ConceptId.toString
 
         let query =
             select {
@@ -161,7 +165,7 @@ module ConceptRepo =
         }
 
 module ConceptLinkRepo =
-    let getByConceptId (conn: IDbConnection) (ConceptId id) : ConceptLink.T seq Async =
+    let getByConceptId (conn: IDbConnection) (ConceptId.T id) : ConceptLink.T seq Async =
         let query =
             select {
                 for link in Dao.ConceptLink.table do
@@ -175,7 +179,7 @@ module ConceptLinkRepo =
         }
 
 module ConceptAliasRepo =
-    let getByConceptId (conn: IDbConnection) (ConceptId id) : Concept.Alias.T seq Async =
+    let getByConceptId (conn: IDbConnection) (ConceptId.T id) : Concept.Alias.T seq Async =
         let query =
             select {
                 for dao in Dao.ConceptAlias.table do
@@ -188,7 +192,7 @@ module ConceptAliasRepo =
         }
 
 module ConceptAttachmentRepo =
-    let getByConceptId (conn: IDbConnection) (ConceptId id) : Attachment.T seq Async =
+    let getByConceptId (conn: IDbConnection) (ConceptId.T id) : Attachment.T seq Async =
         let getConceptAttachmentsQuery =
             select {
                 for dao in Dao.ConceptAttachment.table do
@@ -215,7 +219,7 @@ module ConceptAttachmentRepo =
         }
 
 module ConceptPropertyRepo =
-    let isRelation (conn: IDbConnection) (ConceptId id) : bool Async =
+    let isRelation (conn: IDbConnection) (ConceptId.T id) : bool Async =
         let query =
             select {
                 for dao in Dao.ConceptPropertyIsRelation.table do
