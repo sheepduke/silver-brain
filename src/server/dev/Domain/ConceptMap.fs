@@ -170,7 +170,7 @@ module ConceptMap =
                     return Ok()
             })
 
-    let getConceptLinks (context: RequestContext.T) (level: uint) (id: ConceptId.T) : ConceptLink.T seq Async =
+    let getConceptLinks (context: RequestContext.T) (level: int) (id: ConceptId.T) : ConceptLink.T seq Async =
         let extractIdsFromLink (link: ConceptLink.T) = [ link.Source; link.Target ]
 
         let mutable processedIds = Set.empty
@@ -180,7 +180,7 @@ module ConceptMap =
         use conn = RequestContext.createDbConnection context
 
         async {
-            for _ in 1u .. level do
+            for _ in 1..level do
                 for id in nextIds do
                     let! links = ConceptLinkRepo.getByConceptId conn id
                     processedIds <- Set.add id processedIds

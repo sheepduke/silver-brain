@@ -91,8 +91,8 @@ module ConceptMapRoute =
 
             let level =
                 match context.TryGetQueryStringValue "level" with
-                | None -> 1u
-                | Some value -> System.Convert.ToUInt32 value
+                | None -> 1
+                | Some value -> System.Convert.ToInt32 value
 
             task {
                 let! links = ConceptMap.getConceptLinks requestContext level (ConceptId.T id)
