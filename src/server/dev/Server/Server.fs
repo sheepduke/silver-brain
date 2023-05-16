@@ -33,9 +33,30 @@ module RestApi =
                     [ GET
                       >=> choose
                           [ route "/concepts" >=> ConceptMapRoute.getManyConcept
+                            route "/concepts/search" >=> text "search concepts"
                             routef "/concepts/%s" ConceptMapRoute.getConcept
-                            routef "/concepts/%s/links" ConceptMapRoute.getConceptLink ]
-                      POST >=> choose [ route "/concepts" >=> ConceptMapRoute.createConcept ] ])
+                            routef "/concepts/%s/links" ConceptMapRoute.getConceptLink
+                            route "/attachments/%s" >=> text "get attachments" ]
+                      POST
+                      >=> choose
+                          [ route "/concepts" >=> ConceptMapRoute.createConcept
+                            route "/concept-aliases" >=> text "create alias"
+                            route "/concept-links" >=> text "create link"
+                            route "/attachments" >=> text "create attachment"
+                            route "/concepts/%s/attachments" >=> text "attach a file to concept" ]
+                      PATCH
+                      >=> choose
+                          [ route "/concepts/%s" >=> text "update concept"
+                            route "/concept-aliases/%s" >=> text "update alias"
+                            route "/concept/%s/properties" >=> text "update property"
+                            route "/attachments/%s" >=> text "change an attachment" ]
+                      DELETE
+                      >=> choose
+                          [ route "/concepts/%s" >=> text "delete concept"
+                            route "/concept-aliases/%s" >=> text "delete alias"
+                            route "/concept-links/%s" >=> text "delete link"
+                            route "/attachments/%s" >=> text "delete attachment"
+                            route "/concept/%s/attachments/%s" >=> text "remove an attachment from concept" ] ])
 
         let configureApp (app: IApplicationBuilder) =
             app.UseGiraffe endpoints
