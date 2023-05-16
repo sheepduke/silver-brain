@@ -55,7 +55,7 @@ module ConceptMapRoute =
                 let! id = ConceptMap.createConcept requestContext request
 
                 context.SetStatusCode StatusCodes.Status201Created
-                return! context.WriteJsonAsync {| Id = id.Value |}
+                return! context.WriteJsonAsync {| Id = ConceptId.toString id |}
             })
 
     let getConcept (id: string) : HttpHandler =
@@ -64,9 +64,7 @@ module ConceptMapRoute =
             let options = createGetConceptOptions context
 
             task {
-                let! conceptOpt = ConceptMap.getConcept requestContext options (ConceptId id)
-
-                printfn "%A" conceptOpt
+                let! conceptOpt = ConceptMap.getConcept requestContext options (ConceptId.T id)
 
                 return!
                     match conceptOpt with
@@ -80,7 +78,7 @@ module ConceptMapRoute =
         handleContext (fun context ->
             let requestContext = createRequestContext context
             let options = createGetConceptOptions context
-            let ids = context.GetQueryStringSeq "ids" |> map ConceptId
+            let ids = context.GetQueryStringSeq "ids" |> map ConceptId.T
 
             task {
                 let! concepts = ConceptMap.getManyConcepts requestContext options ids
@@ -97,6 +95,6 @@ module ConceptMapRoute =
                 | Some value -> System.Convert.ToUInt32 value
 
             task {
-                let! links = ConceptMap.getConceptLinks requestContext level (ConceptId id)
+                let! links = ConceptMap.getConceptLinks requestContext level (ConceptId.T id)
                 return! context.WriteJsonAsync links
             })
