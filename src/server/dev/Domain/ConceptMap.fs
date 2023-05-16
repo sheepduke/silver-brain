@@ -84,7 +84,7 @@ module ConceptMap =
 
     let createConcept (context: RequestContext.T) (request: CreateConceptRequest.T) : ConceptId.T Async =
         async {
-            let id = ConceptId.generate
+            let id = ConceptId.generate ()
             let now = DateTime.UtcNow
 
             let concept =
