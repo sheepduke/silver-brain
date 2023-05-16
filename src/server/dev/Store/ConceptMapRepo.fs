@@ -78,7 +78,8 @@ module Dao =
               ConceptId = conceptId
               Alias = alias }
 
-        let toDomainType (t: T) : Concept.Alias.T = Concept.Alias.create (Id t.Id) t.Alias
+        let toDomainType (t: T) : Concept.Alias.T =
+            Concept.Alias.create (Id.T t.Id) t.Alias
 
     module Attachment =
         [<CLIMutable>]
@@ -90,7 +91,7 @@ module Dao =
         let table = table'<T> "Attachment"
 
         let toDomainType (t: T) : Attachment.T =
-            Attachment.create (Id t.Id) t.Name (FilePath t.FilePath)
+            Attachment.create (Id.T t.Id) t.Name (FilePath t.FilePath)
 
     module ConceptAttachment =
         [<CLIMutable>]
@@ -117,7 +118,7 @@ module Dao =
               TargetId = targetId }
 
         let toDomainType (t: T) : ConceptLink.T =
-            { Id = Id t.Id
+            { Id = Id.T t.Id
               Source = ConceptId.T t.SourceId
               Relation = ConceptId.T t.RelationId
               Target = ConceptId.T t.TargetId }

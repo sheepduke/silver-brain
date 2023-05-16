@@ -20,7 +20,7 @@ module ConceptIdNotFoundError =
 
 module Attachment =
     type T =
-        { Id: Id
+        { Id: Id.T
           Name: string
           FilePath: FilePath }
 
@@ -36,7 +36,7 @@ module ConceptProperty =
 
 module Concept =
     module Alias =
-        type T = { Id: Id; Alias: string }
+        type T = { Id: Id.T; Alias: string }
 
         let create id alias = { Id = id; Alias = alias }
 
@@ -102,7 +102,7 @@ module Concept =
 
 module ConceptLink =
     type T =
-        { Id: Id
+        { Id: Id.T
           Source: ConceptId.T
           Relation: ConceptId.T
           Target: ConceptId.T }
