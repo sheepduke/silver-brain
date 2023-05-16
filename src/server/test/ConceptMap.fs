@@ -27,7 +27,7 @@ module ConceptMapTests =
             let options = GetConceptOptions.create
 
             async {
-                let id = ConceptId.T TestData.Concept.emacs.Id
+                let id = ConceptId TestData.Concept.emacs.Id
 
                 let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
 
@@ -44,7 +44,7 @@ module ConceptMapTests =
     [<Test>]
     let ``getConcept - With times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let id = ConceptId.T TestData.Concept.vim.Id
+            let id = ConceptId TestData.Concept.vim.Id
 
             let options =
                 { GetConceptOptions.create with
@@ -65,7 +65,7 @@ module ConceptMapTests =
     [<Test>]
     let ``getConcept - With aliases`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let id = ConceptId.T TestData.Concept.emacs.Id
+            let id = ConceptId TestData.Concept.emacs.Id
 
             let options =
                 { GetConceptOptions.create with
@@ -86,7 +86,7 @@ module ConceptMapTests =
     [<Test>]
     let ``getConcept - With all`` () =
         TestSqliteContext.withTempDatabase (fun context ->
-            let id = ConceptId.T TestData.Concept.k8s.Id
+            let id = ConceptId TestData.Concept.k8s.Id
 
             let options =
                 { GetConceptOptions.create with
@@ -110,7 +110,7 @@ module ConceptMapTests =
         TestSqliteContext.withTempDatabase (fun context ->
             let ids =
                 [ TestData.Concept.emacs; TestData.Concept.vim ]
-                |> map (fun x -> ConceptId.T x.Id)
+                |> map (fun x -> ConceptId x.Id)
 
             let options = GetConceptOptions.create
 
@@ -128,7 +128,7 @@ module ConceptMapTests =
     let ``getManyConcepts - With aliases and times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let concept = TestData.Concept.k8s
-            let id = ConceptId.T concept.Id
+            let id = ConceptId concept.Id
 
             let options =
                 { GetConceptOptions.create with
@@ -155,7 +155,7 @@ module ConceptMapTests =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
                 let! links =
-                    ConceptMap.getConceptLinks context.ToRequestContext 1 (ConceptId.T TestData.Concept.emacs.Id)
+                    ConceptMap.getConceptLinks context.ToRequestContext 1 (ConceptId TestData.Concept.emacs.Id)
 
                 let expected =
                     [ TestData.ConceptLink.emacsRelatesVim; TestData.ConceptLink.emacsIsEditor ]
@@ -169,7 +169,7 @@ module ConceptMapTests =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
                 let! links =
-                    ConceptMap.getConceptLinks context.ToRequestContext 2 (ConceptId.T TestData.Concept.emacs.Id)
+                    ConceptMap.getConceptLinks context.ToRequestContext 2 (ConceptId TestData.Concept.emacs.Id)
 
                 let expected =
                     [ TestData.ConceptLink.emacsIsEditor

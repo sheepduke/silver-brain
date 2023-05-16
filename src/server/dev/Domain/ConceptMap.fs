@@ -82,7 +82,7 @@ module ConceptMap =
             return concept
         }
 
-    let createConcept (context: RequestContext.T) (request: CreateConceptRequest.T) : ConceptId.T Async =
+    let createConcept (context: RequestContext.T) (request: CreateConceptRequest.T) : ConceptId Async =
         async {
             let id = ConceptId.generate ()
             let now = DateTime.UtcNow
@@ -100,11 +100,7 @@ module ConceptMap =
             return id
         }
 
-    let getConcept
-        (context: RequestContext.T)
-        (options: GetConceptOptions.T)
-        (id: ConceptId.T)
-        : Concept.T option Async =
+    let getConcept (context: RequestContext.T) (options: GetConceptOptions.T) (id: ConceptId) : Concept.T option Async =
         async {
             // Set basic information.
             use conn = RequestContext.createDbConnection context
@@ -120,7 +116,7 @@ module ConceptMap =
     let getManyConcepts
         (context: RequestContext.T)
         (options: GetConceptOptions.T)
-        (ids: ConceptId.T seq)
+        (ids: ConceptId seq)
         : Concept.T seq Async =
 
         async {
@@ -140,7 +136,7 @@ module ConceptMap =
     let updateConcept
         (context: RequestContext.T)
         (request: UpdateConceptRequest.T)
-        (id: ConceptId.T)
+        (id: ConceptId)
         : Result<unit, ConceptIdNotFoundError.T> Async =
         use conn = RequestContext.createDbConnection context
 
@@ -170,7 +166,7 @@ module ConceptMap =
                     return Ok()
             })
 
-    let getConceptLinks (context: RequestContext.T) (level: int) (id: ConceptId.T) : ConceptLink.T seq Async =
+    let getConceptLinks (context: RequestContext.T) (level: int) (id: ConceptId) : ConceptLink.T seq Async =
         let extractIdsFromLink (link: ConceptLink.T) = [ link.Source; link.Target ]
 
         let mutable processedIds = Set.empty

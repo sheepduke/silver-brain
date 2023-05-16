@@ -64,7 +64,7 @@ module ConceptMapRoute =
             let options = createGetConceptOptions context
 
             task {
-                let! conceptOpt = ConceptMap.getConcept requestContext options (ConceptId.T id)
+                let! conceptOpt = ConceptMap.getConcept requestContext options (ConceptId id)
 
                 return!
                     match conceptOpt with
@@ -78,7 +78,7 @@ module ConceptMapRoute =
         handleContext (fun context ->
             let requestContext = createRequestContext context
             let options = createGetConceptOptions context
-            let ids = context.GetQueryStringSeq "ids" |> map ConceptId.T
+            let ids = context.GetQueryStringSeq "ids" |> map ConceptId
 
             task {
                 let! concepts = ConceptMap.getManyConcepts requestContext options ids
@@ -95,6 +95,6 @@ module ConceptMapRoute =
                 | Some value -> System.Convert.ToInt32 value
 
             task {
-                let! links = ConceptMap.getConceptLinks requestContext level (ConceptId.T id)
+                let! links = ConceptMap.getConceptLinks requestContext level (ConceptId id)
                 return! context.WriteJsonAsync links
             })
