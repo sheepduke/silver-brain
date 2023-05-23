@@ -13,6 +13,7 @@ nuget Ksuid
 nuget Microsoft.Data.Sqlite
 nuget FSharp.SystemTextJson 
 nuget Giraffe
+nuget FParsec
 
 # Test
 nuget FsUnit

@@ -1,7 +1,6 @@
 namespace SilverBrain.Test
 
 open FsUnit
-open System
 open System.IO
 
 open SilverBrain.Core
