@@ -7,3 +7,4 @@ Microsoft.Data.Sqlite
 FSharp.SystemTextJson
 Giraffe
 Ksuid
+FParsec

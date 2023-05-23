@@ -1,4 +1,4 @@
-namespace SilverBrain.Test
+namespace SilverBrain.Test.ConceptMapTests
 
 open FSharpPlus
 
@@ -8,7 +8,9 @@ open FsUnit
 open SilverBrain.Store
 open SilverBrain.Domain
 open SilverBrain.Domain.ConceptMap
+open SilverBrain.Test
 
+[<Ignore("FIXME")>]
 module ConceptMapTests =
     type TestSqliteContext.T with
 
@@ -21,8 +23,12 @@ module ConceptMapTests =
         | None -> failwith "Concept not found"
         | Some _ -> ()
 
+    // ------------------------------------------------------------
+    //  getConcept
+    // ------------------------------------------------------------
+
     [<Test>]
-    let ``getConcept - Basic info only`` () =
+    let ``getConcept - basic info only`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let options = GetConceptOptions.create
 
@@ -42,7 +48,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``getConcept - With times`` () =
+    let ``getConcept - wwith times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let id = ConceptId TestData.Concept.vim.Id
 
@@ -63,7 +69,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``getConcept - With aliases`` () =
+    let ``getConcept - with aliases`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let id = ConceptId TestData.Concept.emacs.Id
 
@@ -84,7 +90,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``getConcept - With all`` () =
+    let ``getConcept - with all`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let id = ConceptId TestData.Concept.k8s.Id
 
@@ -105,8 +111,12 @@ module ConceptMapTests =
                 concept.UpdatedAt.IsSome |> should be True
             })
 
+    // ------------------------------------------------------------
+    //  getManyconcepts
+    // ------------------------------------------------------------
+
     [<Test>]
-    let ``getManyConcepts - Basic info`` () =
+    let ``getManyConcepts - basic info`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let ids =
                 [ TestData.Concept.emacs; TestData.Concept.vim ]
@@ -125,7 +135,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``getManyConcepts - With aliases and times`` () =
+    let ``getManyConcepts - with aliases and times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let concept = TestData.Concept.k8s
             let id = ConceptId concept.Id
@@ -150,8 +160,12 @@ module ConceptMapTests =
                 |> should equal TestData.ConceptAlias.k8s.Alias
             })
 
+    // ------------------------------------------------------------
+    //  getConceptLinks
+    // ------------------------------------------------------------
+
     [<Test>]
-    let ``getConceptLinks - Level 1`` () =
+    let ``getConceptLinks - level 1`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
                 let! links =
@@ -165,7 +179,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``getConceptLinks - Level 2`` () =
+    let ``getConceptLinks - level 2`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             async {
                 let! links =

@@ -17,6 +17,8 @@ NUGET
       dbup-core (>= 5.0.8)
       Microsoft.Data.Sqlite (>= 1.0.1)
       NETStandard.Library (>= 1.6.1)
+    FParsec (1.1.1)
+      FSharp.Core (>= 4.3.4)
     FSharp.Core (7.0.200)
     FSharp.SystemTextJson (1.1.23)
       FSharp.Core (>= 4.7)
