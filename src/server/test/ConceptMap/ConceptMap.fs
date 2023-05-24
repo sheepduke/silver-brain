@@ -41,7 +41,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``getConcept - wwith times`` () =
+    let ``getConcept - with times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let id = ConceptId TestData.Concept.vim.Id
 
