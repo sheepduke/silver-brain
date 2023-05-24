@@ -19,31 +19,27 @@ module RequestContext =
 
 module GetConceptOptions =
     type T =
-        { LoadSummary: bool
-          LoadContent: bool
+        { LoadContent: bool
           LoadTimes: bool
           LoadAliases: bool
           LoadAttachments: bool
           LoadProperties: bool }
 
     let create =
-        { LoadSummary = false
-          LoadContent = false
+        { LoadContent = false
           LoadTimes = false
           LoadAliases = false
           LoadAttachments = false
           LoadProperties = false }
 
     let toRepoLoadOptions (t: T) : ConceptRepoLoadOptions.T =
-        { ConceptRepoLoadOptions.LoadSummary = t.LoadSummary
-          ConceptRepoLoadOptions.LoadContent = t.LoadContent
+        { ConceptRepoLoadOptions.LoadContent = t.LoadContent
           ConceptRepoLoadOptions.LoadTimes = t.LoadTimes }
 
 module CreateConceptRequest =
     [<CLIMutable>]
     type T =
         { Name: string
-          Summary: string option
           ContentType: string option
           Content: string option }
 
@@ -51,7 +47,6 @@ module UpdateConceptRequest =
     [<CLIMutable>]
     type T =
         { Name: string option
-          Summary: string option
           ContentType: string option
           Content: string option }
 
@@ -89,7 +84,6 @@ module ConceptMap =
 
             let concept =
                 { Concept.create id request.Name with
-                    Concept.Summary = request.Summary
                     Concept.ContentType = request.ContentType
                     Concept.Content = request.Content }
                 |> Concept.withTimes now now
@@ -169,7 +163,6 @@ module ConceptMap =
 
         let options =
             { GetConceptOptions.create with
-                LoadSummary = true
                 LoadContent = true
                 LoadTimes = true
                 LoadProperties = true }
@@ -185,7 +178,6 @@ module ConceptMap =
                     let concept': Concept.T =
                         { concept with
                             Concept.Name = Option.defaultValue concept.Name request.Name
-                            Concept.Summary = Option.defaultValue concept.Summary <| Some request.Summary
                             Concept.ContentType = Option.defaultValue concept.ContentType <| Some request.ContentType
                             Concept.Content = Option.defaultValue concept.Content <| Some request.Content }
 

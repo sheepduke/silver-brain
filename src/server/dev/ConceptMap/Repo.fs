@@ -10,10 +10,7 @@ open SilverBrain.Core
 open SilverBrain.Store
 
 module ConceptRepoLoadOptions =
-    type T =
-        { LoadSummary: bool
-          LoadContent: bool
-          LoadTimes: bool }
+    type T = { LoadContent: bool; LoadTimes: bool }
 
 [<RequireQualifiedAccess>]
 module Dao =
@@ -23,7 +20,6 @@ module Dao =
         type T =
             { Id: string
               Name: string
-              Summary: string
               ContentType: string
               Content: string
               CreatedAt: string
@@ -31,10 +27,9 @@ module Dao =
 
         let table = table'<T> "Concept"
 
-        let create id name summary contentType content createdAt updatedAt =
+        let create id name contentType content createdAt updatedAt =
             { Id = id
               Name = name
-              Summary = summary
               ContentType = contentType
               Content = content
               CreatedAt = createdAt
@@ -43,7 +38,6 @@ module Dao =
         let ofDomainType (concept: Concept.T) : T =
             { Id = concept.Id |> ConceptId.toString
               Name = concept.Name
-              Summary = Option.defaultValue "" concept.Summary
               ContentType = Option.defaultValue "" concept.ContentType
               Content = Option.defaultValue "" concept.Content
               CreatedAt = Option.defaultValue DateTime.UtcNow concept.CreatedAt |> DateTime.toIsoString
@@ -51,10 +45,6 @@ module Dao =
 
         let toDomainType (options: ConceptRepoLoadOptions.T) (t: T) : Concept.T =
             Concept.create (ConceptId t.Id) t.Name
-            |> if options.LoadSummary then
-                   Concept.withSummary t.Summary
-               else
-                   Concept.withoutSummary
             |> if options.LoadContent then
                    Concept.withContent t.ContentType t.Content
                else

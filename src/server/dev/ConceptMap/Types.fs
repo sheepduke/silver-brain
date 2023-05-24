@@ -44,7 +44,6 @@ module Concept =
     type T =
         { Id: ConceptId
           Name: string
-          Summary: string option
           ContentType: string option
           Content: string option
           CreatedAt: DateTime option
@@ -56,7 +55,6 @@ module Concept =
     let create id name =
         { Id = id
           Name = name
-          Summary = None
           ContentType = None
           Content = None
           CreatedAt = None
@@ -66,10 +64,6 @@ module Concept =
           Properties = None }
 
     let withName name concept = { concept with Name = name }
-
-    let withSummary summary concept = { concept with Summary = Some summary }
-
-    let withoutSummary concept = { concept with Summary = None }
 
     let withContent contentType content concept =
         { concept with

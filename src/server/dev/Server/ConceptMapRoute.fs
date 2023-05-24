@@ -26,7 +26,6 @@ module ConceptMapRoute =
             isSelectAll || Seq.contains prop selectProps
 
         { GetConceptOptions.create with
-            GetConceptOptions.LoadSummary = isSelected "summary"
             GetConceptOptions.LoadContent = isSelected "content"
             GetConceptOptions.LoadAliases = isSelected "aliases"
             GetConceptOptions.LoadAttachments = isSelected "attachments"

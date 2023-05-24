@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS Concept (
     Id TEXT PRIMARY KEY,
     Name TEXT NOT NULL,
-    Summary TEXT NOT NULL,
     ContentType TEXT NOT NULL,
     Content TEXT NOT NULL,
     CreatedAt TEXT NOT NULL,
