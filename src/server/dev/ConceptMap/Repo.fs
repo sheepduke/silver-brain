@@ -1,4 +1,4 @@
-namespace SilverBrain.Store
+namespace SilverBrain.ConceptMap
 
 open FSharpPlus
 
@@ -7,7 +7,7 @@ open System.Data
 open Dapper.FSharp.SQLite
 
 open SilverBrain.Core
-open SilverBrain.Domain.ConceptMap
+open SilverBrain.Store
 
 module ConceptRepoLoadOptions =
     type T =

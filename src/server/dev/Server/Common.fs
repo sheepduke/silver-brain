@@ -2,24 +2,12 @@ namespace SilverBrain.Server
 
 open FSharpPlus
 
-open System.IO
-
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
-open Microsoft.Extensions.FileProviders
 open Giraffe
-
-open System.Text.Json
-open System.Text.Json.Serialization
 
 open SilverBrain.Core
 open SilverBrain.Store
-open SilverBrain.Domain
-open SilverBrain.Domain.ConceptMap
 
 type RootDataDirectory =
     | RootDataDirectory of FilePath

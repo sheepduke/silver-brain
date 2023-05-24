@@ -1,4 +1,4 @@
-namespace SilverBrain.Store
+namespace SilverBrain
 
 open System
 open System.IO
@@ -8,7 +8,7 @@ open Dapper.FSharp.SQLite
 
 open SilverBrain.Core
 open SilverBrain.Store
-open SilverBrain.Domain.ConceptMap
+open SilverBrain.ConceptMap
 
 module TestData =
     let now = DateTime.UtcNow |> DateTime.toIsoString

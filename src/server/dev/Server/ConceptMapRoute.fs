@@ -3,21 +3,10 @@ namespace SilverBrain.Server
 open FSharpPlus
 
 open Giraffe
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Options
-open Microsoft.Extensions.FileProviders
 
-open System.Text.Json
-open System.Text.Json.Serialization
-
-open SilverBrain.Core
 open SilverBrain.Store
-open SilverBrain.Domain
-open SilverBrain.Domain.ConceptMap
+open SilverBrain.ConceptMap
 
 module ConceptMapRoute =
     let private createRequestContext (context: HttpContext) =

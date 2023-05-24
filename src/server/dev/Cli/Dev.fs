@@ -1,8 +1,9 @@
 namespace SilverBrain.Cli
 
 open Argu
+
+open SilverBrain
 open SilverBrain.Core
-open SilverBrain.Store
 
 module Dev =
     type InitArgs =
