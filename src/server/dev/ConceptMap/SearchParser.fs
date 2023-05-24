@@ -1,4 +1,4 @@
-namespace SilverBrain.Domain.ConceptMap
+namespace SilverBrain.ConceptMap
 
 open FSharpPlus
 open FParsec

@@ -5,9 +5,8 @@ open FSharpPlus
 open NUnit.Framework
 open FsUnit
 
-open SilverBrain.Store
-open SilverBrain.Domain
-open SilverBrain.Domain.ConceptMap
+open SilverBrain
+open SilverBrain.ConceptMap
 open SilverBrain.Test
 
 module ConceptMapTests =

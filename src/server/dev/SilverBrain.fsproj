@@ -9,17 +9,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Core.fs" />
-    <Compile Include="DomainType/ConceptMap.fs" />
     <Compile Include="Store/Store.fs" />
     <Compile Include="Store/Migration.fs" />
-    <Compile Include="Store/ConceptMapRepo.fs" />
-    <Compile Include="Store/TestData.fs" />
-    <Compile Include="Domain/ConceptMap/SearchParser.fs" />
-    <Compile Include="Domain/ConceptMap/SearchEngine.fs" />
-    <Compile Include="Domain/ConceptMap/ConceptMap.fs" />
+    <Compile Include="ConceptMap/Types.fs" />
+    <Compile Include="ConceptMap/Repo.fs" />
+    <Compile Include="ConceptMap/SearchParser.fs" />
+    <Compile Include="ConceptMap/SearchEngine.fs" />
+    <Compile Include="ConceptMap/ConceptMap.fs" />
     <Compile Include="Server/Common.fs" />
     <Compile Include="Server/ConceptMapRoute.fs" />
     <Compile Include="Server/Server.fs" />
+    <Compile Include="TestData.fs" />
     <Compile Include="Cli/Dev.fs" />
     <Compile Include="Cli/Server.fs" />
     <Compile Include="Program.fs" />

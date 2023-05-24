@@ -2,7 +2,7 @@ namespace SilverBrain.Test.ConceptMapTests
 
 open NUnit.Framework
 
-open SilverBrain.Domain.ConceptMap.SearchParser
+open SilverBrain.ConceptMap.SearchParser
 
 module SearchParserTests =
     let (=>) input expected =

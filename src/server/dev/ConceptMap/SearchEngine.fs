@@ -1,12 +1,9 @@
-namespace SilverBrain.Domain.ConceptMap
+namespace SilverBrain.ConceptMap
 
 open FSharpPlus
-open Dapper.FSharp.SQLite
-open System
 open System.Data
 
 open SearchParser
-open SilverBrain.Store
 
 module SearchEngine =
     type SearchResult = ConceptId seq

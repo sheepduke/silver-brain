@@ -3,6 +3,7 @@ namespace SilverBrain.Test
 open FsUnit
 open System.IO
 
+open SilverBrain
 open SilverBrain.Core
 open SilverBrain.Store
 
