@@ -21,14 +21,14 @@ module GetConceptOptions =
     type T =
         { LoadContent: bool
           LoadTimes: bool
-          LoadAliases: bool
+          LoadKeywords: bool
           LoadAttachments: bool
           LoadProperties: bool }
 
     let create =
         { LoadContent = false
           LoadTimes = false
-          LoadAliases = false
+          LoadKeywords = false
           LoadAttachments = false
           LoadProperties = false }
 
@@ -59,10 +59,10 @@ module ConceptMap =
         let mutable concept = concept
 
         async {
-            // Optionally load aliases.
-            if options.LoadAliases then
-                let! aliases = ConceptAliasRepo.getByConceptId conn concept.Id
-                concept <- Concept.withAliases aliases concept
+            // Optionally load keywords.
+            if options.LoadKeywords then
+                let! keywords = ConceptKeywordRepo.getByConceptId conn concept.Id
+                concept <- Concept.withKeywords keywords concept
 
             // Optionally load attachments.
             if options.LoadAttachments then

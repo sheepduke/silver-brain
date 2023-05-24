@@ -36,10 +36,10 @@ module ConceptProperty =
     let create = { IsRelation = None }
 
 module Concept =
-    module Alias =
-        type T = { Id: Id; Alias: string }
+    module Keyword =
+        type T = { Id: Id; Keyword: string }
 
-        let create id alias = { Id = id; Alias = alias }
+        let create id keyword = { Id = id; Keyword = keyword }
 
     type T =
         { Id: ConceptId
@@ -48,7 +48,7 @@ module Concept =
           Content: string option
           CreatedAt: DateTime option
           UpdatedAt: DateTime option
-          Aliases: Alias.T seq option
+          Keywords: Keyword.T seq option
           Attachments: Attachment.T seq option
           Properties: ConceptProperty.T option }
 
@@ -59,7 +59,7 @@ module Concept =
           Content = None
           CreatedAt = None
           UpdatedAt = None
-          Aliases = None
+          Keywords = None
           Attachments = None
           Properties = None }
 
@@ -85,7 +85,9 @@ module Concept =
             CreatedAt = None
             UpdatedAt = None }
 
-    let withAliases aliases concept = { concept with Aliases = Some aliases }
+    let withKeywords keywords concept =
+        { concept with
+            Keywords = Some keywords }
 
     let withAttachments attachments concept =
         { concept with

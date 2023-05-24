@@ -44,14 +44,14 @@ module TestData =
         let supports =
             Dao.Concept.create (ConceptId.generateString ()) "Supports" "" "" now now
 
-    module ConceptAlias =
+    module ConceptKeyword =
         let emacs =
-            Dao.ConceptAlias.create (Id.generateString ()) Concept.emacs.Id "Editor MACroS"
+            Dao.ConceptKeyword.create (Id.generateString ()) Concept.emacs.Id "Editor MACroS"
 
         let vim =
-            Dao.ConceptAlias.create (Id.generateString ()) Concept.vim.Id "Vi IMitation"
+            Dao.ConceptKeyword.create (Id.generateString ()) Concept.vim.Id "Vi IMitation"
 
-        let k8s = Dao.ConceptAlias.create (Id.generateString ()) Concept.k8s.Id "K8s"
+        let k8s = Dao.ConceptKeyword.create (Id.generateString ()) Concept.k8s.Id "K8s"
 
     module ConceptPropertyIsRelation =
         let isA = Dao.ConceptPropertyIsRelation.create Concept.isA.Id
@@ -114,9 +114,9 @@ module TestData =
             |> ignore
 
             insert {
-                into Dao.ConceptAlias.table
+                into Dao.ConceptKeyword.table
 
-                values [ ConceptAlias.emacs; ConceptAlias.vim; ConceptAlias.k8s ]
+                values [ ConceptKeyword.emacs; ConceptKeyword.vim; ConceptKeyword.k8s ]
             }
             |> conn.InsertAsync
             |> ignore
