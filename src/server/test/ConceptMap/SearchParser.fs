@@ -99,6 +99,7 @@ module SearchParserTests =
         "one OR two" => o (sl "one") (sl "two")
         "oneOR two" => a (sl "oneOR") (sl "two")
         "one OR \"two\"" => o (sl "one") (sq "two")
+        "one OR two||three" => o (sl "one") (o (sl "two") (sl "three"))
 
         // NOT.
         "NOT one" => n (sl "one")

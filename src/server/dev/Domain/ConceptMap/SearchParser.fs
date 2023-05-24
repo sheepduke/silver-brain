@@ -16,14 +16,28 @@ module SearchParser =
         | LiteralString of string
         | QuotedString of string
 
+        member this.String: string =
+            match this with
+            | LiteralString value -> value
+            | QuotedString value -> value
+
+    type StringQuery = AnyString
+    type PropertyFilter = ComparisonOperator * AnyString * AnyString
+    type TagFilter = ComparisonOperator * AnyString * AnyString
+    type Condition = AnyString * AnyString
+
     type Query =
-        | StringQuery of AnyString
-        | PropertyFilter of (ComparisonOperator * AnyString * AnyString)
-        | TagFilter of (ComparisonOperator * AnyString * AnyString)
-        | Condition of (AnyString * AnyString)
+        | StringQuery of StringQuery
+        | PropertyFilter of PropertyFilter
+        | TagFilter of TagFilter
+        | Condition of Condition
         | AndQuery of (Query * Query)
         | OrQuery of (Query * Query)
         | NotQuery of Query
+
+    type AndQuery = Query * Query
+    type OrQuery = Query * Query
+    type NotQuery = Query
 
     module private Internal =
 
