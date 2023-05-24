@@ -27,7 +27,7 @@ module ConceptMapRoute =
 
         { GetConceptOptions.create with
             GetConceptOptions.LoadContent = isSelected "content"
-            GetConceptOptions.LoadAliases = isSelected "aliases"
+            GetConceptOptions.LoadKeywords = isSelected "aliases"
             GetConceptOptions.LoadAttachments = isSelected "attachments"
             GetConceptOptions.LoadTimes = isSelected "times"
             GetConceptOptions.LoadProperties = isSelected "properties" }

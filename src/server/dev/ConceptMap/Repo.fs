@@ -54,21 +54,22 @@ module Dao =
                else
                    Concept.withoutTimes
 
-    module ConceptAlias =
+    module ConceptKeyword =
         [<CLIMutable>]
         type T =
             { Id: string
               ConceptId: string
-              Alias: string }
+              Keyword: string }
 
-        let table = table'<T> "ConceptAlias"
+        let table = table'<T> "ConceptKeyword"
 
-        let create id conceptId alias =
+        let create id conceptId keyword =
             { Id = id
               ConceptId = conceptId
-              Alias = alias }
+              Keyword = keyword }
 
-        let toDomainType (t: T) : Concept.Alias.T = Concept.Alias.create (Id t.Id) t.Alias
+        let toDomainType (t: T) : Concept.Keyword.T =
+            Concept.Keyword.create (Id t.Id) t.Keyword
 
     module Attachment =
         [<CLIMutable>]
@@ -195,17 +196,17 @@ module ConceptLinkRepo =
             return daos |> map Dao.ConceptLink.toDomainType
         }
 
-module ConceptAliasRepo =
-    let getByConceptId (conn: IDbConnection) (ConceptId id) : Concept.Alias.T seq Async =
+module ConceptKeywordRepo =
+    let getByConceptId (conn: IDbConnection) (ConceptId id) : Concept.Keyword.T seq Async =
         let query =
             select {
-                for dao in Dao.ConceptAlias.table do
+                for dao in Dao.ConceptKeyword.table do
                     where (dao.ConceptId = id)
             }
 
         async {
-            let! result = Store.getMany<Dao.ConceptAlias.T> conn query
-            return result |> map Dao.ConceptAlias.toDomainType
+            let! result = Store.getMany<Dao.ConceptKeyword.T> conn query
+            return result |> map Dao.ConceptKeyword.toDomainType
         }
 
 module ConceptAttachmentRepo =

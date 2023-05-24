@@ -7,10 +7,10 @@ CREATE TABLE IF NOT EXISTS Concept (
     UpdatedAt TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS ConceptAlias (
+CREATE TABLE IF NOT EXISTS ConceptKeyword (
     Id TEXT PRIMARY KEY,
     ConceptId TEXT NOT NULL,
-    Alias TEXT NOT NULL,
+    Keyword TEXT NOT NULL,
     FOREIGN KEY (ConceptId) REFERENCES Concept (Id)
 ) WITHOUT ROWID;
 

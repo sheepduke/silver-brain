@@ -35,7 +35,7 @@ module ConceptMapTests =
                 let concept = conceptOpt.Value
                 concept.Id |> should equal id
                 concept.Name |> should equal "Emacs"
-                concept.Aliases.IsNone |> should be True
+                concept.Keywords.IsNone |> should be True
                 concept.CreatedAt.IsNone |> should be True
                 concept.UpdatedAt.IsNone |> should be True
             })
@@ -56,7 +56,7 @@ module ConceptMapTests =
                 let concept = conceptOpt.Value
                 concept.Id |> should equal id
                 concept.Name |> should equal "Vim"
-                concept.Aliases.IsNone |> should be True
+                concept.Keywords.IsNone |> should be True
                 concept.CreatedAt.IsSome |> should be True
                 concept.UpdatedAt.IsSome |> should be True
             })
@@ -68,7 +68,7 @@ module ConceptMapTests =
 
             let options =
                 { GetConceptOptions.create with
-                    LoadAliases = true }
+                    LoadKeywords = true }
 
             async {
                 let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
@@ -77,7 +77,7 @@ module ConceptMapTests =
                 let concept = conceptOpt.Value
                 concept.Id |> should equal id
                 concept.Name |> should equal "Emacs"
-                concept.Aliases.Value |> Seq.length |> should equal 1
+                concept.Keywords.Value |> Seq.length |> should equal 1
                 concept.CreatedAt.IsNone |> should be True
                 concept.UpdatedAt.IsNone |> should be True
             })
@@ -89,7 +89,7 @@ module ConceptMapTests =
 
             let options =
                 { GetConceptOptions.create with
-                    LoadAliases = true
+                    LoadKeywords = true
                     LoadTimes = true }
 
             async {
@@ -99,7 +99,7 @@ module ConceptMapTests =
                 let concept = conceptOpt.Value
                 concept.Id |> should equal id
                 concept.Name |> should equal "Kubernates"
-                concept.Aliases.Value |> Seq.length |> should equal 1
+                concept.Keywords.Value |> Seq.length |> should equal 1
                 concept.CreatedAt.IsSome |> should be True
                 concept.UpdatedAt.IsSome |> should be True
             })
@@ -135,7 +135,7 @@ module ConceptMapTests =
 
             let options =
                 { GetConceptOptions.create with
-                    LoadAliases = true
+                    LoadKeywords = true
                     LoadTimes = true }
 
             async {
@@ -146,12 +146,12 @@ module ConceptMapTests =
                 head.Name |> should equal concept.Name
                 head.CreatedAt.IsSome |> should equal true
                 head.UpdatedAt.IsSome |> should equal true
-                head.Aliases.Value |> Seq.length |> should equal 1
+                head.Keywords.Value |> Seq.length |> should equal 1
 
-                head.Aliases.Value
+                head.Keywords.Value
                 |> Seq.head
-                |> (fun x -> x.Alias)
-                |> should equal TestData.ConceptAlias.k8s.Alias
+                |> (fun x -> x.Keyword)
+                |> should equal TestData.ConceptKeyword.k8s.Keyword
             })
 
     // ------------------------------------------------------------
