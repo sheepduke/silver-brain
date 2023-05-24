@@ -2,6 +2,7 @@ namespace SilverBrain.Store
 
 open FSharpPlus
 
+open System
 open System.Data
 open System.IO
 open System.Transactions
@@ -33,12 +34,9 @@ module Store =
         new SqliteConnection(connectionString)
 
     let withTransaction<'T> (func: unit -> 'T Async) : 'T Async =
-        use transaction = new TransactionScope()
-
         async {
+            use _ = new TransactionScope()
             let! result = func ()
-            transaction.Complete()
-
             return result
         }
 

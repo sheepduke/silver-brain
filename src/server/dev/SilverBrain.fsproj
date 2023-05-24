@@ -15,6 +15,7 @@
     <Compile Include="Store/ConceptMapRepo.fs" />
     <Compile Include="Store/TestData.fs" />
     <Compile Include="Domain/ConceptMap/SearchParser.fs" />
+    <Compile Include="Domain/ConceptMap/SearchEngine.fs" />
     <Compile Include="Domain/ConceptMap/ConceptMap.fs" />
     <Compile Include="Server/Common.fs" />
     <Compile Include="Server/ConceptMapRoute.fs" />

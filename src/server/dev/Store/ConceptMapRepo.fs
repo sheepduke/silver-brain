@@ -160,6 +160,37 @@ module ConceptRepo =
             return result |> map (Dao.Concept.toDomainType options)
         }
 
+    let searchNameLike (conn: IDbConnection) (search: string) : ConceptId seq Async =
+        async {
+            let search = sprintf "%%%s%%" search
+
+            let query =
+                select {
+                    for concept in Dao.Concept.table do
+                        where (like concept.Name search)
+                }
+
+            let! result = Store.getMany<Dao.Concept.T> conn query
+
+            return result |> map (fun dao -> ConceptId dao.Id)
+        }
+
+    let searchNameLikeIdWithin (conn: IDbConnection) (search: string) (ids: ConceptId seq) : ConceptId seq Async =
+        async {
+            let search = sprintf "%%%s%%" search
+            let idList = ids |> Seq.toList |> map (fun (ConceptId id) -> id)
+
+            let query =
+                select {
+                    for concept in Dao.Concept.table do
+                        where (isIn concept.Id idList && like concept.Name search)
+                }
+
+            let! result = Store.getMany<Dao.Concept.T> conn query
+
+            return result |> map (fun dao -> ConceptId dao.Id)
+        }
+
 module ConceptLinkRepo =
     let getByConceptId (conn: IDbConnection) (ConceptId id) : ConceptLink.T seq Async =
         let query =

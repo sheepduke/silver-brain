@@ -133,6 +133,33 @@ module ConceptMap =
             return concepts
         }
 
+    let searchConcept
+        (context: RequestContext.T)
+        (options: GetConceptOptions.T)
+        (search: string)
+        : Result<Concept.T seq, string> Async =
+        let parseResult = SearchParser.parse search
+
+        async {
+            match parseResult with
+            | Ok query ->
+                use conn = RequestContext.createDbConnection context
+
+                let! result =
+                    Store.withTransaction (fun () ->
+                        async {
+                            let! ids = SearchEngine.processQuery conn query None
+
+                            let! result = ConceptRepo.getByIds conn (GetConceptOptions.toRepoLoadOptions options) ids
+
+                            return result
+                        })
+
+                return Ok(result)
+
+            | Error message -> return Error message
+        }
+
     let updateConcept
         (context: RequestContext.T)
         (request: UpdateConceptRequest.T)

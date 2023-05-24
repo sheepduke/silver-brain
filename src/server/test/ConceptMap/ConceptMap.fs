@@ -10,18 +10,12 @@ open SilverBrain.Domain
 open SilverBrain.Domain.ConceptMap
 open SilverBrain.Test
 
-[<Ignore("FIXME")>]
 module ConceptMapTests =
     type TestSqliteContext.T with
 
         member this.ToRequestContext =
             { RequestContext.RootDataDirectory = this.RootDataDirectory
               RequestContext.DatabaseName = this.DatabaseName }
-
-    let private assertConceptExists (concept: Concept.T option) =
-        match concept with
-        | None -> failwith "Concept not found"
-        | Some _ -> ()
 
     // ------------------------------------------------------------
     //  getConcept
@@ -37,7 +31,7 @@ module ConceptMapTests =
 
                 let! conceptOpt = ConceptMap.getConcept context.ToRequestContext options id
 
-                assertConceptExists conceptOpt
+                conceptOpt.IsSome |> should be True
 
                 let concept = conceptOpt.Value
                 concept.Id |> should equal id
@@ -148,6 +142,7 @@ module ConceptMapTests =
             async {
                 let! result = ConceptMap.getManyConcepts context.ToRequestContext options [ id ]
 
+
                 let head = Seq.head result
                 head.Name |> should equal concept.Name
                 head.CreatedAt.IsSome |> should equal true
@@ -159,6 +154,32 @@ module ConceptMapTests =
                 |> (fun x -> x.Alias)
                 |> should equal TestData.ConceptAlias.k8s.Alias
             })
+
+    // ------------------------------------------------------------
+    //  Search
+    // ------------------------------------------------------------
+
+    let private testSearch (query: string) (names: string list) =
+        TestSqliteContext.withTempDatabase (fun context ->
+            let requestContext = context.ToRequestContext
+            let options = GetConceptOptions.create
+
+            async {
+                let! result = ConceptMap.searchConcept requestContext options query
+                result |> Result.isOk |> should be True
+
+                let concepts = Result.defaultValue Seq.empty result
+
+                concepts |> map (fun c -> c.Name) |> Seq.toList |> should equivalent names
+            })
+
+    [<Test>]
+    let ``searchConcept`` () =
+        task {
+            do! testSearch "ema vim" []
+            do! testSearch "emacs" [ "Emacs" ]
+            do! testSearch "ema || vim " [ "Emacs"; "Vim" ]
+        }
 
     // ------------------------------------------------------------
     //  getConceptLinks
