@@ -1,0 +1,39 @@
+.modal-container {
+    border-radius: 4px;
+    background-color: #fff;
+    color: #000;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+    position: relative;
+    max-height: 80%;
+    width: 575px;
+    position: absolute;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease 0s;
+}
+
+.top-actions-container {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    margin-left: auto;
+    padding: 10px 11px 0 0;
+}
+
+.content-container {
+    overflow: auto;
+    flex: 1;
+    padding: 0 60px 12px 60px;
+}
+
+.create-button-wrapper {
+    text-align: right;
+    padding: 16px;
+    padding-bottom: 8px;
+}
+
+.save-btn {
+    margin-left: 4px;
+}

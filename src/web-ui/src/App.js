@@ -23,6 +23,8 @@ import TuneIcon from '@mui/icons-material/Tune';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
 
+import NewConceptModal from './components/NewConceptModal';
+
 const drawerWidth = 240;
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -57,7 +59,7 @@ const creationModalStyle = {
 export default function App() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(true);
-  const [creationModalOpen, setCreationModalOpen] = React.useState(false);
+  const [isNewConceptModalOpen, setNewConceptModalOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -68,11 +70,11 @@ export default function App() {
   };
 
   const handleCreationModalOpen = () => {
-    setCreationModalOpen(true);
+    setNewConceptModalOpen(true);
   };
 
   const handleClose = () => {
-    setCreationModalOpen(false);
+    setNewConceptModalOpen(false);
   };
 
   return (
@@ -150,7 +152,11 @@ export default function App() {
           </Toolbar>
         </ViewPanel>
       </Box>
-      <Modal
+      <NewConceptModal
+        isOpen={isNewConceptModalOpen}
+        onClose={() => setNewConceptModalOpen(false)}
+      />
+      {/* <Modal
         open={creationModalOpen}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
@@ -159,7 +165,7 @@ export default function App() {
         <Box style={creationModalStyle}>
           <div >Create new concept modal.</div>
         </Box>
-      </Modal>
+      </Modal> */}
     </Box>
   );
 }
