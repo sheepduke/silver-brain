@@ -7,7 +7,7 @@ open SilverBrain
 exception SuccessExitSignal
 
 type LogLevel =
-    | None
+    | Silent
     | Error
     | Info
     | Debug

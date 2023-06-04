@@ -42,3 +42,12 @@ module HttpContextExtensions =
                 |> String.split [ "," ]
                 |> Seq.map String.trimWhiteSpaces
                 |> Seq.filter (fun x -> (String.length x) > 0)
+
+namespace FSharpPlus
+
+module String =
+    let splitAndTrim (separators: string seq) (source: string) : string seq =
+        source
+        |> String.split separators
+        |> Seq.map String.trimWhiteSpaces
+        |> Seq.filter (fun x -> (String.length x) > 0)
