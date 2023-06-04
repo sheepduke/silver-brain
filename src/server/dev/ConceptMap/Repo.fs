@@ -113,13 +113,19 @@ module Dao =
               Relation = ConceptId t.RelationId
               Target = ConceptId t.TargetId }
 
-    module ConceptPropertyIsRelation =
+    module ConceptProperty =
         [<CLIMutable>]
-        type T = { ConceptId: string }
+        type T =
+            { ConceptId: string
+              Key: string
+              Value: string }
 
-        let table = table'<T> "ConceptPropertyIsRelation"
+        let table = table'<T> "ConceptProperty"
 
-        let create conceptId = { ConceptId = conceptId }
+        let create conceptId key value =
+            { ConceptId = conceptId
+              Key = key
+              Value = value }
 
 module ConceptRepo =
     let save (conn: IDbConnection) (concept: Concept.T) : unit Async =
@@ -149,6 +155,18 @@ module ConceptRepo =
         async {
             let! result = Store.getMany<Dao.Concept.T> conn query
             return result |> map (Dao.Concept.toDomainType options)
+        }
+
+    let getAllIds (conn: IDbConnection) : ConceptId seq Async =
+        async {
+            let query =
+                select {
+                    for concept in Dao.Concept.table do
+                        selectAll
+                }
+
+            let! result = Store.getMany<Dao.Concept.T> conn query
+            return result |> map (fun dao -> ConceptId dao.Id)
         }
 
     let searchNameLike (conn: IDbConnection) (search: string) : ConceptId seq Async =
@@ -237,15 +255,26 @@ module ConceptAttachmentRepo =
         }
 
 module ConceptPropertyRepo =
-    let isRelation (conn: IDbConnection) (ConceptId id) : bool Async =
+    let getByConceptId (conn: IDbConnection) (ConceptId id) : ConceptPropertyBag.T Async =
         let query =
             select {
-                for dao in Dao.ConceptPropertyIsRelation.table do
+                for dao in Dao.ConceptProperty.table do
                     where (dao.ConceptId = id)
             }
 
         async {
-            let! result = Store.getSingle<Dao.ConceptPropertyIsRelation.T> conn query
+            let! daos = Store.getMany<Dao.ConceptProperty.T> conn query
+            let mutable propertyBag = ConceptPropertyBag.create
 
-            return result.IsSome
+            for dao in daos do
+                propertyBag <-
+                    match dao.Key with
+                    | "IsRelation" ->
+                        { propertyBag with
+                            IsRelation = Some true }
+                    | "IsRelationMutual" ->
+                        { propertyBag with
+                            IsRelationMutual = Some(String.isTrue dao.Value) }
+
+            return propertyBag
         }

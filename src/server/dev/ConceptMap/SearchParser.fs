@@ -27,6 +27,7 @@ module SearchParser =
     type Condition = AnyString * AnyString
 
     type Query =
+        | EmptyQuery
         | StringQuery of StringQuery
         | PropertyFilter of PropertyFilter
         | TagFilter of TagFilter
@@ -164,7 +165,12 @@ module SearchParser =
 
         do queryRef.Value <- orQuery
 
-    let parse (query: string) : Result<Query, string> =
-        match run Internal.wholeQuery (String.trim " " query) with
-        | Success(query, _, _) -> Result.Ok query
-        | Failure(error, _, _) -> Result.Error error
+    let parse (queryString: string) : Result<Query, string> =
+        let queryString' = String.trim "" queryString
+
+        if Seq.isEmpty queryString' then
+            Result.Ok EmptyQuery
+        else
+            match run Internal.wholeQuery queryString' with
+            | Success(query, _, _) -> Result.Ok query
+            | Failure(error, _, _) -> Result.Error error

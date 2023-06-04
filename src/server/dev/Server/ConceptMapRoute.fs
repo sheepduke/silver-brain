@@ -73,6 +73,17 @@ module ConceptMapRoute =
                 return! context.WriteJsonAsync concepts
             })
 
+    let searchConcept: HttpHandler =
+        handleContext (fun context ->
+            let requestContext = createRequestContext context
+            let options = createGetConceptOptions context
+            let search = Option.defaultValue "" (context.TryGetQueryStringValue "query")
+
+            task {
+                let! concepts = ConceptMap.searchConcept requestContext options search
+                return! context.WriteJsonAsync concepts
+            })
+
     let getConceptLink (id: string) =
         handleContext (fun context ->
             let requestContext = createRequestContext context

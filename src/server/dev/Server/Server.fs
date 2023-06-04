@@ -33,7 +33,7 @@ module RestApi =
                     [ GET
                       >=> choose
                           [ route "/concepts" >=> ConceptMapRoute.getManyConcept
-                            route "/concepts/search" >=> text "search concepts"
+                            route "/concepts/search" >=> ConceptMapRoute.searchConcept
                             routef "/concepts/%s" ConceptMapRoute.getConcept
                             routef "/concepts/%s/links" ConceptMapRoute.getConceptLink
                             route "/attachments/%s" >=> text "get attachments" ]

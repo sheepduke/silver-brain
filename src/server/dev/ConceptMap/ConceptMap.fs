@@ -71,8 +71,8 @@ module ConceptMap =
 
             // Optionally load properties.
             if options.LoadProperties then
-                let! isRelation = ConceptPropertyRepo.isRelation conn concept.Id
-                concept <- Concept.withProperties { ConceptProperty.IsRelation = Some isRelation } concept
+                let! properties = ConceptPropertyRepo.getByConceptId conn concept.Id
+                concept <- Concept.withProperties properties concept
 
             return concept
         }
