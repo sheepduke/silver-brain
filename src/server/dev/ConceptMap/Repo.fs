@@ -127,6 +127,11 @@ module Dao =
               Key = key
               Value = value }
 
+module IdView =
+    type T = { Id: string }
+
+    let table = table'<T> "Concept"
+
 module ConceptRepo =
     let save (conn: IDbConnection) (concept: Concept.T) : unit Async =
         Store.save conn Dao.Concept.table (Dao.Concept.ofDomainType concept)
@@ -161,11 +166,11 @@ module ConceptRepo =
         async {
             let query =
                 select {
-                    for concept in Dao.Concept.table do
+                    for _ in IdView.table do
                         selectAll
                 }
 
-            let! result = Store.getMany<Dao.Concept.T> conn query
+            let! result = Store.getMany<IdView.T> conn query
             return result |> map (fun dao -> ConceptId dao.Id)
         }
 
