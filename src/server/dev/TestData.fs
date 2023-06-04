@@ -53,12 +53,14 @@ module TestData =
 
         let k8s = Dao.ConceptKeyword.create (Id.generateString ()) Concept.k8s.Id "K8s"
 
-    module ConceptPropertyIsRelation =
-        let isA = Dao.ConceptPropertyIsRelation.create Concept.isA.Id
-
-        let relatesTo = Dao.ConceptPropertyIsRelation.create Concept.relatesTo.Id
-
-        let supports = Dao.ConceptPropertyIsRelation.create Concept.supports.Id
+    module ConceptProperty =
+        let data =
+            [ Dao.ConceptProperty.create Concept.isA.Id "IsRelation" "true"
+              Dao.ConceptProperty.create Concept.isA.Id "IsRelationMutual" "true"
+              Dao.ConceptProperty.create Concept.relatesTo.Id "IsRelation" "true"
+              Dao.ConceptProperty.create Concept.relatesTo.Id "IsRelationMutual" "true"
+              Dao.ConceptProperty.create Concept.supports.Id "IsRelation" "true"
+              Dao.ConceptProperty.create Concept.supports.Id "IsRelationMutual" "true" ]
 
     module ConceptLink =
         let emacsIsEditor =
@@ -122,12 +124,9 @@ module TestData =
             |> ignore
 
             insert {
-                into Dao.ConceptPropertyIsRelation.table
+                into Dao.ConceptProperty.table
 
-                values
-                    [ ConceptPropertyIsRelation.isA
-                      ConceptPropertyIsRelation.relatesTo
-                      ConceptPropertyIsRelation.supports ]
+                values ConceptProperty.data
             }
             |> conn.InsertAsync
             |> ignore

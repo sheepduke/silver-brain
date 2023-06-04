@@ -30,10 +30,18 @@ module Attachment =
           Name = name
           FilePath = filePath }
 
-module ConceptProperty =
-    type T = { IsRelation: bool option }
+module ConceptPropertyBag =
+    type T =
+        { IsRelation: bool option
+          IsRelationMutual: bool option }
 
-    let create = { IsRelation = None }
+    type Type =
+        | IsRelation = 0
+        | IsRelationMutual = 1
+
+    let create =
+        { IsRelation = None
+          IsRelationMutual = None }
 
 module Concept =
     module Keyword =
@@ -50,7 +58,7 @@ module Concept =
           UpdatedAt: DateTime option
           Keywords: Keyword.T seq option
           Attachments: Attachment.T seq option
-          Properties: ConceptProperty.T option }
+          Properties: ConceptPropertyBag.T option }
 
     let create id name =
         { Id = id

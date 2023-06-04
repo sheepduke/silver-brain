@@ -46,6 +46,7 @@ module SearchEngine =
             | Some [] -> return []
             | _ ->
                 match query with
+                | EmptyQuery -> return! ConceptRepo.getAllIds conn
                 | StringQuery query -> return! processStringQuery query result
                 | AndQuery query -> return! processAndQuery query result
                 | OrQuery query -> return! processOrQuery query result
