@@ -64,23 +64,18 @@ module ConceptMapRoute =
 
     let getManyConcept: HttpHandler =
         handleContext (fun context ->
-            let requestContext = createRequestContext context
-            let options = createGetConceptOptions context
-            let ids = context.GetQueryStringSeq "ids" |> map ConceptId
 
             task {
-                let! concepts = ConceptMap.getManyConcepts requestContext options ids
-                return! context.WriteJsonAsync concepts
-            })
+                let requestContext = createRequestContext context
+                let options = createGetConceptOptions context
+                let search = Option.defaultValue "" (context.TryGetQueryStringValue "search")
 
-    let searchConcept: HttpHandler =
-        handleContext (fun context ->
-            let requestContext = createRequestContext context
-            let options = createGetConceptOptions context
-            let search = Option.defaultValue "" (context.TryGetQueryStringValue "query")
+                let ids =
+                    context.TryGetQueryStringValue "ids"
+                    |> map (String.splitAndTrim [ "," ] >> map ConceptId)
 
-            task {
-                let! concepts = ConceptMap.searchConcept requestContext options search
+                let! concepts = ConceptMap.getManyConcepts requestContext options search ids
+
                 return! context.WriteJsonAsync concepts
             })
 

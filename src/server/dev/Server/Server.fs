@@ -33,14 +33,13 @@ module RestApi =
                     [ GET
                       >=> choose
                           [ route "/concepts" >=> ConceptMapRoute.getManyConcept
-                            route "/concepts/search" >=> ConceptMapRoute.searchConcept
                             routef "/concepts/%s" ConceptMapRoute.getConcept
                             routef "/concepts/%s/links" ConceptMapRoute.getConceptLink
                             route "/attachments/%s" >=> text "get attachments" ]
                       POST
                       >=> choose
                           [ route "/concepts" >=> ConceptMapRoute.createConcept
-                            route "/concept-aliases" >=> text "create alias"
+                            route "/concepts/%s/keywords" >=> text "create a keyword"
                             route "/concept-links" >=> text "create link"
                             route "/attachments" >=> text "create attachment"
                             route "/concepts/%s/attachments" >=> text "attach a file to concept" ]
