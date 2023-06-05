@@ -109,29 +109,30 @@ module ConceptMapTests =
     // ------------------------------------------------------------
 
     [<Test>]
-    let ``getManyConcepts - basic info`` () =
+    let ``getManyConcepts - ids only - basic info`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let ids =
                 [ TestData.Concept.emacs; TestData.Concept.vim ]
                 |> map (fun x -> ConceptId x.Id)
+                |> Seq.ofList
+                |> Some
 
             let options = GetConceptOptions.create
 
             async {
-                let! concepts = ConceptMap.getManyConcepts context.ToRequestContext options ids
+                let! result = ConceptMap.getManyConcepts context.ToRequestContext options "" ids
 
+                let concepts = Result.get result
                 let names = concepts |> map (fun x -> x.Name)
-
                 let expected = [ "Emacs"; "Vim" ]
-
                 names |> should equivalent expected
             })
 
     [<Test>]
-    let ``getManyConcepts - with aliases and times`` () =
+    let ``getManyConcepts - ids only - with aliases and times`` () =
         TestSqliteContext.withTempDatabase (fun context ->
             let concept = TestData.Concept.k8s
-            let id = ConceptId concept.Id
+            let ids = ConceptId concept.Id |> Seq.singleton |> Some
 
             let options =
                 { GetConceptOptions.create with
@@ -139,10 +140,11 @@ module ConceptMapTests =
                     LoadTimes = true }
 
             async {
-                let! result = ConceptMap.getManyConcepts context.ToRequestContext options [ id ]
+                let! result = ConceptMap.getManyConcepts context.ToRequestContext options "" ids
 
+                let concepts = Result.get result
 
-                let head = Seq.head result
+                let head = Seq.head concepts
                 head.Name |> should equal concept.Name
                 head.CreatedAt.IsSome |> should equal true
                 head.UpdatedAt.IsSome |> should equal true
@@ -158,13 +160,13 @@ module ConceptMapTests =
     //  Search
     // ------------------------------------------------------------
 
-    let private testSearch (query: string) (names: string list) =
+    let private testSearch (search: string) (names: string list) =
         TestSqliteContext.withTempDatabase (fun context ->
             let requestContext = context.ToRequestContext
             let options = GetConceptOptions.create
 
             async {
-                let! result = ConceptMap.searchConcept requestContext options query
+                let! result = ConceptMap.getManyConcepts requestContext options search None
                 result |> Result.isOk |> should be True
 
                 let concepts = Result.defaultValue Seq.empty result
@@ -173,7 +175,7 @@ module ConceptMapTests =
             })
 
     [<Test>]
-    let ``searchConcept`` () =
+    let ``getManyConcepts - search`` () =
         task {
             do! testSearch "ema vim" []
             do! testSearch "emacs" [ "Emacs" ]

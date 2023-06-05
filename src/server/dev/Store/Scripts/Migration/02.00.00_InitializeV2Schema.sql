@@ -28,6 +28,13 @@ CREATE TABLE if NOT EXISTS ConceptAttachment (
     FOREIGN KEY (ConceptId) REFERENCES Concept (Id)
 ) WITHOUT ROWID;
 
+CREATE TABLE IF NOT EXISTS ConceptProperty (
+    Id INTEGER PRIMARY KEY,
+    ConceptId TEXT,
+    Key TEXT,
+    VALUE TEXT
+);
+
 CREATE TABLE IF NOT EXISTS ConceptLink (
     Id INTEGER PRIMARY KEY,
     SourceId TEXT NOT NULL,

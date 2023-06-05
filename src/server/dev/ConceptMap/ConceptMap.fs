@@ -71,8 +71,8 @@ module ConceptMap =
 
             // Optionally load properties.
             if options.LoadProperties then
-                let! isRelation = ConceptPropertyRepo.isRelation conn concept.Id
-                concept <- Concept.withProperties { ConceptProperty.IsRelation = Some isRelation } concept
+                let! properties = ConceptPropertyRepo.getByConceptId conn concept.Id
+                concept <- Concept.withProperties properties concept
 
             return concept
         }
@@ -110,49 +110,33 @@ module ConceptMap =
     let getManyConcepts
         (context: RequestContext.T)
         (options: GetConceptOptions.T)
-        (ids: ConceptId seq)
-        : Concept.T seq Async =
-
-        async {
-            use conn = RequestContext.createDbConnection context
-
-            let! result = ConceptRepo.getByIds conn (GetConceptOptions.toRepoLoadOptions options) ids
-
-            let mutable concepts = List.empty
-
-            for concept in result do
-                let! concept' = updateConceptOptionalProps conn options concept
-                concepts <- List.append concepts [ concept' ]
-
-            return concepts
-        }
-
-    let searchConcept
-        (context: RequestContext.T)
-        (options: GetConceptOptions.T)
         (search: string)
+        (ids: ConceptId seq option)
         : Result<Concept.T seq, string> Async =
-        let parseResult = SearchParser.parse search
 
         async {
-            match parseResult with
+            match SearchParser.parse search with
             | Ok query ->
                 use conn = RequestContext.createDbConnection context
 
-                let! result =
+                let! concepts =
                     Store.withTransaction (fun () ->
                         async {
-                            let! ids = SearchEngine.processQuery conn query None
+                            let mutable concepts = List.empty
+                            let! ids' = SearchEngine.processQuery conn query ids
+                            let! result = ConceptRepo.getByIds conn (GetConceptOptions.toRepoLoadOptions options) ids'
 
-                            let! result = ConceptRepo.getByIds conn (GetConceptOptions.toRepoLoadOptions options) ids
+                            for concept in result do
+                                let! concept' = updateConceptOptionalProps conn options concept
+                                concepts <- List.append concepts [ concept' ]
 
-                            return result
+                            return concepts
                         })
 
-                return Ok(result)
-
+                return Ok concepts
             | Error message -> return Error message
         }
+
 
     let updateConcept
         (context: RequestContext.T)

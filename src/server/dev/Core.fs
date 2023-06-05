@@ -31,3 +31,11 @@ module DateTime =
 
     let ofIsoString (string: String) =
         DateTime.Parse(string, null, Globalization.DateTimeStyles.RoundtripKind)
+
+module String =
+    let isTrue (str: string) : bool =
+        String.Equals(
+            "TRUE",
+            str.ToUpper(Globalization.CultureInfo.InvariantCulture),
+            StringComparison.InvariantCultureIgnoreCase
+        )

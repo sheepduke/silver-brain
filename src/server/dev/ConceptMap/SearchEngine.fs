@@ -42,12 +42,12 @@ module SearchEngine =
             }
 
         async {
-            match map Seq.toList result with
-            | Some [] -> return []
-            | _ ->
-                match query with
-                | StringQuery query -> return! processStringQuery query result
-                | AndQuery query -> return! processAndQuery query result
-                | OrQuery query -> return! processOrQuery query result
-                | _ -> return []
+            match query, map Seq.toList result with
+            | _, Some [] -> return []
+            | EmptyQuery, Some ids -> return ids
+            | EmptyQuery, None -> return! ConceptRepo.getAllIds conn
+            | StringQuery query, _ -> return! processStringQuery query result
+            | AndQuery query, _ -> return! processAndQuery query result
+            | OrQuery query, _ -> return! processOrQuery query result
+            | _ -> return []
         }
