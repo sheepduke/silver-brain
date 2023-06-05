@@ -21,9 +21,9 @@ import Button from '@mui/material/Button';
 import InputBase from '@mui/material/InputBase';
 import TuneIcon from '@mui/icons-material/Tune';
 import Stack from '@mui/material/Stack';
-import Modal from '@mui/material/Modal';
 
 import NewConceptModal from './components/NewConceptModal';
+import ConceptCard from './components/ConceptCard';
 
 const drawerWidth = 240;
 
@@ -133,7 +133,7 @@ export default function App() {
       <Box component="main" sx={{ flexGrow: 1, p: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
         <ViewPanel >
-          <Toolbar sx={{ backgroundColor: 'white', }}>
+          <Toolbar sx={{ backgroundColor: 'white', marginBottom: '10px', }}>
             <Button onClick={handleCreationModalOpen} variant="contained" sx={{ textTransform: 'none', marginRight: '14px', }}>New Concept</Button>
             <Stack
               direction="row"
@@ -148,8 +148,8 @@ export default function App() {
                 <TuneIcon />
               </IconButton>
             </Stack>
-
           </Toolbar>
+          <ConceptCard />
         </ViewPanel>
       </Box>
       <NewConceptModal
