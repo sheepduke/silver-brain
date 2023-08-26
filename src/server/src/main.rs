@@ -1,5 +1,7 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
+mod server;
+
 #[derive(Debug, Parser)]
 #[command(name = "silver-brain")]
 #[command(long_about = r####"Silver Brain - Your external brain.
@@ -29,11 +31,21 @@ enum ServerCommand {
         /// The path of root data directory. Defaults to ~/.silver-brain
         #[arg(short, long)]
         data_path: Option<std::path::PathBuf>,
+
+        /// The port to listen on.
+        #[arg(short, long)]
+        #[clap(default_value_t = 5000)]
+        port: u32,
     },
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
-    println!("{:?}", cli);
+    match cli.command {
+        Command::Server(args) => match args.command {
+            ServerCommand::Start { data_path, port } => server::start(port).await,
+        },
+    }
 }
