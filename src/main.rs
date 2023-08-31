@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand};
 use silver_brain_server as server;
 
 #[derive(Debug, Parser)]
@@ -50,5 +50,5 @@ pub async fn handle_cli(cli: &Cli) {
 async fn main() {
     let cli = Cli::parse();
 
-    handle_cli(&cli);
+    handle_cli(&cli).await;
 }

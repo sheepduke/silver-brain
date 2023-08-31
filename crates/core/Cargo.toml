@@ -6,5 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies] 
-sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+anyhow.workspace = true
+async-trait.workspace = true
+sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros", "with-time"] }
+thiserror.workspace = true
 time.workspace = true

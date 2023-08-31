@@ -1,12 +1,16 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 use time::OffsetDateTime;
 
+#[derive(Debug)]
 pub struct EntryId(String);
 
+#[derive(Debug)]
 pub struct LinkId(String);
 
+#[derive(Debug)]
 pub struct AttachmentId(String);
 
+#[derive(Debug)]
 pub struct Entry {
     id: EntryId,
     name: String,
@@ -18,6 +22,7 @@ pub struct Entry {
     update_time: Option<OffsetDateTime>,
 }
 
+#[derive(Debug)]
 pub struct Attachment {
     id: AttachmentId,
     entry_id: EntryId,
@@ -27,11 +32,13 @@ pub struct Attachment {
     update_time: OffsetDateTime,
 }
 
+#[derive(Debug)]
 pub enum LinkType {
     Solid,
     Weak,
 }
 
+#[derive(Debug)]
 pub struct Link {
     id: LinkId,
     source: EntryId,
