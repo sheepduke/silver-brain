@@ -1,18 +1,50 @@
-use anyhow::{ensure, Context, Result};
-use sea_orm::{Database, DatabaseConnection};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use anyhow::{ensure, Context, Result};
+use async_trait::async_trait;
+use sea_orm::Database;
+use sea_orm::DatabaseConnection;
 use thiserror::Error;
 
-pub struct StoreName(&'static str);
+use crate::{Entry, EntryId, Link, LinkId};
 
-pub struct StoreConnection(DatabaseConnection);
+// =================================================================
+//  StoreName
+// =================================================================
 
-impl From<DatabaseConnection> for StoreConnection {
-    fn from(value: DatabaseConnection) -> Self {
-        Self(value)
+#[derive(Debug, PartialEq, Eq)]
+pub struct StoreName(String);
+
+impl From<&'static str> for StoreName {
+    fn from(value: &'static str) -> Self {
+        StoreName(value.into())
     }
 }
+
+impl From<String> for StoreName {
+    fn from(value: String) -> Self {
+        StoreName(value)
+    }
+}
+
+impl From<StoreName> for String {
+    fn from(value: StoreName) -> Self {
+        value.0
+    }
+}
+
+// =================================================================
+//  StoreConnection
+// =================================================================
+
+pub trait StoreConnection {
+    type Connection;
+}
+
+// =================================================================
+//  Store Error
+// =================================================================
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum StoreError {
@@ -26,43 +58,22 @@ pub enum StoreError {
     InvalidDatabaseName,
 }
 
-#[derive(Debug)]
-pub struct Store {
-    data_path: PathBuf,
+// =================================================================
+//  Store
+// =================================================================
+
+#[async_trait]
+pub trait Store: StoreConnection + EntryRepo {
+    async fn get_connection(&self, name: StoreName) -> Result<Self::Connection>;
 }
 
-impl Store {
-    pub fn new(data_path: &Path) -> Result<Self> {
-        ensure!(data_path.is_dir(), StoreError::DataPathNotDirectory);
+// =================================================================
+//  EntryRepo
+// =================================================================
 
-        ensure!(
-            is_dir_writable(data_path).context("Failed to check directory permission")?,
-            StoreError::DataPathNotWritable
-        );
+#[async_trait]
+pub trait EntryRepo: StoreConnection {
+    async fn create_entry(&self, conn: &Self::Connection) -> Result<EntryId>;
 
-        Ok(Self {
-            data_path: data_path.to_path_buf(),
-        })
-    }
-
-    pub async fn connect(&self, db_name: StoreName) -> Result<StoreConnection> {
-        let db_path = self.resolve_sqlite_path(db_name);
-        let db_path_str = db_path.to_str().ok_or(StoreError::InvalidDatabaseName)?;
-        let conn_str = format!("sqlite:{}", db_path_str);
-
-        Ok(Database::connect(conn_str).await?.into())
-    }
-
-    fn resolve_sqlite_path(&self, db_name: StoreName) -> PathBuf {
-        let mut result = self.data_path.clone();
-
-        result.push(db_name.0);
-        result.push("sqlite");
-
-        result
-    }
-}
-
-fn is_dir_writable(path: &Path) -> Result<bool> {
-    Ok(!fs::metadata(path)?.permissions().readonly())
+    async fn get_entry(&self, conn: &Self::Connection, id: EntryId) -> Result<Entry>;
 }
