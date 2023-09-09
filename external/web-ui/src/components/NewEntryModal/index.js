@@ -3,15 +3,15 @@ import { Modal, Button, IconButton, Box, TextField, Select, MenuItem } from '@mu
 import CloseIcon from '@mui/icons-material/Close';
 import './index.css';
 
-const NewConceptModal = ({ isOpen, onClose, onSave }) => {
-  const [name, setName] = useState('New Concept');
+const NewEntryModal = ({ isOpen, onClose, onSave }) => {
+  const [name, setName] = useState('New Entry');
   const [summary, setSummary] = useState('');
   const [contentType, setContentType] = useState('');
   const [content, setContent] = useState('');
 
   const handleSave = () => {
-    // 构造新的concept对象
-    const newConcept = {
+    // 构造新的entry对象
+    const newEntry = {
       name,
       summary,
       content,
@@ -19,7 +19,7 @@ const NewConceptModal = ({ isOpen, onClose, onSave }) => {
     };
 
     // 调用保存回调函数
-    onSave(newConcept);
+    onSave(newEntry);
 
     // 清空输入框
     setName('');
@@ -86,4 +86,4 @@ const NewConceptModal = ({ isOpen, onClose, onSave }) => {
   );
 };
 
-export default NewConceptModal;
+export default NewEntryModal;

@@ -22,8 +22,8 @@ import InputBase from '@mui/material/InputBase';
 import TuneIcon from '@mui/icons-material/Tune';
 import Stack from '@mui/material/Stack';
 
-import NewConceptModal from './components/NewConceptModal';
-import ConceptCard from './components/ConceptCard';
+import NewEntryModal from './components/NewEntryModal';
+import EntryCard from './components/EntryCard';
 
 const drawerWidth = 240;
 
@@ -59,7 +59,7 @@ const creationModalStyle = {
 export default function App() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(true);
-  const [isNewConceptModalOpen, setNewConceptModalOpen] = React.useState(false);
+  const [isNewEntryModalOpen, setNewEntryModalOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -70,11 +70,11 @@ export default function App() {
   };
 
   const handleCreationModalOpen = () => {
-    setNewConceptModalOpen(true);
+    setNewEntryModalOpen(true);
   };
 
   const handleClose = () => {
-    setNewConceptModalOpen(false);
+    setNewEntryModalOpen(false);
   };
 
   return (
@@ -134,7 +134,7 @@ export default function App() {
         <Toolbar />
         <ViewPanel >
           <Toolbar sx={{ backgroundColor: 'white', marginBottom: '10px', }}>
-            <Button onClick={handleCreationModalOpen} variant="contained" sx={{ textTransform: 'none', marginRight: '14px', }}>New Concept</Button>
+            <Button onClick={handleCreationModalOpen} variant="contained" sx={{ textTransform: 'none', marginRight: '14px', }}>New Entry</Button>
             <Stack
               direction="row"
               sx={{ border: '1px solid rgba(0, 0, 0, 0.12)', borderRadius: '12px', boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)' }}
@@ -149,12 +149,12 @@ export default function App() {
               </IconButton>
             </Stack>
           </Toolbar>
-          <ConceptCard />
+          <EntryCard />
         </ViewPanel>
       </Box>
-      <NewConceptModal
-        isOpen={isNewConceptModalOpen}
-        onClose={() => setNewConceptModalOpen(false)}
+      <NewEntryModal
+        isOpen={isNewEntryModalOpen}
+        onClose={() => setNewEntryModalOpen(false)}
       />
       {/* <Modal
         open={creationModalOpen}
@@ -163,7 +163,7 @@ export default function App() {
         aria-describedby="modal-modal-description"
       >
         <Box style={creationModalStyle}>
-          <div >Create new concept modal.</div>
+          <div >Create new entry modal.</div>
         </Box>
       </Modal> */}
     </Box>
