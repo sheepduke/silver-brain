@@ -1,31 +1,39 @@
+use std::marker::PhantomData;
+
 use anyhow::Result;
 
 use crate::{
-    store::{SqlStore, Store},
-    Entry,
+    store::{DataSource, SqlStore, Store},
+    Entry, EntryId,
 };
 
 #[derive(Default)]
-pub struct EntryGraph<StoreT: Store = SqlStore> {
-    store: StoreT,
+pub struct EntryGraph<S, D>
+where
+    S: Store<D>,
+    D: DataSource,
+{
+    store: S,
+    _phantom: PhantomData<D>,
 }
 
-impl<T: Store> EntryGraph<T> {
-    pub fn new(store: T) -> EntryGraph<T> {
-        Self { store }
+impl<S, D> EntryGraph<S, D>
+where
+    S: Store<D>,
+    D: DataSource,
+{
+    pub fn new(store: S) -> EntryGraph<S, D> {
+        Self {
+            store,
+            _phantom: Default::default(),
+        }
     }
 
     pub async fn temp(&self) -> Result<()> {
-        let conn = self.store.get_connection("some".into()).await?;
+        let conn = self.store.get_conn("some".into()).await?;
 
         let entry = Entry::default();
 
         Ok(())
-    }
-}
-
-impl EntryGraph {
-    pub fn default() -> EntryGraph<SqlStore> {
-        Default::default()
     }
 }

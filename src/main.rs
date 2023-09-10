@@ -41,7 +41,7 @@ enum ServerCommand {
 pub async fn handle_cli(cli: &Cli) {
     match &cli.command {
         Command::Server(args) => match &args.command {
-            ServerCommand::Start { data_path, port } => server::start(*port).await,
+            ServerCommand::Start { data_path: _, port } => server::start(*port).await,
         },
     }
 }

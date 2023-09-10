@@ -1,45 +1,24 @@
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::any::Any;
+use std::sync::Arc;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::Result;
 use async_trait::async_trait;
-use sea_orm::Database;
-use sea_orm::DatabaseConnection;
 use thiserror::Error;
-
-use crate::{Entry, EntryId, Link, LinkId};
 
 // =================================================================
 //  StoreName
 // =================================================================
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct StoreName(String);
+pub struct StoreName(pub String);
 
-impl From<&'static str> for StoreName {
-    fn from(value: &'static str) -> Self {
-        StoreName(value.into())
+impl<T> From<T> for StoreName
+where
+    T: Into<String>,
+{
+    fn from(value: T) -> Self {
+        Self(value.into())
     }
-}
-
-impl From<String> for StoreName {
-    fn from(value: String) -> Self {
-        StoreName(value)
-    }
-}
-
-impl From<StoreName> for String {
-    fn from(value: StoreName) -> Self {
-        value.0
-    }
-}
-
-// =================================================================
-//  StoreConnection
-// =================================================================
-
-pub trait StoreConnection {
-    type Connection;
 }
 
 // =================================================================
@@ -59,21 +38,40 @@ pub enum StoreError {
 }
 
 // =================================================================
+//  StoreConnection
+// =================================================================
+
+pub struct StoreConnection(pub Arc<dyn Any + Send + Sync>);
+
+// =================================================================
+//  DataSource
+// =================================================================
+
+pub trait DataSource {
+    type Connection;
+}
+
+// =================================================================
 //  Store
 // =================================================================
 
 #[async_trait]
-pub trait Store: StoreConnection + EntryRepo {
-    async fn get_connection(&self, name: StoreName) -> Result<Self::Connection>;
+pub trait Store<D: DataSource> {
+    type Connection;
+
+    async fn get_conn(&self, name: StoreName) -> Result<StoreConnection>;
 }
 
-// =================================================================
-//  EntryRepo
-// =================================================================
+// ----------------------------------------------------------------------
+//  DataAccess
+// ----------------------------------------------------------------------
 
-#[async_trait]
-pub trait EntryRepo: StoreConnection {
-    async fn create_entry(&self, conn: &Self::Connection) -> Result<EntryId>;
+pub trait DataAccess<D: DataSource> {
+    type Id;
 
-    async fn get_entry(&self, conn: &Self::Connection, id: EntryId) -> Result<Entry>;
+    type Out;
+
+    type LoadOption;
+
+    fn get(conn: StoreConnection, id: Self::Id, options: Self::LoadOption) -> Self::Out;
 }

@@ -1,24 +1,36 @@
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
 use sea_orm::{Database, DatabaseConnection};
 
-use super::{EntryRepo, Store, StoreConnection, StoreName};
-use crate::{store::StoreError, Entry, EntryId};
+use crate::{store::StoreError, Entry, EntryLoadOption, LinkId};
 
-pub struct SqlDataSource;
+use super::{DataAccess, DataSource, Store, StoreConnection, StoreName};
+
+pub struct SqlDataSource {}
+
+impl DataSource for SqlDataSource {
+    type Connection = DatabaseConnection;
+}
+
+impl From<DatabaseConnection> for StoreConnection {
+    fn from(value: DatabaseConnection) -> Self {
+        StoreConnection(Arc::new(value))
+    }
+}
+
+// =================================================================
+//  SqlStore
+// =================================================================
 
 #[derive(Default, Debug)]
 pub struct SqlStore {
     data_path: PathBuf,
-}
-
-impl StoreConnection for SqlStore {
-    type Connection = DatabaseConnection;
 }
 
 impl SqlStore {
@@ -41,7 +53,7 @@ impl SqlStore {
     fn resolve_sqlite_path(&self, name: StoreName) -> PathBuf {
         let mut result = self.data_path.clone();
 
-        result.push::<String>(name.into());
+        result.push::<String>(name.0);
         result.push("sqlite");
 
         result
@@ -53,8 +65,10 @@ impl SqlStore {
 }
 
 #[async_trait]
-impl Store for SqlStore {
-    async fn get_connection(&self, name: StoreName) -> Result<Self::Connection> {
+impl Store<SqlDataSource> for SqlStore {
+    type Connection = DatabaseConnection;
+
+    async fn get_conn(&self, name: StoreName) -> Result<StoreConnection> {
         let db_path = self.resolve_sqlite_path(name);
         let db_path_str = db_path.to_str().ok_or(StoreError::InvalidDatabaseName)?;
         let conn_str = format!("sqlite:{}", db_path_str);
@@ -63,13 +77,18 @@ impl Store for SqlStore {
     }
 }
 
-#[async_trait]
-impl EntryRepo for SqlStore {
-    async fn create_entry(&self, conn: &Self::Connection) -> Result<EntryId> {
-        todo!()
-    }
+// =================================================================
+//  Entry
+// =================================================================
 
-    async fn get_entry(&self, conn: &Self::Connection, id: EntryId) -> Result<Entry> {
+impl DataAccess<SqlDataSource> for Entry {
+    type Id = LinkId;
+
+    type Out = Self;
+
+    type LoadOption = EntryLoadOption;
+
+    fn get(conn: StoreConnection, id: Self::Id, options: Self::LoadOption) -> Self::Out {
         todo!()
     }
 }
