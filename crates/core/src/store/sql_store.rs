@@ -1,32 +1,19 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
 use sea_orm::{Database, DatabaseConnection};
 
-use crate::{store::StoreError, Entry, EntryLoadOption, LinkId};
+use crate::{store::StoreError, Entry, EntryLoadOption, StoreName};
 
-use super::{DataAccess, DataSource, Store, StoreConnection, StoreName};
+use super::Store;
 
-pub struct SqlDataSource {}
-
-impl DataSource for SqlDataSource {
-    type Connection = DatabaseConnection;
-}
-
-impl From<DatabaseConnection> for StoreConnection {
-    fn from(value: DatabaseConnection) -> Self {
-        StoreConnection(Arc::new(value))
-    }
-}
-
-// =================================================================
+// ============================================================
 //  SqlStore
-// =================================================================
+// ============================================================
 
 #[derive(Default, Debug)]
 pub struct SqlStore {
@@ -50,10 +37,10 @@ impl SqlStore {
         })
     }
 
-    fn resolve_sqlite_path(&self, name: StoreName) -> PathBuf {
+    fn resolve_sqlite_path(&self, name: &StoreName) -> PathBuf {
         let mut result = self.data_path.clone();
 
-        result.push::<String>(name.0);
+        result.push::<String>(name.0.clone());
         result.push("sqlite");
 
         result
@@ -65,30 +52,14 @@ impl SqlStore {
 }
 
 #[async_trait]
-impl Store<SqlDataSource> for SqlStore {
+impl Store for SqlStore {
     type Connection = DatabaseConnection;
 
-    async fn get_conn(&self, name: StoreName) -> Result<StoreConnection> {
-        let db_path = self.resolve_sqlite_path(name);
+    async fn get_conn(&self, store_name: &StoreName) -> Result<DatabaseConnection> {
+        let db_path = self.resolve_sqlite_path(store_name);
         let db_path_str = db_path.to_str().ok_or(StoreError::InvalidDatabaseName)?;
         let conn_str = format!("sqlite:{}", db_path_str);
 
         Ok(Database::connect(conn_str).await?.into())
-    }
-}
-
-// =================================================================
-//  Entry
-// =================================================================
-
-impl DataAccess<SqlDataSource> for Entry {
-    type Id = LinkId;
-
-    type Out = Self;
-
-    type LoadOption = EntryLoadOption;
-
-    fn get(conn: StoreConnection, id: Self::Id, options: Self::LoadOption) -> Self::Out {
-        todo!()
     }
 }

@@ -2,9 +2,9 @@ use std::path::PathBuf;
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-// ====================================================================
+// ============================================================
 //  Entry
-// ====================================================================
+// ============================================================
 
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct Entry {
@@ -27,6 +27,10 @@ pub struct Entry {
     pub metadata: Option<EntryMetadata>,
 }
 
+// ============================================================
+//  EntryId
+// ============================================================
+
 #[derive(Clone, Default, Debug)]
 pub struct EntryId(pub String);
 
@@ -39,6 +43,10 @@ where
     }
 }
 
+// ============================================================
+//  EntryTag
+// ============================================================
+
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryTag {
     #[builder(setter(into))]
@@ -48,35 +56,48 @@ pub struct EntryTag {
     pub name: String,
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct EntryTagId(String);
+// ============================================================
+//  EntryTagId
+// ============================================================
 
 #[derive(Clone, Default, Debug)]
+pub struct EntryTagId(pub String);
+
+impl<T> From<T> for EntryTagId
+where
+    T: Into<String>,
+{
+    fn from(value: T) -> Self {
+        Self(value.into())
+    }
+}
+
+// ============================================================
+//  EntryBody
+// ============================================================
+
+#[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryBody {
+    #[builder(setter(into))]
     pub content_type: String,
+
+    #[builder(setter(into))]
     pub content: String,
 }
 
-#[derive(Clone, Debug)]
+// ============================================================
+//  EntryMetadata
+// ============================================================
+
+#[derive(Clone, TypedBuilder, Debug)]
 pub struct EntryMetadata {
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
 
-#[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct EntryLoadOption {
-    #[builder(setter(into))]
-    pub load_tags: bool,
-
-    #[builder(setter(into))]
-    pub load_body: bool,
-
-    #[builder(setter(into))]
-    pub load_attachments: bool,
-
-    #[builder(setter(into))]
-    pub load_times: bool,
-}
+// ============================================================
+//  Attachment
+// ============================================================
 
 #[derive(Clone, TypedBuilder, Debug)]
 pub struct Attachment {
@@ -111,6 +132,10 @@ impl Default for Attachment {
     }
 }
 
+// ============================================================
+//  AttachmentId
+// ============================================================
+
 #[derive(Clone, Default, Debug)]
 pub struct AttachmentId(pub String);
 
@@ -121,52 +146,4 @@ where
     fn from(value: T) -> Self {
         Self(value.into())
     }
-}
-
-// ====================================================================
-//  Link
-// ====================================================================
-
-#[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct Link {
-    #[builder(setter(into))]
-    pub id: LinkId,
-
-    #[builder(setter(into))]
-    pub source: EntryId,
-
-    #[builder(setter(into))]
-    pub target: EntryId,
-
-    #[builder(setter(into))]
-    pub annotation: String,
-
-    #[builder(setter(into))]
-    pub link_type: LinkType,
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct LinkId(pub String);
-
-impl<T> From<T> for LinkId
-where
-    T: Into<String>,
-{
-    fn from(value: T) -> Self {
-        Self(value.into())
-    }
-}
-
-impl From<LinkId> for String {
-    fn from(value: LinkId) -> Self {
-        value.0
-    }
-}
-
-#[derive(Clone, Default, Debug)]
-pub enum LinkType {
-    Solid,
-
-    #[default]
-    Weak,
 }

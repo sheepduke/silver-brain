@@ -1,25 +1,8 @@
-use std::any::Any;
-use std::sync::Arc;
-
 use anyhow::Result;
 use async_trait::async_trait;
 use thiserror::Error;
 
-// =================================================================
-//  StoreName
-// =================================================================
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct StoreName(pub String);
-
-impl<T> From<T> for StoreName
-where
-    T: Into<String>,
-{
-    fn from(value: T) -> Self {
-        Self(value.into())
-    }
-}
+use crate::StoreName;
 
 // =================================================================
 //  Store Error
@@ -41,37 +24,9 @@ pub enum StoreError {
 //  StoreConnection
 // =================================================================
 
-pub struct StoreConnection(pub Arc<dyn Any + Send + Sync>);
-
-// =================================================================
-//  DataSource
-// =================================================================
-
-pub trait DataSource {
-    type Connection;
-}
-
-// =================================================================
-//  Store
-// =================================================================
-
 #[async_trait]
-pub trait Store<D: DataSource> {
+pub trait Store {
     type Connection;
 
-    async fn get_conn(&self, name: StoreName) -> Result<StoreConnection>;
-}
-
-// ----------------------------------------------------------------------
-//  DataAccess
-// ----------------------------------------------------------------------
-
-pub trait DataAccess<D: DataSource> {
-    type Id;
-
-    type Out;
-
-    type LoadOption;
-
-    fn get(conn: StoreConnection, id: Self::Id, options: Self::LoadOption) -> Self::Out;
+    async fn get_conn(&self, store_name: &StoreName) -> Result<Self::Connection>;
 }
