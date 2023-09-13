@@ -12,3 +12,6 @@ sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls
 thiserror = { workspace = true }
 time = { workspace = true }
 typed-builder = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
