@@ -79,7 +79,7 @@ mod tests {
         // Create the test sqlite file if not exists.
         let mut sqlite_file = data_path.clone();
         sqlite_file.push("test.sqlite");
-        File::create(&sqlite_file);
+        let _ = File::create(&sqlite_file).expect("Create test.sqlite file");
 
         // Ensure the database can be connected.
         let store = result.unwrap();
