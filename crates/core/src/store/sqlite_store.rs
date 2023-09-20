@@ -15,7 +15,7 @@ use super::Store;
 //  SqlStore
 // ============================================================
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct SqliteStore {
     data_path: PathBuf,
 }
@@ -49,9 +49,7 @@ impl SqliteStore {
 }
 
 #[async_trait]
-impl Store for SqliteStore {
-    type Connection = DatabaseConnection;
-
+impl Store<DatabaseConnection> for SqliteStore {
     async fn get_conn(&self, store_name: &StoreName) -> Result<DatabaseConnection> {
         let db_path = self.resolve_sqlite_path(store_name);
         let db_path_str = db_path.to_str().ok_or(StoreError::InvalidDatabaseName)?;

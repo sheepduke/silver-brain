@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros", "with-time"] }
+svix-ksuid = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 typed-builder = { workspace = true }

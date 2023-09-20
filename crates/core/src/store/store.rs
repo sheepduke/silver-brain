@@ -27,8 +27,6 @@ pub enum StoreError {
 // =================================================================
 
 #[async_trait]
-pub trait Store: Any + Send + Sync {
-    type Connection;
-
-    async fn get_conn(&self, store_name: &StoreName) -> Result<Self::Connection>;
+pub trait Store<Connection>: Any + Send + Sync {
+    async fn get_conn(&self, store_name: &StoreName) -> Result<Connection>;
 }

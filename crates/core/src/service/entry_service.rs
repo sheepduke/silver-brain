@@ -15,7 +15,7 @@ pub trait EntryService {
     async fn create_entry(
         &self,
         context: &RequestContext,
-        request: &EntryCreateRequest,
+        request: EntryCreateRequest,
     ) -> Result<EntryId>;
 
     async fn get_entry(
@@ -35,7 +35,7 @@ pub trait EntryService {
     async fn update_entry(
         &self,
         context: &RequestContext,
-        request: &EntryUpdateRequest,
+        request: EntryUpdateRequest,
     ) -> Result<()>;
 
     async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()>;
@@ -51,13 +51,13 @@ pub trait EntryService {
     async fn create_attachment(
         &self,
         context: &RequestContext,
-        request: &AttachmentCreateRequest,
+        request: AttachmentCreateRequest,
     ) -> Result<AttachmentId>;
 
     async fn update_attachment(
         &self,
         context: &RequestContext,
-        request: &AttachmentUpdateRequest,
+        request: AttachmentUpdateRequest,
     ) -> Result<()>;
 
     async fn delete_attachment(&self, context: &RequestContext, id: &AttachmentId) -> Result<()>;
@@ -89,13 +89,13 @@ pub struct EntryLoadOption {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryCreateRequest {
     #[builder(setter(into))]
-    name: String,
+    pub name: String,
 
     #[builder(default, setter(strip_option, into))]
-    content_type: Option<String>,
+    pub content_type: Option<String>,
 
     #[builder(default, setter(strip_option, into))]
-    content: Option<String>,
+    pub content: Option<String>,
 }
 
 // ============================================================

@@ -1,2 +1,3 @@
 mod entry_service;
-mod sqlite_entry_service;
+mod sql_entry_service;
+
