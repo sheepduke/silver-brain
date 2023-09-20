@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::m20230920_010000_create_concept_table::Concept;
+use crate::m20230920_010000_create_entry_table::Entry;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -11,21 +11,21 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(ConceptTag::Table)
+                    .table(EntryTag::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(ConceptTag::Id)
+                        ColumnDef::new(EntryTag::Id)
                             .string()
                             .not_null()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(ConceptTag::ConceptId).string().not_null())
-                    .col(ColumnDef::new(ConceptTag::Name).string().not_null())
+                    .col(ColumnDef::new(EntryTag::EntryId).string().not_null())
+                    .col(ColumnDef::new(EntryTag::Name).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk_concept_id")
-                            .from(ConceptTag::Table, ConceptTag::ConceptId)
-                            .to(Concept::Table, Concept::Id),
+                            .name("fk_entry_id")
+                            .from(EntryTag::Table, EntryTag::EntryId)
+                            .to(Entry::Table, Entry::Id),
                     )
                     .to_owned(),
             )
@@ -34,15 +34,15 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(ConceptTag::Table).to_owned())
+            .drop_table(Table::drop().table(EntryTag::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum ConceptTag {
+pub enum EntryTag {
     Table,
     Id,
-    ConceptId,
+    EntryId,
     Name,
 }
