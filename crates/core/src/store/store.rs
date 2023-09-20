@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use thiserror::Error;
@@ -25,7 +27,7 @@ pub enum StoreError {
 // =================================================================
 
 #[async_trait]
-pub trait Store {
+pub trait Store: Any + Send + Sync {
     type Connection;
 
     async fn get_conn(&self, store_name: &StoreName) -> Result<Self::Connection>;

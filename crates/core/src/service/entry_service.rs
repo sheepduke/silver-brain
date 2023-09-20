@@ -14,43 +14,53 @@ use crate::{AttachmentId, Entry, EntryId, EntryTagId, RequestContext};
 pub trait EntryService {
     async fn create_entry(
         &self,
-        context: RequestContext,
+        context: &RequestContext,
         request: &EntryCreateRequest,
     ) -> Result<EntryId>;
 
-    async fn get_entry(&self, context: RequestContext, id: &EntryId) -> Result<Entry>;
+    async fn get_entry(
+        &self,
+        context: &RequestContext,
+        id: &EntryId,
+        option: &EntryLoadOption,
+    ) -> Result<Entry>;
 
-    async fn get_entries(&self, context: RequestContext, ids: &[EntryId]) -> Result<Vec<Entry>>;
+    async fn get_entries(
+        &self,
+        context: &RequestContext,
+        ids: &[EntryId],
+        option: &EntryLoadOption,
+    ) -> Result<Vec<Entry>>;
 
     async fn update_entry(
         &self,
-        context: RequestContext,
+        context: &RequestContext,
         request: &EntryUpdateRequest,
     ) -> Result<()>;
 
-    async fn delete_entry(&self, context: RequestContext, id: &EntryId) -> Result<()>;
+    async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()>;
 
     async fn create_entry_tag(
         &self,
-        context: RequestContext,
+        context: &RequestContext,
         request: EntryCreateRequest,
     ) -> Result<EntryTagId>;
 
-    async fn delete_entry_tag(&self, context: RequestContext, id: &EntryTagId) -> Result<()>;
+    async fn delete_entry_tag(&self, context: &RequestContext, id: &EntryTagId) -> Result<()>;
 
     async fn create_attachment(
         &self,
-        context: RequestContext,
+        context: &RequestContext,
         request: &AttachmentCreateRequest,
     ) -> Result<AttachmentId>;
 
     async fn update_attachment(
         &self,
-        context: RequestContext,
+        context: &RequestContext,
         request: &AttachmentUpdateRequest,
     ) -> Result<()>;
 
-    async fn delete_attachment(&self, context: RequestContext, id: &AttachmentId) -> Result<()>;
+    async fn delete_attachment(&self, context: &RequestContext, id: &AttachmentId) -> Result<()>;
 }
 
 // ============================================================

@@ -15,16 +15,22 @@ pub struct Entry {
     pub name: String,
 
     #[builder(default, setter(strip_option, into))]
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<Vec<EntryTag>>,
 
     #[builder(default, setter(strip_option, into))]
-    pub body: Option<EntryBody>,
+    pub content_type: Option<String>,
 
     #[builder(default, setter(strip_option, into))]
-    pub attachments: Option<Attachment>,
+    pub content: Option<String>,
+
+    #[builder(default, setter(strip_option))]
+    pub attachments: Option<Vec<Attachment>>,
 
     #[builder(default, setter(strip_option, into))]
-    pub metadata: Option<EntryMetadata>,
+    pub create_time: Option<OffsetDateTime>,
+
+    #[builder(default, setter(strip_option, into))]
+    pub update_time: Option<OffsetDateTime>,
 }
 
 // ============================================================
@@ -70,29 +76,6 @@ where
     fn from(value: T) -> Self {
         Self(value.into())
     }
-}
-
-// ============================================================
-//  EntryBody
-// ============================================================
-
-#[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct EntryBody {
-    #[builder(setter(into))]
-    pub content_type: String,
-
-    #[builder(setter(into))]
-    pub content: String,
-}
-
-// ============================================================
-//  EntryMetadata
-// ============================================================
-
-#[derive(Clone, TypedBuilder, Debug)]
-pub struct EntryMetadata {
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
 }
 
 // ============================================================
