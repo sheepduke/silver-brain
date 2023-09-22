@@ -12,7 +12,7 @@ use crate::{AttachmentId, Entry, EntryId, EntryTagId, RequestContext};
 
 #[async_trait]
 pub trait EntryService {
-    async fn count_entry(&self, context: &RequestContext) -> Result<u64>;
+    async fn count_entries(&self, context: &RequestContext) -> Result<u64>;
 
     async fn create_entry(
         &self,

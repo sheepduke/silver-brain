@@ -31,7 +31,7 @@ impl<S: Store<DatabaseConnection>> SqlEntryService<S> {
 
 #[async_trait]
 impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
-    async fn count_entry(&self, context: &RequestContext) -> Result<u64> {
+    async fn count_entries(&self, context: &RequestContext) -> Result<u64> {
         let conn = self.create_conn(context).await?;
 
         Ok(entry::Entity::find().count(&conn).await?)
@@ -143,7 +143,7 @@ mod tests {
             .build();
 
         let _ = service.create_entry(&context, request).await.unwrap();
-        assert_eq!(service.count_entry(&context).await.unwrap(), 1);
+        assert_eq!(service.count_entries(&context).await.unwrap(), 1);
     }
 
     fn create_service() -> SqlEntryService<SqliteStore> {
