@@ -8,11 +8,16 @@ edition = "2021"
 [dependencies] 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros", "with-time"] }
+lazy_static = { workspace = true }
+sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros", "with-time", "debug-print"] }
 svix-ksuid = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 typed-builder = { workspace = true }
+
+silver-brain-migration = { path = "../migration"}
 
 [dev-dependencies]
 tokio = { workspace = true }

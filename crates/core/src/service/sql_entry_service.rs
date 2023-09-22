@@ -1,16 +1,16 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait};
+use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, PaginatorTrait};
 use svix_ksuid::{Ksuid, KsuidLike};
 use typed_builder::TypedBuilder;
 
 use crate::{
-    store::{entity, Store},
+    store::{entity::entry, Store},
     AttachmentId, Entry, EntryId, EntryTagId, RequestContext, ToIso8601String,
 };
 
 use super::entry_service::{
-    AttachmentCreateRequest, AttachmentUpdateRequest, EntryCreateRequest, EntryLoadOption,
+    AttachmentCreateRequest, AttachmentUpdateRequest, EntryCreateRequest, EntryLoadOptions,
     EntryService, EntryUpdateRequest,
 };
 
@@ -23,21 +23,31 @@ impl<S: Store<DatabaseConnection>> SqlEntryService<S> {
     pub fn new(store: S) -> Self {
         Self { store }
     }
+
+    async fn create_conn(&self, context: &RequestContext) -> Result<DatabaseConnection> {
+        Ok(self.store.get_conn(&context.store_name).await?)
+    }
 }
 
 #[async_trait]
 impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
+    async fn count_entry(&self, context: &RequestContext) -> Result<u64> {
+        let conn = self.create_conn(context).await?;
+
+        Ok(entry::Entity::find().count(&conn).await?)
+    }
+
     async fn create_entry(
         &self,
         context: &RequestContext,
         request: EntryCreateRequest,
     ) -> Result<EntryId> {
-        let conn = self.store.get_conn(&context.store_name).await?;
+        let conn = self.create_conn(context).await?;
 
         let uid = Ksuid::new(None, None);
         let now_time_string = uid.timestamp().to_iso_8601_string();
 
-        let record = entity::entry::ActiveModel {
+        let record = entry::ActiveModel {
             id: ActiveValue::set(uid.to_string()),
             name: ActiveValue::set(request.name),
             content_type: ActiveValue::set(request.content_type.unwrap_or_default()),
@@ -46,7 +56,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
             update_time: ActiveValue::set(now_time_string),
         };
 
-        entity::entry::Entity::insert(record).exec(&conn).await?;
+        entry::Entity::insert(record).exec(&conn).await?;
 
         Ok(uid.to_string().into())
     }
@@ -55,7 +65,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         &self,
         context: &RequestContext,
         id: &EntryId,
-        option: &EntryLoadOption,
+        option: &EntryLoadOptions,
     ) -> Result<Entry> {
         todo!()
     }
@@ -64,7 +74,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         &self,
         context: &RequestContext,
         ids: &[EntryId],
-        option: &EntryLoadOption,
+        option: &EntryLoadOptions,
     ) -> Result<Vec<Entry>> {
         todo!()
     }
@@ -116,20 +126,15 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
 
 #[cfg(test)]
 mod tests {
-    use std::{path::PathBuf, str::FromStr};
-
-    use crate::store::SqliteStore;
+    use crate::store::{tests::store::new_sqlite_store, SqliteStore};
 
     use super::*;
 
-    // #[tokio::test]
+    #[tokio::test]
     async fn asdf() {
-        let store =
-            SqliteStore::new(&PathBuf::from_str("/home/invalid/temp/silver-brain").unwrap())
-                .unwrap();
-        let service = SqlEntryService::new(store);
+        let service = create_service();
 
-        let context = RequestContext::builder().store_name("default").build();
+        let context = RequestContext::default();
 
         let request = EntryCreateRequest::builder()
             .name("Test")
@@ -137,6 +142,12 @@ mod tests {
             .content("What??")
             .build();
 
-        service.create_entry(&context, request).await;
+        let _ = service.create_entry(&context, request).await.unwrap();
+        assert_eq!(service.count_entry(&context).await.unwrap(), 1);
+    }
+
+    fn create_service() -> SqlEntryService<SqliteStore> {
+        let store = new_sqlite_store();
+        SqlEntryService::new(store)
     }
 }

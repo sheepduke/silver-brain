@@ -1,11 +1,13 @@
 use std::{
-    fs,
+    fs::{self, File},
     path::{Path, PathBuf},
 };
 
 use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
+use migration::Migrator;
 use sea_orm::{Database, DatabaseConnection};
+use typed_builder::TypedBuilder;
 
 use crate::{store::StoreError, StoreName};
 
@@ -15,26 +17,45 @@ use super::Store;
 //  SqlStore
 // ============================================================
 
+#[derive(Clone, PartialEq, Eq, TypedBuilder, Debug)]
+pub struct SqliteStoreOptions {
+    #[builder(default = true)]
+    pub auto_create: bool,
+
+    #[builder(default = true)]
+    pub auto_migrate: bool,
+}
+
+impl Default for SqliteStoreOptions {
+    fn default() -> Self {
+        Self {
+            auto_create: true,
+            auto_migrate: true,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct SqliteStore {
-    data_path: PathBuf,
+    pub data_path: PathBuf,
+
+    pub options: SqliteStoreOptions,
 }
 
 impl SqliteStore {
-    pub fn new(data_path: &Path) -> Result<Self> {
+    pub fn new(data_path: PathBuf, options: SqliteStoreOptions) -> Result<Self> {
         if data_path.exists() {
             ensure!(data_path.is_dir(), StoreError::DataPathNotDirectory);
             ensure!(
-                Self::is_dir_writable(data_path).context("Failed to check directory permission")?,
+                Self::is_dir_writable(&data_path)
+                    .context("Failed to check directory permission")?,
                 StoreError::DataPathNotWritable
             );
         } else {
-            fs::create_dir_all(data_path)?;
+            fs::create_dir_all(&data_path)?;
         }
 
-        Ok(Self {
-            data_path: data_path.to_path_buf(),
-        })
+        Ok(Self { data_path, options })
     }
 
     fn resolve_sqlite_path(&self, name: &StoreName) -> PathBuf {
@@ -55,32 +76,36 @@ impl Store<DatabaseConnection> for SqliteStore {
         let db_path_str = db_path.to_str().ok_or(StoreError::InvalidDatabaseName)?;
         let conn_str = format!("sqlite:{}", db_path_str);
 
-        Ok(Database::connect(conn_str).await?.into())
+        let conn;
+
+        if db_path.try_exists()? {
+            conn = Database::connect(conn_str).await?;
+        } else {
+            if self.options.auto_create {
+                File::create(&db_path)?;
+            }
+
+            conn = Database::connect(conn_str).await?;
+
+            if self.options.auto_migrate {
+                Migrator::run(&conn).await?;
+            }
+        }
+
+        Ok(conn)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs::File};
+    use crate::store::tests::store::new_sqlite_store;
 
     use super::*;
 
     #[tokio::test]
-    async fn new_get_conn() {
-        let mut data_path = env::temp_dir();
-        data_path.push("silver-brain");
-
-        // Ensure the creation succeeds.
-        let result = SqliteStore::new(&data_path);
-        assert!(result.is_ok());
-
-        // Create the test sqlite file if not exists.
-        let mut sqlite_file = data_path.clone();
-        sqlite_file.push("test.sqlite");
-        let _ = File::create(&sqlite_file).expect("Create test.sqlite file");
-
+    async fn get_conn() {
         // Ensure the database can be connected.
-        let store = result.unwrap();
+        let store = new_sqlite_store();
         let store_name = StoreName("test".to_string());
         let conn = store.get_conn(&store_name).await;
 

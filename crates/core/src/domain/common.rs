@@ -16,7 +16,7 @@ pub struct RequestContext {
 //  StoreName
 // ============================================================
 
-#[derive(Clone, Default, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct StoreName(pub String);
 
 impl<T> From<T> for StoreName
@@ -25,6 +25,12 @@ where
 {
     fn from(value: T) -> Self {
         Self(value.into())
+    }
+}
+
+impl Default for StoreName {
+    fn default() -> Self {
+        Self("default".to_string())
     }
 }
 

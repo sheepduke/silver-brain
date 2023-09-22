@@ -12,6 +12,8 @@ use crate::{AttachmentId, Entry, EntryId, EntryTagId, RequestContext};
 
 #[async_trait]
 pub trait EntryService {
+    async fn count_entry(&self, context: &RequestContext) -> Result<u64>;
+
     async fn create_entry(
         &self,
         context: &RequestContext,
@@ -22,14 +24,14 @@ pub trait EntryService {
         &self,
         context: &RequestContext,
         id: &EntryId,
-        option: &EntryLoadOption,
+        option: &EntryLoadOptions,
     ) -> Result<Entry>;
 
     async fn get_entries(
         &self,
         context: &RequestContext,
         ids: &[EntryId],
-        option: &EntryLoadOption,
+        option: &EntryLoadOptions,
     ) -> Result<Vec<Entry>>;
 
     async fn update_entry(
@@ -68,7 +70,7 @@ pub trait EntryService {
 // ============================================================
 
 #[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct EntryLoadOption {
+pub struct EntryLoadOptions {
     #[builder(default, setter(into))]
     pub load_tags: bool,
 
