@@ -1,6 +1,5 @@
 mod domain;
 pub use domain::*;
 
-mod store;
-
 mod service;
+pub use service::*;

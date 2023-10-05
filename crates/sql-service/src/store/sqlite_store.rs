@@ -7,9 +7,10 @@ use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
 use migration::Migrator;
 use sea_orm::{Database, DatabaseConnection};
+use silver_brain_core::StoreName;
 use typed_builder::TypedBuilder;
 
-use crate::{store::StoreError, StoreName};
+use crate::store::StoreError;
 
 use super::Store;
 
@@ -97,10 +98,41 @@ impl Store<DatabaseConnection> for SqliteStore {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::store::tests::store::new_sqlite_store;
-
+pub mod tests {
     use super::*;
+
+    use std::env;
+    use std::sync::Once;
+
+    use lazy_static::lazy_static;
+    use svix_ksuid::{Ksuid, KsuidLike};
+
+    use crate::store::{SqliteStore, SqliteStoreOptions};
+
+    impl Drop for SqliteStore {
+        fn drop(&mut self) {
+            fs::remove_dir_all(&self.data_path).unwrap()
+        }
+    }
+
+    lazy_static! {
+        static ref INIT: Once = Once::new();
+    }
+
+    pub fn new_sqlite_store() -> SqliteStore {
+        INIT.call_once(|| {
+            tracing_subscriber::fmt()
+                .with_max_level(tracing::Level::DEBUG)
+                .with_test_writer()
+                .init();
+        });
+
+        let mut path = env::temp_dir();
+        path.push("silver-brain-tests");
+        path.push(Ksuid::new(None, None).to_string());
+
+        SqliteStore::new(path, SqliteStoreOptions::default()).unwrap()
+    }
 
     #[tokio::test]
     async fn get_conn() {

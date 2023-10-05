@@ -1,3 +1,8 @@
-mod entry_service;
-mod sql_entry_service;
+mod entry;
+pub use entry::{
+    AttachmentCreateRequest, AttachmentUpdateRequest, EntryCreateRequest, EntryLoadOptions,
+    EntryService, EntryTagCreateRequest, EntryTagUpdateRequest, EntryUpdateRequest,
+};
 
+mod error;
+pub use error::ServiceError;

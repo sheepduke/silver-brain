@@ -2,9 +2,8 @@ use std::any::Any;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use silver_brain_core::StoreName;
 use thiserror::Error;
-
-use crate::StoreName;
 
 // =================================================================
 //  Store Error
@@ -23,7 +22,7 @@ pub enum StoreError {
 }
 
 // =================================================================
-//  StoreConnection
+//  Store
 // =================================================================
 
 #[async_trait]

@@ -1,18 +1,12 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, PaginatorTrait};
+//use silver_brain_core::{EntryId, EntryService, RequestContext, EntryCreateRequest, EntryLoadOptions, Entry, EntryUpdateRequest, EntryTagId, AttachmentCreateRequest, AttachmentId, AttachmentUpdateRequest};
+use silver_brain_core::*;
 use svix_ksuid::{Ksuid, KsuidLike};
 use typed_builder::TypedBuilder;
 
-use crate::{
-    store::{entity::entry, Store},
-    AttachmentId, Entry, EntryId, EntryTagId, RequestContext, ToIso8601String,
-};
-
-use super::entry_service::{
-    AttachmentCreateRequest, AttachmentUpdateRequest, EntryCreateRequest, EntryLoadOptions,
-    EntryService, EntryUpdateRequest,
-};
+use crate::{entity::entry, store::Store};
 
 #[derive(TypedBuilder, Debug)]
 pub struct SqlEntryService<S: Store<DatabaseConnection>> {
@@ -58,15 +52,22 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
 
         entry::Entity::insert(record).exec(&conn).await?;
 
-        Ok(uid.to_string().into())
+        Ok(EntryId::new(uid.to_string()))
     }
 
     async fn get_entry(
         &self,
         context: &RequestContext,
         id: &EntryId,
-        option: &EntryLoadOptions,
+        options: &EntryLoadOptions,
     ) -> Result<Entry> {
+        let conn = self.create_conn(context).await?;
+
+        let entry = entry::Entity::find_by_id("something")
+            .one(&conn)
+            .await?
+            .ok_or(ServiceError::IdNotFound)?;
+
         todo!()
     }
 
@@ -74,7 +75,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         &self,
         context: &RequestContext,
         ids: &[EntryId],
-        option: &EntryLoadOptions,
+        options: &EntryLoadOptions,
     ) -> Result<Vec<Entry>> {
         todo!()
     }
@@ -126,7 +127,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
 
 #[cfg(test)]
 mod tests {
-    use crate::store::{tests::store::new_sqlite_store, SqliteStore};
+    use crate::store::{new_sqlite_store, SqliteStore};
 
     use super::*;
 

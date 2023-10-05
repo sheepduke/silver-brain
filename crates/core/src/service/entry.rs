@@ -24,14 +24,14 @@ pub trait EntryService {
         &self,
         context: &RequestContext,
         id: &EntryId,
-        option: &EntryLoadOptions,
+        options: &EntryLoadOptions,
     ) -> Result<Entry>;
 
     async fn get_entries(
         &self,
         context: &RequestContext,
         ids: &[EntryId],
-        option: &EntryLoadOptions,
+        options: &EntryLoadOptions,
     ) -> Result<Vec<Entry>>;
 
     async fn update_entry(

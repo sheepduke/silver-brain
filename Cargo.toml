@@ -9,7 +9,8 @@ members = [
   "crates/cli",
   "crates/core",
   "crates/server",
-  "crates/migration"
+  "crates/migration",
+  "crates/sql-service"
 ]
 
 [workspace.dependencies]

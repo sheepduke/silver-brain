@@ -41,12 +41,21 @@ pub struct Entry {
 #[derive(Clone, Default, Debug)]
 pub struct EntryId(pub String);
 
-impl<T> From<T> for EntryId
-where
-    T: Into<String>,
-{
-    fn from(value: T) -> Self {
+impl EntryId {
+    pub fn new(value: impl Into<String>) -> Self {
         Self(value.into())
+    }
+}
+
+impl From<EntryId> for String {
+    fn from(value: EntryId) -> Self {
+        value.0
+    }
+}
+
+impl From<&EntryId> for String {
+    fn from(value: &EntryId) -> Self {
+        value.0.clone()
     }
 }
 
