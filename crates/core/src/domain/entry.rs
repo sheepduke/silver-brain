@@ -47,6 +47,18 @@ impl EntryId {
     }
 }
 
+impl From<String> for EntryId {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&str> for EntryId {
+    fn from(value: &str) -> Self {
+        Self(value.to_string())
+    }
+}
+
 impl From<EntryId> for String {
     fn from(value: EntryId) -> Self {
         value.0

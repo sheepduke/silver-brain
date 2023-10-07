@@ -46,6 +46,10 @@ pub trait FromIso8601String<Out = Self> {
     fn from_iso_8601_string(input: &str) -> Result<Out>;
 }
 
+pub trait IntoOffsetDateTime {
+    fn into_offset_date_time(self) -> OffsetDateTime;
+}
+
 impl ToIso8601String for OffsetDateTime {
     fn to_iso_8601_string(&self) -> String {
         self.format(&Iso8601::DEFAULT).unwrap()
@@ -55,5 +59,11 @@ impl ToIso8601String for OffsetDateTime {
 impl FromIso8601String for OffsetDateTime {
     fn from_iso_8601_string(input: &str) -> Result<Self> {
         Ok(Self::parse(input, &Iso8601::DEFAULT)?)
+    }
+}
+
+impl IntoOffsetDateTime for String {
+    fn into_offset_date_time(self) -> OffsetDateTime {
+        OffsetDateTime::from_iso_8601_string(&self).unwrap()
     }
 }

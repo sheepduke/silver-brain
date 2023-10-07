@@ -1,5 +1,5 @@
 use clap::{Args, Parser, Subcommand};
-use silver_brain_server as server;
+use silver_brain_http_server as server;
 
 #[derive(Debug, Parser)]
 #[command(name = "silver-brain")]

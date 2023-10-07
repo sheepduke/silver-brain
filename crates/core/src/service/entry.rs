@@ -4,7 +4,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use typed_builder::TypedBuilder;
 
-use crate::{AttachmentId, Entry, EntryId, EntryTagId, RequestContext};
+use crate::{AttachmentId, Entry, EntryId, EntryTag, EntryTagId, RequestContext};
 
 // ============================================================
 //  EntryService
@@ -75,7 +75,7 @@ pub struct EntryLoadOptions {
     pub load_tags: bool,
 
     #[builder(default, setter(into))]
-    pub load_body: bool,
+    pub load_content: bool,
 
     #[builder(default, setter(into))]
     pub load_attachments: bool,

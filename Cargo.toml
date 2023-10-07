@@ -6,11 +6,11 @@ edition = "2021"
 
 [workspace]
 members = [
-  "crates/cli",
   "crates/core",
-  "crates/server",
   "crates/migration",
-  "crates/sql-service"
+  "crates/sql-service",
+  "crates/http-server",
+  "crates/cli",
 ]
 
 [workspace.dependencies]
@@ -31,5 +31,5 @@ typed-builder = "0.16.0"
 [dependencies]
 clap = { version = "4.3.24", features = ["derive"] }
 silver-brain-cli = { path = "crates/cli" }
-silver-brain-server = { path = "crates/server" }
+silver-brain-http-server = { path = "crates/http-server" }
 tokio = { workspace = true }

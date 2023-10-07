@@ -5,4 +5,4 @@ pub use entry::{
 };
 
 mod error;
-pub use error::ServiceError;
+pub use error::ClientError;

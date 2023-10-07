@@ -1,5 +1,5 @@
 [package]
-name = "silver-brain-server"
+name = "silver-brain-http-server"
 version = "0.1.0"
 edition = "2021"
 

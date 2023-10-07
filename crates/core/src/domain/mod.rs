@@ -1,5 +1,7 @@
 mod common;
-pub use common::{FromIso8601String, RequestContext, StoreName, ToIso8601String};
+pub use common::{
+    FromIso8601String, IntoOffsetDateTime, RequestContext, StoreName, ToIso8601String,
+};
 
 mod entry;
 pub use entry::{Entry, EntryId, EntryTag, EntryTagId};
