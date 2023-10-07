@@ -45,7 +45,7 @@ pub trait EntryService {
     async fn create_entry_tag(
         &self,
         context: &RequestContext,
-        request: EntryCreateRequest,
+        request: EntryTagCreateRequest,
     ) -> Result<EntryTagId>;
 
     async fn delete_entry_tag(&self, context: &RequestContext, id: &EntryTagId) -> Result<()>;
@@ -107,16 +107,16 @@ pub struct EntryCreateRequest {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryUpdateRequest {
     #[builder(setter(into))]
-    id: EntryId,
+    pub id: EntryId,
 
     #[builder(default, setter(strip_option, into))]
-    name: Option<String>,
+    pub name: Option<String>,
 
     #[builder(default, setter(strip_option, into))]
-    content_type: Option<String>,
+    pub content_type: Option<String>,
 
     #[builder(default, setter(strip_option, into))]
-    content: Option<String>,
+    pub content: Option<String>,
 }
 
 // ============================================================
@@ -126,10 +126,10 @@ pub struct EntryUpdateRequest {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryTagCreateRequest {
     #[builder(setter(into))]
-    entry_id: EntryId,
+    pub entry_id: EntryId,
 
     #[builder(setter(into))]
-    name: String,
+    pub name: String,
 }
 
 // ============================================================
@@ -139,10 +139,10 @@ pub struct EntryTagCreateRequest {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryTagUpdateRequest {
     #[builder(setter(into))]
-    id: EntryTagId,
+    pub id: EntryTagId,
 
     #[builder(default, setter(strip_option, into))]
-    name: Option<String>,
+    pub name: Option<String>,
 }
 
 // ============================================================
@@ -152,13 +152,13 @@ pub struct EntryTagUpdateRequest {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct AttachmentCreateRequest {
     #[builder(setter(into))]
-    entry_id: EntryId,
+    pub entry_id: EntryId,
 
     #[builder(setter(into))]
-    name: String,
+    pub name: String,
 
     #[builder(setter(into))]
-    file_path: PathBuf,
+    pub file_path: PathBuf,
 }
 
 // ============================================================
@@ -168,11 +168,11 @@ pub struct AttachmentCreateRequest {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct AttachmentUpdateRequest {
     #[builder(setter(into))]
-    id: EntryId,
+    pub id: EntryId,
 
     #[builder(default, setter(strip_option, into))]
-    entry_id: Option<EntryId>,
+    pub entry_id: Option<EntryId>,
 
     #[builder(default, setter(strip_option, into))]
-    name: Option<String>,
+    pub name: Option<String>,
 }

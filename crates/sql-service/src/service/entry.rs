@@ -1,7 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait};
-//use silver_brain_core::{EntryId, EntryService, RequestContext, EntryCreateRequest, EntryLoadOptions, Entry, EntryUpdateRequest, EntryTagId, AttachmentCreateRequest, AttachmentId, AttachmentUpdateRequest};
 use silver_brain_core::*;
 use svix_ksuid::{Ksuid, KsuidLike};
 use time::OffsetDateTime;
@@ -144,9 +143,22 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
     async fn create_entry_tag(
         &self,
         context: &RequestContext,
-        request: EntryCreateRequest,
+        request: EntryTagCreateRequest,
     ) -> Result<EntryTagId> {
-        todo!()
+        let conn = self.store.get_conn(&context.store_name).await?;
+        let tag_id = Ksuid::new(None, None);
+
+        let entity = entity::entry_tag::ActiveModel {
+            id: ActiveValue::set(tag_id.to_string()),
+            name: ActiveValue::set(request.name),
+            entry_id: ActiveValue::set(request.entry_id.into()),
+        };
+
+        entity::entry_tag::Entity::insert(entity)
+            .exec(&conn)
+            .await?;
+
+        Ok(tag_id.to_string().into())
     }
 
     async fn delete_entry_tag(&self, context: &RequestContext, id: &EntryTagId) -> Result<()> {
@@ -177,6 +189,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
 #[cfg(test)]
 mod tests {
     use crate::store::{new_sqlite_store, SqliteStore};
+    use silver_brain_dev as dev;
 
     use super::*;
 
@@ -185,13 +198,8 @@ mod tests {
         let service = create_service();
         let context = RequestContext::default();
 
-        let request = EntryCreateRequest::builder()
-            .name("Test")
-            .content_type("text/md")
-            .content("What??")
-            .build();
+        let _ = dev::create_editor(&service, &context).await;
 
-        let _ = service.create_entry(&context, request).await.unwrap();
         assert_eq!(service.count_entries(&context).await.unwrap(), 1);
     }
 
@@ -200,28 +208,31 @@ mod tests {
         let service = create_service();
         let context = RequestContext::default();
 
-        let request = EntryCreateRequest::builder()
-            .name("Test")
-            .content_type("text/md")
-            .content("What??")
-            .build();
-
         let start_time = OffsetDateTime::now_utc();
-        let id = service.create_entry(&context, request).await.unwrap();
+        let id = dev::create_neovim(&service, &context).await.unwrap();
         let end_time = OffsetDateTime::now_utc();
 
         let options = EntryLoadOptions::builder()
-            .load_tags(true)
             .load_content(true)
             .load_times(true)
+            .load_attachments(true)
+            .load_tags(true)
             .build();
 
         let entry = service.get_entry(&context, &id, &options).await.unwrap();
-        assert_eq!(entry.tags.unwrap().iter().count(), 0);
+
         assert_eq!(entry.content_type.unwrap(), "text/md");
-        assert_eq!(entry.content.unwrap(), "What??");
+        assert!(entry.content.unwrap().contains("Vim-based"));
         assert!(start_time <= entry.create_time.unwrap() && entry.create_time.unwrap() <= end_time);
         assert!(start_time <= entry.update_time.unwrap() && entry.update_time.unwrap() <= end_time);
+
+        let tags = entry.tags.unwrap();
+        assert_eq!(tags.iter().count(), 2);
+        assert!(tags.iter().find(|x| x.name == "open-source").is_some());
+        assert!(tags.iter().find(|x| x.name == "vi").is_some());
+        assert!(tags.iter().find(|x| x.name == "vim").is_none());
+
+        assert_eq!(entry.attachments.unwrap().iter().count(), 0);
     }
 
     fn create_service() -> SqlEntryService<SqliteStore> {

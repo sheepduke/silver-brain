@@ -91,11 +91,8 @@ pub struct EntryTag {
 #[derive(Clone, Default, Debug)]
 pub struct EntryTagId(pub String);
 
-impl<T> From<T> for EntryTagId
-where
-    T: Into<String>,
-{
-    fn from(value: T) -> Self {
-        Self(value.into())
+impl From<String> for EntryTagId {
+    fn from(value: String) -> Self {
+        Self(value)
     }
 }

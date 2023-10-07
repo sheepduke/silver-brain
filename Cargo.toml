@@ -9,6 +9,7 @@ members = [
   "crates/core",
   "crates/migration",
   "crates/sql-service",
+  "crates/dev",
   "crates/http-server",
   "crates/cli",
 ]
@@ -16,8 +17,8 @@ members = [
 [workspace.dependencies]
 anyhow = "1.0.75"
 async-trait = "0.1.73"
-ksuid = "0.2.0"
 lazy_static = "1.4.0"
+sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros", "with-time", "debug-print"] }
 serde = { version = "1.0.188", features = ["serde_derive"] }
 serde_json = "1.0.105"
 svix-ksuid = "0.7.0"
@@ -31,5 +32,6 @@ typed-builder = "0.16.0"
 [dependencies]
 clap = { version = "4.3.24", features = ["derive"] }
 silver-brain-cli = { path = "crates/cli" }
+silver-brain-dev = { path = "crates/dev" }
 silver-brain-http-server = { path = "crates/http-server" }
 tokio = { workspace = true }

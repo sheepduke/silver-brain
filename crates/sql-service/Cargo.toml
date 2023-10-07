@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 lazy_static = { workspace = true }
-sea-orm = { version = "0.12.2", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros", "with-time", "debug-print"] }
+sea-orm = { workspace = true }
 svix-ksuid = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
@@ -22,3 +22,5 @@ silver-brain-migration = { path = "../migration"}
 
 [dev-dependencies]
 tokio = { workspace = true }
+
+silver-brain-dev = { path = "../dev" }
