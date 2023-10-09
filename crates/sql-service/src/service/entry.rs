@@ -137,7 +137,13 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
     }
 
     async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()> {
-        todo!()
+        let conn = self.store.get_conn(&context.store_name).await?;
+
+        let _ = entity::entry::Entity::delete_by_id(&id.0)
+            .exec(&conn)
+            .await?;
+
+        Ok(())
     }
 
     async fn create_entry_tag(
@@ -162,7 +168,12 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
     }
 
     async fn delete_entry_tag(&self, context: &RequestContext, id: &EntryTagId) -> Result<()> {
-        todo!()
+        let conn = self.store.get_conn(&context.store_name).await?;
+        let _ = entity::entry_tag::Entity::delete_by_id(&id.0)
+            .exec(&conn)
+            .await?;
+
+        Ok(())
     }
 
     async fn create_attachment(
@@ -170,7 +181,33 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         context: &RequestContext,
         request: AttachmentCreateRequest,
     ) -> Result<AttachmentId> {
-        todo!()
+        // Check file path first.
+        let path = match request.file_path.to_str() {
+            Some(path) if request.file_path.exists() && request.file_path.is_file() => Ok(path),
+            _ => Err(ClientError::InvalidFilePath),
+        }?
+        .to_string();
+
+        let conn = self.store.get_conn(&context.store_name).await?;
+        let now_time = OffsetDateTime::now_utc();
+        let now_time_string = now_time.to_iso_8601_string();
+        let id = Ksuid::new(Some(now_time), None);
+
+        let entity = entity::attachment::ActiveModel {
+            id: ActiveValue::Set(id.to_string()),
+            name: ActiveValue::Set(request.name),
+            entry_id: ActiveValue::Set(request.entry_id.into()),
+            size: ActiveValue::Set(0), // TODO: Read content length.
+            file_path: ActiveValue::Set(path),
+            create_time: ActiveValue::Set(now_time_string.clone()),
+            update_time: ActiveValue::Set(now_time_string),
+        };
+
+        entity::attachment::Entity::insert(entity)
+            .exec(&conn)
+            .await?;
+
+        Ok(id.to_string().into())
     }
 
     async fn update_attachment(
@@ -182,7 +219,12 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
     }
 
     async fn delete_attachment(&self, context: &RequestContext, id: &AttachmentId) -> Result<()> {
-        todo!()
+        let conn = self.store.get_conn(&context.store_name).await?;
+        let _ = entity::attachment::Entity::delete_by_id(&id.0)
+            .exec(&conn)
+            .await?;
+
+        Ok(())
     }
 }
 
