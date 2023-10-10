@@ -1,6 +1,9 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait,
+    QueryFilter,
+};
 use silver_brain_core::*;
 use svix_ksuid::{Ksuid, KsuidLike};
 use time::OffsetDateTime;
@@ -133,7 +136,32 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         context: &RequestContext,
         request: EntryUpdateRequest,
     ) -> Result<()> {
-        todo!()
+        let conn = self.store.get_conn(&context.store_name).await?;
+
+        let mut model: entity::entry::ActiveModel =
+            entity::entry::Entity::find_by_id(&request.id.0)
+                .one(&conn)
+                .await?
+                .ok_or(ClientError::IdNotFound)?
+                .into();
+
+        if let Some(name) = request.name {
+            model.name = ActiveValue::Set(name);
+        }
+
+        if let Some(content_type) = request.content_type {
+            model.content_type = ActiveValue::Set(content_type);
+        }
+
+        if let Some(content) = request.content {
+            model.content = ActiveValue::Set(content);
+        }
+
+        model.update_time = ActiveValue::Set(OffsetDateTime::now_utc().to_iso_8601_string());
+
+        model.update(&conn).await?;
+
+        Ok(())
     }
 
     async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()> {
@@ -193,7 +221,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         let now_time_string = now_time.to_iso_8601_string();
         let id = Ksuid::new(Some(now_time), None);
 
-        let entity = entity::attachment::ActiveModel {
+        let model = entity::attachment::ActiveModel {
             id: ActiveValue::Set(id.to_string()),
             name: ActiveValue::Set(request.name),
             entry_id: ActiveValue::Set(request.entry_id.into()),
@@ -203,9 +231,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
             update_time: ActiveValue::Set(now_time_string),
         };
 
-        entity::attachment::Entity::insert(entity)
-            .exec(&conn)
-            .await?;
+        model.insert(&conn).await?;
 
         Ok(id.to_string().into())
     }
@@ -215,7 +241,28 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         context: &RequestContext,
         request: AttachmentUpdateRequest,
     ) -> Result<()> {
-        todo!()
+        let conn = self.store.get_conn(&context.store_name).await?;
+
+        let mut model: entity::attachment::ActiveModel =
+            entity::attachment::Entity::find_by_id(&request.id)
+                .one(&conn)
+                .await?
+                .ok_or(ClientError::IdNotFound)?
+                .into();
+
+        if let Some(entry_id) = request.entry_id {
+            model.entry_id = ActiveValue::Set(entry_id.into());
+        }
+
+        if let Some(name) = request.name {
+            model.name = ActiveValue::Set(name.clone());
+        }
+
+        model.update_time = ActiveValue::Set(OffsetDateTime::now_utc().to_iso_8601_string());
+
+        model.update(&conn).await?;
+
+        Ok(())
     }
 
     async fn delete_attachment(&self, context: &RequestContext, id: &AttachmentId) -> Result<()> {
