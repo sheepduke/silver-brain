@@ -21,9 +21,72 @@ import Button from '@mui/material/Button';
 import InputBase from '@mui/material/InputBase';
 import TuneIcon from '@mui/icons-material/Tune';
 import Stack from '@mui/material/Stack';
+import './diagram.css';
+import './App.css';
+
+import Diagram, { createSchema, useSchema } from 'beautiful-react-diagrams';
 
 import NewEntryModal from './components/NewEntryModal';
 import EntryCard from './components/EntryCard';
+
+const CustomNode = (props) => {
+  const { inputs } = props;
+  
+  return (
+    <div style={{ background: '#717EC3', borderRadius: '10px' }}>
+      <div style={{ padding: '10px', color: 'white'  }}>
+        Custom Node
+      </div>
+      <div style={{marginTop: '20px'}}>
+        {inputs.map((port) => React.cloneElement(port, {
+          style: { width: '50px', height: '25px', background: '#1B263B' }
+        }))}
+      </div>
+    </div>
+  );
+};
+
+const initialSchema = createSchema({
+  nodes: [
+    { 
+      id: 'node-1', 
+      content: 'Node 1', 
+      coordinates: [150, 60], 
+      outputs: [ { id: 'port-1', alignment: 'right' } ], 
+    },
+    { 
+      id: 'node-custom', 
+      coordinates: [250, 60], 
+      render: CustomNode,
+      inputs: [ { id: 'custom-port-1',  alignment: 'left' } ],
+    },
+  ]
+});
+
+const testSchema = createSchema({
+  nodes: [
+    { id: 'node-1', content: 'Node 1', coordinates: [250, 60], },
+    { id: 'node-2', content: 'Node 2', coordinates: [100, 200], },
+    { id: 'node-3', content: 'Node 3', coordinates: [250, 200], },
+    { id: 'node-4', content: 'Node 4', coordinates: [400, 200], },
+  ],
+  links: [
+    { input: 'node-1',  output: 'node-2' },
+    { input: 'node-1',  output: 'node-3' },
+    { input: 'node-1',  output: 'node-4' },
+  ],
+});
+
+const UncontrolledDiagram = () => {
+  // create diagrams schema
+  const [schema, { onChange }] = useSchema(testSchema);
+
+  return (
+    <div style={{ height: '22.5rem', position: 'relative', }}>
+      <Diagram schema={schema} onChange={onChange} />
+    </div>
+  );
+};
 
 const drawerWidth = 240;
 
@@ -149,7 +212,8 @@ export default function App() {
               </IconButton>
             </Stack>
           </Toolbar>
-          <EntryCard />
+          {/* <EntryCard /> */}
+          <UncontrolledDiagram />
         </ViewPanel>
       </Box>
       <NewEntryModal

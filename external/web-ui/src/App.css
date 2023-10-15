@@ -35,3 +35,49 @@
     transform: rotate(360deg);
   }
 }
+
+.bi.bi-diagram .bi.bi-diagram-node.bi-diagram-node-default {
+  transition: box-shadow 0.25s ease-in-out, border 0.3s ease-out;
+  border: 0.07rem solid #8795a1;
+  background-color: #dae1e7;
+  color: #606f7b;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.07rem 0.2rem 0 rgba(0, 0, 0, 0.1), 0 0.07rem 0.125rem 0 rgba(0, 0, 0, 0.06);
+  padding: 0.5rem;
+  box-sizing: border-box;
+  width: fit-content;
+}
+
+.bi.bi-diagram .bi-link-canvas-layer {
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.bi.bi-diagram .bi-link-canvas-layer .bi-diagram-link {
+  pointer-events: stroke;
+  /* stylelint-disable-next-line */
+}
+
+.bi.bi-diagram .bi-link-canvas-layer .bi-diagram-link .bi-link-path {
+  stroke: #dae1e7;
+  stroke-width: 0.25rem;
+  pointer-events: stroke;
+  fill: transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bi.bi-diagram .bi-link-canvas-layer .bi-diagram-link .bi-link-ghost {
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-width: 1.2rem;
+  fill: transparent;
+  cursor: pointer;
+}
