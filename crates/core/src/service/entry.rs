@@ -64,9 +64,6 @@ pub trait EntryService {
 #[derive(Clone, Default, TypedBuilder, Debug)]
 pub struct EntryLoadOptions {
     #[builder(default, setter(into))]
-    pub load_tags: bool,
-
-    #[builder(default, setter(into))]
     pub load_content: bool,
 
     #[builder(default, setter(into))]

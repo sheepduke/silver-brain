@@ -18,19 +18,11 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::attachment::Entity")]
     Attachment,
-    #[sea_orm(has_many = "super::entry_tag::Entity")]
-    EntryTag,
 }
 
 impl Related<super::attachment::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Attachment.def()
-    }
-}
-
-impl Related<super::entry_tag::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::EntryTag.def()
     }
 }
 

@@ -4,5 +4,5 @@ pub mod prelude;
 
 pub mod attachment;
 pub mod entry;
-pub mod entry_tag;
-pub mod link;
+pub mod friend_link;
+pub mod parent_link;

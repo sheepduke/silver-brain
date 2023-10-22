@@ -2,5 +2,5 @@
 
 pub use super::attachment::Entity as Attachment;
 pub use super::entry::Entity as Entry;
-pub use super::entry_tag::Entity as EntryTag;
-pub use super::link::Entity as Link;
+pub use super::friend_link::Entity as FriendLink;
+pub use super::parent_link::Entity as ParentLink;

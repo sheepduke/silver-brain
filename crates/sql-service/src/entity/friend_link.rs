@@ -3,13 +3,14 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "link")]
+#[sea_orm(table_name = "friend_link")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
     pub source: String,
     pub target: String,
-    pub annotation: String,
+    pub label: String,
+    pub is_mutual: bool,
     pub create_time: String,
     pub update_time: String,
 }

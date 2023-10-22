@@ -11,24 +11,30 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Link::Table)
+                    .table(FriendLink::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Link::Id).string().not_null().primary_key())
-                    .col(ColumnDef::new(Link::Source).string().not_null())
-                    .col(ColumnDef::new(Link::Target).string().not_null())
-                    .col(ColumnDef::new(Link::Annotation).text().not_null())
-                    .col(ColumnDef::new(Link::CreateTime).string().not_null())
-                    .col(ColumnDef::new(Link::UpdateTime).string().not_null())
+                    .col(
+                        ColumnDef::new(FriendLink::Id)
+                            .string()
+                            .not_null()
+                            .primary_key(),
+                    )
+                    .col(ColumnDef::new(FriendLink::Source).string().not_null())
+                    .col(ColumnDef::new(FriendLink::Target).string().not_null())
+                    .col(ColumnDef::new(FriendLink::Label).text().not_null())
+                    .col(ColumnDef::new(FriendLink::IsMutual).boolean().not_null())
+                    .col(ColumnDef::new(FriendLink::CreateTime).string().not_null())
+                    .col(ColumnDef::new(FriendLink::UpdateTime).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_source")
-                            .from(Link::Table, Link::Source)
+                            .from(FriendLink::Table, FriendLink::Source)
                             .to(Entry::Table, Entry::Id),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_target")
-                            .from(Link::Table, Link::Target)
+                            .from(FriendLink::Table, FriendLink::Target)
                             .to(Entry::Table, Entry::Id),
                     )
                     .to_owned(),
@@ -38,18 +44,19 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Link::Table).to_owned())
+            .drop_table(Table::drop().table(FriendLink::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Link {
+pub enum FriendLink {
     Table,
     Id,
     Source,
     Target,
-    Annotation,
+    Label,
+    IsMutual,
     CreateTime,
     UpdateTime,
 }
