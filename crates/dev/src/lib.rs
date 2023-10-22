@@ -1,7 +1,5 @@
 use anyhow::Result;
-use silver_brain_core::{
-    EntryCreateRequest, EntryId, EntryService, EntryTagCreateRequest, RequestContext,
-};
+use silver_brain_core::{EntryCreateRequest, EntryId, EntryService, RequestContext};
 
 pub async fn create_editor(
     service: &impl EntryService,
@@ -31,26 +29,6 @@ pub async fn create_emacs(
         )
         .await?;
 
-    service
-        .create_entry_tag(
-            &context,
-            EntryTagCreateRequest::builder()
-                .entry_id(entry_id.clone())
-                .name("open-source")
-                .build(),
-        )
-        .await?;
-
-    service
-        .create_entry_tag(
-            &context,
-            EntryTagCreateRequest::builder()
-                .entry_id(entry_id.clone())
-                .name("GNU")
-                .build(),
-        )
-        .await?;
-
     Ok(entry_id)
 }
 
@@ -62,16 +40,6 @@ pub async fn create_vim(service: &impl EntryService, context: &RequestContext) -
                 .name("Vim")
                 .content_type("text/md")
                 .content("Vi IMproved")
-                .build(),
-        )
-        .await?;
-
-    service
-        .create_entry_tag(
-            &context,
-            EntryTagCreateRequest::builder()
-                .entry_id(entry_id.clone())
-                .name("vi")
                 .build(),
         )
         .await?;
@@ -90,26 +58,6 @@ pub async fn create_neovim(
                 .name("Neovim")
                 .content_type("text/md")
                 .content("hyperextensible Vim-based text editor")
-                .build(),
-        )
-        .await?;
-
-    service
-        .create_entry_tag(
-            &context,
-            EntryTagCreateRequest::builder()
-                .entry_id(entry_id.clone())
-                .name("open-source")
-                .build(),
-        )
-        .await?;
-
-    service
-        .create_entry_tag(
-            &context,
-            EntryTagCreateRequest::builder()
-                .entry_id(entry_id.clone())
-                .name("vi")
                 .build(),
         )
         .await?;

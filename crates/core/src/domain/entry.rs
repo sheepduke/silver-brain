@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
@@ -27,11 +25,11 @@ pub struct Entry {
     pub attachments: Option<Vec<Attachment>>,
 
     #[builder(default, setter(strip_option))]
-    pub properties: Option<HashMap<String, String>>,
+    pub properties: Option<Vec<EntryProperty>>,
 
     #[builder(default, setter(strip_option))]
     pub parents: Option<Vec<Entry>>,
-        
+
     #[builder(default, setter(strip_option))]
     pub children: Option<Vec<Entry>>,
 
@@ -86,12 +84,17 @@ impl From<&EntryId> for String {
 //  EntryProperty
 // ============================================================
 
+#[derive(Clone, TypedBuilder, Debug)]
 pub struct EntryProperty {
+    #[builder(setter(into))]
     pub id: EntryPropertyId,
 
+    #[builder(setter(into))]
     pub name: String,
 
-    pub value: String
+    #[builder(setter(into))]
+    pub value: String,
 }
 
+#[derive(Clone, Debug)]
 pub struct EntryPropertyId(pub String);

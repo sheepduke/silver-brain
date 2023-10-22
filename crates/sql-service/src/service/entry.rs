@@ -79,18 +79,6 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
             .name(entry_entity.name.clone())
             .build();
 
-        if options.load_tags {
-            entry.tags = Some(
-                entry_entity
-                    .find_related(entity::entry_tag::Entity)
-                    .all(&conn)
-                    .await?
-                    .into_iter()
-                    .map(|x| x.into())
-                    .collect::<Vec<EntryTag>>(),
-            );
-        }
-
         if options.load_attachments {
             entry.attachments = Some(
                 entry_entity
@@ -167,36 +155,6 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         let conn = self.store.get_conn(&context.store_name).await?;
 
         let _ = entity::entry::Entity::delete_by_id(&id.0)
-            .exec(&conn)
-            .await?;
-
-        Ok(())
-    }
-
-    async fn create_entry_tag(
-        &self,
-        context: &RequestContext,
-        request: EntryTagCreateRequest,
-    ) -> Result<EntryTagId> {
-        let conn = self.store.get_conn(&context.store_name).await?;
-        let tag_id = Ksuid::new(None, None);
-
-        let entity = entity::entry_tag::ActiveModel {
-            id: ActiveValue::set(tag_id.to_string()),
-            name: ActiveValue::set(request.name),
-            entry_id: ActiveValue::set(request.entry_id.into()),
-        };
-
-        entity::entry_tag::Entity::insert(entity)
-            .exec(&conn)
-            .await?;
-
-        Ok(tag_id.to_string().into())
-    }
-
-    async fn delete_entry_tag(&self, context: &RequestContext, id: &EntryTagId) -> Result<()> {
-        let conn = self.store.get_conn(&context.store_name).await?;
-        let _ = entity::entry_tag::Entity::delete_by_id(&id.0)
             .exec(&conn)
             .await?;
 
@@ -304,7 +262,6 @@ mod tests {
             .load_content(true)
             .load_times(true)
             .load_attachments(true)
-            .load_tags(true)
             .build();
 
         let entry = service.get_entry(&context, &id, &options).await.unwrap();
@@ -313,12 +270,6 @@ mod tests {
         assert!(entry.content.unwrap().contains("Vim-based"));
         assert!(start_time <= entry.create_time.unwrap() && entry.create_time.unwrap() <= end_time);
         assert!(start_time <= entry.update_time.unwrap() && entry.update_time.unwrap() <= end_time);
-
-        let tags = entry.tags.unwrap();
-        assert_eq!(tags.iter().count(), 2);
-        assert!(tags.iter().find(|x| x.name == "open-source").is_some());
-        assert!(tags.iter().find(|x| x.name == "vi").is_some());
-        assert!(tags.iter().find(|x| x.name == "vim").is_none());
 
         assert_eq!(entry.attachments.unwrap().iter().count(), 0);
     }

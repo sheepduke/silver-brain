@@ -37,7 +37,9 @@ async fn root() -> &'static str {
 
 async fn create_entry() {}
 
-async fn get_entry(Path(id): Path<String>) -> String {}
+async fn get_entry(Path(id): Path<String>) -> String {
+    todo!()
+}
 
 async fn update_entry() {}
 
