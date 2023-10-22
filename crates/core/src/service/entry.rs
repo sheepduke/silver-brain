@@ -4,7 +4,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use typed_builder::TypedBuilder;
 
-use crate::{AttachmentId, Entry, EntryId, EntryTag, EntryTagId, RequestContext};
+use crate::{AttachmentId, Entry, EntryId, RequestContext};
 
 // ============================================================
 //  EntryService
@@ -41,14 +41,6 @@ pub trait EntryService {
     ) -> Result<()>;
 
     async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()>;
-
-    async fn create_entry_tag(
-        &self,
-        context: &RequestContext,
-        request: EntryTagCreateRequest,
-    ) -> Result<EntryTagId>;
-
-    async fn delete_entry_tag(&self, context: &RequestContext, id: &EntryTagId) -> Result<()>;
 
     async fn create_attachment(
         &self,
@@ -117,32 +109,6 @@ pub struct EntryUpdateRequest {
 
     #[builder(default, setter(strip_option, into))]
     pub content: Option<String>,
-}
-
-// ============================================================
-//  EntryTagCreateRequest
-// ============================================================
-
-#[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct EntryTagCreateRequest {
-    #[builder(setter(into))]
-    pub entry_id: EntryId,
-
-    #[builder(setter(into))]
-    pub name: String,
-}
-
-// ============================================================
-//  EntryTagUpdateRequest
-// ============================================================
-
-#[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct EntryTagUpdateRequest {
-    #[builder(setter(into))]
-    pub id: EntryTagId,
-
-    #[builder(default, setter(strip_option, into))]
-    pub name: Option<String>,
 }
 
 // ============================================================

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
@@ -16,9 +18,6 @@ pub struct Entry {
     pub name: String,
 
     #[builder(default, setter(strip_option, into))]
-    pub tags: Option<Vec<EntryTag>>,
-
-    #[builder(default, setter(strip_option, into))]
     pub content_type: Option<String>,
 
     #[builder(default, setter(strip_option, into))]
@@ -26,6 +25,18 @@ pub struct Entry {
 
     #[builder(default, setter(strip_option))]
     pub attachments: Option<Vec<Attachment>>,
+
+    #[builder(default, setter(strip_option))]
+    pub properties: Option<HashMap<String, String>>,
+
+    #[builder(default, setter(strip_option))]
+    pub parents: Option<Vec<Entry>>,
+        
+    #[builder(default, setter(strip_option))]
+    pub children: Option<Vec<Entry>>,
+
+    #[builder(default, setter(strip_option))]
+    pub friends: Option<Vec<Entry>>,
 
     #[builder(default, setter(strip_option, into))]
     pub create_time: Option<OffsetDateTime>,
@@ -72,27 +83,15 @@ impl From<&EntryId> for String {
 }
 
 // ============================================================
-//  EntryTag
+//  EntryProperty
 // ============================================================
 
-#[derive(Clone, Default, TypedBuilder, Debug)]
-pub struct EntryTag {
-    #[builder(setter(into))]
-    pub id: EntryTagId,
+pub struct EntryProperty {
+    pub id: EntryPropertyId,
 
-    #[builder(setter(into))]
     pub name: String,
+
+    pub value: String
 }
 
-// ============================================================
-//  EntryTagId
-// ============================================================
-
-#[derive(Clone, Default, Debug)]
-pub struct EntryTagId(pub String);
-
-impl From<String> for EntryTagId {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
+pub struct EntryPropertyId(pub String);

@@ -2,7 +2,6 @@ use anyhow::Result;
 use async_trait::async_trait;
 use sea_orm::{
     ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait,
-    QueryFilter,
 };
 use silver_brain_core::*;
 use svix_ksuid::{Ksuid, KsuidLike};

@@ -37,9 +37,7 @@ async fn root() -> &'static str {
 
 async fn create_entry() {}
 
-async fn get_entry(Path(id): Path<String>) -> String {
-    id
-}
+async fn get_entry(Path(id): Path<String>) -> String {}
 
 async fn update_entry() {}
 
@@ -60,4 +58,3 @@ async fn get_attachment() {}
 async fn update_attachment() {}
 
 async fn delete_attachment() {}
-

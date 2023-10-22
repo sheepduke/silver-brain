@@ -4,7 +4,7 @@ pub use common::{
 };
 
 mod entry;
-pub use entry::{Entry, EntryId, EntryTag, EntryTagId};
+pub use entry::{Entry, EntryId};
 
 mod attachment;
 pub use attachment::{Attachment, AttachmentId};

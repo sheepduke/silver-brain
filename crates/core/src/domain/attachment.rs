@@ -7,24 +7,28 @@ use std::path::PathBuf;
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use crate::EntryId;
-
+/// The attachment that belongs to an [`Entry`].
 #[derive(Clone, TypedBuilder, Debug)]
 pub struct Attachment {
+    /// The ID of attachment.
     #[builder(setter(into))]
     pub id: AttachmentId,
 
-    #[builder(setter(into))]
-    pub entry_id: EntryId,
-
+    /// The name of attachment.
     #[builder(setter(into))]
     pub name: String,
 
+    /// The relative path of file on the disk.
     #[builder(setter(into))]
     pub file_path: PathBuf,
 
+    /// The size of file.
     pub size: u64,
+
+    /// The create time.
     pub create_time: OffsetDateTime,
+
+    /// The last updated time.
     pub update_time: OffsetDateTime,
 }
 
@@ -32,7 +36,6 @@ impl Default for Attachment {
     fn default() -> Self {
         Self {
             id: Default::default(),
-            entry_id: Default::default(),
             name: Default::default(),
             file_path: Default::default(),
             size: 0,
