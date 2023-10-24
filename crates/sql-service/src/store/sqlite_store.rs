@@ -59,9 +59,9 @@ impl SqliteStore {
         Ok(Self { data_path, options })
     }
 
-    fn resolve_sqlite_path(&self, name: &StoreName) -> PathBuf {
+    fn resolve_sqlite_path(&self, StoreName(name): &StoreName) -> PathBuf {
         let mut result = self.data_path.clone();
-        result.push(format!("{}.sqlite", name.0));
+        result.push(format!("{}.sqlite", name));
         result
     }
 

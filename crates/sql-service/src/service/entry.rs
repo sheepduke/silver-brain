@@ -64,12 +64,12 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
     async fn get_entry(
         &self,
         context: &RequestContext,
-        id: &EntryId,
+        EntryId(id): &EntryId,
         options: &EntryLoadOptions,
     ) -> Result<Entry> {
         let conn = self.create_conn(context).await?;
 
-        let entry_entity = entity::entry::Entity::find_by_id(&id.0)
+        let entry_entity = entity::entry::Entity::find_by_id(id)
             .one(&conn)
             .await?
             .ok_or(ClientError::IdNotFound)?;
@@ -151,12 +151,10 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         Ok(())
     }
 
-    async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()> {
+    async fn delete_entry(&self, context: &RequestContext, EntryId(id): &EntryId) -> Result<()> {
         let conn = self.store.get_conn(&context.store_name).await?;
 
-        let _ = entity::entry::Entity::delete_by_id(&id.0)
-            .exec(&conn)
-            .await?;
+        let _ = entity::entry::Entity::delete_by_id(id).exec(&conn).await?;
 
         Ok(())
     }
@@ -222,9 +220,13 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         Ok(())
     }
 
-    async fn delete_attachment(&self, context: &RequestContext, id: &AttachmentId) -> Result<()> {
+    async fn delete_attachment(
+        &self,
+        context: &RequestContext,
+        AttachmentId(id): &AttachmentId,
+    ) -> Result<()> {
         let conn = self.store.get_conn(&context.store_name).await?;
-        let _ = entity::attachment::Entity::delete_by_id(&id.0)
+        let _ = entity::attachment::Entity::delete_by_id(id)
             .exec(&conn)
             .await?;
 
