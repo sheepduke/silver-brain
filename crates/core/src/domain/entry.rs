@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
@@ -84,7 +85,7 @@ impl From<&EntryId> for String {
 //  EntryProperty
 // ============================================================
 
-#[derive(Clone, TypedBuilder, Debug)]
+#[derive(Clone, TypedBuilder, Debug, Deserialize)]
 pub struct EntryProperty {
     #[builder(setter(into))]
     pub id: EntryPropertyId,
@@ -96,5 +97,5 @@ pub struct EntryProperty {
     pub value: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct EntryPropertyId(pub String);

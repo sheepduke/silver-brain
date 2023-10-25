@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = { workspace = true }
 axum = "0.6.20"
+serde = { workspace = true }
+serde_json = { workspace = true }
 silver-brain-core = { path = "../core" }
 silver-brain-sql-service = { path = "../sql-service" }

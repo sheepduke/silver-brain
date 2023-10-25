@@ -72,7 +72,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         let entry_entity = entity::entry::Entity::find_by_id(id)
             .one(&conn)
             .await?
-            .ok_or(ClientError::IdNotFound)?;
+            .ok_or(ServiceClientError::NotFound(id.clone()))?;
 
         let mut entry = Entry::builder()
             .id(entry_entity.id.clone())
@@ -129,7 +129,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
             entity::entry::Entity::find_by_id(&request.id.0)
                 .one(&conn)
                 .await?
-                .ok_or(ClientError::IdNotFound)?
+                .ok_or(ServiceClientError::NotFound(request.id.0.clone()))?
                 .into();
 
         if let Some(name) = request.name {
@@ -167,7 +167,10 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
         // Check file path first.
         let path = match request.file_path.to_str() {
             Some(path) if request.file_path.exists() && request.file_path.is_file() => Ok(path),
-            _ => Err(ClientError::InvalidFilePath),
+            Some(path) => Err(ServiceClientError::InvalidAttachmentFilePath(
+                path.to_string(),
+            )),
+            None => Err(ServiceClientError::BadArguments(String::new())),
         }?
         .to_string();
 
@@ -202,7 +205,7 @@ impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
             entity::attachment::Entity::find_by_id(&request.id)
                 .one(&conn)
                 .await?
-                .ok_or(ClientError::IdNotFound)?
+                .ok_or(ServiceClientError::NotFound(request.id.0.to_string()))?
                 .into();
 
         if let Some(entry_id) = request.entry_id {

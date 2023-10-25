@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
 use crate::{AttachmentId, Entry, EntryId, RequestContext};
@@ -77,7 +78,7 @@ pub struct EntryLoadOptions {
 //  EntryCreateRequest
 // ============================================================
 
-#[derive(Clone, Default, TypedBuilder, Debug)]
+#[derive(Clone, Default, TypedBuilder, Debug, Deserialize)]
 pub struct EntryCreateRequest {
     #[builder(setter(into))]
     pub name: String,

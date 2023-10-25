@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies] 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+serde = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 typed-builder = { workspace = true }
-

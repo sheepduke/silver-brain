@@ -1,13 +1,16 @@
 use axum::{
-    extract::Path,
+    extract::{rejection::JsonRejection, Path},
+    http::StatusCode,
+    response::IntoResponse,
     routing::{delete, get, patch, post},
-    Router,
+    Json, Router,
 };
+use silver_brain_core::{EntryCreateRequest, ServiceClientError};
 
 pub fn new_app() -> Router {
     Router::new()
         .route("/", get(root))
-        .route("/api/v2/entries", post(create_entry))
+        // .route("/api/v2/entries", post(create_entry))
         .route("/api/v2/entries/:id", get(get_entry))
         .route("/api/v2/entries/:id", patch(update_entry))
         .route("/api/v2/entries/:id", delete(delete_entry))
@@ -31,11 +34,61 @@ pub async fn start(port: u32) {
         .unwrap();
 }
 
-async fn root() -> &'static str {
-    "Silver Brain v2"
+enum ErrorKind {
+    NotFound,
+    BadRequest,
+    InternalError,
 }
 
-async fn create_entry() {}
+impl From<ServiceClientError> for ErrorKind {
+    fn from(value: ServiceClientError) -> Self {
+        match value {
+            ServiceClientError::NotFound(_) => Self::NotFound,
+            ServiceClientError::BadArguments(_) => Self::BadRequest,
+            ServiceClientError::InvalidStoreName(_) => Self::BadRequest,
+            ServiceClientError::InvalidAttachmentFilePath(_) => Self::BadRequest,
+        }
+    }
+}
+
+impl From<JsonRejection> for ErrorKind {
+    fn from(value: JsonRejection) -> Self {
+        Self::BadRequest
+    }
+}
+
+impl From<serde_json::Error> for ErrorKind {
+    fn from(value: serde_json::Error) -> Self {
+        Self::BadRequest
+    }
+}
+
+impl IntoResponse for ErrorKind {
+    fn into_response(self) -> axum::response::Response {
+        match self {
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::BadRequest => StatusCode::BAD_REQUEST,
+            Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+        .into_response()
+    }
+}
+
+type HttpResponse<T> = Result<T, ErrorKind>;
+
+async fn root() -> HttpResponse<&'static str> {
+    Ok("Silver Brain v2")
+}
+
+async fn create_entry(
+    payload: Result<Json<serde_json::Value>, JsonRejection>,
+) -> HttpResponse<StatusCode> {
+    let Json(json) = payload?;
+
+    let request = serde_json::from_value::<EntryCreateRequest>(json)?;
+
+    Ok(StatusCode::CREATED)
+}
 
 async fn get_entry(Path(id): Path<String>) -> String {
     todo!()

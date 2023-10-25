@@ -4,5 +4,5 @@ pub use entry::{
     EntryService, EntryUpdateRequest,
 };
 
-mod error;
-pub use error::ClientError;
+mod result;
+pub use result::ServiceClientError;

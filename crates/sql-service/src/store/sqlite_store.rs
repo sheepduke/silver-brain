@@ -6,8 +6,8 @@ use std::{
 use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
 use migration::Migrator;
-use sea_orm::{Database, DatabaseConnection};
-use silver_brain_core::StoreName;
+use sea_orm::{Database, DatabaseConnection, DbErr};
+use silver_brain_core::{ServiceClientError, StoreName};
 use typed_builder::TypedBuilder;
 
 use crate::store::StoreError;
@@ -74,7 +74,9 @@ impl SqliteStore {
 impl Store<DatabaseConnection> for SqliteStore {
     async fn get_conn(&self, store_name: &StoreName) -> Result<DatabaseConnection> {
         let db_path = self.resolve_sqlite_path(store_name);
-        let db_path_str = db_path.to_str().ok_or(StoreError::InvalidDatabaseName)?;
+        let db_path_str = db_path
+            .to_str()
+            .ok_or(ServiceClientError::InvalidStoreName(store_name.0.clone()))?;
         let conn_str = format!("sqlite:{}", db_path_str);
 
         let conn;

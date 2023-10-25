@@ -16,9 +16,6 @@ pub enum StoreError {
 
     #[error("Data path not writable")]
     DataPathNotWritable,
-
-    #[error("Invalid database name")]
-    InvalidDatabaseName,
 }
 
 // =================================================================
