@@ -8,7 +8,9 @@ edition = "2021"
 [dependencies]
 anyhow = { workspace = true }
 axum = "0.6.20"
+clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 silver-brain-core = { path = "../core" }
 silver-brain-sql-service = { path = "../sql-service" }
+tokio = { workspace = true }
