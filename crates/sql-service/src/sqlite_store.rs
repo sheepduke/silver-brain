@@ -4,15 +4,22 @@ use std::{
 };
 
 use anyhow::{ensure, Context, Result};
-use async_trait::async_trait;
 use migration::Migrator;
-use sea_orm::{Database, DatabaseConnection, DbErr};
-use silver_brain_core::{ServiceClientError, StoreName};
+use sea_orm::{Database, DatabaseConnection};
+
+use thiserror::Error;
 use typed_builder::TypedBuilder;
 
-use crate::store::StoreError;
+use silver_brain_core::{ServiceClientError, StoreName};
 
-use super::Store;
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum StoreError {
+    #[error("Data path not a directory")]
+    DataPathNotDirectory,
+
+    #[error("Data path not writable")]
+    DataPathNotWritable,
+}
 
 // ============================================================
 //  SqlStore
@@ -59,20 +66,7 @@ impl SqliteStore {
         Ok(Self { data_path, options })
     }
 
-    fn resolve_sqlite_path(&self, StoreName(name): &StoreName) -> PathBuf {
-        let mut result = self.data_path.clone();
-        result.push(format!("{}.sqlite", name));
-        result
-    }
-
-    fn is_dir_writable(path: &Path) -> Result<bool> {
-        Ok(!fs::metadata(path)?.permissions().readonly())
-    }
-}
-
-#[async_trait]
-impl Store<DatabaseConnection> for SqliteStore {
-    async fn get_conn(&self, store_name: &StoreName) -> Result<DatabaseConnection> {
+    pub async fn get_conn(&self, store_name: &StoreName) -> Result<DatabaseConnection> {
         let db_path = self.resolve_sqlite_path(store_name);
         let db_path_str = db_path
             .to_str()
@@ -97,6 +91,16 @@ impl Store<DatabaseConnection> for SqliteStore {
 
         Ok(conn)
     }
+
+    fn resolve_sqlite_path(&self, StoreName(name): &StoreName) -> PathBuf {
+        let mut result = self.data_path.clone();
+        result.push(format!("{}.sqlite", name));
+        result
+    }
+
+    fn is_dir_writable(path: &Path) -> Result<bool> {
+        Ok(!fs::metadata(path)?.permissions().readonly())
+    }
 }
 
 #[cfg(test)]
@@ -108,8 +112,6 @@ pub mod tests {
 
     use lazy_static::lazy_static;
     use svix_ksuid::{Ksuid, KsuidLike};
-
-    use crate::store::{SqliteStore, SqliteStoreOptions};
 
     impl Drop for SqliteStore {
         fn drop(&mut self) {

@@ -16,14 +16,15 @@
 #![allow(clippy::too_many_lines)]
 #![allow(clippy::uninlined_format_args)]
 
-/// Store related.
-pub mod store;
-
 /// Automatically generated entity.
 mod entity;
 
 /// External functions for entity.
 mod entity_ext;
 
+mod sqlite_store;
+pub use sqlite_store::{SqliteStore, SqliteStoreOptions, StoreError};
+
 /// Service implementation.
-pub mod service;
+mod service;
+pub use service::entry::SqlEntryService;

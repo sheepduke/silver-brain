@@ -14,3 +14,4 @@ serde_json = { workspace = true }
 silver-brain-core = { path = "../core" }
 silver-brain-sql-service = { path = "../sql-service" }
 tokio = { workspace = true }
+typed-builder = { workspace = true }

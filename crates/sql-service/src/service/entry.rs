@@ -8,18 +8,17 @@ use svix_ksuid::{Ksuid, KsuidLike};
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use crate::{
-    entity,
-    store::{SqliteStore, Store},
-};
+use std::sync::Arc;
+
+use crate::{entity, SqliteStore};
 
 #[derive(TypedBuilder, Debug)]
-pub struct SqlEntryService<S: Store<DatabaseConnection> = SqliteStore> {
-    store: S,
+pub struct SqlEntryService {
+    store: Arc<SqliteStore>,
 }
 
-impl<S: Store<DatabaseConnection>> SqlEntryService<S> {
-    pub fn new(store: S) -> Self {
+impl SqlEntryService {
+    pub fn new(store: Arc<SqliteStore>) -> Self {
         Self { store }
     }
 
@@ -29,7 +28,7 @@ impl<S: Store<DatabaseConnection>> SqlEntryService<S> {
 }
 
 #[async_trait]
-impl<S: Store<DatabaseConnection>> EntryService for SqlEntryService<S> {
+impl EntryService for SqlEntryService {
     async fn count_entries(&self, context: &RequestContext) -> Result<u64> {
         let conn = self.create_conn(context).await?;
 

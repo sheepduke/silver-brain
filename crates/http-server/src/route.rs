@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{rejection::JsonRejection, Path},
     http::StatusCode,
@@ -6,9 +8,12 @@ use axum::{
 };
 use silver_brain_core::EntryCreateRequest;
 
-use crate::error::HttpResponse;
+use crate::{
+    error::HttpResponse,
+    state::{ServerState, ServerStateArgs},
+};
 
-pub fn new() -> Router {
+pub fn new(args: ServerStateArgs) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/api/v2/entries", post(create_entry))
@@ -23,6 +28,7 @@ pub fn new() -> Router {
         .route("/api/v2/attachments/:id", get(get_attachment))
         .route("/api/v2/attachments/:id", patch(update_attachment))
         .route("/api/v2/attachments/:id", delete(delete_attachment))
+        .with_state(Arc::new(ServerState::new(args)))
 }
 
 async fn root() -> HttpResponse<&'static str> {
