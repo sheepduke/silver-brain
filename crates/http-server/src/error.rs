@@ -1,3 +1,4 @@
+use anyhow::Error;
 use axum::{extract::rejection::JsonRejection, http::StatusCode, response::IntoResponse};
 use silver_brain_core::ServiceClientError;
 
@@ -27,6 +28,12 @@ impl From<JsonRejection> for ErrorKind {
 impl From<serde_json::Error> for ErrorKind {
     fn from(value: serde_json::Error) -> Self {
         Self::BadRequest
+    }
+}
+
+impl From<Error> for ErrorKind {
+    fn from(value: Error) -> Self {
+        Self::InternalError
     }
 }
 

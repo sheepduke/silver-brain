@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
+use tracing::{info, info_span, instrument};
 
 #[derive(Debug, Parser)]
 #[command(name = "silver-brain-server")]
@@ -8,8 +9,7 @@ use clap::{Args, Parser, Subcommand};
 
 Starts a server that serves all sort of clients!
 "####)]
-pub struct Cli 
-{
+pub struct Cli {
     #[command(subcommand)]
     command: Command,
 }
@@ -20,7 +20,7 @@ enum Command {
     Start {
         /// The path of root data directory. Defaults to ~/.silver-brain
         #[arg(short, long)]
-        data_path: Option<PathBuf>,
+        data_path: Option<String>,
 
         /// The port to listen on.
         #[arg(short, long)]
@@ -33,7 +33,20 @@ enum Command {
 async fn main() {
     let cli = Cli::parse();
 
+    tracing_subscriber::fmt().init();
+
+    info_span!("YES?");
+
     match &cli.command {
-        Command::Start { data_path: _, port } => silver_brain_http_server::server::start(*port).await,
+        Command::Start { data_path, port } => {
+            let path = match data_path {
+                Some(value) => value,
+                None => "~/.silver-brain",
+            };
+
+            let full_path = shellexpand::tilde(path);
+
+            silver_brain_http_server::server::start((*full_path).into(), *port).await
+        }
     }
 }

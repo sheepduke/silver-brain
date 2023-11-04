@@ -1,18 +1,18 @@
 use std::{path::PathBuf, sync::Arc};
 
-use silver_brain_sql_service::SqliteStoreOptions;
+use tower_http::trace::TraceLayer;
 
 use crate::{
     route,
     state::{ServerState, ServerStateArgs},
 };
 
-pub async fn start(port: u32) {
-    let app = route::new(
-        ServerStateArgs::builder()
-            .data_path("~/.silver-brain-dev".into())
-            .store_options(SqliteStoreOptions::builder().auto_create(true).auto_migrate(true).build()
-            ).build());
+pub async fn start(data_path: PathBuf, port: u32) {
+    let server_state_args = ServerStateArgs::builder().data_path(data_path).build();
+
+    let shared_server_state = Arc::new(ServerState::new(server_state_args));
+
+    let app = route::new(shared_server_state).layer(TraceLayer::new_for_http());
 
     let address = format!("127.0.0.1:{port}");
 

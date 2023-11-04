@@ -23,7 +23,7 @@ mod entity;
 mod entity_ext;
 
 mod sqlite_store;
-pub use sqlite_store::{SqliteStore, SqliteStoreOptions, StoreError};
+pub use sqlite_store::{SqliteStore, StoreError};
 
 /// Service implementation.
 mod service;
