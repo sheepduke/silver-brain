@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
-use tracing::{info, info_span, instrument};
+use tracing::{info, info_span, instrument, Level};
 
 #[derive(Debug, Parser)]
 #[command(name = "silver-brain-server")]
@@ -33,9 +33,9 @@ enum Command {
 async fn main() {
     let cli = Cli::parse();
 
-    tracing_subscriber::fmt().init();
-
-    info_span!("YES?");
+    tracing_subscriber::fmt()
+        .with_max_level(Level::DEBUG)
+        .init();
 
     match &cli.command {
         Command::Start { data_path, port } => {

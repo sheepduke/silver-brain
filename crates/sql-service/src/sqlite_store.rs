@@ -101,7 +101,10 @@ impl StoreService for SqliteStore {
     }
 
     async fn list_stores(&self) -> Result<Vec<StoreName>> {
-        fs::read_dir(&self.data_path)?
+        let mut path = self.data_path.clone();
+        path.push("store");
+
+        fs::read_dir(path)?
             .map(|r| {
                 r.map(|path| {
                     path.file_name()
@@ -117,7 +120,11 @@ impl StoreService for SqliteStore {
 
     async fn delete_store(&self, name: &StoreName) -> Result<()> {
         let path = self.resolve_store_path(name);
-        fs::remove_dir_all(&path)?;
+
+        if path.try_exists()? {
+            fs::remove_dir_all(&path)?;
+        }
+
         Ok(())
     }
 }

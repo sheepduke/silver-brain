@@ -65,9 +65,28 @@ async fn create_store(
     Ok(StatusCode::CREATED)
 }
 
-async fn list_stores() {}
+async fn list_stores(State(state): State<Arc<ServerState>>) -> HttpResponse<Json<Vec<String>>> {
+    let stores = state
+        .store
+        .list_stores()
+        .await?
+        .into_iter()
+        .map(|x| x.0)
+        .collect::<Vec<String>>();
 
-async fn delete_store() {}
+    Ok(Json(stores))
+}
+
+async fn delete_store(
+    State(state): State<Arc<ServerState>>,
+    headers: HeaderMap,
+) -> HttpResponse<StatusCode> {
+    let store_name = get_store_name(&headers)?;
+
+    state.store.delete_store(&store_name).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
 
 async fn create_entry(
     payload: Result<Json<serde_json::Value>, JsonRejection>,
