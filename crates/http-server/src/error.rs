@@ -8,12 +8,25 @@ pub enum ErrorKind {
     InternalError,
 }
 
+impl From<Error> for ErrorKind {
+    fn from(value: Error) -> Self {
+        tracing::debug!("I do not believe this...");
+        tracing::debug!("{:?}", value);
+        Self::InternalError
+    }
+}
+
 impl From<ServiceClientError> for ErrorKind {
     fn from(value: ServiceClientError) -> Self {
+        tracing::debug!("Enter conversion!!!");
+
         match value {
             ServiceClientError::NotFound(_) => Self::NotFound,
             ServiceClientError::BadArguments(_) => Self::BadRequest,
-            ServiceClientError::InvalidStoreName(_) => Self::BadRequest,
+            ServiceClientError::InvalidStoreName(_) => {
+                tracing::debug!("Really??");
+                Self::BadRequest
+            }
             ServiceClientError::InvalidAttachmentFilePath(_) => Self::BadRequest,
         }
     }
@@ -28,12 +41,6 @@ impl From<JsonRejection> for ErrorKind {
 impl From<serde_json::Error> for ErrorKind {
     fn from(value: serde_json::Error) -> Self {
         Self::BadRequest
-    }
-}
-
-impl From<Error> for ErrorKind {
-    fn from(value: Error) -> Self {
-        Self::InternalError
     }
 }
 

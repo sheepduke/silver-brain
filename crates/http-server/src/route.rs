@@ -6,11 +6,14 @@ use axum::{
     routing::{delete, get, patch, post},
     Json, Router,
 };
-use silver_brain_core::{EntryCreateRequest, ServiceClientError, StoreName, StoreService};
+use silver_brain_core::{
+    Entry, EntryCreateRequest, EntryId, EntryLoadOptions, EntryService, RequestContext,
+    ServiceClientError, StoreName, StoreService,
+};
 use tracing::{debug, info, instrument, log::warn};
 
 use crate::{
-    error::HttpResponse,
+    error::{ErrorKind, HttpResponse},
     state::{ServerState, ServerStateArgs},
 };
 
@@ -45,6 +48,12 @@ fn get_store_name(headers: &HeaderMap) -> Result<StoreName, ServiceClientError> 
     String::from_utf8(header_value.as_bytes().to_vec())
         .map(|value| StoreName(value))
         .map_err(|_| ServiceClientError::InvalidStoreName("Invalid UTF-8 string".to_string()))
+}
+
+fn create_request_context(headers: &HeaderMap) -> anyhow::Result<RequestContext> {
+    let store_name = get_store_name(&headers)?;
+
+    Ok(RequestContext::builder().store_name(store_name).build())
 }
 
 #[instrument]
@@ -88,18 +97,38 @@ async fn delete_store(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 async fn create_entry(
+    State(state): State<Arc<ServerState>>,
+    headers: HeaderMap,
     payload: Result<Json<serde_json::Value>, JsonRejection>,
-) -> HttpResponse<StatusCode> {
+) -> HttpResponse<(StatusCode, String)> {
     let Json(json) = payload?;
 
     let request = serde_json::from_value::<EntryCreateRequest>(json)?;
+    let context = create_request_context(&headers)?;
 
-    Ok(StatusCode::CREATED)
+    let EntryId(entry_id) = state.entry_service.create_entry(&context, request).await?;
+
+    Ok((StatusCode::CREATED, entry_id))
 }
 
-async fn get_entry(Path(id): Path<String>) -> String {
-    todo!()
+#[instrument]
+async fn get_entry(
+    State(state): State<Arc<ServerState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> HttpResponse<Json<Entry>> {
+    let context = create_request_context(&headers)?;
+
+    let options = EntryLoadOptions::builder().load_content(true).build();
+
+    let entry = state
+        .entry_service
+        .get_entry(&context, &EntryId(id), &options)
+        .await?;
+
+    Ok(Json(entry))
 }
 
 async fn update_entry() {}

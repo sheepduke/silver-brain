@@ -4,11 +4,12 @@
 
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
 /// The attachment that belongs to an [`Entry`].
-#[derive(Clone, TypedBuilder, Debug)]
+#[derive(Clone, TypedBuilder, Debug, Serialize, Deserialize)]
 pub struct Attachment {
     /// The ID of attachment.
     #[builder(setter(into))]
@@ -49,7 +50,7 @@ impl Default for Attachment {
 //  AttachmentId
 // ============================================================
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct AttachmentId(pub String);
 
 impl<T> From<T> for AttachmentId

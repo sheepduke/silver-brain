@@ -2,6 +2,8 @@
 //  Error
 // ============================================================
 
+use std::backtrace::Backtrace;
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -18,4 +20,7 @@ pub enum ServiceClientError {
 
     #[error("Invalid file path `{0}` for attachment")]
     InvalidAttachmentFilePath(String),
+    // FIXME: Add this back and change error handling.
+    // #[error(transparent)]
+    // Other(#[from] anyhow::Error),
 }
