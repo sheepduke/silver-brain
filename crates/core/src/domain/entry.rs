@@ -45,11 +45,17 @@ pub struct Entry {
     pub friends: Option<Vec<Entry>>,
 
     #[builder(default, setter(strip_option, into))]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        with = "time::serde::rfc3339::option"
+    )]
     pub create_time: Option<OffsetDateTime>,
 
     #[builder(default, setter(strip_option, into))]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        with = "time::serde::rfc3339::option"
+    )]
     pub update_time: Option<OffsetDateTime>,
 }
 

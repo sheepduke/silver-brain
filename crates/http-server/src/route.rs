@@ -1,7 +1,10 @@
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use axum::{
-    extract::{rejection::JsonRejection, Path, State},
+    extract::{rejection::JsonRejection, Path, Query, State},
     http::{HeaderMap, StatusCode},
     routing::{delete, get, patch, post},
     Json, Router,
@@ -54,6 +57,21 @@ fn create_request_context(headers: &HeaderMap) -> anyhow::Result<RequestContext>
     let store_name = get_store_name(&headers)?;
 
     Ok(RequestContext::builder().store_name(store_name).build())
+}
+
+fn create_entry_load_options(params: &HashMap<String, String>) -> EntryLoadOptions {
+    let load_params = params
+        .get("load")
+        .unwrap_or(&"".to_string())
+        .split(",")
+        .map(|x| x.to_string())
+        .collect::<HashSet<String>>();
+
+    EntryLoadOptions::builder()
+        .load_content(load_params.contains("contents"))
+        .load_attachments(load_params.contains("attachments"))
+        .load_times(load_params.contains("times"))
+        .build()
 }
 
 #[instrument]
@@ -118,10 +136,11 @@ async fn get_entry(
     State(state): State<Arc<ServerState>>,
     headers: HeaderMap,
     Path(id): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
 ) -> HttpResponse<Json<Entry>> {
     let context = create_request_context(&headers)?;
 
-    let options = EntryLoadOptions::builder().load_content(true).build();
+    let options = create_entry_load_options(&params);
 
     let entry = state
         .entry_service
