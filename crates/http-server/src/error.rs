@@ -1,33 +1,31 @@
 use anyhow::Error;
 use axum::{extract::rejection::JsonRejection, http::StatusCode, response::IntoResponse};
-use silver_brain_core::ServiceClientError;
+use silver_brain_core::service::ServiceError;
 
 pub enum ErrorKind {
     NotFound,
     BadRequest,
-    InternalError,
+    InternalError(anyhow::Error),
 }
 
 impl From<Error> for ErrorKind {
     fn from(value: Error) -> Self {
         tracing::debug!("I do not believe this...");
         tracing::debug!("{:?}", value);
-        Self::InternalError
+        Self::InternalError(value)
     }
 }
 
-impl From<ServiceClientError> for ErrorKind {
-    fn from(value: ServiceClientError) -> Self {
+impl From<ServiceError> for ErrorKind {
+    fn from(value: ServiceError) -> Self {
         tracing::debug!("Enter conversion!!!");
 
         match value {
-            ServiceClientError::NotFound(_) => Self::NotFound,
-            ServiceClientError::BadArguments(_) => Self::BadRequest,
-            ServiceClientError::InvalidStoreName(_) => {
-                tracing::debug!("Really??");
-                Self::BadRequest
-            }
-            ServiceClientError::InvalidAttachmentFilePath(_) => Self::BadRequest,
+            ServiceError::NotFound => Self::NotFound,
+            ServiceError::BadArguments => Self::BadRequest,
+            ServiceError::InvalidStoreName => Self::BadRequest,
+            ServiceError::InvalidAttachmentFilePath => Self::BadRequest,
+            ServiceError::Other(error) => Self::InternalError(error),
         }
     }
 }
@@ -49,7 +47,7 @@ impl IntoResponse for ErrorKind {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest => StatusCode::BAD_REQUEST,
-            Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
     }

@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-use anyhow::Result;
 use async_trait::async_trait;
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
-use crate::{AttachmentId, Entry, EntryId, RequestContext};
+use crate::domain::{AttachmentId, Entry, EntryId};
+use crate::service::{RequestContext, ServiceResult};
 
 // ============================================================
 //  EntryService
@@ -13,49 +13,53 @@ use crate::{AttachmentId, Entry, EntryId, RequestContext};
 
 #[async_trait]
 pub trait EntryService {
-    async fn count_entries(&self, context: &RequestContext) -> Result<u64>;
+    async fn count_entries(&self, context: &RequestContext) -> ServiceResult<u64>;
 
     async fn create_entry(
         &self,
         context: &RequestContext,
         request: EntryCreateRequest,
-    ) -> Result<EntryId>;
+    ) -> ServiceResult<EntryId>;
 
     async fn get_entry(
         &self,
         context: &RequestContext,
         id: &EntryId,
         options: &EntryLoadOptions,
-    ) -> Result<Entry>;
+    ) -> ServiceResult<Entry>;
 
     async fn get_entries(
         &self,
         context: &RequestContext,
         ids: &[EntryId],
         options: &EntryLoadOptions,
-    ) -> Result<Vec<Entry>>;
+    ) -> ServiceResult<Vec<Entry>>;
 
     async fn update_entry(
         &self,
         context: &RequestContext,
         request: EntryUpdateRequest,
-    ) -> Result<()>;
+    ) -> ServiceResult<()>;
 
-    async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> Result<()>;
+    async fn delete_entry(&self, context: &RequestContext, id: &EntryId) -> ServiceResult<()>;
 
     async fn create_attachment(
         &self,
         context: &RequestContext,
         request: AttachmentCreateRequest,
-    ) -> Result<AttachmentId>;
+    ) -> ServiceResult<AttachmentId>;
 
     async fn update_attachment(
         &self,
         context: &RequestContext,
         request: AttachmentUpdateRequest,
-    ) -> Result<()>;
+    ) -> ServiceResult<()>;
 
-    async fn delete_attachment(&self, context: &RequestContext, id: &AttachmentId) -> Result<()>;
+    async fn delete_attachment(
+        &self,
+        context: &RequestContext,
+        id: &AttachmentId,
+    ) -> ServiceResult<()>;
 }
 
 // ============================================================

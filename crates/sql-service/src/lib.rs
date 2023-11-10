@@ -1,6 +1,6 @@
 //! SQL based service implementation.
 
-#![warn(missing_docs)]
+//#![warn(missing_docs)]
 //#![deny(warnings)]
 #![deny(clippy::pedantic)]
 #![allow(clippy::doc_markdown)]
@@ -19,12 +19,6 @@
 /// Automatically generated entity.
 mod entity;
 
-/// External functions for entity.
-mod entity_ext;
-
-mod sqlite_store;
-pub use sqlite_store::{SqliteStore, StoreError};
-
 /// Service implementation.
 mod service;
-pub use service::entry::SqlEntryService;
+pub use service::*;

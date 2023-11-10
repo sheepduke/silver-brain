@@ -1,5 +1,3 @@
-use anyhow::Result;
-use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use typed_builder::TypedBuilder;
 
 // ============================================================
@@ -35,35 +33,32 @@ impl Default for StoreName {
 }
 
 // ============================================================
-//  OffsetDateTime
+//  Error
 // ============================================================
 
-pub trait ToIso8601String {
-    fn to_iso_8601_string(&self) -> String;
+#[derive(Debug)]
+pub enum ServiceError {
+    NotFound,
+
+    BadArguments,
+
+    InvalidStoreName,
+
+    InvalidAttachmentFilePath,
+
+    Other(anyhow::Error),
 }
 
-pub trait FromIso8601String<Out = Self> {
-    fn from_iso_8601_string(input: &str) -> Result<Out>;
-}
+pub type ServiceResult<T> = Result<T, ServiceError>;
 
-pub trait IntoOffsetDateTime {
-    fn into_offset_date_time(self) -> OffsetDateTime;
-}
+// impl From<anyhow::Error> for ServiceError {
+//     fn from(value: anyhow::Error) -> Self {
+//         Self::Other(value)
+//     }
+// }
 
-impl ToIso8601String for OffsetDateTime {
-    fn to_iso_8601_string(&self) -> String {
-        self.format(&Iso8601::DEFAULT).unwrap()
-    }
-}
-
-impl FromIso8601String for OffsetDateTime {
-    fn from_iso_8601_string(input: &str) -> Result<Self> {
-        Ok(Self::parse(input, &Iso8601::DEFAULT)?)
-    }
-}
-
-impl IntoOffsetDateTime for String {
-    fn into_offset_date_time(self) -> OffsetDateTime {
-        OffsetDateTime::from_iso_8601_string(&self).unwrap()
+impl<T: std::error::Error + Send + Sync + 'static> From<T> for ServiceError {
+    fn from(value: T) -> Self {
+        Self::Other(anyhow::Error::new(value))
     }
 }

@@ -1,7 +1,7 @@
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use crate::EntryId;
+use crate::domain::EntryId;
 
 // ============================================================
 //  Link

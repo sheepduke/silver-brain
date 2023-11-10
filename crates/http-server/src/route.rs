@@ -9,10 +9,15 @@ use axum::{
     routing::{delete, get, patch, post},
     Json, Router,
 };
-use silver_brain_core::{
-    Entry, EntryCreateRequest, EntryId, EntryLoadOptions, EntryService, RequestContext,
-    ServiceClientError, StoreName, StoreService,
+use silver_brain_core::service::{
+    EntryCreateRequest, EntryLoadOptions, EntryService, RequestContext, ServiceError, StoreName,
+    StoreService,
 };
+use silver_brain_core::{
+    domain::{Entry, EntryId},
+    service::ServiceResult,
+};
+
 use tracing::{debug, info, instrument, log::warn};
 
 use crate::{
@@ -43,17 +48,17 @@ pub fn new(state: Arc<ServerState>) -> Router {
 
 const STORE_NAME_HEADER: &'static str = "X-SB-StoreName";
 
-fn get_store_name(headers: &HeaderMap) -> Result<StoreName, ServiceClientError> {
+fn get_store_name(headers: &HeaderMap) -> Result<StoreName, ServiceError> {
     let header_value = headers
         .get(STORE_NAME_HEADER)
-        .ok_or(ServiceClientError::InvalidStoreName("".to_string()))?;
+        .ok_or(ServiceError::InvalidStoreName)?;
 
     String::from_utf8(header_value.as_bytes().to_vec())
         .map(|value| StoreName(value))
-        .map_err(|_| ServiceClientError::InvalidStoreName("Invalid UTF-8 string".to_string()))
+        .map_err(|_| ServiceError::InvalidStoreName)
 }
 
-fn create_request_context(headers: &HeaderMap) -> anyhow::Result<RequestContext> {
+fn create_request_context(headers: &HeaderMap) -> ServiceResult<RequestContext> {
     let store_name = get_store_name(&headers)?;
 
     Ok(RequestContext::builder().store_name(store_name).build())

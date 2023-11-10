@@ -1,9 +1,14 @@
-use anyhow::Result;
 use async_trait::async_trait;
 use sea_orm::{
     ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, ModelTrait, PaginatorTrait,
 };
-use silver_brain_core::*;
+use silver_brain_core::{
+    domain::{Attachment, AttachmentId, Entry, EntryId},
+    service::{
+        AttachmentCreateRequest, AttachmentUpdateRequest, EntryCreateRequest, EntryLoadOptions,
+        EntryService, EntryUpdateRequest, RequestContext, ServiceError, ServiceResult,
+    },
+};
 use svix_ksuid::{Ksuid, KsuidLike};
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
@@ -11,6 +16,8 @@ use typed_builder::TypedBuilder;
 use std::sync::Arc;
 
 use crate::{entity, SqliteStore};
+
+use super::extension::OffsetDateTimeExtension;
 
 #[derive(TypedBuilder, Debug)]
 pub struct SqlEntryService {
@@ -22,14 +29,14 @@ impl SqlEntryService {
         Self { store }
     }
 
-    async fn create_conn(&self, context: &RequestContext) -> Result<DatabaseConnection> {
+    async fn create_conn(&self, context: &RequestContext) -> ServiceResult<DatabaseConnection> {
         Ok(self.store.get_conn(&context.store_name).await?)
     }
 }
 
 #[async_trait]
 impl EntryService for SqlEntryService {
-    async fn count_entries(&self, context: &RequestContext) -> Result<u64> {
+    async fn count_entries(&self, context: &RequestContext) -> ServiceResult<u64> {
         let conn = self.create_conn(context).await?;
 
         Ok(entity::entry::Entity::find().count(&conn).await?)
@@ -39,7 +46,7 @@ impl EntryService for SqlEntryService {
         &self,
         context: &RequestContext,
         request: EntryCreateRequest,
-    ) -> Result<EntryId> {
+    ) -> ServiceResult<EntryId> {
         let conn = self.create_conn(context).await?;
 
         let now_time = OffsetDateTime::now_utc();
@@ -65,13 +72,13 @@ impl EntryService for SqlEntryService {
         context: &RequestContext,
         EntryId(id): &EntryId,
         options: &EntryLoadOptions,
-    ) -> Result<Entry> {
+    ) -> ServiceResult<Entry> {
         let conn = self.create_conn(context).await?;
 
         let entry_entity = entity::entry::Entity::find_by_id(id)
             .one(&conn)
             .await?
-            .ok_or(ServiceClientError::NotFound(id.clone()))?;
+            .ok_or(ServiceError::NotFound)?;
 
         let mut entry = Entry::builder()
             .id(entry_entity.id.clone())
@@ -110,10 +117,10 @@ impl EntryService for SqlEntryService {
 
     async fn get_entries(
         &self,
-        context: &RequestContext,
-        ids: &[EntryId],
-        options: &EntryLoadOptions,
-    ) -> Result<Vec<Entry>> {
+        _context: &RequestContext,
+        _ids: &[EntryId],
+        _options: &EntryLoadOptions,
+    ) -> ServiceResult<Vec<Entry>> {
         todo!()
     }
 
@@ -121,14 +128,14 @@ impl EntryService for SqlEntryService {
         &self,
         context: &RequestContext,
         request: EntryUpdateRequest,
-    ) -> Result<()> {
+    ) -> ServiceResult<()> {
         let conn = self.store.get_conn(&context.store_name).await?;
 
         let mut model: entity::entry::ActiveModel =
             entity::entry::Entity::find_by_id(&request.id.0)
                 .one(&conn)
                 .await?
-                .ok_or(ServiceClientError::NotFound(request.id.0.clone()))?
+                .ok_or(ServiceError::NotFound)?
                 .into();
 
         if let Some(name) = request.name {
@@ -150,7 +157,11 @@ impl EntryService for SqlEntryService {
         Ok(())
     }
 
-    async fn delete_entry(&self, context: &RequestContext, EntryId(id): &EntryId) -> Result<()> {
+    async fn delete_entry(
+        &self,
+        context: &RequestContext,
+        EntryId(id): &EntryId,
+    ) -> ServiceResult<()> {
         let conn = self.store.get_conn(&context.store_name).await?;
 
         let _ = entity::entry::Entity::delete_by_id(id).exec(&conn).await?;
@@ -162,14 +173,12 @@ impl EntryService for SqlEntryService {
         &self,
         context: &RequestContext,
         request: AttachmentCreateRequest,
-    ) -> Result<AttachmentId> {
+    ) -> ServiceResult<AttachmentId> {
         // Check file path first.
         let path = match request.file_path.to_str() {
             Some(path) if request.file_path.exists() && request.file_path.is_file() => Ok(path),
-            Some(path) => Err(ServiceClientError::InvalidAttachmentFilePath(
-                path.to_string(),
-            )),
-            None => Err(ServiceClientError::BadArguments(String::new())),
+            Some(path) => Err(ServiceError::InvalidAttachmentFilePath),
+            None => Err(ServiceError::BadArguments),
         }?
         .to_string();
 
@@ -197,14 +206,14 @@ impl EntryService for SqlEntryService {
         &self,
         context: &RequestContext,
         request: AttachmentUpdateRequest,
-    ) -> Result<()> {
+    ) -> ServiceResult<()> {
         let conn = self.store.get_conn(&context.store_name).await?;
 
         let mut model: entity::attachment::ActiveModel =
             entity::attachment::Entity::find_by_id(&request.id)
                 .one(&conn)
                 .await?
-                .ok_or(ServiceClientError::NotFound(request.id.0.to_string()))?
+                .ok_or(ServiceError::NotFound)?
                 .into();
 
         if let Some(entry_id) = request.entry_id {
@@ -226,7 +235,7 @@ impl EntryService for SqlEntryService {
         &self,
         context: &RequestContext,
         AttachmentId(id): &AttachmentId,
-    ) -> Result<()> {
+    ) -> ServiceResult<()> {
         let conn = self.store.get_conn(&context.store_name).await?;
         let _ = entity::attachment::Entity::delete_by_id(id)
             .exec(&conn)

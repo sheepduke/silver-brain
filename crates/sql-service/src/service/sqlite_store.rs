@@ -1,27 +1,15 @@
 use std::{
-    fs::{self, DirEntry, File},
+    fs::{self, File},
     path::{Path, PathBuf},
 };
 
-use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
 use migration::Migrator;
 use sea_orm::{Database, DatabaseConnection};
 
-use thiserror::Error;
-use tracing::{debug, info, instrument};
-use typed_builder::TypedBuilder;
+use tracing::debug;
 
-use silver_brain_core::{RequestContext, ServiceClientError, StoreName, StoreService};
-
-#[derive(Error, Debug, PartialEq, Eq)]
-pub enum StoreError {
-    #[error("Data path not a directory")]
-    DataPathNotDirectory,
-
-    #[error("Data path not writable")]
-    DataPathNotWritable,
-}
+use silver_brain_core::service::{ServiceError, ServiceResult, StoreName, StoreService};
 
 // ============================================================
 //  SqlStore
@@ -33,14 +21,15 @@ pub struct SqliteStore {
 }
 
 impl SqliteStore {
-    pub fn new(data_path: PathBuf) -> Result<Self> {
+    pub fn new(data_path: PathBuf) -> ServiceResult<Self> {
         if data_path.exists() {
-            ensure!(data_path.is_dir(), StoreError::DataPathNotDirectory);
-            ensure!(
-                Self::is_dir_writable(&data_path)
-                    .context("Failed to check directory permission")?,
-                StoreError::DataPathNotWritable
-            );
+            if !data_path.is_dir() {
+                panic!("Data path is not a directory");
+            }
+
+            if !Self::is_dir_writable(&data_path).expect("Failed to check directory permission") {
+                panic!("Data path is not writable");
+            }
         } else {
             debug!("Creating data directory");
             fs::create_dir_all(&data_path)?;
@@ -49,19 +38,17 @@ impl SqliteStore {
         Ok(Self { data_path })
     }
 
-    pub async fn get_conn(&self, store_name: &StoreName) -> Result<DatabaseConnection> {
+    pub async fn get_conn(&self, store_name: &StoreName) -> ServiceResult<DatabaseConnection> {
         let sqlite_path = self.resolve_sqlite_path(store_name);
 
-        let sqlite_file_path_str = sqlite_path
-            .to_str()
-            .ok_or(ServiceClientError::InvalidStoreName(store_name.0.clone()))?;
+        let sqlite_file_path_str = sqlite_path.to_str().ok_or(ServiceError::InvalidStoreName)?;
         let conn_str = format!("sqlite:{}", &sqlite_file_path_str);
         let conn = Database::connect(&conn_str).await?;
 
         Ok(conn)
     }
 
-    fn is_dir_writable(path: &Path) -> Result<bool> {
+    fn is_dir_writable(path: &Path) -> ServiceResult<bool> {
         Ok(!fs::metadata(path)?.permissions().readonly())
     }
 
@@ -81,16 +68,16 @@ impl SqliteStore {
 
 #[async_trait]
 impl StoreService for SqliteStore {
-    async fn create_store(&self, store_name: &StoreName) -> Result<()> {
+    async fn create_store(&self, store_name: &StoreName) -> ServiceResult<()> {
         let store_path = self.resolve_store_path(store_name);
 
         if !store_path.exists() {
             fs::create_dir_all(&store_path)?;
-            fs::create_dir(&store_path.join("attachments"));
+            fs::create_dir(&store_path.join("attachments"))?;
 
             // Create SQLite file.
             let sqlite_file_path = self.resolve_sqlite_path(store_name);
-            File::create(&sqlite_file_path);
+            File::create(&sqlite_file_path)?;
 
             // Migrate SQLite database.
             let conn = self.get_conn(store_name).await?;
@@ -100,25 +87,25 @@ impl StoreService for SqliteStore {
         Ok(())
     }
 
-    async fn list_stores(&self) -> Result<Vec<StoreName>> {
+    async fn list_stores(&self) -> ServiceResult<Vec<StoreName>> {
         let mut path = self.data_path.clone();
         path.push("store");
 
-        fs::read_dir(path)?
+        let store_names = fs::read_dir(path)?
             .map(|r| {
                 r.map(|path| {
                     path.file_name()
                         .into_string()
                         .map(|name| StoreName(name))
-                        .map_err(|_| anyhow::anyhow!("Invalid file name"))
-                })
+                        .map_err(|_| ServiceError::Other(anyhow::anyhow!("Invalid file name")))
+                })?
             })
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()
+            .collect::<Result<Vec<StoreName>, _>>()?;
+
+        Ok(store_names)
     }
 
-    async fn delete_store(&self, name: &StoreName) -> Result<()> {
+    async fn delete_store(&self, name: &StoreName) -> ServiceResult<()> {
         let path = self.resolve_store_path(name);
 
         if path.try_exists()? {

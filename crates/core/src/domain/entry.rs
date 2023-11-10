@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use crate::Attachment;
+use crate::domain::Attachment;
 
 // ============================================================
 //  Entry
