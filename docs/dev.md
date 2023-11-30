@@ -153,7 +153,9 @@
 
 <characters> ::= <characters> | [^\] | "\\" "\\" | "\\" '"'
 
-<filter-query> ::= <string> ":" <string>
+<filter-query> ::= <string> <filter-operator> <string>
+
+<filter-operator> ::= ":" | ":=" | ":!" | ":!=" | ":<" | ":<=" | ":>=" | ":>" | ":>"
 
 <property-query> ::= <string> <compare-operator> <string>
 
