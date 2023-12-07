@@ -46,6 +46,7 @@ pub enum Query {
     Not(Box<Query>),
 }
 
+#[derive(Debug)]
 pub struct InvalidSearchError;
 
 impl<T: Error> From<T> for InvalidSearchError {
@@ -60,12 +61,48 @@ pub fn parse(input: &str) -> Result<Query, InvalidSearchError> {
     if !remaining.is_empty() {
         Err(InvalidSearchError)
     } else {
-        Ok(expr_to_query(&expr))
+        Ok(expr.try_into()?)
     }
 }
 
-fn expr_to_query(expr: &Expr) -> Query {
-    todo!()
+enum ExprSeqParseState {
+    Not,
+    And,
+    Or,
+}
+
+impl TryFrom<Expr> for Query {
+    type Error = InvalidSearchError;
+
+    fn try_from(value: Expr) -> Result<Self, InvalidSearchError> {
+        match value {
+            Expr::Sequence(mut seq) if seq.len() == 1 => Ok(seq.pop().unwrap().try_into()?),
+            Expr::Sequence(mut seq) => {
+                for expr in seq {
+                    println!("Expr: {:?}", expr);
+                }
+                Ok(Query::Keyword("test".to_string()))
+            }
+            Expr::String(string) => Ok(Query::Keyword(string)),
+            Expr::Filter { key, op, value } => Ok(Query::Filter { key, op, value }),
+            Expr::Property { key, op, value } => Ok(Query::Property { key, op, value }),
+            _ => Err(InvalidSearchError),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn asdf() {
+        let input = "aaa && (bb || !cc)";
+
+        println!("Result: {:?}", parse(input));
+
+        panic!()
+    }
 }
 
 // ============================================================
