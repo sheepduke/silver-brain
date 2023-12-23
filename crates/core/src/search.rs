@@ -65,7 +65,8 @@ pub fn parse(input: &str) -> Result<Query, InvalidSearchError> {
     }
 }
 
-enum ExprSeqParseState {
+enum ParseState {
+    Normal,
     Not,
     And,
     Or,
@@ -75,19 +76,62 @@ impl TryFrom<Expr> for Query {
     type Error = InvalidSearchError;
 
     fn try_from(value: Expr) -> Result<Self, InvalidSearchError> {
-        match value {
-            Expr::Sequence(mut seq) if seq.len() == 1 => Ok(seq.pop().unwrap().try_into()?),
-            Expr::Sequence(mut seq) => {
-                for expr in seq {
-                    println!("Expr: {:?}", expr);
+        expr_to_query(value)
+    }
+}
+
+fn expr_to_query(expr: Expr) -> Result<Query, InvalidSearchError> {
+    println!("Expr: {:?}", expr);
+
+    match expr {
+        Expr::Sequence(mut seq) if seq.len() == 1 => Ok(expr_to_query(seq.pop().unwrap())?),
+        Expr::Sequence(mut seq) => {
+            let has_or = seq.iter().find(|expr| matches!(expr, Expr::Or)).is_some();
+
+            if has_or {
+                let mut root: Vec<Query> = Vec::new();
+                let mut current: Vec<Query> = Vec::new();
+
+                // let not_state =
+
+                for expr in seq.into_iter() {}
+
+                Ok(Query::Or(vec![]))
+            } else {
+                let mut root: Vec<Query> = Vec::new();
+                let mut not_state = false;
+
+                for expr in seq.into_iter() {
+                    if not_state {
+                        root.push(Query::Not(Box::new(expr_to_query(expr)?)));
+                        not_state = false;
+                    } else if matches!(expr, Expr::Not) {
+                        not_state = true;
+                    } else if matches!(expr, Expr::And) {
+                        // Do nothing.
+                    } else {
+                        root.push(expr_to_query(expr)?);
+                    }
                 }
-                Ok(Query::Keyword("test".to_string()))
+
+                Ok(vec_to_and_query(root))
             }
-            Expr::String(string) => Ok(Query::Keyword(string)),
-            Expr::Filter { key, op, value } => Ok(Query::Filter { key, op, value }),
-            Expr::Property { key, op, value } => Ok(Query::Property { key, op, value }),
-            _ => Err(InvalidSearchError),
         }
+        Expr::String(string) => Ok(Query::Keyword(string)),
+        Expr::Filter { key, op, value } => Ok(Query::Filter { key, op, value }),
+        Expr::Property { key, op, value } => Ok(Query::Property { key, op, value }),
+        x => {
+            println!("Not recognized: {:?}", x);
+            Err(InvalidSearchError)
+        } //         _ => Err(InvalidSearchError),
+    }
+}
+
+fn vec_to_and_query(vec: Vec<Query>) -> Query {
+    if vec.len() == 1 {
+        vec.into_iter().next().unwrap()
+    } else {
+        Query::And(vec)
     }
 }
 
@@ -97,11 +141,11 @@ mod tests {
 
     #[test]
     fn asdf() {
-        let input = "aaa && (bb || !cc)";
+        let input = "aaa && (bb && !cc)";
 
         println!("Result: {:?}", parse(input));
 
-        panic!()
+        panic!();
     }
 }
 
