@@ -1,160 +1,20 @@
-use std::error::Error;
-
 use nom::{
     branch::alt,
-    bytes::complete::{tag, tag_no_case, take_until, take_while, take_while1},
+    bytes::complete::{tag, tag_no_case, take_until, take_while1},
     character::{
         complete::{char, space0},
         streaming::space1,
     },
-    combinator::{fail, into, success, value},
-    error::context,
+    combinator::{fail, value},
     multi::{many0, many1},
-    sequence::{delimited, preceded, terminated, tuple},
-    IResult, Parser,
+    sequence::{delimited, terminated, tuple},
+    IResult,
 };
 
-// ============================================================
-//  Query
-// ============================================================
-
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub enum CompareOperator {
-    Less,
-    LessEqual,
-    Equal,
-    NotEqual,
-    Greater,
-    GreaterEqual,
-}
+use super::query::CompareOperator;
 
 #[derive(Clone, Debug)]
-pub enum Query {
-    Keyword(String),
-    Filter {
-        key: String,
-        op: CompareOperator,
-        value: String,
-    },
-    Property {
-        key: String,
-        op: CompareOperator,
-        value: String,
-    },
-    And(Vec<Query>),
-    Or(Vec<Query>),
-    Not(Box<Query>),
-}
-
-#[derive(Debug)]
-pub struct InvalidSearchError;
-
-impl<T: Error> From<T> for InvalidSearchError {
-    fn from(_: T) -> Self {
-        Self
-    }
-}
-
-pub fn parse(input: &str) -> Result<Query, InvalidSearchError> {
-    let (remaining, expr) = parse_expr(input)?;
-
-    if !remaining.is_empty() {
-        Err(InvalidSearchError)
-    } else {
-        Ok(expr.try_into()?)
-    }
-}
-
-enum ParseState {
-    Normal,
-    Not,
-    And,
-    Or,
-}
-
-impl TryFrom<Expr> for Query {
-    type Error = InvalidSearchError;
-
-    fn try_from(value: Expr) -> Result<Self, InvalidSearchError> {
-        expr_to_query(value)
-    }
-}
-
-fn expr_to_query(expr: Expr) -> Result<Query, InvalidSearchError> {
-    println!("Expr: {:?}", expr);
-
-    match expr {
-        Expr::Sequence(mut seq) if seq.len() == 1 => Ok(expr_to_query(seq.pop().unwrap())?),
-        Expr::Sequence(mut seq) => {
-            let has_or = seq.iter().find(|expr| matches!(expr, Expr::Or)).is_some();
-
-            if has_or {
-                let mut root: Vec<Query> = Vec::new();
-                let mut current: Vec<Query> = Vec::new();
-
-                // let not_state =
-
-                for expr in seq.into_iter() {}
-
-                Ok(Query::Or(vec![]))
-            } else {
-                let mut root: Vec<Query> = Vec::new();
-                let mut not_state = false;
-
-                for expr in seq.into_iter() {
-                    if not_state {
-                        root.push(Query::Not(Box::new(expr_to_query(expr)?)));
-                        not_state = false;
-                    } else if matches!(expr, Expr::Not) {
-                        not_state = true;
-                    } else if matches!(expr, Expr::And) {
-                        // Do nothing.
-                    } else {
-                        root.push(expr_to_query(expr)?);
-                    }
-                }
-
-                Ok(vec_to_and_query(root))
-            }
-        }
-        Expr::String(string) => Ok(Query::Keyword(string)),
-        Expr::Filter { key, op, value } => Ok(Query::Filter { key, op, value }),
-        Expr::Property { key, op, value } => Ok(Query::Property { key, op, value }),
-        x => {
-            println!("Not recognized: {:?}", x);
-            Err(InvalidSearchError)
-        } //         _ => Err(InvalidSearchError),
-    }
-}
-
-fn vec_to_and_query(vec: Vec<Query>) -> Query {
-    if vec.len() == 1 {
-        vec.into_iter().next().unwrap()
-    } else {
-        Query::And(vec)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn asdf() {
-        let input = "aaa && (bb && !cc)";
-
-        println!("Result: {:?}", parse(input));
-
-        panic!();
-    }
-}
-
-// ============================================================
-//  Expr
-// ============================================================
-
-#[derive(Clone, Debug)]
-enum Expr {
+pub enum Expr {
     String(String),
     Not,
     And,
@@ -172,7 +32,7 @@ enum Expr {
     Sequence(Vec<Expr>),
 }
 
-fn parse_expr(input: &str) -> IResult<&str, Expr> {
+pub fn parse_expr(input: &str) -> IResult<&str, Expr> {
     let (remaining, output) = many0(alt((parse_paren, parse_seq)))(input)?;
 
     Ok((remaining, Expr::Sequence(output)))
@@ -204,10 +64,8 @@ fn parse_single(input: &str) -> IResult<&str, Expr> {
 }
 
 fn parse_not_expr(input: &str) -> IResult<&str, Expr> {
-    let (remaining, _) = alt((
-        terminated(tag("!"), space0),
-        terminated(tag_no_case("NOT"), space1),
-    ))(input)?;
+    let (remaining, _) =
+        alt((terminated(tag("!"), space0), terminated(tag("not"), space1)))(input)?;
 
     Ok((remaining, Expr::Not))
 }
@@ -215,17 +73,15 @@ fn parse_not_expr(input: &str) -> IResult<&str, Expr> {
 fn parse_and_expr(input: &str) -> IResult<&str, Expr> {
     let (remaining, _) = alt((
         terminated(tag("&&"), space0),
-        terminated(tag_no_case("AND"), space1),
+        terminated(tag("and"), space1),
     ))(input)?;
 
     Ok((remaining, Expr::And))
 }
 
 fn parse_or_expr(input: &str) -> IResult<&str, Expr> {
-    let (remaining, _) = alt((
-        terminated(tag("||"), space0),
-        terminated(tag_no_case("OR"), space1),
-    ))(input)?;
+    let (remaining, _) =
+        alt((terminated(tag("||"), space0), terminated(tag("or"), space1)))(input)?;
 
     Ok((remaining, Expr::Or))
 }

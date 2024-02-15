@@ -1,10 +1,13 @@
 use anyhow::Result;
-use silver_brain_core::{EntryCreateRequest, EntryId, EntryService, RequestContext};
+use silver_brain_core::{
+    domain::EntryId,
+    service::{EntryCreateRequest, EntryService, RequestContext, ServiceResult},
+};
 
 pub async fn create_editor(
     service: &impl EntryService,
     context: &RequestContext,
-) -> Result<EntryId> {
+) -> ServiceResult<EntryId> {
     let request = EntryCreateRequest::builder()
         .name("Editor")
         .content_type("text/plain")
@@ -17,7 +20,7 @@ pub async fn create_editor(
 pub async fn create_emacs(
     service: &impl EntryService,
     context: &RequestContext,
-) -> Result<EntryId> {
+) -> ServiceResult<EntryId> {
     let entry_id = service
         .create_entry(
             &context,
@@ -32,7 +35,10 @@ pub async fn create_emacs(
     Ok(entry_id)
 }
 
-pub async fn create_vim(service: &impl EntryService, context: &RequestContext) -> Result<EntryId> {
+pub async fn create_vim(
+    service: &impl EntryService,
+    context: &RequestContext,
+) -> ServiceResult<EntryId> {
     let entry_id = service
         .create_entry(
             &context,
@@ -50,7 +56,7 @@ pub async fn create_vim(service: &impl EntryService, context: &RequestContext) -
 pub async fn create_neovim(
     service: &impl EntryService,
     context: &RequestContext,
-) -> Result<EntryId> {
+) -> ServiceResult<EntryId> {
     let entry_id = service
         .create_entry(
             &context,
