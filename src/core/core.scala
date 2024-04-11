@@ -30,8 +30,6 @@ case class Item(
 enum ServiceError:
   case StoreNotFound(id: StoreName)
   case IdNotFound(id: Id)
-  case DataAccessError(message: String)
-  case DataCorruption(message: String)
   case Conflict(message: String)
   case InvalidArgument(message: String)
   case InternalError(message: String)

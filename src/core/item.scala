@@ -3,7 +3,7 @@ package silver_brain.core
 trait ItemService:
   def createItem(item: Item)(using StoreName): ServiceResponse[Id]
 
-  def getItem(id: Id)(using StoreName): ServiceResponse[Option[Item]]
+  def getItem(id: Id)(using StoreName): ServiceResponse[Item]
 
   def getItems(ids: Seq[Id])(using StoreName): ServiceResponse[Seq[Item]]
 

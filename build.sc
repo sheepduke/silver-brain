@@ -25,7 +25,13 @@ object foo extends RootModule with ScalaModule {
     ivy"org.slf4j:slf4j-simple:2.0.12",
 
     // OS interaction.
-    ivy"com.lihaoyi::os-lib::0.8.0"
+    ivy"com.lihaoyi::os-lib::0.8.0",
+
+    // HTTP server.
+    ivy"com.lihaoyi::cask:0.9.2",
+
+    // HTTP client.
+    ivy"com.lihaoyi::requests:0.8.2"
   )
 
   object test extends ScalaTests {

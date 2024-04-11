@@ -30,9 +30,9 @@ class SqlItemService(store: SqliteStore) extends ItemService:
         Right(id)
       )
 
-  override def getItem(id: Id)(using StoreName): ServiceResponse[Option[Item]] =
+  override def getItem(id: Id)(using StoreName): ServiceResponse[Item] =
     this.store.withTransaction(implicit session =>
-      Right(SqlItemService.getItem(id))
+      SqlItemService.getItem(id).toRight(ServiceError.IdNotFound(id))
     )
 
   override def getItems(ids: Seq[Id])(using

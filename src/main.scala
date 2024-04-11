@@ -5,23 +5,16 @@ import silver_brain.core.*
 import org.flywaydb.core.Flyway
 import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import silver_brain.http.HttpServer
 
 @main def main() =
   val store = SqliteStore(os.home / "temp" / "test")
   val itemService = SqlItemService(store)
 
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
-  given StoreName = "new"
-  migrateDatabase(store, "new")
 
-  val item = Item(name = Some("Software"))
-  val itemId = itemService.createItem(item).right.get
-  val item1 = itemService.getItem(itemId)
-  item1
-
-  val items = itemService.getItems(
-    List("2es8zOggxccpxIkLp3qdCdLA49z", "2es96pLRff3c6oEGO1gheWJi6H1")
-  )
+  val httpServer = HttpServer(store = store, itemService = itemService)
+  httpServer.start()
 
 def migrateDatabase(store: SqliteStore, storeName: StoreName) =
   val flyway =
@@ -32,3 +25,7 @@ def migrateDatabase(store: SqliteStore, storeName: StoreName) =
       .load()
 
   flyway.migrate()
+
+def repl() =
+  main()
+  requests.get("http://localhost:8080/api/v2/items/2esE3arQXC0HKQu443BVvLoIkTr")
