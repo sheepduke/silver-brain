@@ -28,4 +28,3 @@ def migrateDatabase(store: SqliteStore, storeName: StoreName) =
 
 def repl() =
   main()
-  requests.get("http://localhost:8080/api/v2/items/2esE3arQXC0HKQu443BVvLoIkTr")
