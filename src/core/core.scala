@@ -9,9 +9,9 @@ type Id = String
 type StoreName = String
 
 case class Reference(
-    id: Id,
-    target: Id,
-    annotation: String
+    id: Option[Id] = None,
+    target: Option[Id] = None,
+    annotation: Option[String] = None
 )
 
 case class Item(

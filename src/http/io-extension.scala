@@ -45,3 +45,11 @@ object UnitCodec extends jsoniter.JsonValueCodec[Unit]:
 
   override def encodeValue(x: Unit, out: jsoniter.JsonWriter): Unit =
     out.writeVal("")
+
+// ============================================================
+//  Option
+// ============================================================
+
+extension [A](option: Option[A])
+  def ensure: Either[Response[String], A] =
+    option.toRight(Response("Required property not provided", 404))

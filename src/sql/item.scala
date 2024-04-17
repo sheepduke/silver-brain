@@ -39,12 +39,21 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       StoreName
   ): ServiceResponse[Seq[Item]] =
     this.store.withTransaction(implicit session =>
-      Right(
-        sql"select * from item where id in ($ids)"
-          .map(rs => jsoniter.readFromString[Item](rs.string(2)))
-          .list
-          .apply()
-      )
+      Right(SqlItemService.getItems(ids))
+    )
+
+  override def searchItems(
+      search: String
+  )(using StoreName): ServiceResponse[Seq[Item]] =
+    println(s"select id from item where props like ${"%" + search + "%"}")
+
+    this.store.withTransaction(implicit session =>
+      val ids = sql"select id from item where props like ${"%" + search + "%"}"
+        .map(rs => rs.string("id"))
+        .list
+        .apply()
+
+      Right(SqlItemService.getItems(ids))
     )
 
   override def updateItem(id: Id, item: Item)(using
@@ -80,28 +89,49 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(())
     )
 
-  override def createHierarchy(parentId: Id, childId: Id)(using
+  override def createChild(parent: Id, child: Id)(using
       StoreName
   ): ServiceResponse[Unit] =
     val createTime = Instant.now().toString()
 
     this.store.withTransaction(implicit session =>
-      sql"""
-      insert into item_child values(
-        $parentId, $childId, $createTime
-      )
-      """.update.apply()
+      val hasHierarchy = sql"""
+      select count(*) from item_child
+      where parent = $parent and child = $child
+      """.map(_.int(1) > 0).single.apply().get
 
-      Right(())
+      if hasHierarchy then Right(())
+      else
+        val hasReversedHierarchy = sql"""
+        select count(*) from item_child
+        where parent = $child and child = $parent
+        """.map(_.int(1) > 0).single.apply().get
+
+        if hasReversedHierarchy then
+          val message = s"Given `$parent` is currently a child of `$child`"
+          Left(ServiceError.Conflict(message))
+        else
+          sql"""
+          delete from item_child
+          where parent = $child and child = $parent
+          """.update.apply()
+
+          sql"""
+          insert into item_child values(
+            $parent, $child, $createTime
+          )
+          """.update.apply()
+
+          Right(())
     )
 
-  override def deleteHierarchy(parentId: Id, childId: Id)(using
+  override def deleteChild(parent: Id, child: Id)(using
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
       sql"""
       delete from item_child
-        where parent = $parentId and child = $childId
+        where parent = $parent and child = $child
       """.update.apply()
 
       Right(())
@@ -148,4 +178,10 @@ object SqlItemService:
     sql"select * from item where id = $id"
       .map(rs => jsoniter.readFromString[Item](rs.string(2)))
       .single
+      .apply()
+
+  def getItems(ids: Seq[Id])(using DBSession): Seq[Item] =
+    sql"select * from item where id in ($ids)"
+      .map(rs => jsoniter.readFromString[Item](rs.string(2)))
+      .list
       .apply()

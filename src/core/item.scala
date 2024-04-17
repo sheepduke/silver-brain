@@ -7,15 +7,17 @@ trait ItemService:
 
   def getItems(ids: Seq[Id])(using StoreName): ServiceResponse[Seq[Item]]
 
+  def searchItems(search: String)(using StoreName): ServiceResponse[Seq[Item]]
+
   def updateItem(id: Id, item: Item)(using StoreName): ServiceResponse[Unit]
 
   def deleteItem(id: Id)(using StoreName): ServiceResponse[Unit]
 
-  def createHierarchy(parentId: Id, childId: Id)(using
+  def createChild(parent: Id, child: Id)(using
       StoreName
   ): ServiceResponse[Unit]
 
-  def deleteHierarchy(parentId: Id, childId: Id)(using
+  def deleteChild(parent: Id, child: Id)(using
       StoreName
   ): ServiceResponse[Unit]
 
