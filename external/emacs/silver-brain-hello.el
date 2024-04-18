@@ -40,7 +40,7 @@ I am Silver, your personal external brain.\n\n")
     (widget-insert "\n")
     
     ;; Insert New button.
-    (widget-insert "\n  ")
+    (widget-insert "\n")
     (silver-brain--with-push-button-face
      (widget-create 'push-button
                     :notify (lambda (&rest _) (silver-brain-create-concept))

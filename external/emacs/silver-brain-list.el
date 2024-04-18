@@ -4,6 +4,7 @@
 (require 'wid-edit)
 (require 'silver-brain-common)
 (require 'silver-brain-concept)
+(require 'silver-brain-data)
 
 (defvar silver-brain-list-buffer-name "*Silver Brain List*")
 
@@ -43,9 +44,13 @@
 (defun silver-brain--list-prepare-buffer (search-string)
   "Prepare the Silver Brain List buffer. The data is fetched
 using given SEARCH-STRING."
-  (let ((concept-list (thread-first (silver-brain-api-search-concept search-string)
-                        (sort #'silver-brain-concept-summary-by-uuid-<)
-                        (sort #'silver-brain-concept-summary-by-name-<))))
+  (let ((concept-list (thread-first (silver-brain-api-search-item search-string)
+                                    (sort (lambda (x y)
+                                            (string< (silver-brain--get-id x)
+                                                     (silver-brain--get-id y))))
+                                    (sort (lambda (x y)
+                                            (string< (silver-brain--get-name x)
+                                                     (silver-brain--get-name y)))))))
     (silver-brain--with-widget-buffer silver-brain-list-buffer-name
       (silver-brain-list-mode)
       (setq silver-brain-list-search-string search-string)
@@ -60,7 +65,7 @@ using given SEARCH-STRING."
   (let ((concept-count (length concept-list)))
     (if (= 0 concept-count)
         (widget-insert "I dit not find any concept. :-(")
-      (widget-insert (format "I found %d councepts. :-)\n" concept-count))))
+      (widget-insert (format "I found %d councepts. :-)\n\n" concept-count))))
 
   ;; Insert concept buttons.
   (mapc (lambda (concept)
@@ -68,8 +73,8 @@ using given SEARCH-STRING."
            (widget-create 'push-button
                           :notify (lambda (&rest _)
                                     (silver-brain-concept-open
-                                     (silver-brain-concept-summary-uuid concept)))
-                          (silver-brain-concept-summary-name concept)))
+                                     (silver-brain--get-id concept)))
+                          (silver-brain--get-name concept)))
           (widget-insert "\n"))
         concept-list))
 

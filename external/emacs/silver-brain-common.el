@@ -3,6 +3,8 @@
 (require 'cl-lib)
 (require 'json)
 (require 'silver-brain-vars)
+(require 'names)
+(require 'iso8601)
 
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
@@ -27,10 +29,10 @@
 (defun silver-brain-quit-all ()
   "Kill all the Silver Brain buffers."
   (interactive)
-  (mapc (lambda (buffer) (kill-buffer buffer))
-        (cl-remove-if-not (lambda (buffer)
-                            (string-prefix-p "*Silver Brain" (buffer-name buffer)))
-                          (buffer-list))))
+  (seq-do (lambda (buffer) (kill-buffer buffer))
+          (seq-filter (lambda (buffer)
+                        (string-prefix-p "*Silver Brain" (buffer-name buffer)))
+                      (buffer-list))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Widget                            ;;;;
