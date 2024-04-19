@@ -3,7 +3,7 @@
 (require 'widget)
 (require 'wid-edit)
 
-(require 'silver-brain-common)
+(require 'silver-brain-util)
 (require 'silver-brain-list)
 
 (defvar silver-brain-hello-buffer-name "*Silver Brain Hello*")

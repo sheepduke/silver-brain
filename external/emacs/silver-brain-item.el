@@ -3,9 +3,9 @@
 (require 'widget)
 (require 'wid-edit)
 
-(require 'silver-brain-common)
-(require 'silver-brain-api)
 (require 'silver-brain-vars)
+(require 'silver-brain-util)
+(require 'silver-brain-client)
 
 (defvar silver-brain-concept-buffer-name-format "*Silver Brain Concept %s*")
 
@@ -327,4 +327,4 @@ current concept, insert a button otherwise."
   (add-hook 'silver-brain-after-update-concept-hook 'silver-brain-concept-refresh-all-buffers)
   (add-hook 'after-change-major-mode-hook 'silver-brain-concept-setup-local-key))
 
-(provide 'silver-brain-concept)
+(provide 'silver-brain-item)

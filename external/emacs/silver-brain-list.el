@@ -2,15 +2,13 @@
 
 (require 'widget)
 (require 'wid-edit)
-(require 'silver-brain-common)
-(require 'silver-brain-concept)
-(require 'silver-brain-data)
+(require 'silver-brain-util)
+(require 'silver-brain-item)
 
 (defvar silver-brain-list-buffer-name "*Silver Brain List*")
 
 (defvar-local silver-brain-list-search-string nil
   "The current search string for Silver Brain List buffer.")
-(put 'silver-brain-list-search-string 'permanent-local t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Mode                             ;;;;
@@ -20,6 +18,7 @@
   (let ((map (make-composed-keymap (list (make-sparse-keymap)
                                          widget-keymap))))
     (set-keymap-parent map silver-brain-common-keymap)
+    (define-key map (kbd "g") 'silver-brain-list-refresh)
     map)
   "The keymap used for Silver Brain List mode.")
 
@@ -35,8 +34,9 @@
   (silver-brain--list-prepare-buffer search-string)
   (pop-to-buffer-same-window (get-buffer silver-brain-list-buffer-name)))
 
-(defun silver-brain-list-refresh ()
+(defun silver-brain-list-refresh (before after)
   "Refresh Silver Brain List buffer."
+  (interactive)
   (if-let ((buffer (get-buffer silver-brain-list-buffer-name)))
       (with-current-buffer buffer
         (silver-brain--list-prepare-buffer silver-brain-list-search-string))))
@@ -44,44 +44,44 @@
 (defun silver-brain--list-prepare-buffer (search-string)
   "Prepare the Silver Brain List buffer. The data is fetched
 using given SEARCH-STRING."
-  (let ((concept-list (thread-first (silver-brain-api-search-item search-string)
-                                    (sort (lambda (x y)
-                                            (string< (silver-brain--get-id x)
-                                                     (silver-brain--get-id y))))
-                                    (sort (lambda (x y)
-                                            (string< (silver-brain--get-name x)
-                                                     (silver-brain--get-name y)))))))
+  (let ((items (thread-first (silver-brain-client-search-items search-string)
+                             (sort (lambda (x y)
+                                     (string< (silver-brain--get-id x)
+                                              (silver-brain--get-id y))))
+                             (sort (lambda (x y)
+                                     (string< (silver-brain--get-name x)
+                                              (silver-brain--get-name y)))))))
     (silver-brain--with-widget-buffer silver-brain-list-buffer-name
       (silver-brain-list-mode)
       (setq silver-brain-list-search-string search-string)
       (setq silver-brain-refresh-function 'silver-brain-list-refresh)
-      (silver-brain--list-create-widgets concept-list))
+      (silver-brain--list-create-widgets items))
     (with-current-buffer silver-brain-list-buffer-name
       (goto-char (point-min))
       (ignore-errors (widget-forward 1)))))
 
-(defun silver-brain--list-create-widgets (concept-list)
+(defun silver-brain--list-create-widgets (items)
   "Create inserts to "
-  (let ((concept-count (length concept-list)))
-    (if (= 0 concept-count)
-        (widget-insert "I dit not find any concept. :-(")
-      (widget-insert (format "I found %d councepts. :-)\n\n" concept-count))))
+  (let ((item-count (length items)))
+    (if (= 0 item-count)
+        (widget-insert "I dit not find any item. :-(")
+      (widget-insert (format "I found %d councepts. :-)\n\n" item-count))))
 
-  ;; Insert concept buttons.
-  (mapc (lambda (concept)
-          (silver-brain--with-concept-hyperlink-face
+  ;; Insert item buttons.
+  (mapc (lambda (item)
+          (silver-brain--with-item-hyperlink-face
            (widget-create 'push-button
                           :notify (lambda (&rest _)
-                                    (silver-brain-concept-open
-                                     (silver-brain--get-id concept)))
-                          (silver-brain--get-name concept)))
+                                    (silver-brain-item-open
+                                     (silver-brain--get-id item)))
+                          (silver-brain--get-name item)))
           (widget-insert "\n"))
-        concept-list))
+        items))
 
 (defun silver-brain--list-install ()
   "Install hooks etc."
-  (add-hook 'silver-brain-after-create-concept-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-update-concept-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-delete-concept-hook 'silver-brain-list-refresh))
+  (add-hook 'silver-brain-after-create-item-hook 'silver-brain-list-refresh)
+  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-list-refresh)
+  (add-hook 'silver-brain-after-delete-item-hook 'silver-brain-list-refresh))
 
 (provide 'silver-brain-list)

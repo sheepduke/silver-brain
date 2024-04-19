@@ -2,15 +2,44 @@
 
 (require 'cl-lib)
 (require 'json)
-(require 'silver-brain-vars)
-(require 'names)
 (require 'iso8601)
+(require 'seq)
+
+(require 'silver-brain-vars)
+(require 'silver-brain-client)
+
+;; ============================================================
+;;  Data Model
+;; ============================================================
+
+(defun silver-brain--get-id (obj)
+  (silver-brain--get "id" obj))
+
+(defun silver-brain--get-name (obj)
+  (silver-brain--get "name" obj))
+
+(defun silver-brain--get-content-type (obj)
+  (silver-brain--get "contentType" obj))
+
+(defun silver-brain--get-content (obj)
+  (silver-brain--get "content" obj))
+
+(defun silver-brain--get-create-time (obj)
+  (silver-brain--get "createTime" obj))
+
+(defun silver-brain--get-update-time (obj)
+  (silver-brain--get "updateTime" obj))
+
+(defun silver-brain--get (key obj)
+  (cdr (assoc-string key obj)))
+
+;; ============================================================
+;;  Interaction
+;; ============================================================
 
 (defvar silver-brain-common-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "g") 'silver-brain-refresh)
     (define-key map (kbd "j") 'silver-brain-widget-jump)
-    (define-key map (kbd "c c") 'silver-brain-create-concept)
     (define-key map (kbd "q") 'quit-window)
     (define-key map (kbd "Q") 'silver-brain-quit-all)
     (define-key map [remap self-insert-command] 'silver-brain--no-edit)
@@ -18,13 +47,9 @@
   "Common keymap shared by all the Silver Brain buffers.")
 
 (defun silver-brain--no-edit ()
-  "Refuse to allow editing of Custom buffer."
+  "Disallow editing custom buffer."
   (interactive)
   (error "Undefined key binding"))
-
-(defun silver-brain-refresh ()
-  (interactive)
-  (funcall silver-brain-refresh-function))
 
 (defun silver-brain-quit-all ()
   "Kill all the Silver Brain buffers."
@@ -34,9 +59,20 @@
                         (string-prefix-p "*Silver Brain" (buffer-name buffer)))
                       (buffer-list))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                            Widget                            ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(cl-defun silver-brain--search-item-and-select (search-string)
+  "Ask for a search string, search for items and select one.
+PROMPT is the prompt for search string."
+  (let* ((result (silver-brain-client-search-items search-string))
+         (items (seq-map (lambda (item)
+                           (cons (silver-brain--get-name item) (silver-brain--get-id item)))
+                         result)))
+    (and items
+         (let ((key (completing-read "Choose item: " items)))
+           (cdr (assoc-string key items))))))
+
+;; ============================================================
+;;  Widget
+;; ============================================================
 
 (defmacro silver-brain--with-widget-buffer (buffer-name &rest body)
   "Wrap basic buffer setup functions."
@@ -82,12 +118,12 @@ length to be removed."
                           (cons point (selected-window)))
                         (silver-brain--get-widgets)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                         Buffer Style                         ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ============================================================
+;;  Buffer
+;; ============================================================
 
-(defmacro silver-brain--with-concept-hyperlink-face (&rest body)
-  `(let ((widget-button-face 'silver-brain-concept-hyperlink)
+(defmacro silver-brain--with-item-hyperlink-face (&rest body)
+  `(let ((widget-button-face 'silver-brain-item-hyperlink)
          (widget-push-button-prefix nil)
          (widget-push-button-suffix nil))
      ,@body))
@@ -104,19 +140,4 @@ length to be removed."
     (let ((end (point)))
       (add-face-text-property start end face))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                             Api                              ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(cl-defun silver-brain--search-concept-and-select (&optional (prompt "Search string: "))
-  "Ask for a search string, search for concepts and select
-one. PROMPT is the prompt for search string."
-  (let* ((result (silver-brain-api-search-concept (read-string prompt)))
-         (concepts (mapcar (lambda (alist) (cons (silver-brain-concept-summary-name alist)
-                                                 (silver-brain-concept-summary-uuid alist)))
-                           result)))
-    (and concepts
-         (let ((key (completing-read "Choose concept: " concepts)))
-           (cdr (assoc-string key concepts))))))
-
-(provide 'silver-brain-common)
+(provide 'silver-brain-util)

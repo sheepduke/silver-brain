@@ -8,7 +8,7 @@
 ;;;;                           Customs                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defcustom silver-brain-server-port 5001
+(defcustom silver-brain-server-port 8080
   "The port of Silver Brain server."
   :type 'integer
   :group 'silver-brain)
@@ -22,18 +22,18 @@
                                  ("text/markdown" . markdown-mode)
                                  ("text/md" . markdown-mode)
                                  ("" . fundamental-mode))
-  "The alist of mapping between concept's content type and major
+  "The alist of mapping between item's content type and major
 mode used to open it."
   :type 'alist
   :group 'silver-brain)
 
-(defcustom silver-brain-database-name nil
-  "The default database name."
+(defcustom silver-brain-store-name "main"
+  "The store name."
   :type 'string
   :group 'silver-brain)
 
 (defcustom silver-brain-default-content-type "text/org"
-  "The default content type for concept."
+  "The default content type for item."
   :type 'string
   :group 'silver-brain)
 
@@ -47,22 +47,19 @@ mode used to open it."
 
 (defvar silver-brain-after-delete-concept-hook '())
 
-(defvar-local silver-brain-refresh-function nil)
-(put 'silver-brain-refresh-function 'permanent-local t)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Faces                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defface silver-brain-concept-hyperlink '((((class color)
-                                (background dark))
-                               :foreground "LightBlue1"
-                               :underline t)
-                              (((class color)
-                                (background light))
-                               :foreground "blue"
-                               :underline t))
-  "Face used for concept hyperlinks."
+(defface silver-brain-item-hyperlink '((((class color)
+                             (background dark))
+                            :foreground "LightBlue1"
+                            :underline t)
+                           (((class color)
+                             (background light))
+                            :foreground "blue"
+                            :underline t))
+  "Face used for item hyperlinks."
   :group 'silver-brain)
 
 (defface silver-brain-push-button '((((class color)
@@ -76,10 +73,10 @@ mode used to open it."
   "Face used for push buttons."
   :group 'silver-brain)
 
-(defface silver-brain-concept-subtitle '((t :underline t
-                                :height 1.5
-                                :weight bold))
-  "Face used for subtitle in concept buffer."
+(defface silver-brain-item-subtitle '((t :underline t
+                             :height 1.5
+                             :weight bold))
+  "Face used for subtitle in item buffer."
   :group 'silver-brain)
 
 (provide 'silver-brain-vars)
