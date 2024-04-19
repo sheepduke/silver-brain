@@ -48,7 +48,10 @@ class SqlItemService(store: SqliteStore) extends ItemService:
     println(s"select id from item where props like ${"%" + search + "%"}")
 
     this.store.withTransaction(implicit session =>
-      val ids = sql"select id from item where props like ${"%" + search + "%"}"
+      val ids = sql"""
+      select id from item
+      where props ->> '$$.name' like ${"%" + search + "%"}
+      """
         .map(rs => rs.string("id"))
         .list
         .apply()
