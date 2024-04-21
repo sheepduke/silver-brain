@@ -34,7 +34,7 @@
   (silver-brain--list-prepare-buffer search-string)
   (pop-to-buffer-same-window (get-buffer silver-brain-list-buffer-name)))
 
-(defun silver-brain-list-refresh (before after)
+(defun silver-brain-list-refresh ()
   "Refresh Silver Brain List buffer."
   (interactive)
   (if-let ((buffer (get-buffer silver-brain-list-buffer-name)))
@@ -46,11 +46,11 @@
 using given SEARCH-STRING."
   (let ((items (thread-first (silver-brain-client-search-items search-string)
                              (sort (lambda (x y)
-                                     (string< (silver-brain--get-id x)
-                                              (silver-brain--get-id y))))
+                                     (string< (silver-brain--prop-id x)
+                                              (silver-brain--prop-id y))))
                              (sort (lambda (x y)
-                                     (string< (silver-brain--get-name x)
-                                              (silver-brain--get-name y)))))))
+                                     (string< (silver-brain--prop-name x)
+                                              (silver-brain--prop-name y)))))))
     (silver-brain--with-widget-buffer silver-brain-list-buffer-name
       (silver-brain-list-mode)
       (setq silver-brain-list-search-string search-string)
@@ -73,10 +73,13 @@ using given SEARCH-STRING."
            (widget-create 'push-button
                           :notify (lambda (&rest _)
                                     (silver-brain-item-open
-                                     (silver-brain--get-id item)))
-                          (silver-brain--get-name item)))
+                                     (silver-brain--prop-id item)))
+                          (silver-brain--prop-name item)))
           (widget-insert "\n"))
         items))
+
+(defun silver-brain-list-on-item-update (before after)
+  (silver-brain-list-refresh))
 
 (defun silver-brain--list-install ()
   "Install hooks etc."

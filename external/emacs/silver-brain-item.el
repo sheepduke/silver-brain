@@ -2,329 +2,333 @@
 
 (require 'widget)
 (require 'wid-edit)
+(require 'seq)
 
 (require 'silver-brain-vars)
 (require 'silver-brain-util)
 (require 'silver-brain-client)
 
-(defvar silver-brain-concept-buffer-name-format "*Silver Brain Concept %s*")
+(defvar silver-brain-item-buffer-name-format "*Silver Brain Item %s*")
 
-(defvar silver-brain-concept-content-buffer-name-format "*Silver Brain Concept Content %s*")
+(defvar silver-brain-item-content-buffer-name-format "*Silver Brain Item Content %s*")
 
-(defvar-local silver-brain-current-concept nil)
-(put 'silver-brain-current-concept 'permanent-local t)
+(defvar-local silver-brain-current-item nil)
+;; (put 'silver-brain-current-item 'permanent-local t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Mode                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar silver-brain-concept-mode-map
+(defvar silver-brain-item-mode-map
   (let ((map (make-composed-keymap (list (make-sparse-keymap)
                                          widget-keymap))))
     (set-keymap-parent map silver-brain-common-keymap)
-    (define-key map (kbd "e") 'silver-brain-concept-open-content)
-    (define-key map (kbd "d") 'silver-brain-delete-this-concept)
-    (define-key map (kbd "l i") 'silver-brain-create-inbound-link)
-    (define-key map (kbd "l o") 'silver-brain-create-outbound-link)
-    (define-key map (kbd "l b") 'silver-brain-create-bidirectional-link)
+    (define-key map (kbd "g") 'silver-brain-item-refresh)
+    (define-key map (kbd "e") 'silver-brain-item-open-content)
+    (define-key map (kbd "d") 'silver-brain-delete-this-item)
     map))
 
-(define-derived-mode silver-brain-concept-mode fundamental-mode "SB-Concept"
-  "Major mode for Silver Brain single concept.")
+(define-derived-mode silver-brain-item-mode fundamental-mode "SB-item"
+  "Major mode for Silver Brain single item.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Buffer                            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun silver-brain-concept-open (uuid)
-  (silver-brain-concept-show (silver-brain-api-get-concept uuid)))
+(defun silver-brain-item-open (id)
+  (silver-brain-item-show (silver-brain-client-get-item id)))
 
-(defun silver-brain-concept-show (concept)
-  (let ((buffer (silver-brain--concept-prepare-buffer concept)))
+(defun silver-brain-item-show (item)
+  (let ((buffer (silver-brain--item-prepare-buffer item)))
     (pop-to-buffer-same-window buffer)))
 
-(defun silver-brain-concept-refresh ()
-  (with-current-buffer (silver-brain--concept-get-buffer-name silver-brain-current-concept)
-    (silver-brain--concept-prepare-buffer (silver-brain-api-get-concept (silver-brain-concept-uuid silver-brain-current-concept)))))
+(defun silver-brain-item-refresh ()
+  "Refresh current item."
+  (interactive)
+  (with-current-buffer (silver-brain--item-get-buffer-name silver-brain-current-item)
+    (silver-brain--item-prepare-buffer (silver-brain-client-get-item (silver-brain--prop-id silver-brain-current-item)))))
 
-(defun silver-brain--concept-prepare-buffer (concept)
-  (silver-brain--with-widget-buffer (silver-brain--concept-get-buffer-name concept)
-    (silver-brain-concept-mode)
-    (setq silver-brain-current-concept concept)
-    (setq silver-brain-refresh-function 'silver-brain-concept-refresh)
-    (silver-brain--concept-insert-widgets concept))
-  (let ((buffer (get-buffer (silver-brain--concept-get-buffer-name concept))))
+(defun silver-brain--item-prepare-buffer (item)
+  (silver-brain--with-widget-buffer (silver-brain--item-get-buffer-name item)
+    (silver-brain-item-mode)
+    (setq silver-brain-current-item item)
+    (setq silver-brain-refresh-function 'silver-brain-item-refresh)
+    (silver-brain--item-insert-widgets item))
+  (let ((buffer (get-buffer (silver-brain--item-get-buffer-name item))))
     (with-current-buffer buffer
       (set-buffer-modified-p nil))
     buffer))
 
-(defun silver-brain--concept-get-buffer-name (concept)
-  (format silver-brain-concept-buffer-name-format (silver-brain-concept-name concept)))
+(defun silver-brain--item-get-buffer-name (item)
+  (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))
 
-(defun silver-brain--concept-insert-widgets (concept)
-  (silver-brain--widget-insert-with-face "Concept" 'silver-brain-concept-subtitle)
+(defun silver-brain--item-insert-widgets (item)
+  (silver-brain--widget-insert-with-face "Item" 'silver-brain-item-subtitle)
   
   (widget-insert "\n\n  Name: ")
   (widget-create 'editable-field
                  :size (silver-brain--get-textfield-length 6)
-                 :value (silver-brain-concept-name concept)
+                 :value (silver-brain--prop-name item)
                  :action (lambda (widget &rest _)
-                           (silver-brain--concept-rename (widget-value widget))))
+                           (silver-brain--item-rename (widget-value widget))))
   (widget-insert "\n  Content Type: ")
   (widget-create 'editable-field
                  :size (silver-brain--get-textfield-length 14)
-                 :value (silver-brain-concept-content-type concept)
+                 :value (silver-brain--prop-content-type item)
                  :action (lambda (widget &rest _)
-                           (silver-brain--concept-update-content-type (widget-value widget))))
+                           (silver-brain--item-update-content-type (widget-value widget))))
   (widget-insert "\n  Create Time: ")
-  (widget-insert (silver-brain--format-time (silver-brain-concept-create-time concept)))
+  (widget-insert (silver-brain--format-time (silver-brain--prop-create-time item)))
   (widget-insert "\n  Update Time: ")
-  (widget-insert (silver-brain--format-time (silver-brain-concept-update-time concept)))
+  (widget-insert (silver-brain--format-time (silver-brain--prop-update-time item)))
   (widget-insert "\n\n  ")
   
   ;; Insert buttons.
   (silver-brain--with-push-button-face
    (widget-create 'push-button
                   :notify (lambda (&rest _)
-                            (silver-brain-create-concept))
+                            (silver-brain-create-item))
                   "New")
    (widget-insert " ")
    (widget-create 'push-button
                   :notify (lambda (&rest _)
-                            (silver-brain-delete-this-concept))
+                            (silver-brain-delete-this-item))
                   "Delete")
    (widget-insert " ")
    (widget-create 'push-button
                   :notify (lambda (&rest _)
                             (kill-buffer))
-                  "Back"))
+                  "Close"))
 
   ;; Insert links.
   (widget-insert "\n")
-  (silver-brain--concept-insert-link-widgets
-   (cl-remove-if-not (lambda (link)
-                       (and (silver-brain-concept-link-directionalp link)
-                            (string-equal (silver-brain-concept-summary-uuid
-                                           (silver-brain-concept-link-target link))
-                                          (silver-brain-concept-uuid silver-brain-current-concept))))
-                 (silver-brain-concept-links silver-brain-current-concept))
-   :inbound)
-  (widget-insert "\n")
-  (silver-brain--concept-insert-link-widgets
-   (cl-remove-if-not (lambda (link)
-                       (and (silver-brain-concept-link-directionalp link)
-                            (string-equal (silver-brain-concept-summary-uuid
-                                           (silver-brain-concept-link-source link))
-                                          (silver-brain-concept-uuid silver-brain-current-concept))))
-                     (silver-brain-concept-links silver-brain-current-concept))
-   :outbound)
-  (widget-insert "\n")
-  (silver-brain--concept-insert-link-widgets
-   (cl-remove-if-not (lambda (link)
-                       (not (silver-brain-concept-link-directionalp link)))
-                     (silver-brain-concept-links silver-brain-current-concept))
-   :bidirectional)
+  ;; (silver-brain--item-insert-link-widgets
+  ;;  (seq-filter (lambda (link)
+  ;;                (and (silver-brain-item-link-directionalp link)
+  ;;                     (string-equal (silver-brain-item-summary-id
+  ;;                                    (silver-brain-item-link-target link))
+  ;;                                   (silver-brain-item-id silver-brain-current-item))))
+  ;;              (silver-brain-item-links silver-brain-current-item))
+  ;;  :inbound)
+  ;; (widget-insert "\n")
+  ;; (silver-brain--item-insert-link-widgets
+  ;;  (cl-remove-if-not (lambda (link)
+  ;;                      (and (silver-brain-item-link-directionalp link)
+  ;;                           (string-equal (silver-brain-item-summary-id
+  ;;                                          (silver-brain-item-link-source link))
+  ;;                                         (silver-brain-item-id silver-brain-current-item))))
+  ;;                    (silver-brain-item-links silver-brain-current-item))
+  ;;  :outbound)
+  ;; (widget-insert "\n")
+  ;; (silver-brain--item-insert-link-widgets
+  ;;  (cl-remove-if-not (lambda (link)
+  ;;                      (not (silver-brain-item-link-directionalp link)))
+  ;;                    (silver-brain-item-links silver-brain-current-item))
+  ;;  :bidirectional)
 
   ;; Insert content.
   (widget-insert "\n")
-  (silver-brain--widget-insert-with-face "Content" 'silver-brain-concept-subtitle)
+  (silver-brain--widget-insert-with-face "Content" 'silver-brain-item-subtitle)
   (widget-insert "\n\n")
-  (widget-insert (silver-brain-concept-content concept)))
+  (widget-insert (silver-brain--prop-content item)))
 
-(defun silver-brain--concept-insert-link-widgets (links links-type)
-  "Insert link widgets. LINKS-TYPE is :inbound, :outbound or :bidirectional."
-  (widget-insert "\n")
+;; (defun silver-brain--item-insert-link-widgets (links links-type)
+;;   "Insert link widgets. LINKS-TYPE is :inbound, :outbound or :bidirectional."
+;;   (widget-insert "\n")
 
-  ;; Insert sub-title.
-  (silver-brain--widget-insert-with-face (format "%s Links" (cl-case links-type
-                                                  (:inbound "Inbound")
-                                                  (:outbound "Outbound")
-                                                  (:bidirectional "Bidirectional")))
-                             'silver-brain-concept-subtitle)
-  (widget-insert "  ")
+;;   ;; Insert sub-title.
+;;   (silver-brain--widget-insert-with-face (format "%s Links" (cl-case links-type
+;;                                                   (:inbound "Inbound")
+;;                                                   (:outbound "Outbound")
+;;                                                   (:bidirectional "Bidirectional")))
+;;                              'silver-brain-item-subtitle)
+;;   (widget-insert "  ")
 
-  ;; Insert New button.
-  (silver-brain--with-push-button-face
-   (widget-create 'push-button
-                  :notify (lambda (&rest _)
-                            (funcall
-                             (cl-case links-type
-                               (:inbound #'silver-brain-create-inbound-link)
-                               (:outbound #'silver-brain-create-outbound-link)
-                               (:bidirectional #'silver-brain-create-bidirectional-link))))
-                  "New"))
-  (widget-insert "\n")
+;;   ;; Insert New button.
+;;   (silver-brain--with-push-button-face
+;;    (widget-create 'push-button
+;;                   :notify (lambda (&rest _)
+;;                             (funcall
+;;                              (cl-case links-type
+;;                                (:inbound #'silver-brain-create-inbound-link)
+;;                                (:outbound #'silver-brain-create-outbound-link)
+;;                                (:bidirectional #'silver-brain-create-bidirectional-link))))
+;;                   "New"))
+;;   (widget-insert "\n")
 
-  ;; Insert links.
-  (let* ((sort-attr (cl-case links-type
-                      (:inbound #'silver-brain-concept-link-source)
-                      (:outbound #'silver-brain-concept-link-target)
-                      (:bidirectional #'silver-brain-concept-link-source)))
-         (links (sort links
-                      (lambda (a b)
-                        (string-lessp (silver-brain-concept-summary-name (funcall sort-attr a))
-                                      (silver-brain-concept-summary-name (funcall sort-attr b)))))))
-    (and (< 0 (length links)) (widget-insert "\n"))
-    (mapc (lambda (link)
-            (widget-insert "  ")
-            (silver-brain--with-push-button-face
-             (widget-create 'push-button
-                            :notify (let ((uuid (silver-brain-concept-link-uuid link)))
-                                      (lambda (&rest _)
-                                        (silver-brain--concept-confirm-delete-link uuid)))
-                            "Unlink"))
-            (widget-insert " ")
+;;   ;; Insert links.
+;;   (let* ((sort-attr (cl-case links-type
+;;                       (:inbound #'silver-brain-item-link-source)
+;;                       (:outbound #'silver-brain-item-link-target)
+;;                       (:bidirectional #'silver-brain-item-link-source)))
+;;          (links (sort links
+;;                       (lambda (a b)
+;;                         (string-lessp (silver-brain-item-summary-name (funcall sort-attr a))
+;;                                       (silver-brain-item-summary-name (funcall sort-attr b)))))))
+;;     (and (< 0 (length links)) (widget-insert "\n"))
+;;     (mapc (lambda (link)
+;;             (widget-insert "  ")
+;;             (silver-brain--with-push-button-face
+;;              (widget-create 'push-button
+;;                             :notify (let ((id (silver-brain-item-link-id link)))
+;;                                       (lambda (&rest _)
+;;                                         (silver-brain--item-confirm-delete-link id)))
+;;                             "Unlink"))
+;;             (widget-insert " ")
 
-            (silver-brain--concept-insert-text-or-button (silver-brain-concept-link-source link))
-            (widget-insert " → ")
-            (silver-brain--concept-insert-text-or-button (silver-brain-concept-link-relation link)) 
-            (widget-insert " → ")
-            (silver-brain--concept-insert-text-or-button (silver-brain-concept-link-target link))
-            (widget-insert "\n"))
-          links)))
+;;             (silver-brain--item-insert-text-or-button (silver-brain-item-link-source link))
+;;             (widget-insert " → ")
+;;             (silver-brain--item-insert-text-or-button (silver-brain-item-link-relation link)) 
+;;             (widget-insert " → ")
+;;             (silver-brain--item-insert-text-or-button (silver-brain-item-link-target link))
+;;             (widget-insert "\n"))
+;;           links)))
 
-(cl-defun silver-brain-create-concept (&optional name)
-  "Create a new concept. If NAME is given, it is used as the name
-of new concept. Otherwise, it prompts the user to input one."
+(cl-defun silver-brain-create-item (&optional name)
+  "Create a new item. If NAME is given, it is used as the name
+of new item. Otherwise, it prompts the user to input one."
   (interactive)
-  (let* ((name (or name (read-string "Concept name: ")))
-         (concept (silver-brain-api-create-concept name silver-brain-default-content-type)))
-    (run-hooks 'silver-brain-after-concept-create-hook)
-    (silver-brain-concept-show concept)))
+  (let* ((name (or name (read-string "Item name: ")))
+         (item (silver-brain-client-create-item name silver-brain-default-content-type)))
+    (run-hooks 'silver-brain-after-item-create-hook)
+    (silver-brain-item-show item)))
 
 (defun silver-brain-create-inbound-link ()
   (interactive)
-  (silver-brain--verify-current-concept)
+  (silver-brain--verify-current-item)
   (let* (source relation)
-    (setq source (silver-brain--search-concept-and-select "Search and select source: "))
-    (setq relation (silver-brain--search-concept-and-select "Search and select relation: "))
-    (silver-brain-api-create-link source relation (silver-brain-concept-uuid silver-brain-current-concept) t))
-  (run-hooks 'silver-brain-after-update-concept-hook))
+    (setq source (silver-brain--search-item-and-select "Search and select source: "))
+    (setq relation (silver-brain--search-item-and-select "Search and select relation: "))
+    (silver-brain-client-create-link source relation (silver-brain-item-id silver-brain-current-item) t))
+  (run-hooks 'silver-brain-after-update-item-hook))
 
 (defun silver-brain-create-outbound-link ()
   (interactive)
-  (silver-brain--verify-current-concept)
+  (silver-brain--verify-current-item)
   (let* (relation target)
-    (setq relation (silver-brain--search-concept-and-select "Search and select relation: "))
-    (setq target (silver-brain--search-concept-and-select "Search and select target: "))
-    (silver-brain-api-create-link (silver-brain-concept-uuid silver-brain-current-concept) relation target t))
-  (run-hooks 'silver-brain-after-update-concept-hook))
+    (setq relation (silver-brain--search-item-and-select "Search and select relation: "))
+    (setq target (silver-brain--search-item-and-select "Search and select target: "))
+    (silver-brain-client-create-link (silver-brain-item-id silver-brain-current-item) relation target t))
+  (run-hooks 'silver-brain-after-update-item-hook))
 
 (defun silver-brain-create-bidirectional-link ()
   (interactive)
-  (silver-brain--verify-current-concept)
+  (silver-brain--verify-current-item)
   (let* (relation target)
-    (setq relation (silver-brain--search-concept-and-select "Search and select relation: "))
-    (setq target (silver-brain--search-concept-and-select "Search and select target: "))
-    (silver-brain-api-create-link (silver-brain-concept-uuid silver-brain-current-concept) relation target nil))
-  (run-hooks 'silver-brain-after-update-concept-hook))
+    (setq relation (silver-brain--search-item-and-select "Search and select relation: "))
+    (setq target (silver-brain--search-item-and-select "Search and select target: "))
+    (silver-brain-client-create-link (silver-brain-item-id silver-brain-current-item) relation target nil))
+  (run-hooks 'silver-brain-after-update-item-hook))
 
-(defun silver-brain--concept-confirm-delete-link (uuid)
+(defun silver-brain--item-confirm-delete-link (id)
   (when (y-or-n-p "Confirm? ")
-    (silver-brain-api-delete-link uuid)
-    (run-hook-with-args 'silver-brain-after-update-concept-hook)))
+    (silver-brain-client-delete-link id)
+    (run-hook-with-args 'silver-brain-after-update-item-hook)))
 
-(defun silver-brain--concept-insert-text-or-button (concept-summary)
-  "Insert plain text if uuid of CONCEPT-SUMMARY equals to the
-current concept, insert a button otherwise."
-  (if (string-equal (silver-brain-concept-uuid silver-brain-current-concept)
-                    (silver-brain-concept-summary-uuid concept-summary))
-      (silver-brain--widget-insert-with-face (silver-brain-concept-summary-name concept-summary)
+(defun silver-brain--item-insert-text-or-button (item-summary)
+  "Insert plain text if id of ITEM-SUMMARY equals to the
+current item, insert a button otherwise."
+  (if (string-equal (silver-brain--prop-id silver-brain-current-item)
+                    (silver-brain--prop-id item-summary))
+      (silver-brain--widget-insert-with-face (silver-brain-item-summary-name item-summary)
                                  '(:underline t))
-    (let ((uuid (silver-brain-concept-summary-uuid concept-summary))
-          (name (silver-brain-concept-summary-name concept-summary)))
-      (silver-brain--with-concept-hyperlink-face
+    (let ((id (silver-brain-item-summary-id item-summary))
+          (name (silver-brain-item-summary-name item-summary)))
+      (silver-brain--with-item-hyperlink-face
        (widget-create 'push-button
-                      :notify (lambda (&rest _) (silver-brain-concept-open uuid))
+                      :notify (lambda (&rest _) (silver-brain-item-open id))
                       (if (string-empty-p name) " " name))))))
 
-(defun silver-brain--concept-rename (new-name)
-  (let ((concept silver-brain-current-concept))
-    (silver-brain--api-send-request
-     (concat "concepts/" (silver-brain-concept-uuid concept))
-     :method :patch
-     :data `((:name . ,new-name)))
-    (setf (silver-brain-concept-name silver-brain-current-concept) new-name)
-    (rename-buffer (silver-brain--concept-get-buffer-name concept)))
-  (run-hooks 'silver-brain-after-update-concept-hook))
+(defun silver-brain--item-rename (new-name)
+  (let ((old-item )
+        (item silver-brain-current-item))
+    (silver-brain-client-update-item (silver-brain--prop-id item) new-name)
+    (setf (silver-brain--prop-name silver-brain-current-item) new-name)
+    (rename-buffer (silver-brain--item-get-buffer-name item)))
+  (run-hook-with-args 'silver-brain-after-update-item-hook )
+  (run-hooks 'silver-brain-after-update-item-hook))
 
-(defun silver-brain--concept-update-content-type (content-type)
-  (silver-brain-api-update-concept (silver-brain-concept-uuid silver-brain-current-concept)
+(defun silver-brain--item-update-content-type (content-type)
+  (silver-brain-client-update-item (silver-brain-item-id silver-brain-current-item)
                        :content-type content-type)
-  (silver-brain-concept-refresh))
+  (silver-brain-item-refresh))
 
-(defun silver-brain-delete-this-concept ()
+(defun silver-brain-delete-this-item ()
   (interactive)
-  (silver-brain--verify-current-concept)
-  (when (y-or-n-p "I will delete this concept and all the related links. Continue?")
-    (let ((uuid (silver-brain-concept-uuid silver-brain-current-concept)))
+  (silver-brain--verify-current-item)
+  (when (y-or-n-p "I will delete this item and all the related links. Continue?")
+    (let ((id (silver-brain-item-id silver-brain-current-item)))
       (kill-buffer)
-      (silver-brain-api-delete-concept uuid)
-      (run-hooks 'silver-brain-after-delete-concept-hook))))
+      (silver-brain-client-delete-item id)
+      (run-hooks 'silver-brain-after-delete-item-hook))))
 
-(defun silver-brain--verify-current-concept ()
-  (unless silver-brain-current-concept
-    (error "This command must be invoked within a concept buffer")))
+(defun silver-brain--verify-current-item ()
+  (unless silver-brain-current-item
+    (error "This command must be invoked within a item buffer")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                        Content Buffer                        ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun silver-brain-concept-open-content ()
+(defun silver-brain-item-open-content ()
   (interactive)
-  (silver-brain--verify-current-concept)
-  (let ((concept silver-brain-current-concept))
+  (silver-brain--verify-current-item)
+  (let ((item silver-brain-current-item))
     (with-current-buffer (get-buffer-create
-                          (format silver-brain-concept-content-buffer-name-format
-                                  (silver-brain-concept-name concept)))
-      (insert (silver-brain-concept-content concept))
+                          (format silver-brain-item-content-buffer-name-format
+                                  (silver-brain--prop-name item)))
+      (insert (silver-brain--prop-content item))
 
       ;; Decide major mode.
-      (funcall (cdr (assoc (silver-brain-concept-content-type concept)
+      (funcall (cdr (assoc (silver-brain--prop-content-type item)
                            silver-brain-content-mode-alist)))
       
       ;; Set local vars.
-      (setq silver-brain-current-concept concept)
+      (setq silver-brain-current-item item)
       
       ;; Set local keys.
-      (silver-brain-concept-setup-local-key)
+      (let ((keymap (make-sparse-keymap)))
+        (set-keymap-parent keymap (current-local-map))
+        (use-local-map keymap)
+        (define-key keymap (kbd "C-x C-s") 'silver-brain-item-save-content))
 
       (set-buffer-modified-p nil)
       (pop-to-buffer-same-window (current-buffer)))))
 
-(defun silver-brain-concept-setup-local-key ()
-  (and silver-brain-current-concept
-       (let ((keymap (make-sparse-keymap)))
-         (set-keymap-parent keymap (current-local-map))
-         (use-local-map keymap)
-         (define-key keymap (kbd "C-x C-s") 'silver-brain-concept-save-content))))
-
-(defun silver-brain-concept-save-content ()
+(defun silver-brain-item-save-content ()
   (interactive)
-  (silver-brain-api-update-concept (silver-brain-concept-uuid silver-brain-current-concept)
-                       :content (buffer-string))
-  (run-hooks 'silver-brain-after-update-concept-hook)
-  (set-buffer-modified-p nil))
+  (let ((old-item (seq-copy silver-brain-current-item))
+        (new-item (silver-brain--update-prop-content item (buffer-string))))
+    (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
+                         :content (buffer-string))
+    
+    (run-hook-with-args 'silver-brain-after-update-item-hook
+                        (silver-brain--prop-content silver-brain-current-item)
+                        (buffer-string))
+    ;; FIXME
+    (message "Before: %s" )
+    (message "After: %s" )
+    (set-buffer-modified-p nil)))
 
-(defun silver-brain-concept-refresh-all-buffers ()
-  "Refresh all the Silver Brain Concept buffers."
+(defun silver-brain-item-refresh-all-buffers ()
+  "Refresh all the Silver Brain Item buffers."
   (mapc (lambda (buffer)
           (with-current-buffer buffer
-            (silver-brain-concept-refresh)))
-        (silver-brain-concept-get-all-buffers)))
+            (silver-brain-item-refresh)))
+        (silver-brain-item-get-all-buffers)))
 
-(defun silver-brain-concept-get-all-buffers ()
-  "Return all the Silver Brain Concept buffers."
+(defun silver-brain-item-get-all-buffers ()
+  "Return all the Silver Brain Item buffers."
   (cl-remove-if-not (lambda (buffer)
                       (with-current-buffer buffer
-                        (and (string-prefix-p "*Silver Brain Concept"
+                        (and (string-prefix-p "*Silver Brain Item"
                                               (buffer-name))
-                             (equal 'silver-brain-concept-mode major-mode))))
+                             (equal 'silver-brain-item-mode major-mode))))
                     (buffer-list)))
 
-(defun silver-brain--concept-install ()
-  "Setup hooks etc for Silver Brain Concept buffers."
-  (add-hook 'silver-brain-after-update-concept-hook 'silver-brain-concept-refresh-all-buffers)
-  (add-hook 'after-change-major-mode-hook 'silver-brain-concept-setup-local-key))
+(defun silver-brain--item-install ()
+  "Setup hooks etc for Silver Brain Item buffers."
+  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-item-refresh-all-buffers)
+  (add-hook 'after-change-major-mode-hook 'silver-brain-item-setup-local-key))
 
 (provide 'silver-brain-item)

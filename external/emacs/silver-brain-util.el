@@ -12,26 +12,39 @@
 ;;  Data Model
 ;; ============================================================
 
-(defun silver-brain--get-id (obj)
-  (silver-brain--get "id" obj))
+(defun silver-brain--prop-id (obj)
+  (silver-brain--prop "id" obj))
 
-(defun silver-brain--get-name (obj)
-  (silver-brain--get "name" obj))
+(defun silver-brain--prop-name (obj)
+  (silver-brain--prop "name" obj))
 
-(defun silver-brain--get-content-type (obj)
-  (silver-brain--get "contentType" obj))
+(defun silver-brain--update-prop-name (obj value)
+  (silver-brain--update-prop obj "name" value))
 
-(defun silver-brain--get-content (obj)
-  (silver-brain--get "content" obj))
+(defun silver-brain--prop-content-type (obj)
+  (silver-brain--prop "contentType" obj))
 
-(defun silver-brain--get-create-time (obj)
-  (silver-brain--get "createTime" obj))
+(defun silver-brain--update-prop-content-type (obj value)
+  (silver-brain--update-prop obj "content-type" value))
 
-(defun silver-brain--get-update-time (obj)
-  (silver-brain--get "updateTime" obj))
+(defun silver-brain--prop-content (obj)
+  (silver-brain--prop "content" obj))
 
-(defun silver-brain--get (key obj)
+(defun silver-brain--update-prop-content (obj value)
+  (silver-brain--update-prop obj "content" value))
+
+(defun silver-brain--prop-create-time (obj)
+  (silver-brain--prop "createTime" obj))
+
+(defun silver-brain--prop-update-time (obj)
+  (silver-brain--prop "updateTime" obj))
+
+(defun silver-brain--prop (key obj)
   (cdr (assoc-string key obj)))
+
+(defun silver-brain--update-prop (obj key value)
+  (cons (cons key value)
+        (assoc-delete-all key obj #'string=)))
 
 ;; ============================================================
 ;;  Interaction
@@ -59,12 +72,12 @@
                         (string-prefix-p "*Silver Brain" (buffer-name buffer)))
                       (buffer-list))))
 
-(cl-defun silver-brain--search-item-and-select (search-string)
+(cl-defun silver-brain--search-items-and-select (search-string)
   "Ask for a search string, search for items and select one.
 PROMPT is the prompt for search string."
   (let* ((result (silver-brain-client-search-items search-string))
          (items (seq-map (lambda (item)
-                           (cons (silver-brain--get-name item) (silver-brain--get-id item)))
+                           (cons (silver-brain--prop-name item) (silver-brain--prop-id item)))
                          result)))
     (and items
          (let ((key (completing-read "Choose item: " items)))

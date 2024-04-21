@@ -78,7 +78,7 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun silver-brain-client-get-item (id)
-  (silver-brain--client-get (format "item/%s" id)))
+  (silver-brain--client-get (format "items/%s" id)))
 
 (defun silver-brain-client-search-items (search-string)
   (silver-brain--client-get (format "items?search=%s" search-string)))
@@ -88,15 +88,15 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
                  (list (cons "name" name)
                        (cons "contentType" content-type))))
 
-(cl-defun silver-brain-client-update-concept (uuid &key name content-type content)
+(cl-defun silver-brain-client-update-item (id &key name content-type content)
   (let ((data '()))
     (when name
       (push (cons "name" name) data))
     (when content-type
-      (push (cons "content-type" content-type) data))
+      (push (cons "contenType" content-type) data))
     (when content
       (push (cons "content" content) data))
-    (silver-brain--client-patch (format "concepts/%s" uuid) data)))
+    (silver-brain--client-patch (format "items/%s" id) data)))
 
 (defun silver-brain-client-delete-concept (uuid)
   (silver-brain--client-delete (format "concepts/%s" uuid)))
