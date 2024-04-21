@@ -21,13 +21,13 @@ trait ItemService:
       StoreName
   ): ServiceResponse[Unit]
 
-  def createReference(
+  def createRelation(
       source: Id,
       target: Id,
       annotation: String
   )(using StoreName): ServiceResponse[Id]
 
-  def updateReference(id: Id, annotation: String)(using
+  def updateRelation(id: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Unit]
 

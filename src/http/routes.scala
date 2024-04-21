@@ -12,7 +12,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   given jsoniter.JsonValueCodec[Unit] = UnitCodec
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
-  given jsoniter.JsonValueCodec[Reference] = JsonCodecMaker.make
+  given jsoniter.JsonValueCodec[Relation] = JsonCodecMaker.make
   given jsoniter.JsonValueCodec[Map[String, String]] = JsonCodecMaker.make
   given jsoniter.JsonValueCodec[Seq[Item]] = JsonCodecMaker.make
 
@@ -45,30 +45,30 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
     this.itemService.deleteChild(id, child).toHttpResponse(204)
 
   // ============================================================
-  //  Reference
+  //  Relations
   // ============================================================
 
   @withStoreName
-  @post("/api/v2/items/:id/references")
-  def createReference(id: Id, request: Request)(using
+  @post("/api/v2/relations")
+  def createRelation(id: Id, request: Request)(using
       storeName: StoreName
   ) =
     val result =
       for
-        reference <- request.readJson[Reference]
-        target <- reference.target.ensure
-        annotation <- reference.annotation.ensure
+        relation <- request.readJson[Relation]
+        target <- relation.target.ensure
+        annotation <- relation.annotation.ensure
       yield this.itemService
-        .createReference(id, target, annotation)
-        .map(id => Reference(id = Some(id)))
+        .createRelation(id, target, annotation)
+        .map(id => Relation(id = Some(id)))
         .toHttpResponse(201)
 
     result.merge
 
   @withStoreName
-  @delete("/api/v2/items/:id/references/:referenceId")
-  def deleteReference(id: Id, referenceId: Id)(using storeName: StoreName) =
-    this.itemService.deleteReference(referenceId).toHttpResponse(204)
+  @delete("/api/v2/relations/:id")
+  def deleteRelation(id: Id)(using storeName: StoreName) =
+    this.itemService.deleteReference(id).toHttpResponse(204)
 
   // ============================================================
   //  Item

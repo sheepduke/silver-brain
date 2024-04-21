@@ -140,7 +140,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(())
     )
 
-  override def createReference(source: Id, target: Id, annotation: String)(using
+  override def createRelation(source: Id, target: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Id] =
     val createTime = Instant.now()
@@ -157,7 +157,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(id)
     )
 
-  override def updateReference(id: Id, annotation: String)(using
+  override def updateRelation(id: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>

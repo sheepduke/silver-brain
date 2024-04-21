@@ -8,8 +8,9 @@ type Id = String
 
 type StoreName = String
 
-case class Reference(
+case class Relation(
     id: Option[Id] = None,
+    source: Option[Id] = None,
     target: Option[Id] = None,
     annotation: Option[String] = None
 )
@@ -21,8 +22,8 @@ case class Item(
     content: Option[String] = None,
     parents: Option[List[Id]] = None,
     children: Option[List[Id]] = None,
-    references: Option[List[Reference]] = None,
-    referenced: Option[List[Reference]] = None,
+    references: Option[List[Relation]] = None,
+    referenced: Option[List[Relation]] = None,
     createTime: Option[Instant] = None,
     updateTime: Option[Instant] = None
 )
