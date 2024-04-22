@@ -8,16 +8,9 @@ type Id = String
 
 type StoreName = String
 
-case class Relation(
-    id: Option[Id] = None,
-    source: Option[Id] = None,
-    target: Option[Id] = None,
-    annotation: Option[String] = None
-)
-
 case class Item(
-    id: Option[Id] = None,
-    name: Option[String] = None,
+    id: Id,
+    name: String,
     contentType: Option[String] = None,
     content: Option[String] = None,
     parents: Option[List[Id]] = None,
@@ -26,6 +19,13 @@ case class Item(
     referenced: Option[List[Relation]] = None,
     createTime: Option[Instant] = None,
     updateTime: Option[Instant] = None
+)
+
+case class Relation(
+    id: Id,
+    source: Id,
+    target: Id,
+    annotation: String
 )
 
 enum ServiceError:

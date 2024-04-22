@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS item_child(
     create_time TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS item_reference(
+CREATE TABLE IF NOT EXISTS relation(
     id TEXT PRIMARY KEY,
     source TEXT NOT NULL,
     target TEXT NOT NULL,

@@ -8,21 +8,29 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 import scala.util.Try
 import scalikejdbc.DBSession
+import scalikejdbc.WrappedResultSet
 
 class SqlItemService(store: SqliteStore) extends ItemService:
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
 
-  override def createItem(item: Item)(using
+  // ============================================================
+  //  Item
+  // ============================================================
+
+  override def createItem(payload: ItemCreatePayload)(using
       StoreName
   ): ServiceResponse[Id] =
     val now = Instant.now()
     val id = Ksuid.fromInstant(now).toString()
-    val item1 = item.copy(
-      id = Some(id),
+    val item = Item(
+      id = id,
+      name = payload.name,
+      contentType = payload.contentType,
+      content = payload.content,
       createTime = Some(now),
       updateTime = Some(now)
     )
-    val json = jsoniter.writeToString(item1)
+    val json = jsoniter.writeToString(item)
 
     this.store
       .withTransaction(implicit session =>
@@ -59,22 +67,23 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(SqlItemService.getItems(ids))
     )
 
-  override def updateItem(id: Id, item: Item)(using
+  override def updateItem(payload: ItemUpdatePayload)(using
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
-      SqlItemService.getItem(id) match
-        case None => Left(ServiceError.IdNotFound(id))
-        case Some(existingItem) =>
-          val newItem = existingItem.copy(
-            name = item.name.orElse(existingItem.name),
-            contentType = item.name.orElse(existingItem.contentType),
-            content = item.content.orElse(existingItem.content)
+      SqlItemService.getItem(payload.id) match
+        case None => Left(ServiceError.IdNotFound(payload.id))
+        case Some(item) =>
+          val newItem = item.copy(
+            name = payload.name.getOrElse(item.name),
+            contentType = payload.name.orElse(item.contentType),
+            content = payload.content.orElse(item.content)
           )
 
           val json = jsoniter.writeToString(newItem)
 
-          sql"update item set props = $json where id = $id".update.apply()
+          sql"update item set props = $json where id = ${payload.id}".update
+            .apply()
 
           Right(())
     )
@@ -91,6 +100,10 @@ class SqlItemService(store: SqliteStore) extends ItemService:
 
       Right(())
     )
+
+  // ============================================================
+  //  Child
+  // ============================================================
 
   override def createChild(parent: Id, child: Id)(using
       StoreName
@@ -140,6 +153,10 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(())
     )
 
+  // ============================================================
+  //  Relation
+  // ============================================================
+
   override def createRelation(source: Id, target: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Id] =
@@ -157,6 +174,30 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(id)
     )
 
+  override def getRelationsFromItem(id: Id)(using
+      StoreName
+  ): ServiceResponse[Seq[Relation]] =
+    this.store.withTransaction(implicit session =>
+      val result = sql"select * from relation where source = $id"
+        .map(SqlItemService.rowToRelation)
+        .list
+        .apply()
+
+      Right(result)
+    )
+
+  override def getRelationsToItem(id: Id)(using
+      StoreName
+  ): ServiceResponse[Seq[Relation]] =
+    this.store.withTransaction(implicit session =>
+      val result = sql"select * from relation where target = $id"
+        .map(SqlItemService.rowToRelation)
+        .list
+        .apply()
+
+      Right(result)
+    )
+
   override def updateRelation(id: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Unit] =
@@ -167,7 +208,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(())
     )
 
-  override def deleteReference(id: Id)(using StoreName): ServiceResponse[Unit] =
+  override def deleteRelation(id: Id)(using StoreName): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
       sql"delete from item_reference where id = $id".update.apply()
 
@@ -188,3 +229,11 @@ object SqlItemService:
       .map(rs => jsoniter.readFromString[Item](rs.string(2)))
       .list
       .apply()
+
+  def rowToRelation(rs: WrappedResultSet): Relation =
+    Relation(
+      id = rs.string("id"),
+      source = rs.string("source"),
+      target = rs.string("target"),
+      annotation = rs.string("annotation")
+    )

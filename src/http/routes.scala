@@ -11,10 +11,19 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 
 class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   given jsoniter.JsonValueCodec[Unit] = UnitCodec
+
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
+  given itemSeqCodec: jsoniter.JsonValueCodec[Seq[Item]] = JsonCodecMaker.make
+  given jsoniter.JsonValueCodec[ItemCreatePayload] = JsonCodecMaker.make
+  given jsoniter.JsonValueCodec[ItemUpdatePayload] = JsonCodecMaker.make
+
   given jsoniter.JsonValueCodec[Relation] = JsonCodecMaker.make
+  given relationSeqCodec: jsoniter.JsonValueCodec[Seq[Relation]] =
+    JsonCodecMaker.make
+  given jsoniter.JsonValueCodec[RelationCreatePayload] = JsonCodecMaker.make
+  given jsoniter.JsonValueCodec[RelationUpdatePayload] = JsonCodecMaker.make
+
   given jsoniter.JsonValueCodec[Map[String, String]] = JsonCodecMaker.make
-  given jsoniter.JsonValueCodec[Seq[Item]] = JsonCodecMaker.make
 
   class withStoreName extends RawDecorator:
     val defaultStoreName: String = "main"
@@ -36,39 +45,13 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
 
   @withStoreName
   @post("/api/v2/items/:id/children/:child")
-  def createChild(id: Id, child: Id)(using storeName: StoreName) =
+  def createChild(id: String, child: String)(using storeName: StoreName) =
     this.itemService.createChild(id, child).toHttpResponse(204)
 
   @withStoreName
   @delete("/api/v2/items/:id/children/:child")
-  def deleteChild(id: Id, child: Id)(using storeName: StoreName) =
+  def deleteChild(id: String, child: String)(using storeName: StoreName) =
     this.itemService.deleteChild(id, child).toHttpResponse(204)
-
-  // ============================================================
-  //  Relations
-  // ============================================================
-
-  @withStoreName
-  @post("/api/v2/relations")
-  def createRelation(id: Id, request: Request)(using
-      storeName: StoreName
-  ) =
-    val result =
-      for
-        relation <- request.readJson[Relation]
-        target <- relation.target.ensure
-        annotation <- relation.annotation.ensure
-      yield this.itemService
-        .createRelation(id, target, annotation)
-        .map(id => Relation(id = Some(id)))
-        .toHttpResponse(201)
-
-    result.merge
-
-  @withStoreName
-  @delete("/api/v2/relations/:id")
-  def deleteRelation(id: Id)(using storeName: StoreName) =
-    this.itemService.deleteReference(id).toHttpResponse(204)
 
   // ============================================================
   //  Item
@@ -76,15 +59,15 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
 
   @withStoreName
   @get("/api/v2/items/:id")
-  def getItem(id: Id, request: Request)(using storeName: StoreName) =
+  def getItem(id: String, request: Request)(using storeName: StoreName) =
     this.itemService.getItem(id).toHttpResponse()
 
   @withStoreName
   @get("/api/v2/items")
-  def getItems(ids: Seq[Id] = Nil, search: Option[String])(using
+  def getItems(id: Seq[String] = Nil, search: Option[String])(using
       storeName: StoreName
   ) =
-    if ids.nonEmpty then this.itemService.getItems(ids).toHttpResponse()
+    if id.nonEmpty then this.itemService.getItems(id).toHttpResponse()
     else
       search match
         case Some(search1) =>
@@ -96,26 +79,69 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   @post("/api/v2/items")
   def createItem(request: Request)(using storeName: StoreName) =
     val result =
-      for item <- request.readJson[Item]
+      for item <- request.readJson[ItemCreatePayload]
       yield this.itemService
         .createItem(item)
-        .map(id => Item(id = Some(id)))
+        .map(id => Map("id" -> id))
         .toHttpResponse(201)
 
     result.merge
 
   @withStoreName
   @patch("/api/v2/items/:id")
-  def updateItem(id: Id, request: Request)(using storeName: StoreName) =
+  def updateItem(id: String, request: Request)(using storeName: StoreName) =
     val result =
-      for item <- request.readJson[Item]
-      yield this.itemService.updateItem(id, item).toHttpResponse(204)
+      for item <- request.readJson[ItemUpdatePayload]
+      yield this.itemService.updateItem(item.copy(id = id)).toHttpResponse(204)
 
     result.merge
 
   @withStoreName
   @delete("/api/v2/items/:id")
-  def deleteItem(id: Id)(using storeName: StoreName) =
+  def deleteItem(id: String)(using storeName: StoreName) =
     this.itemService.deleteItem(id).toHttpResponse(204)
+
+  // ============================================================
+  //  Relations
+  // ============================================================
+
+  @withStoreName
+  @post("/api/v2/relations")
+  def createRelation(request: Request)(using
+      storeName: StoreName
+  ) =
+    val result =
+      for payload <- request.readJson[RelationCreatePayload]
+      yield this.itemService
+        .createRelation(payload.source, payload.target, payload.annotation)
+        .map(id => Map(id -> id))
+        .toHttpResponse(201)
+
+    result.merge
+
+  @withStoreName
+  @get("/api/v2/relations")
+  def getRelations(
+      source: Option[String] = None,
+      target: Option[String] = None
+  )(using
+      storeName: StoreName
+  ) =
+    if source.isEmpty && target.isEmpty then
+      Response("Neither `source` nor `target` is provided", 400)
+    else if source.isDefined then
+      this.itemService.getRelationsFromItem(source.get).toHttpResponse()
+    else this.itemService.getRelationsToItem(target.get).toHttpResponse()
+
+  case class RelationCreatePayload(
+      source: String,
+      target: String,
+      annotation: String
+  )
+
+  @withStoreName
+  @delete("/api/v2/relations/:id")
+  def deleteRelation(id: String)(using storeName: StoreName) =
+    this.itemService.deleteRelation(id).toHttpResponse(204)
 
   initialize()
