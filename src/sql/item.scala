@@ -9,6 +9,7 @@ import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
 import scala.util.Try
 import scalikejdbc.DBSession
 import scalikejdbc.WrappedResultSet
+import scala.collection.mutable.ListBuffer
 
 class SqlItemService(store: SqliteStore) extends ItemService:
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
@@ -17,23 +18,29 @@ class SqlItemService(store: SqliteStore) extends ItemService:
   //  Item
   // ============================================================
 
-  override def getItem(id: Id)(using StoreName): ServiceResponse[Item] =
+  override def getItem(id: Id, options: ItemLoadOptions = ItemLoadOptions())(
+      using StoreName
+  ): ServiceResponse[Item] =
     this.store.withTransaction(implicit session =>
-      SqlItemService.getItem(id).toRight(ServiceError.IdNotFound(id))
+      val items = SqlItemService.getItems(Seq(id), options)
+      if items.isEmpty then Left(ServiceError.IdNotFound(id))
+      else Right(items.head)
     )
 
-  override def getItems(ids: Seq[Id])(using
+  override def getItems(
+      ids: Seq[Id],
+      options: ItemLoadOptions = ItemLoadOptions()
+  )(using
       StoreName
   ): ServiceResponse[Seq[Item]] =
     this.store.withTransaction(implicit session =>
-      Right(SqlItemService.getItems(ids))
+      Right(SqlItemService.getItems(ids, options))
     )
 
   override def searchItems(
-      search: String
+      search: String,
+      options: ItemLoadOptions = ItemLoadOptions()
   )(using StoreName): ServiceResponse[Seq[Item]] =
-    println(s"select id from item where props like ${"%" + search + "%"}")
-
     this.store.withTransaction(implicit session =>
       val ids = sql"""
       select id from item
@@ -43,7 +50,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
         .list
         .apply()
 
-      Right(SqlItemService.getItems(ids))
+      Right(SqlItemService.getItems(ids, options))
     )
 
   override def createItem(
@@ -86,7 +93,8 @@ class SqlItemService(store: SqliteStore) extends ItemService:
           val newItem = item.copy(
             name = name.getOrElse(item.name),
             contentType = name.orElse(item.contentType),
-            content = content.orElse(item.content)
+            content = content.orElse(item.content),
+            updateTime = Some(Instant.now())
           )
 
           val json = jsoniter.writeToString(newItem)
@@ -163,34 +171,34 @@ class SqlItemService(store: SqliteStore) extends ItemService:
     )
 
   // ============================================================
-  //  Relation
+  //  Reference
   // ============================================================
 
-  override def getRelationsFromItem(id: Id)(using
+  override def getReference(id: Id)(using
       StoreName
-  ): ServiceResponse[Seq[Relation]] =
+  ): ServiceResponse[Reference] =
     this.store.withTransaction(implicit session =>
-      val result = sql"select * from relation where source = $id"
-        .map(SqlItemService.rowToRelation)
+      val result = sql"select * from reference where id = $id"
+        .map(rowToReference)
+        .single
+        .apply()
+
+      result.toRight(ServiceError.IdNotFound(id))
+    )
+
+  override def getReferences(ids: Seq[Id])(using
+      StoreName
+  ): ServiceResponse[Seq[Reference]] =
+    this.store.withTransaction(implicit session =>
+      val result = sql"select * from reference where target in ($ids)"
+        .map(rowToReference)
         .list
         .apply()
 
       Right(result)
     )
 
-  override def getRelationsToItem(id: Id)(using
-      StoreName
-  ): ServiceResponse[Seq[Relation]] =
-    this.store.withTransaction(implicit session =>
-      val result = sql"select * from relation where target = $id"
-        .map(SqlItemService.rowToRelation)
-        .list
-        .apply()
-
-      Right(result)
-    )
-
-  override def createRelation(source: Id, target: Id, annotation: String)(using
+  override def createReference(source: Id, target: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Id] =
     val createTime = Instant.now()
@@ -207,7 +215,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(id)
     )
 
-  override def updateRelation(id: Id, annotation: String)(using
+  override def updateReference(id: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
@@ -220,7 +228,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(())
     )
 
-  override def deleteRelation(id: Id)(using StoreName): ServiceResponse[Unit] =
+  override def deleteReference(id: Id)(using StoreName): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
       sql"delete from item_reference where id = $id".update.apply()
 
@@ -230,22 +238,122 @@ class SqlItemService(store: SqliteStore) extends ItemService:
 object SqlItemService:
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
 
-  def getItem(id: Id)(using DBSession): Option[Item] =
-    sql"select * from item where id = $id"
-      .map(rs => jsoniter.readFromString[Item](rs.string(2)))
+  private def getItem(id: Id)(using DBSession): Option[Item] =
+    sql"select props from item where id = $id"
+      .map(rs => jsoniter.readFromString[Item](rs.string(1)))
       .single
       .apply()
 
-  def getItems(ids: Seq[Id])(using DBSession): Seq[Item] =
-    sql"select * from item where id in ($ids)"
-      .map(rs => jsoniter.readFromString[Item](rs.string(2)))
+  private def getItems(ids: Seq[Id], options: ItemLoadOptions)(using
+      DBSession
+  ): Seq[Item] =
+    var items = sql"select props from item where id in ($ids)"
+      .map(rs => jsoniter.readFromString[Item](rs.string(1)))
       .list
       .apply()
+      .map(item =>
+        item.copy(
+          contentType =
+            if options.loadContentType then item.contentType else None,
+          content = if options.loadContent then item.content else None,
+          createTime = if options.loadCreateTime then item.createTime else None,
+          updateTime = if options.loadUpdateTime then item.updateTime else None
+        )
+      )
 
-  def rowToRelation(rs: WrappedResultSet): Relation =
-    Relation(
-      id = rs.string("id"),
-      source = rs.string("source"),
-      target = rs.string("target"),
-      annotation = rs.string("annotation")
-    )
+    // Load parents or siblings.
+    if options.loadParents || options.loadSiblings then
+      val parentRelations = getParents(ids)
+      items = items.map(item =>
+        item.copy(parents =
+          Some(
+            parentRelations.view.filter(_.child == item.id).map(_.parent).toSeq
+          )
+        )
+      )
+
+      if options.loadSiblings then
+        val siblingRelations = getChildren(parentRelations.map(_.parent))
+        items = items.map(item =>
+          item.copy(
+            siblings = Some(
+              siblingRelations.view
+                .filter(sibling =>
+                  item.id != sibling.child && item.parents.get
+                    .contains(sibling.parent)
+                )
+                .map(_.child)
+                .toSeq
+            )
+          )
+        )
+
+      if !options.loadParents then
+        items = items.map(item => item.copy(parents = None))
+
+    // Load children.
+    if options.loadChildren then
+      val childRelations = getChildren(ids)
+
+      items = items.map(item =>
+        item.copy(children =
+          Some(
+            childRelations.view.filter(_.parent == item.id).map(_.child).toSeq
+          )
+        )
+      )
+
+    // Load references.
+    if options.loadReferencesFromThis then
+      val references =
+        sql"select id, source, target from item_reference where source in ($ids)"
+          .map(rs => ReferenceRecord(rs.string(1), rs.string(2), rs.string(3)))
+          .list
+          .apply()
+      items = items.map(item =>
+        item.copy(referencesFromThis =
+          Some(
+            references.view.filter(_.source == item.id).map(_.id).toSeq
+          )
+        )
+      )
+
+    if options.loadReferencesToThis then
+      val references =
+        sql"select id, source, target from item_reference where target in ($ids)"
+          .map(rs => ReferenceRecord(rs.string(1), rs.string(2), rs.string(3)))
+          .list
+          .apply()
+      items = items.map(item =>
+        item.copy(referencesToThis =
+          Some(
+            references.view.filter(_.target == item.id).map(_.id).toSeq
+          )
+        )
+      )
+
+    items
+
+private case class ParentChild(parent: Id, child: Id)
+
+private case class ReferenceRecord(id: Id, source: Id, target: Id)
+
+private def getParents(ids: Seq[Id])(using DBSession): Seq[ParentChild] =
+  sql"select * from item_child where child in ($ids)"
+    .map(rs => ParentChild(rs.string(1), rs.string(2)))
+    .list
+    .apply()
+
+private def getChildren(ids: Seq[Id])(using DBSession): Seq[ParentChild] =
+  sql"select * from item_child where parent in ($ids)"
+    .map(rs => ParentChild(rs.string(1), rs.string(2)))
+    .list
+    .apply()
+
+private def rowToReference(rs: WrappedResultSet): Reference =
+  Reference(
+    id = rs.string("id"),
+    source = rs.string("source"),
+    target = rs.string("target"),
+    annotation = rs.string("annotation")
+  )

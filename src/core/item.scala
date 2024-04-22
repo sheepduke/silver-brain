@@ -3,15 +3,22 @@ package silver_brain.core
 import java.time.Instant
 
 trait ItemService:
+
   // ============================================================
   //  Item
   // ============================================================
 
-  def getItem(id: Id)(using StoreName): ServiceResponse[Item]
+  def getItem(id: Id, options: ItemLoadOptions = ItemLoadOptions())(using
+      StoreName
+  ): ServiceResponse[Item]
 
-  def getItems(ids: Seq[Id])(using StoreName): ServiceResponse[Seq[Item]]
+  def getItems(ids: Seq[Id], options: ItemLoadOptions = ItemLoadOptions())(using
+      StoreName
+  ): ServiceResponse[Seq[Item]]
 
-  def searchItems(search: String)(using StoreName): ServiceResponse[Seq[Item]]
+  def searchItems(search: String, options: ItemLoadOptions = ItemLoadOptions())(
+      using StoreName
+  ): ServiceResponse[Seq[Item]]
 
   def createItem(
       name: String,
@@ -45,25 +52,23 @@ trait ItemService:
   ): ServiceResponse[Unit]
 
   // ============================================================
-  //  Relation
+  //  Reference
   // ============================================================
 
-  def getRelationsFromItem(id: Id)(using
-      StoreName
-  ): ServiceResponse[Seq[Relation]]
+  def getReference(id: Id)(using StoreName): ServiceResponse[Reference]
 
-  def getRelationsToItem(id: Id)(using
+  def getReferences(ids: Seq[Id])(using
       StoreName
-  ): ServiceResponse[Seq[Relation]]
+  ): ServiceResponse[Seq[Reference]]
 
-  def createRelation(
+  def createReference(
       source: Id,
       target: Id,
       annotation: String
   )(using StoreName): ServiceResponse[Id]
 
-  def updateRelation(id: Id, annotation: String)(using
+  def updateReference(id: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Unit]
 
-  def deleteRelation(id: Id)(using StoreName): ServiceResponse[Unit]
+  def deleteReference(id: Id)(using StoreName): ServiceResponse[Unit]

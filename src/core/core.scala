@@ -13,15 +13,28 @@ case class Item(
     name: String,
     contentType: Option[String] = None,
     content: Option[String] = None,
-    parents: Option[List[Id]] = None,
-    children: Option[List[Id]] = None,
-    references: Option[List[Relation]] = None,
-    referenced: Option[List[Relation]] = None,
+    parents: Option[Seq[Id]] = None,
+    children: Option[Seq[Id]] = None,
+    siblings: Option[Seq[Id]] = None,
+    referencesFromThis: Option[Seq[Id]] = None,
+    referencesToThis: Option[Seq[Id]] = None,
     createTime: Option[Instant] = None,
     updateTime: Option[Instant] = None
 )
 
-case class Relation(
+case class ItemLoadOptions(
+    loadContentType: Boolean = false,
+    loadContent: Boolean = false,
+    loadCreateTime: Boolean = false,
+    loadUpdateTime: Boolean = false,
+    loadParents: Boolean = false,
+    loadChildren: Boolean = false,
+    loadSiblings: Boolean = false,
+    loadReferencesFromThis: Boolean = false,
+    loadReferencesToThis: Boolean = false
+)
+
+case class Reference(
     id: Id,
     source: Id,
     target: Id,
