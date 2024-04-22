@@ -17,27 +17,6 @@ class SqlItemService(store: SqliteStore) extends ItemService:
   //  Item
   // ============================================================
 
-  override def createItem(payload: ItemCreatePayload)(using
-      StoreName
-  ): ServiceResponse[Id] =
-    val now = Instant.now()
-    val id = Ksuid.fromInstant(now).toString()
-    val item = Item(
-      id = id,
-      name = payload.name,
-      contentType = payload.contentType,
-      content = payload.content,
-      createTime = Some(now),
-      updateTime = Some(now)
-    )
-    val json = jsoniter.writeToString(item)
-
-    this.store
-      .withTransaction(implicit session =>
-        sql"insert into item values($id, $json)".update.apply()
-        Right(id)
-      )
-
   override def getItem(id: Id)(using StoreName): ServiceResponse[Item] =
     this.store.withTransaction(implicit session =>
       SqlItemService.getItem(id).toRight(ServiceError.IdNotFound(id))
@@ -67,22 +46,52 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(SqlItemService.getItems(ids))
     )
 
-  override def updateItem(payload: ItemUpdatePayload)(using
+  override def createItem(
+      name: String,
+      contentType: Option[String] = None,
+      content: Option[String] = None
+  )(using
+      StoreName
+  ): ServiceResponse[Id] =
+    val now = Instant.now()
+    val id = Ksuid.fromInstant(now).toString()
+    val item = Item(
+      id = id,
+      name = name,
+      contentType = contentType,
+      content = content,
+      createTime = Some(now),
+      updateTime = Some(now)
+    )
+    val json = jsoniter.writeToString(item)
+
+    this.store
+      .withTransaction(implicit session =>
+        sql"insert into item values($id, $json)".update.apply()
+        Right(id)
+      )
+
+  override def updateItem(
+      id: Id,
+      name: Option[String] = None,
+      contentType: Option[String] = None,
+      content: Option[String] = None
+  )(using
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
-      SqlItemService.getItem(payload.id) match
-        case None => Left(ServiceError.IdNotFound(payload.id))
+      SqlItemService.getItem(id) match
+        case None => Left(ServiceError.IdNotFound(id))
         case Some(item) =>
           val newItem = item.copy(
-            name = payload.name.getOrElse(item.name),
-            contentType = payload.name.orElse(item.contentType),
-            content = payload.content.orElse(item.content)
+            name = name.getOrElse(item.name),
+            contentType = name.orElse(item.contentType),
+            content = content.orElse(item.content)
           )
 
           val json = jsoniter.writeToString(newItem)
 
-          sql"update item set props = $json where id = ${payload.id}".update
+          sql"update item set props = $json where id = ${id}".update
             .apply()
 
           Right(())
@@ -157,23 +166,6 @@ class SqlItemService(store: SqliteStore) extends ItemService:
   //  Relation
   // ============================================================
 
-  override def createRelation(source: Id, target: Id, annotation: String)(using
-      StoreName
-  ): ServiceResponse[Id] =
-    val createTime = Instant.now()
-    val id = Ksuid.fromInstant(createTime).toString()
-
-    this.store.withTransaction(implicit session =>
-      sql"""
-      insert into item_reference values(
-        $id, $source, $target, $annotation,
-        ${createTime.toString()}, ${createTime.toString()}
-      )
-      """.update.apply()
-
-      Right(id)
-    )
-
   override def getRelationsFromItem(id: Id)(using
       StoreName
   ): ServiceResponse[Seq[Relation]] =
@@ -198,12 +190,32 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       Right(result)
     )
 
+  override def createRelation(source: Id, target: Id, annotation: String)(using
+      StoreName
+  ): ServiceResponse[Id] =
+    val createTime = Instant.now()
+    val id = Ksuid.fromInstant(createTime).toString()
+
+    this.store.withTransaction(implicit session =>
+      sql"""
+      insert into item_reference values(
+        $id, $source, $target, $annotation,
+        ${createTime.toString()}, ${createTime.toString()}
+      )
+      """.update.apply()
+
+      Right(id)
+    )
+
   override def updateRelation(id: Id, annotation: String)(using
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
-      sql"update item_reference set annotation = $annotation where id = $id".update
-        .apply()
+      sql"""
+      update item_reference
+      set annotation = $annotation and update_time = ${Instant.now()}
+      where id = $id
+      """.update.apply()
 
       Right(())
     )

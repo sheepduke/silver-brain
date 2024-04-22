@@ -75,24 +75,43 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
         case None =>
           Response("Either `ids` or `search` must be provided", 401)
 
+  case class ItemCreatePayload(
+      name: String,
+      contentType: Option[String] = None,
+      content: Option[String] = None
+  )
+
   @withStoreName
   @post("/api/v2/items")
   def createItem(request: Request)(using storeName: StoreName) =
     val result =
       for item <- request.readJson[ItemCreatePayload]
       yield this.itemService
-        .createItem(item)
+        .createItem(item.name, item.contentType, item.content)
         .map(id => Map("id" -> id))
         .toHttpResponse(201)
 
     result.merge
+
+  case class ItemUpdatePayload(
+      name: Option[String] = None,
+      contentType: Option[String] = None,
+      content: Option[String] = None
+  )
 
   @withStoreName
   @patch("/api/v2/items/:id")
   def updateItem(id: String, request: Request)(using storeName: StoreName) =
     val result =
       for item <- request.readJson[ItemUpdatePayload]
-      yield this.itemService.updateItem(item.copy(id = id)).toHttpResponse(204)
+      yield this.itemService
+        .updateItem(
+          id = id,
+          name = item.name,
+          contentType = item.contentType,
+          content = item.content
+        )
+        .toHttpResponse(204)
 
     result.merge
 
@@ -104,20 +123,6 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   // ============================================================
   //  Relations
   // ============================================================
-
-  @withStoreName
-  @post("/api/v2/relations")
-  def createRelation(request: Request)(using
-      storeName: StoreName
-  ) =
-    val result =
-      for payload <- request.readJson[RelationCreatePayload]
-      yield this.itemService
-        .createRelation(payload.source, payload.target, payload.annotation)
-        .map(id => Map(id -> id))
-        .toHttpResponse(201)
-
-    result.merge
 
   @withStoreName
   @get("/api/v2/relations")
@@ -133,9 +138,27 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
       this.itemService.getRelationsFromItem(source.get).toHttpResponse()
     else this.itemService.getRelationsToItem(target.get).toHttpResponse()
 
+  @withStoreName
+  @post("/api/v2/relations")
+  def createRelation(request: Request)(using
+      storeName: StoreName
+  ) =
+    val result =
+      for relation <- request.readJson[RelationCreatePayload]
+      yield this.itemService
+        .createRelation(relation.source, relation.target, relation.annotation)
+        .map(id => Map(id -> id))
+        .toHttpResponse(201)
+
+    result.merge
+
   case class RelationCreatePayload(
       source: String,
       target: String,
+      annotation: String
+  )
+
+  case class RelationUpdatePayload(
       annotation: String
   )
 

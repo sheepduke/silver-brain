@@ -2,35 +2,10 @@ package silver_brain.core
 
 import java.time.Instant
 
-case class ItemCreatePayload(
-    name: String,
-    contentType: Option[String] = None,
-    content: Option[String] = None
-)
-
-case class ItemUpdatePayload(
-    id: Id,
-    name: Option[String] = None,
-    contentType: Option[String] = None,
-    content: Option[String] = None
-)
-
-case class RelationUpdatePayload(
-    annotation: String
-)
-
-enum RelationType:
-  case Source
-  case Target
-
 trait ItemService:
   // ============================================================
   //  Item
   // ============================================================
-
-  def createItem(payload: ItemCreatePayload)(using
-      StoreName
-  ): ServiceResponse[Id]
 
   def getItem(id: Id)(using StoreName): ServiceResponse[Item]
 
@@ -38,7 +13,20 @@ trait ItemService:
 
   def searchItems(search: String)(using StoreName): ServiceResponse[Seq[Item]]
 
-  def updateItem(payload: ItemUpdatePayload)(using
+  def createItem(
+      name: String,
+      contentType: Option[String] = None,
+      content: Option[String] = None
+  )(using
+      StoreName
+  ): ServiceResponse[Id]
+
+  def updateItem(
+      id: Id,
+      name: Option[String] = None,
+      contentType: Option[String] = None,
+      content: Option[String] = None
+  )(using
       StoreName
   ): ServiceResponse[Unit]
 
@@ -60,12 +48,6 @@ trait ItemService:
   //  Relation
   // ============================================================
 
-  def createRelation(
-      source: Id,
-      target: Id,
-      annotation: String
-  )(using StoreName): ServiceResponse[Id]
-
   def getRelationsFromItem(id: Id)(using
       StoreName
   ): ServiceResponse[Seq[Relation]]
@@ -73,6 +55,12 @@ trait ItemService:
   def getRelationsToItem(id: Id)(using
       StoreName
   ): ServiceResponse[Seq[Relation]]
+
+  def createRelation(
+      source: Id,
+      target: Id,
+      annotation: String
+  )(using StoreName): ServiceResponse[Id]
 
   def updateRelation(id: Id, annotation: String)(using
       StoreName
