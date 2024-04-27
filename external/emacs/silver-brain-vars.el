@@ -41,11 +41,11 @@ mode used to open it."
 ;;;;                            Hooks                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar silver-brain-after-create-concept-hook '())
+(defvar silver-brain-after-create-item-hook '())
 
-(defvar silver-brain-after-update-concept-hook '())
+(defvar silver-brain-after-update-item-hook '())
 
-(defvar silver-brain-after-delete-concept-hook '())
+(defvar silver-brain-after-delete-item-hook '())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                            Faces                             ;;;;

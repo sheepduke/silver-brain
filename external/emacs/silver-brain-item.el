@@ -8,12 +8,11 @@
 (require 'silver-brain-util)
 (require 'silver-brain-client)
 
-(defvar silver-brain-item-buffer-name-format "*Silver Brain Item %s*")
+(defvar silver-brain-item-buffer-name-format "*Silver Brain Item - %s*")
 
-(defvar silver-brain-item-content-buffer-name-format "*Silver Brain Item Content %s*")
+(defvar silver-brain-item-content-buffer-name-format "*Silver Brain Item Content - %s*")
 
 (defvar-local silver-brain-current-item nil)
-;; (put 'silver-brain-current-item 'permanent-local t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                             Mode                             ;;;;
@@ -26,9 +25,10 @@
     (define-key map (kbd "g") 'silver-brain-item-refresh)
     (define-key map (kbd "e") 'silver-brain-item-open-content)
     (define-key map (kbd "d") 'silver-brain-delete-this-item)
+    (define-key map (kbd "r") 'silver-brain-item-rename)
     map))
 
-(define-derived-mode silver-brain-item-mode fundamental-mode "SB-item"
+(define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
   "Major mode for Silver Brain single item.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,36 +45,34 @@
 (defun silver-brain-item-refresh ()
   "Refresh current item."
   (interactive)
-  (with-current-buffer (silver-brain--item-get-buffer-name silver-brain-current-item)
-    (silver-brain--item-prepare-buffer (silver-brain-client-get-item (silver-brain--prop-id silver-brain-current-item)))))
+  (let* ((new-item (silver-brain-client-get-item (silver-brain--prop-id)))
+         (new-buffer-name (silver-brain--item-get-buffer-name new-item)))
+    (rename-buffer new-buffer-name)
+    (silver-brain--item-prepare-buffer new-item)))
 
 (defun silver-brain--item-prepare-buffer (item)
   (silver-brain--with-widget-buffer (silver-brain--item-get-buffer-name item)
     (silver-brain-item-mode)
     (setq silver-brain-current-item item)
-    (setq silver-brain-refresh-function 'silver-brain-item-refresh)
-    (silver-brain--item-insert-widgets item))
-  (let ((buffer (get-buffer (silver-brain--item-get-buffer-name item))))
-    (with-current-buffer buffer
-      (set-buffer-modified-p nil))
-    buffer))
+    (silver-brain--item-insert-widgets item)))
 
 (defun silver-brain--item-get-buffer-name (item)
   (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))
 
 (defun silver-brain--item-insert-widgets (item)
-  (silver-brain--widget-insert-with-face "Item" 'silver-brain-item-subtitle)
-  
+  (silver-brain--widget-insert-with-face (format "Item - %s"
+                                     (silver-brain--prop-name silver-brain-current-item))
+                             'silver-brain-item-subtitle)
   (widget-insert "\n\n  Name: ")
   (widget-create 'editable-field
                  :size (silver-brain--get-textfield-length 6)
                  :value (silver-brain--prop-name item)
                  :action (lambda (widget &rest _)
-                           (silver-brain--item-rename (widget-value widget))))
+                           (silver-brain-item-rename (widget-value widget))))
   (widget-insert "\n  Content Type: ")
   (widget-create 'editable-field
                  :size (silver-brain--get-textfield-length 14)
-                 :value (silver-brain--prop-content-type item)
+                 :value (or (silver-brain--prop-content-type item) "") 
                  :action (lambda (widget &rest _)
                            (silver-brain--item-update-content-type (widget-value widget))))
   (widget-insert "\n  Create Time: ")
@@ -84,22 +82,25 @@
   (widget-insert "\n\n  ")
   
   ;; Insert buttons.
-  (silver-brain--with-push-button-face
-   (widget-create 'push-button
-                  :notify (lambda (&rest _)
-                            (silver-brain-create-item))
-                  "New")
-   (widget-insert " ")
-   (widget-create 'push-button
-                  :notify (lambda (&rest _)
-                            (silver-brain-delete-this-item))
-                  "Delete")
-   (widget-insert " ")
-   (widget-create 'push-button
-                  :notify (lambda (&rest _)
-                            (kill-buffer))
-                  "Close"))
-
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (silver-brain-create-item))
+                 "New")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (silver-brain-item-rename))
+                 "Rename")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (silver-brain-delete-this-item))
+                 "Delete")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (kill-buffer))
+                 "Close")
   ;; Insert links.
   (widget-insert "\n")
   ;; (silver-brain--item-insert-link-widgets
@@ -130,7 +131,7 @@
   (widget-insert "\n")
   (silver-brain--widget-insert-with-face "Content" 'silver-brain-item-subtitle)
   (widget-insert "\n\n")
-  (widget-insert (silver-brain--prop-content item)))
+  (widget-insert (or (silver-brain--prop-content item) "")))
 
 ;; (defun silver-brain--item-insert-link-widgets (links links-type)
 ;;   "Insert link widgets. LINKS-TYPE is :inbound, :outbound or :bidirectional."
@@ -239,15 +240,6 @@ current item, insert a button otherwise."
                       :notify (lambda (&rest _) (silver-brain-item-open id))
                       (if (string-empty-p name) " " name))))))
 
-(defun silver-brain--item-rename (new-name)
-  (let ((old-item )
-        (item silver-brain-current-item))
-    (silver-brain-client-update-item (silver-brain--prop-id item) new-name)
-    (setf (silver-brain--prop-name silver-brain-current-item) new-name)
-    (rename-buffer (silver-brain--item-get-buffer-name item)))
-  (run-hook-with-args 'silver-brain-after-update-item-hook )
-  (run-hooks 'silver-brain-after-update-item-hook))
-
 (defun silver-brain--item-update-content-type (content-type)
   (silver-brain-client-update-item (silver-brain-item-id silver-brain-current-item)
                        :content-type content-type)
@@ -306,18 +298,19 @@ current item, insert a button otherwise."
                         (silver-brain--prop-content silver-brain-current-item)
                         (buffer-string))
     ;; FIXME
-    (message "Before: %s" )
-    (message "After: %s" )
     (set-buffer-modified-p nil)))
 
-(defun silver-brain-item-refresh-all-buffers ()
-  "Refresh all the Silver Brain Item buffers."
+;; ============================================================
+;;  Hooks
+;; ============================================================
+
+(defun silver-brain-item-on-item-updated (old-item new-item)
   (mapc (lambda (buffer)
           (with-current-buffer buffer
             (silver-brain-item-refresh)))
-        (silver-brain-item-get-all-buffers)))
+        (silver-brain-item-get-all-item-buffers)))
 
-(defun silver-brain-item-get-all-buffers ()
+(defun silver-brain-item-get-all-item-buffers ()
   "Return all the Silver Brain Item buffers."
   (cl-remove-if-not (lambda (buffer)
                       (with-current-buffer buffer
@@ -328,7 +321,25 @@ current item, insert a button otherwise."
 
 (defun silver-brain--item-install ()
   "Setup hooks etc for Silver Brain Item buffers."
-  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-item-refresh-all-buffers)
-  (add-hook 'after-change-major-mode-hook 'silver-brain-item-setup-local-key))
+  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-item-on-item-updated)
+  ;; (add-hook 'after-change-major-mode-hook 'silver-brain-item-setup-local-key)
+  )
+
+;; ============================================================
+;;  Commands
+;; ============================================================
+
+(cl-defun silver-brain-item-rename (&optional new-name)
+  (interactive)
+  (when (null silver-brain-current-item)
+    (error "Must be invoked in an item buffer."))
+
+  (let* ((new-name (or new-name
+                      (read-string (format "Rename to: ")
+                                   (silver-brain--prop-name silver-brain-current-item))))
+         (new-item (silver-brain--update-prop-name new-name)))
+    (silver-brain-client-update-item (silver-brain--prop-id)
+                         :name new-name)
+    (run-hook-with-args 'silver-brain-after-update-item-hook silver-brain-current-item new-item)))
 
 (provide 'silver-brain-item)

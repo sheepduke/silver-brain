@@ -14,7 +14,7 @@
 
 (defun silver-brain-install ()
   (silver-brain--list-install)
-  (silver-brain--concept-install)
+  (silver-brain--item-install)
   nil)
 
 (provide 'silver-brain)

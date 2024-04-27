@@ -78,7 +78,7 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun silver-brain-client-get-item (id)
-  (silver-brain--client-get (format "items/%s" id)))
+  (silver-brain--client-get (format "items/%s?props=all" id)))
 
 (defun silver-brain-client-search-items (search-string)
   (silver-brain--client-get (format "items?search=%s" search-string)))
@@ -100,12 +100,6 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 
 (defun silver-brain-client-delete-concept (uuid)
   (silver-brain--client-delete (format "concepts/%s" uuid)))
-
-(defun silver-brain-client-get-relations-from (source)
-  (silver-brain--client-get (format "relations?source=%s" source)))
-
-(defun silver-brain-client-get-relations-to (target)
-  (silver-brain--client-get (format "relations?target=%s" target)))
 
 (defun silver-brain-client-create-link (source relation target directionalp)
   (silver-brain--client-post "concept-links"

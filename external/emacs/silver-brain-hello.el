@@ -41,10 +41,9 @@ I am Silver, your personal external brain.\n\n")
     
     ;; Insert New button.
     (widget-insert "\n")
-    (silver-brain--with-push-button-face
-     (widget-create 'push-button
-                    :notify (lambda (&rest _) (silver-brain-create-concept))
-                    "New"))
+    (widget-create 'push-button
+                   :notify (lambda (&rest _) (silver-brain-create-concept))
+                   "New")
     (widget-insert "\n")
     
     (widget-insert "\nInput keywords separated by space to search."))

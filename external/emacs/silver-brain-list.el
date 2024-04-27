@@ -22,7 +22,7 @@
     map)
   "The keymap used for Silver Brain List mode.")
 
-(define-derived-mode silver-brain-list-mode fundamental-mode "SB-List"
+(define-derived-mode silver-brain-list-mode fundamental-mode "SB/List"
   "Major mode for Silver Brain List.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -78,13 +78,13 @@ using given SEARCH-STRING."
           (widget-insert "\n"))
         items))
 
-(defun silver-brain-list-on-item-update (before after)
+(defun silver-brain-list-on-item-changed (before after)
   (silver-brain-list-refresh))
 
 (defun silver-brain--list-install ()
   "Install hooks etc."
-  (add-hook 'silver-brain-after-create-item-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-list-refresh)
-  (add-hook 'silver-brain-after-delete-item-hook 'silver-brain-list-refresh))
+  (add-hook 'silver-brain-after-create-item-hook 'silver-brain-list-on-item-changed)
+  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-list-on-item-changed)
+  (add-hook 'silver-brain-after-delete-item-hook 'silver-brain-list-on-item-changed))
 
 (provide 'silver-brain-list)

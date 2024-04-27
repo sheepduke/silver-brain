@@ -12,39 +12,41 @@
 ;;  Data Model
 ;; ============================================================
 
-(defun silver-brain--prop-id (obj)
+(defun silver-brain--prop-id (&optional obj)
   (silver-brain--prop "id" obj))
 
-(defun silver-brain--prop-name (obj)
+(defun silver-brain--prop-name (&optional obj)
   (silver-brain--prop "name" obj))
 
-(defun silver-brain--update-prop-name (obj value)
-  (silver-brain--update-prop obj "name" value))
+(defun silver-brain--update-prop-name (value &optional obj)
+  (silver-brain--update-prop"name" value obj))
 
-(defun silver-brain--prop-content-type (obj)
+(defun silver-brain--prop-content-type (&optional obj)
   (silver-brain--prop "contentType" obj))
 
-(defun silver-brain--update-prop-content-type (obj value)
-  (silver-brain--update-prop obj "content-type" value))
+(defun silver-brain--update-prop-content-type (value &optional obj)
+  (silver-brain--update-prop "contentType" value obj))
 
-(defun silver-brain--prop-content (obj)
+(defun silver-brain--prop-content (&optional obj)
   (silver-brain--prop "content" obj))
 
-(defun silver-brain--update-prop-content (obj value)
-  (silver-brain--update-prop obj "content" value))
+(defun silver-brain--update-prop-content (value &optional obj)
+  (silver-brain--update-prop "content" value obj))
 
-(defun silver-brain--prop-create-time (obj)
+(defun silver-brain--prop-create-time (&optional obj)
   (silver-brain--prop "createTime" obj))
 
-(defun silver-brain--prop-update-time (obj)
+(defun silver-brain--prop-update-time (&optional obj)
   (silver-brain--prop "updateTime" obj))
 
-(defun silver-brain--prop (key obj)
-  (cdr (assoc-string key obj)))
+(defun silver-brain--prop (key &optional obj)
+  (let ((obj (or obj silver-brain-current-item)))
+    (cdr (assoc-string key obj))))
 
-(defun silver-brain--update-prop (obj key value)
-  (cons (cons key value)
-        (assoc-delete-all key obj #'string=)))
+(defun silver-brain--update-prop (key value &optional obj)
+  (let ((obj (or obj silver-brain-current-item)))
+    (cons (cons key value)
+          (assoc-delete-all key obj #'string=))))
 
 ;; ============================================================
 ;;  Interaction
@@ -97,7 +99,8 @@ PROMPT is the prompt for search string."
        ,@body
        (widget-setup)
        (set-buffer-modified-p nil)
-       (goto-char (point-min)))))
+       (goto-char (point-min)))
+     ,buffer-name))
 
 (defun silver-brain--get-textfield-length (length)
   "Return the width of text field widget. LENGTH is the extra
