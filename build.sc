@@ -22,7 +22,8 @@ object foo extends RootModule with ScalaModule {
     ivy"org.flywaydb:flyway-core:9.0.4",
 
     // Logging.
-    ivy"org.slf4j:slf4j-simple:2.0.12",
+    ivy"org.slf4j:slf4j-api:2.0.13",
+    ivy"ch.qos.logback:logback-classic:1.3.6",
 
     // OS interaction.
     ivy"com.lihaoyi::os-lib::0.8.0",

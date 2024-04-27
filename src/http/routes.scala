@@ -5,12 +5,20 @@ import silver_brain.core.*
 import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import scala.util.boundary
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
+import silver_brain.http.log
 
 // ============================================================
 //  Routes
 // ============================================================
 
-class Routes(store: Store, itemService: ItemService) extends MainRoutes:
+class Routes(using
+    store: Store,
+    itemService: ItemService,
+    logger: Logger = LoggerFactory.getLogger("http")
+) extends MainRoutes:
+  // JSON codecs.
   given jsoniter.JsonValueCodec[Unit] = UnitCodec
 
   given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
@@ -26,6 +34,7 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
 
   given jsoniter.JsonValueCodec[Map[String, String]] = JsonCodecMaker.make
 
+  // Store name extractor.
   class withStoreName extends RawDecorator:
     val defaultStoreName: String = "main"
 
@@ -36,6 +45,16 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
         .getOrElse(defaultStoreName)
 
       delegate(Map("storeName" -> storeName))
+
+  class withRequestLogging extends RawDecorator:
+    def wrapFunction(request: Request, delegate: Delegate) =
+      logger.info(
+        "{} {}",
+        request.exchange.getProtocol(),
+        request.exchange.getDestinationAddress()
+      )
+
+      delegate(Map("" -> ""))
 
   @get("/ping")
   def healthCheck(): Response[String] = Response("")
@@ -63,6 +82,8 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   def getItem(id: String, props: String = "", request: Request)(using
       storeName: StoreName
   ) =
+    request.log()
+
     this.itemService.getItem(id, propsToOptions(props)).toHttpResponse()
 
   @withStoreName
@@ -70,10 +91,13 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   def getItems(
       id: Seq[String] = Nil,
       props: String = "",
-      search: Option[String]
+      search: Option[String],
+      request: Request
   )(using
       storeName: StoreName
   ) =
+    request.log()
+
     if id.nonEmpty then
       this.itemService.getItems(id, propsToOptions(props)).toHttpResponse()
     else
@@ -86,6 +110,8 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   @withStoreName
   @post("/api/v2/items")
   def createItem(request: Request)(using storeName: StoreName) =
+    request.log()
+
     val result =
       for item <- request.readJson[ItemCreatePayload]
       yield this.itemService
@@ -98,6 +124,8 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   @withStoreName
   @patch("/api/v2/items/:id")
   def updateItem(id: String, request: Request)(using storeName: StoreName) =
+    request.log()
+
     val result =
       for item <- request.readJson[ItemUpdatePayload]
       yield this.itemService
@@ -113,7 +141,9 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
 
   @withStoreName
   @delete("/api/v2/items/:id")
-  def deleteItem(id: String)(using storeName: StoreName) =
+  def deleteItem(id: String, request: Request)(using storeName: StoreName) =
+    request.log()
+
     this.itemService.deleteItem(id).toHttpResponse(204)
 
   // ============================================================
@@ -123,8 +153,11 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   @withStoreName
   @get("/api/v2/references/:id")
   def getReference(id: Id)(using
-      storeName: StoreName
+      storeName: StoreName,
+      request: Request
   ) =
+    request.log()
+
     this.itemService.getReference(id).toHttpResponse()
 
   @withStoreName
@@ -132,6 +165,8 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
   def createReference(request: Request)(using
       storeName: StoreName
   ) =
+    request.log()
+
     val result =
       for reference <- request.readJson[ReferenceCreatePayload]
       yield this.itemService
@@ -147,7 +182,11 @@ class Routes(store: Store, itemService: ItemService) extends MainRoutes:
 
   @withStoreName
   @delete("/api/v2/references/:id")
-  def deleteReference(id: String)(using storeName: StoreName) =
+  def deleteReference(id: String, request: Request)(using
+      storeName: StoreName
+  ) =
+    request.log()
+
     this.itemService.deleteReference(id).toHttpResponse(204)
 
   initialize()
@@ -177,14 +216,27 @@ private case class ReferenceUpdatePayload(
 private def propsToOptions(props: String): ItemLoadOptions =
   val propSet = props.split(",").toSet
 
-  ItemLoadOptions(
-    loadContentType = propSet.contains("contentType"),
-    loadContent = propSet.contains("content"),
-    loadCreateTime = props.contains("createTime"),
-    loadUpdateTime = props.contains("updateTime"),
-    loadParents = props.contains("parents"),
-    loadChildren = props.contains("children"),
-    loadSiblings = props.contains("siblings"),
-    loadReferencesFromThis = props.contains("referencesFromThis"),
-    loadReferencesToThis = props.contains("referencesToThis")
-  )
+  if propSet.contains("all") then
+    ItemLoadOptions(
+      loadContentType = true,
+      loadContent = true,
+      loadCreateTime = true,
+      loadUpdateTime = true,
+      loadParents = true,
+      loadChildren = true,
+      loadSiblings = true,
+      loadReferencesFromThis = true,
+      loadReferencesToThis = true
+    )
+  else
+    ItemLoadOptions(
+      loadContentType = propSet.contains("contentType"),
+      loadContent = propSet.contains("content"),
+      loadCreateTime = props.contains("createTime"),
+      loadUpdateTime = props.contains("updateTime"),
+      loadParents = props.contains("parents"),
+      loadChildren = props.contains("children"),
+      loadSiblings = props.contains("siblings"),
+      loadReferencesFromThis = props.contains("referencesFromThis"),
+      loadReferencesToThis = props.contains("referencesToThis")
+    )

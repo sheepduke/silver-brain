@@ -1,9 +1,11 @@
 package silver_brain.http
 
 import cask.*
+import cask.Logger as _
 import silver_brain.core.*
 import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 import scala.util.Try
+import org.slf4j.Logger
 
 // ============================================================
 //  Request Extension
@@ -15,6 +17,13 @@ extension (request: Request)
   ): Either[Response[String], A] =
     Try(jsoniter.readFromStream[A](request.data)).toEither.left
       .map(error => Response(error.getMessage(), 400))
+
+  def log()(using logger: Logger): Unit =
+    logger.info(
+      "{} {}",
+      request.exchange.getRequestMethod(),
+      request.exchange.getRequestURL()
+    )
 
 // ============================================================
 //  Response Extension

@@ -4,9 +4,9 @@ import cask.*
 import silver_brain.core.*
 import io.undertow.Undertow
 
-class HttpServer(store: Store, itemService: ItemService) extends Main:
+class HttpServer(using store: Store, itemService: ItemService) extends Main:
   override def allRoutes: Seq[Routes] = Seq(
-    Routes(store, itemService)
+    Routes()
   )
 
   val server = Undertow

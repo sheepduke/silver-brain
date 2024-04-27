@@ -6,14 +6,23 @@ import org.flywaydb.core.Flyway
 import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import silver_brain.http.HttpServer
+import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.LoggerContext
+import org.slf4j.Logger
+import ch.qos.logback.classic.Level
 
 @main def main() =
-  val store = SqliteStore(os.home / "temp" / "test")
-  val itemService = SqlItemService(store)
+  given store: SqliteStore = SqliteStore(os.home / "temp" / "test")
+  given itemService: ItemService = SqlItemService(store)
 
-  given jsoniter.JsonValueCodec[Item] = JsonCodecMaker.make
+  // Set the log level to INFO.
+  LoggerFactory
+    .getILoggerFactory()
+    .asInstanceOf[LoggerContext]
+    .exists(Logger.ROOT_LOGGER_NAME)
+    .setLevel(Level.INFO)
 
-  val httpServer = HttpServer(store = store, itemService = itemService)
+  val httpServer = HttpServer()
   httpServer.start()
 
 def migrateDatabase(store: SqliteStore, storeName: StoreName) =
