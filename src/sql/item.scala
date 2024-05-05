@@ -92,7 +92,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
         case Some(item) =>
           val newItem = item.copy(
             name = name.getOrElse(item.name),
-            contentType = name.orElse(item.contentType),
+            contentType = contentType.orElse(item.contentType),
             content = content.orElse(item.content),
             updateTime = Some(Instant.now())
           )
