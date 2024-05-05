@@ -93,7 +93,7 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
     (when name
       (push (cons "name" name) data))
     (when content-type
-      (push (cons "contenType" content-type) data))
+      (push (cons "contentType" content-type) data))
     (when content
       (push (cons "content" content) data))
     (silver-brain--client-patch (format "items/%s" id) data)))

@@ -241,7 +241,7 @@ current item, insert a button otherwise."
                       (if (string-empty-p name) " " name))))))
 
 (defun silver-brain--item-update-content-type (content-type)
-  (silver-brain-client-update-item (silver-brain-item-id silver-brain-current-item)
+  (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
                        :content-type content-type)
   (silver-brain-item-refresh))
 
@@ -289,14 +289,14 @@ current item, insert a button otherwise."
 
 (defun silver-brain-item-save-content ()
   (interactive)
-  (let ((old-item (seq-copy silver-brain-current-item))
-        (new-item (silver-brain--update-prop-content item (buffer-string))))
+  (let* ((old-item (seq-copy silver-brain-current-item))
+         (new-content (buffer-string))
+         (new-item (silver-brain--update-prop-content new-content old-item)))
     (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
-                         :content (buffer-string))
-    
+                         :content new-content)
     (run-hook-with-args 'silver-brain-after-update-item-hook
-                        (silver-brain--prop-content silver-brain-current-item)
-                        (buffer-string))
+                        old-item
+                        new-item)
     ;; FIXME
     (set-buffer-modified-p nil)))
 
@@ -305,19 +305,20 @@ current item, insert a button otherwise."
 ;; ============================================================
 
 (defun silver-brain-item-on-item-updated (old-item new-item)
-  (mapc (lambda (buffer)
-          (with-current-buffer buffer
-            (silver-brain-item-refresh)))
-        (silver-brain-item-get-all-item-buffers)))
+  (dolist (buffer (silver-brain-item-get-all-item-buffers))
+    (with-current-buffer buffer
+      (when (or (not (string-equal (silver-brain--prop-name old-item) (silver-brain--prop-name new-item)))
+              (string-equal (silver-brain--prop-id old-item) (silver-brain--prop-id silver-brain-current-item)))
+        (silver-brain-item-refresh)))))
 
 (defun silver-brain-item-get-all-item-buffers ()
   "Return all the Silver Brain Item buffers."
-  (cl-remove-if-not (lambda (buffer)
-                      (with-current-buffer buffer
-                        (and (string-prefix-p "*Silver Brain Item"
-                                              (buffer-name))
-                             (equal 'silver-brain-item-mode major-mode))))
-                    (buffer-list)))
+  (seq-filter (lambda (buffer)
+                (with-current-buffer buffer
+                  (and (string-prefix-p "*Silver Brain Item"
+                                        (buffer-name))
+                       (equal 'silver-brain-item-mode major-mode))))
+              (buffer-list)))
 
 (defun silver-brain--item-install ()
   "Setup hooks etc for Silver Brain Item buffers."

@@ -1,8 +1,9 @@
 ;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
 
+(require 'avy)
 (require 'cl-lib)
-(require 'json)
 (require 'iso8601)
+(require 'json)
 (require 'seq)
 
 (require 'silver-brain-vars)
