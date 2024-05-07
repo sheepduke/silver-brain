@@ -89,23 +89,27 @@ class Routes(using
   @withStoreName
   @get("/api/v2/items")
   def getItems(
-      id: Seq[String] = Nil,
+      ids: Option[String] = None,
+      search: Option[String] = None,
       props: String = "",
-      search: Option[String],
       request: Request
   )(using
       storeName: StoreName
   ) =
     request.log()
 
-    if id.nonEmpty then
-      this.itemService.getItems(id, propsToOptions(props)).toHttpResponse()
-    else
-      search match
-        case Some(search1) =>
-          this.itemService.searchItems(search1).toHttpResponse()
-        case None =>
-          Response("Either `ids` or `search` must be provided", 401)
+    ids match
+      case Some(value) =>
+        val idList = value.split(",").toSet.toSeq
+        this.itemService
+          .getItems(idList, propsToOptions(props))
+          .toHttpResponse()
+      case None =>
+        search match
+          case Some(search1) =>
+            this.itemService.searchItems(search1).toHttpResponse()
+          case None =>
+            Response("Either `ids` or `search` must be provided", 401)
 
   @withStoreName
   @post("/api/v2/items")
