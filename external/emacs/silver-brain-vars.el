@@ -73,10 +73,14 @@ mode used to open it."
   "Face used for push buttons."
   :group 'silver-brain)
 
-(defface silver-brain-item-subtitle '((t :underline t
-                             :height 1.5
-                             :weight bold))
-  "Face used for subtitle in item buffer."
+(defface silver-brain-h1 '((t :height 1.5
+                  :weight bold))
+  "Face for level 1 header."
+  :group 'silver-brain)
+
+(defface silver-brain-h2 '((t :height 1.2
+                  :weight bold))
+  "Face for level 2 header"
   :group 'silver-brain)
 
 (provide 'silver-brain-vars)

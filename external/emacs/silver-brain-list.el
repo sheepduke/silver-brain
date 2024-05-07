@@ -78,14 +78,13 @@ using given SEARCH-STRING."
           (widget-insert "\n"))
         items))
 
-(defun silver-brain-list-on-item-updated (old-item new-item)
-  (unless (string-equal (silver-brain--prop-name old-item) (silver-brain--prop-name new-item))
-    (silver-brain-list-refresh)))
+(defun silver-brain-list-on-item-changed (&rest _)
+  (silver-brain-list-refresh))
 
 (defun silver-brain--list-install ()
   "Install hooks etc."
-  (add-hook 'silver-brain-after-create-item-hook 'silver-brain-list-on-item-updated)
-  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-list-on-item-updated)
-  (add-hook 'silver-brain-after-delete-item-hook 'silver-brain-list-on-item-updated))
+  (add-hook 'silver-brain-after-create-item-hook 'silver-brain-list-on-item-changed)
+  (add-hook 'silver-brain-after-update-item-hook 'silver-brain-list-on-item-changed)
+  (add-hook 'silver-brain-after-delete-item-hook 'silver-brain-list-on-item-changed))
 
 (provide 'silver-brain-list)

@@ -31,6 +31,15 @@
 (defun silver-brain--prop-content (&optional obj)
   (silver-brain--prop "content" obj))
 
+(defun silver-brain--prop-parents (&optional obj)
+  (silver-brain--prop "parents" obj))
+
+(defun silver-brain--prop-children (&optional obj)
+  (silver-brain--prop "children" obj))
+
+(defun silver-brain--prop-siblings (&optional obj)
+  (silver-brain--prop "siblings" obj))
+
 (defun silver-brain--update-prop-content (value &optional obj)
   (silver-brain--update-prop "content" value obj))
 
@@ -80,7 +89,10 @@
 PROMPT is the prompt for search string."
   (let* ((result (silver-brain-client-search-items search-string))
          (items (seq-map (lambda (item)
-                           (cons (silver-brain--prop-name item) (silver-brain--prop-id item)))
+                           (cons (format "%s [%s]"
+                                         (silver-brain--prop-name item)
+                                         (silver-brain--prop-id item))
+                                 (silver-brain--prop-id item)))
                          result)))
     (and items
          (let ((key (completing-read "Choose item: " items)))

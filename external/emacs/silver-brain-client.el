@@ -80,13 +80,20 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (defun silver-brain-client-get-item (id)
   (silver-brain--client-get (format "items/%s?props=all" id)))
 
+(defun silver-brain-client-get-items (ids)
+  (silver-brain--client-get (format "items?ids=%s&props=name"
+                        (string-join ids ","))))
+
 (defun silver-brain-client-search-items (search-string)
   (silver-brain--client-get (format "items?search=%s" search-string)))
 
 (defun silver-brain-client-create-item (name content-type)
-  (silver-brain--client-post "items"
-                 (list (cons "name" name)
-                       (cons "contentType" content-type))))
+  (let* ((response (silver-brain--client-post "items"
+                                  (list (cons "name" name)
+                                        (cons "contentType" content-type))))
+         (id (silver-brain--prop-id response))
+         (item (silver-brain-client-get-item id)))
+    item))
 
 (cl-defun silver-brain-client-update-item (id &key name content-type content)
   (let ((data '()))
@@ -98,8 +105,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
       (push (cons "content" content) data))
     (silver-brain--client-patch (format "items/%s" id) data)))
 
-(defun silver-brain-client-delete-concept (uuid)
-  (silver-brain--client-delete (format "concepts/%s" uuid)))
+(defun silver-brain-client-delete-item (id)
+  (silver-brain--client-delete (format "items/%s" id)))
 
 (defun silver-brain-client-create-link (source relation target directionalp)
   (silver-brain--client-post "concept-links"
