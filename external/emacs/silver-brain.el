@@ -9,8 +9,8 @@
 (defun silver-brain-open ()
   "Search and open concept."
   (interactive)
-  (silver-brain-concept-open (silver-brain--search-items-and-select
-                  (read-string "Search items: "))))
+  (silver-brain-item-open (silver-brain--search-items-and-select
+               (read-string "Search items: "))))
 
 (defun silver-brain-install ()
   (silver-brain--list-install)

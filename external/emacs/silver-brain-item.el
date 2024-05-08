@@ -54,19 +54,35 @@
   (silver-brain--with-widget-buffer (silver-brain--item-get-buffer-name item)
     (silver-brain-item-mode)
     (setq silver-brain-current-item item)
+    (enable-word-wrap)
     (silver-brain--item-insert-widgets item)))
 
 (defun silver-brain--item-get-buffer-name (item)
   (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))
 
 (defun silver-brain--item-insert-widgets (item)
-  (silver-brain--widget-insert-with-face (format "Item - %s "
+  (silver-brain--widget-insert-with-face (format "%s "
                                      (silver-brain--prop-name silver-brain-current-item))
                              'silver-brain-h1)
   (widget-create 'push-button
                  :notify (lambda (&rest _)
+                           (silver-brain-create-item))
+                 "New")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
                            (silver-brain-item-rename))
                  "Rename")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (silver-brain-delete-this-item))
+                 "Delete")
+  (widget-insert " ")
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           (kill-buffer))
+                 "Close")
 
   (widget-insert "\n\n"
                  "  Content Type: "
@@ -82,50 +98,69 @@
                  (silver-brain--format-time (silver-brain--prop-create-time item))
                  "\n  Update Time: "
                  (silver-brain--format-time (silver-brain--prop-update-time item))
-                 "\n\n  ")
+                 "\n\n")
   
-  ;; Insert buttons.
+  ;; Insert parents.
+  (silver-brain--widget-insert-with-face "Parents " 'silver-brain-h2)
   (widget-create 'push-button
                  :notify (lambda (&rest _)
-                           (silver-brain-create-item))
+                           (silver-brain--search-items-and-select
+                            (read-string "Search parent: "))
+                           ;; TODO
+                           )
                  "New")
   (widget-insert " ")
   (widget-create 'push-button
                  :notify (lambda (&rest _)
-                           (silver-brain-delete-this-item))
-                 "Delete")
+                           ;; TODO
+                           )
+                 "Del")
+  (let ((parents (silver-brain-client-get-items (silver-brain--prop-parents))))
+    
+    (widget-insert "  ")
+    (dolist (parent parents)
+      (silver-brain--with-item-hyperlink-face
+       (widget-create 'push-button
+                      :notify (lambda (&rest _)
+                                (silver-brain-item-open (silver-brain--prop-id parent)))
+                      (silver-brain--prop-name parent))
+       (widget-insert "  "))))
+  
+  ;; Insert children.
+  (widget-insert "\n\n")
+  (silver-brain--widget-insert-with-face "Children " 'silver-brain-h2)
+  (widget-create 'push-button
+                 :notify (lambda (&rest _)
+                           ;; TODO
+                           )
+                 "New")
   (widget-insert " ")
   (widget-create 'push-button
                  :notify (lambda (&rest _)
-                           (kill-buffer))
-                 "Close")
-
+                           ;; TODO
+                           )
+                 "Del")
   (widget-insert "\n\n")
-  (silver-brain--widget-insert-with-face "Relations" 'silver-brain-h1)
-
-  ;; Insert parents.
-  (widget-insert "\n\n")
-  (let ((parents (silver-brain-client-get-items (silver-brain--prop-parents))))
-    (widget-insert "Parents: ")
-    (dolist (parent parents)
-      ))
-
-  ;; Insert children.
-  (widget-insert "\n")
   (let ((children (silver-brain-client-get-items (silver-brain--prop-children))))
-    (widget-insert "Children: ")
+      (widget-insert "  ")
     (dolist (child children)
       (silver-brain--with-item-hyperlink-face
         (widget-create 'push-button
-                       :notify (lambda (&rest _) (silver-brain-item-open (silver-brain--prop-id child)))
+                       :notify (lambda (&rest _)
+                                 (silver-brain-item-open (silver-brain--prop-id child)))
                        (silver-brain--prop-name child))
-        (widget-insert " "))))
+        (widget-insert "  "))))
 
   ;; Insert content.
   (widget-insert "\n\n")
-  (silver-brain--widget-insert-with-face "Content" 'silver-brain-h1)
-  (widget-insert "\n\n")
-  (widget-insert (or (silver-brain--prop-content item) "")))
+  (silver-brain--widget-insert-with-face "Content\n" 'silver-brain-h1)
+  (widget-insert (make-horizontal-bar 60)
+                 "\n"
+                 (or (silver-brain--prop-content item) "")))
+
+(cl-defun make-horizontal-bar (length)
+  (window-width)
+  (string-join (cl-loop for i from 1 to length collect "⎯")))
 
 (cl-defun silver-brain-create-item (&optional name)
   "Create a new item. If NAME is given, it is used as the name
@@ -238,9 +273,8 @@ of new item. Otherwise, it prompts the user to input one."
   (interactive)
   (silver-brain--verify-current-item)
 
-  (let* ((new-name (or new-name
-                       (read-string (format "Rename to: ")
-                                    (silver-brain--prop-name silver-brain-current-item))))
+  (let* ((new-name (read-string (format "Rename to: ")
+                                (silver-brain--prop-name silver-brain-current-item)))
          (new-item (silver-brain--update-prop-name new-name)))
     (silver-brain-client-update-item (silver-brain--prop-id)
                          :name new-name)
