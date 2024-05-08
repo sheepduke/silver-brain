@@ -159,7 +159,6 @@
                  (or (silver-brain--prop-content item) "")))
 
 (cl-defun make-horizontal-bar (length)
-  (window-width)
   (string-join (cl-loop for i from 1 to length collect "⎯")))
 
 (cl-defun silver-brain-create-item (&optional name)
