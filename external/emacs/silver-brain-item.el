@@ -24,7 +24,7 @@
     (set-keymap-parent map silver-brain-common-keymap)
     (define-key map (kbd "g") 'silver-brain-item-refresh)
     (define-key map (kbd "e") 'silver-brain-item-open-content)
-    (define-key map (kbd "d") 'silver-brain-delete-this-item)
+    (define-key map (kbd "d") 'silver-brain-item-delete)
     (define-key map (kbd "r") 'silver-brain-item-rename)
     map))
 
@@ -76,7 +76,7 @@
   (widget-insert " ")
   (widget-create 'push-button
                  :notify (lambda (&rest _)
-                           (silver-brain-delete-this-item))
+                           (silver-brain-item-delete))
                  "Delete")
   (widget-insert " ")
   (widget-create 'push-button
@@ -182,7 +182,7 @@ of new item. Otherwise, it prompts the user to input one."
                          :content-type new-content-type)
     (silver-brain-item-refresh)))
 
-(defun silver-brain-delete-this-item ()
+(defun silver-brain-item-delete ()
   (interactive)
   (silver-brain--verify-current-item)
   (when (y-or-n-p "I will delete this item and all the related links. Continue?")
