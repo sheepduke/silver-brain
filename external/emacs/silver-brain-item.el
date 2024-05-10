@@ -15,9 +15,9 @@
 
 (defvar-local silver-brain-current-item nil)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                             Mode                             ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ============================================================
+;;  Mode
+;; ============================================================
 
 (defvar silver-brain-item-mode-map
   (let ((map (make-composed-keymap (list (make-sparse-keymap)
@@ -27,14 +27,15 @@
     (define-key map (kbd "e") 'silver-brain-item-open-content)
     (define-key map (kbd "d") 'silver-brain-item-delete)
     (define-key map (kbd "r") 'silver-brain-item-rename)
+    (define-key map (kbd "u t") 'silver-brain-item-update-content-type)
     map))
 
 (define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
   "Major mode for Silver Brain single item.")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                            Buffer                            ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ============================================================
+;;  Buffer
+;; ============================================================
 
 (defun silver-brain-item-open (id)
   (silver-brain-item-show (silver-brain-client-get-item id)))
@@ -70,7 +71,7 @@
                  (silver-brain--prop-content-type)
                  " ")
 
-  (silver-brain--widget-create-button "Edit" (lambda (&rest _) (silver-brain--item-update-content-type)))
+  (silver-brain--widget-create-button "Edit" (lambda (&rest _) (silver-brain-item-update-content-type)))
 
   (widget-insert "\n  Create Time: "
                  (silver-brain--format-time (silver-brain--prop-create-time item))
@@ -86,6 +87,10 @@
   (widget-insert "\n")
   (silver-brain--item-insert-parents-or-children nil)
 
+  ;; Insert references.
+  (widget-insert "\n")
+  (silver-brain--item-insert-references)
+
   ;; Insert content.
   (widget-insert "\n\n")
   (silver-brain--widget-insert-with-face "Content\n" 'silver-brain-h1)
@@ -95,13 +100,6 @@
 
 (cl-defun make-horizontal-bar (length)
   (string-join (cl-loop for i from 1 to length collect "⎯")))
-
-(defun silver-brain--item-update-content-type ()
-  (let ((new-content-type (read-string "Content type: "
-                                       (silver-brain--prop-content-type silver-brain-current-item))))
-    (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
-                         :content-type new-content-type)
-    (silver-brain-item-refresh)))
 
 (defun silver-brain--verify-current-item ()
   (unless silver-brain-current-item
@@ -142,6 +140,10 @@
       (widget-insert " ")
       (silver-brain--widget-create-item other)
       (widget-insert "\n  "))))
+
+(defun silver-brain--item-insert-references ()
+  ;; TODO
+  )
 
 (defun silver-brain--item-get-sorted (items)
   (seq-sort-by #'silver-brain--prop-id #'string< 
@@ -198,6 +200,7 @@ of new item. Otherwise, it prompts the user to input one."
     (silver-brain-hello-refresh)))
 
 (defun silver-brain-item-delete ()
+  "Delete current item."
   (interactive)
   (silver-brain--verify-current-item)
   (when (y-or-n-p "I will delete this item and all the related links. Continue?")
@@ -206,6 +209,16 @@ of new item. Otherwise, it prompts the user to input one."
       (kill-buffer)
       (silver-brain-item-refresh-all)
       (silver-brain-hello-refresh))))
+
+(defun silver-brain-item-update-content-type ()
+  "Update content type of current item."
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((new-content-type (read-string "Content type: "
+                                       (silver-brain--prop-content-type silver-brain-current-item))))
+    (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
+                         :content-type new-content-type)
+    (silver-brain-item-refresh)))
 
 (defun silver-brain-item-refresh ()
   "Refresh current item."
