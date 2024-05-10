@@ -147,7 +147,7 @@
                  (when (y-or-n-p "Confirm? ")
                    (let* ((this-id (silver-brain--prop-id))
                           (other-id (silver-brain--prop-id other)))
-                     (if parentp
+                     (if (equal type :parents)
                          (silver-brain-client-delete-child other-id this-id)
                        (silver-brain-client-delete-child this-id other-id))
                      
