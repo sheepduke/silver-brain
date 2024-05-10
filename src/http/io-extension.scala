@@ -6,6 +6,7 @@ import silver_brain.core.*
 import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 import scala.util.Try
 import org.slf4j.Logger
+import java.nio.charset.StandardCharsets
 
 // ============================================================
 //  Request Extension
@@ -33,7 +34,11 @@ extension [A](response: ServiceResponse[A])(using jsoniter.JsonValueCodec[A])
   def toHttpResponse(statusCode: Int = 200): Response[String] =
     response match
       case Right(value) =>
-        Response(jsoniter.writeToString[A](value), statusCode)
+        Response(
+          jsoniter.writeToString[A](value),
+          statusCode,
+          Seq(("Content-Type", "application/json; charset=utf-8"))
+        )
       case Left(ServiceError.StoreNotFound(storeName)) =>
         Response(s"Store not found: $storeName", 404)
       case Left(ServiceError.IdNotFound(id)) =>
