@@ -100,7 +100,7 @@ class Routes(using
 
     ids match
       case Some(value) =>
-        val idList = value.split(",").toSet.toSeq
+        val idList = value.toCommaSplitSeq
         this.itemService
           .getItems(idList, propsToOptions(props))
           .toHttpResponse()
@@ -109,7 +109,7 @@ class Routes(using
           case Some(search1) =>
             this.itemService.searchItems(search1).toHttpResponse()
           case None =>
-            Response("Either `ids` or `search` must be provided", 401)
+            Response("Either `ids` or `search` must be provided", 400)
 
   @withStoreName
   @post("/api/v2/items")
@@ -156,13 +156,26 @@ class Routes(using
 
   @withStoreName
   @get("/api/v2/references/:id")
-  def getReference(id: Id)(using
-      storeName: StoreName,
-      request: Request
+  def getReference(id: Id, request: Request)(using
+      storeName: StoreName
   ) =
     request.log()
 
     this.itemService.getReference(id).toHttpResponse()
+
+  @withStoreName
+  @get("/api/v2/references")
+  def getReferences(ids: Option[String] = None, request: Request)(using
+      storeName: StoreName
+  ) =
+    request.log()
+
+    ids match
+      case None => Response("Query parameter `ids` must be provided", 400)
+      case Some(value) =>
+        this.itemService
+          .getReferences(value.toCommaSplitSeq)
+          .toHttpResponse()
 
   @withStoreName
   @post("/api/v2/references")
@@ -181,6 +194,21 @@ class Routes(using
         )
         .map(id => Map(id -> id))
         .toHttpResponse(201)
+
+    result.merge
+
+  @withStoreName
+  @patch("/api/v2/references/:id")
+  def updateReference(id: String, request: Request)(using
+      storeName: StoreName
+  ) =
+    request.log()
+
+    val result =
+      for payload <- request.readJson[ReferenceUpdatePayload]
+      yield this.itemService
+        .updateReference(id, payload.annotation)
+        .toHttpResponse(204)
 
     result.merge
 
@@ -218,7 +246,7 @@ private case class ReferenceUpdatePayload(
 )
 
 private def propsToOptions(props: String): ItemLoadOptions =
-  val propSet = props.split(",").toSet
+  val propSet = props.toCommaSplitSet
 
   if propSet.contains("all") then
     ItemLoadOptions(

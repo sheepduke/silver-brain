@@ -67,3 +67,12 @@ object UnitCodec extends jsoniter.JsonValueCodec[Unit]:
 extension [A](option: Option[A])
   def ensure: Either[Response[String], A] =
     option.toRight(Response("Required property not provided", 404))
+
+// ============================================================
+//  String
+// ============================================================
+
+extension (string: String)
+  def toCommaSplitSet: Set[String] = string.split(",").toSet
+
+  def toCommaSplitSeq: Seq[String] = string.toCommaSplitSet.toSeq

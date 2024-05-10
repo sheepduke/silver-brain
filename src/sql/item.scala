@@ -178,7 +178,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       StoreName
   ): ServiceResponse[Reference] =
     this.store.withTransaction(implicit session =>
-      val result = sql"select * from reference where id = $id"
+      val result = sql"select * from item_reference where id = $id"
         .map(rowToReference)
         .single
         .apply()
@@ -190,7 +190,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       StoreName
   ): ServiceResponse[Seq[Reference]] =
     this.store.withTransaction(implicit session =>
-      val result = sql"select * from reference where target in ($ids)"
+      val result = sql"select * from item_reference where id in ($ids)"
         .map(rowToReference)
         .list
         .apply()
@@ -221,7 +221,7 @@ class SqlItemService(store: SqliteStore) extends ItemService:
     this.store.withTransaction(implicit session =>
       sql"""
       update item_reference
-      set annotation = $annotation and update_time = ${Instant.now()}
+      set annotation = $annotation, update_time = ${Instant.now().toString()}
       where id = $id
       """.update.apply()
 
