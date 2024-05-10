@@ -25,7 +25,8 @@
     (set-keymap-parent map silver-brain-common-keymap)
     (define-key map (kbd "g") 'silver-brain-item-refresh)
     (define-key map (kbd "e") 'silver-brain-item-open-content)
-    (define-key map (kbd "d") 'silver-brain-item-delete)
+    (define-key map (kbd "d") 'silver-brain-delete-item-at-point)
+    (define-key map (kbd "D") 'silver-brain-item-delete)
     (define-key map (kbd "r") 'silver-brain-item-rename)
     (define-key map (kbd "u t") 'silver-brain-item-update-content-type)
     map))
@@ -154,24 +155,15 @@
 ;; ============================================================
 
 (defun silver-brain-item-refresh-all ()
-  (dolist (buffer (silver-brain-item-get-all-item-buffers))
+  (dolist (buffer (silver-brain--get-all-item-buffers))
     (with-current-buffer buffer
       (silver-brain-item-refresh))))
 
 (defun silver-brain-item-refresh-when-id-in (ids)
-  (dolist (buffer (silver-brain-item-get-all-item-buffers))
+  (dolist (buffer (silver-brain--get-all-item-buffers))
     (with-current-buffer buffer
       (when (member (silver-brain--prop-id) ids)
         (silver-brain-item-refresh)))))
-
-(defun silver-brain-item-get-all-item-buffers ()
-  "Return all the Silver Brain Item buffers."
-  (seq-filter (lambda (buffer)
-                (with-current-buffer buffer
-                  (and (string-prefix-p "*Silver Brain Item"
-                                        (buffer-name))
-                       (equal 'silver-brain-item-mode major-mode))))
-              (buffer-list)))
 
 ;; ============================================================
 ;;  Commands
@@ -203,12 +195,7 @@ of new item. Otherwise, it prompts the user to input one."
   "Delete current item."
   (interactive)
   (silver-brain--verify-current-item)
-  (when (y-or-n-p "I will delete this item and all the related links. Continue?")
-    (let ((current-item silver-brain-current-item))
-      (silver-brain-client-delete-item (silver-brain--prop-id))
-      (kill-buffer)
-      (silver-brain-item-refresh-all)
-      (silver-brain-hello-refresh))))
+  (silver-brain--delete-item silver-brain-current-item))
 
 (defun silver-brain-item-update-content-type ()
   "Update content type of current item."

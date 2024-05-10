@@ -15,6 +15,7 @@
   (let ((keymap (make-composed-keymap (list (make-sparse-keymap)
                                             widget-keymap))))
     (set-keymap-parent keymap silver-brain-common-keymap)
+    (define-key keymap (kbd "d") 'silver-brain-delete-item-at-point)
     (define-key keymap (kbd "g") 'silver-brain-hello-refresh)
     (define-key keymap (kbd "G") 'silver-brain-hello-clear)
     keymap))

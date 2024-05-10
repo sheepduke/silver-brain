@@ -98,6 +98,36 @@ PROMPT is the prompt for search string."
          (let ((key (completing-read "Choose item: " items)))
            (cdr (assoc-string key items))))))
 
+(defun silver-brain-delete-item-at-point ()
+  (interactive)
+  (let ((item (silver-brain--widget-get-item)))
+    (unless item
+      (error "Must be invoked upon an item link"))
+
+    (silver-brain--delete-item item)))
+
+(defun silver-brain--delete-item (item)
+  (when (y-or-n-p (format "Delete item `%s [%s]`?"
+                          (silver-brain--prop-name item)
+                          (silver-brain--prop-id item)))
+    (let ((item-id (silver-brain--prop-id item)))
+      (silver-brain-client-delete-item item-id)
+      (dolist (buffer (silver-brain--get-all-item-buffers))
+        (with-current-buffer buffer
+          (if (string= (silver-brain--prop-id) item-id)
+              (kill-buffer)
+            (silver-brain-item-refresh))))
+      (silver-brain-hello-refresh))))
+
+(defun silver-brain--get-all-item-buffers ()
+  "Return all the Silver Brain Item buffers."
+  (seq-filter (lambda (buffer)
+                (with-current-buffer buffer
+                  (and (string-prefix-p "*Silver Brain Item"
+                                        (buffer-name))
+                       (equal 'silver-brain-item-mode major-mode))))
+              (buffer-list)))
+
 ;; ============================================================
 ;;  Widget
 ;; ============================================================
@@ -165,10 +195,10 @@ length to be removed."
                                  :notify (lambda (&rest _)
                                            (silver-brain-item-open (silver-brain--prop-id item)))
                                  (silver-brain--prop-name item))))
-      (widget-put widget 'item-id (silver-brain--prop-id item)))))
+      (widget-put widget 'item item))))
 
-(cl-defun silver-brain--widget-get-item-id (&optional (widget (widget-at)))
-  (widget-get widget 'item-id))
+(cl-defun silver-brain--widget-get-item (&optional (widget (widget-at)))
+  (widget-get widget 'item))
 
 (defun silver-brain--widget-create-button (name notify)
   (silver-brain--with-push-button-face 
@@ -187,5 +217,11 @@ length to be removed."
     (widget-insert text)
     (let ((end (point)))
       (add-face-text-property start end face))))
+
+;; ============================================================
+;;  Commands
+;; ============================================================
+
+
 
 (provide 'silver-brain-util)

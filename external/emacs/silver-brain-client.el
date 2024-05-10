@@ -40,30 +40,29 @@
           (unless (<= 200 code 299)
             (error (format "Server response %d: %s"
                            code
-                           (string-trim (silver-brain--client-body-string)))))))
-      buffer)))
+                           (string-trim (silver-brain--client-body-string))))))
 
-(cl-defun silver-brain--client-read-json (&key (object-type 'alist)
-                            (key-type 'string))
+        (goto-char (point-min))
+        (search-forward "\n\n")
+        (decode-coding-string (buffer-substring (point) (point-max))
+                              'utf-8)))))
+
+(cl-defun silver-brain--client-read-json (string &key (object-type 'alist)
+                                     (key-type 'string))
   "Read response body as JSON and parse it.
 OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (let ((json-object-type object-type)
         (json-key-type key-type)
         (json-array-type 'list))
-    (save-excursion
-      (goto-char (point-min))
-      (search-forward "\n\n")
-      (json-read))))
+    (json-read-from-string string)))
 
 (defun silver-brain--client-get (uri)
-  (with-current-buffer (silver-brain--client-send-request uri :method :get)
-    (silver-brain--client-read-json)))
+  (silver-brain--client-read-json (silver-brain--client-send-request uri :method :get)))
 
 (defun silver-brain--client-post (uri &optional data)
-  (with-current-buffer (silver-brain--client-send-request uri
-                                              :method :post
-                                              :data data)
-    (silver-brain--client-read-json)))
+  (silver-brain--client-read-json (silver-brain--client-send-request uri
+                                             :method :post
+                                             :data data)))
 
 (defun silver-brain--client-patch (uri data)
   (silver-brain--client-send-request uri
