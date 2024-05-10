@@ -38,3 +38,5 @@
                          :content new-content)
     (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-id)))
     (set-buffer-modified-p nil)))
+
+(provide 'silver-brain-item-content)
