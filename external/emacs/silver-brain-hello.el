@@ -64,13 +64,8 @@
 
     ;; Insert search results.
     (when silver-brain-hello-search-string
-      (let* ((items (thread-first (silver-brain-client-search-items silver-brain-hello-search-string)
-                                  (sort (lambda (x y)
-                                          (string< (silver-brain--prop-id x)
-                                                   (silver-brain--prop-id y))))
-                                  (sort (lambda (x y)
-                                          (string< (silver-brain--prop-name x)
-                                                   (silver-brain--prop-name y)))))))
+      (let* ((items (silver-brain--item-get-sorted-items
+                     (silver-brain-client-search-items silver-brain-hello-search-string))))
 
         ;; Insert the result summary line.
         (widget-insert (format "Results (%d):\n" (length items)))
