@@ -66,7 +66,7 @@ class Routes(using
   @withStoreName
   @post("/api/v2/items/:id/children/:child")
   def createChild(id: String, child: String)(using storeName: StoreName) =
-    this.itemService.createChild(id, child).toHttpResponse(204)
+    this.itemService.createChild(id, child).toHttpResponse(201)
 
   @withStoreName
   @delete("/api/v2/items/:id/children/:child")
