@@ -76,12 +76,8 @@
 
         ;; Insert items.
         (dolist (item items)
-          (silver-brain--with-item-hyperlink-face
-           (widget-insert " - ")
-           (widget-create 'push-button
-                          :notify (lambda (&rest _)
-                                    (silver-brain-item-open (silver-brain--prop-id item)))
-                          (silver-brain--prop-name item)))
+          (widget-insert "  ")
+          (silver-brain--widget-create-item item)
           (widget-insert "\n"))))))
 
 (defun silver-brain--hello-show ()
@@ -89,16 +85,6 @@
     (with-current-buffer buffer
       (widget-forward 1))
     (pop-to-buffer-same-window buffer)))
-
-(defun silver-brain--list-create-widgets (items)
-  "Create inserts to "
-  (let ((item-count (length items)))
-    (if (= 0 item-count)
-        (widget-insert "I dit not find any item. :-(")
-      (widget-insert (format "I found %d councepts. :-)\n\n" item-count))))
-
-  ;; Insert item buttons.
-  )
 
 ;; ============================================================
 ;;  Commands

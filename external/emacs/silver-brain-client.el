@@ -59,10 +59,10 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (with-current-buffer (silver-brain--client-send-request uri :method :get)
     (silver-brain--client-read-json)))
 
-(defun silver-brain--client-post (uri data)
+(defun silver-brain--client-post (uri &optional data)
   (with-current-buffer (silver-brain--client-send-request uri
-                                       :method :post
-                                       :data data)
+                                              :method :post
+                                              :data data)
     (silver-brain--client-read-json)))
 
 (defun silver-brain--client-patch (uri data)
@@ -108,14 +108,10 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (defun silver-brain-client-delete-item (id)
   (silver-brain--client-delete (format "items/%s" id)))
 
-(defun silver-brain-client-create-link (source relation target directionalp)
-  (silver-brain--client-post "concept-links"
-          `(("source" . ,source)
-            ("relation" . ,relation)
-            ("target" . ,target)
-            ("isDirectional" . ,directionalp))))
+(defun silver-brain-client-create-child (id child-id)
+  (silver-brain--client-post (format "items/%s/children/%s" id child-id)))
 
-(defun silver-brain-client-delete-link (uuid)
-  (silver-brain--client-delete (format "concept-links/%s" uuid)))
+(defun silver-brain-client-delete-child (id child-id)
+  (silver-brain--client-delete (format "items/%s/children/%s" id child-id)))
 
 (provide 'silver-brain-client)

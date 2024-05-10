@@ -157,6 +157,25 @@ length to be removed."
          (widget-push-button-suffix nil))
      ,@body))
 
+(defun silver-brain--widget-create-item (item)
+  (let ((widget-button-face 'silver-brain-item-hyperlink)
+        (widget-push-button-prefix nil)
+        (widget-push-button-suffix nil))
+    (let ((widget (widget-create 'push-button
+                                 :notify (lambda (&rest _)
+                                           (silver-brain-item-open (silver-brain--prop-id item)))
+                                 (silver-brain--prop-name item))))
+      (widget-put widget 'item-id (silver-brain--prop-id item)))))
+
+(cl-defun silver-brain--widget-get-item-id (&optional (widget (widget-at)))
+  (widget-get widget 'item-id))
+
+(defun silver-brain--widget-create-button (name notify)
+  (silver-brain--with-push-button-face 
+   (widget-create 'push-button
+                  :notify (lambda (&rest _) (funcall notify))
+                  name)))
+
 (defmacro silver-brain--with-push-button-face (&rest body)
   `(let ((widget-button-face 'silver-brain-push-button)
          (widget-push-button-prefix " ")
