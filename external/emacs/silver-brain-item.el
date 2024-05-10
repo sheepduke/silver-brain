@@ -7,6 +7,7 @@
 (require 'silver-brain-vars)
 (require 'silver-brain-util)
 (require 'silver-brain-client)
+(require 'silver-brain-item-content)
 
 (defvar silver-brain-item-buffer-name-format "*Silver Brain Item - %s*")
 
@@ -41,14 +42,6 @@
 (defun silver-brain-item-show (item)
   (let ((buffer (silver-brain--item-prepare-buffer item)))
     (pop-to-buffer-same-window buffer)))
-
-(defun silver-brain-item-refresh ()
-  "Refresh current item."
-  (interactive)
-  (let* ((new-item (silver-brain-client-get-item (silver-brain--prop-id)))
-         (new-buffer-name (silver-brain--item-get-buffer-name new-item)))
-    (rename-buffer new-buffer-name)
-    (silver-brain--item-prepare-buffer new-item)))
 
 (defun silver-brain--item-prepare-buffer (item)
   (silver-brain--with-widget-buffer (silver-brain--item-get-buffer-name item)
@@ -103,31 +96,12 @@
 (cl-defun make-horizontal-bar (length)
   (string-join (cl-loop for i from 1 to length collect "⎯")))
 
-(cl-defun silver-brain-create-item (&optional name)
-  "Create a new item. If NAME is given, it is used as the name
-of new item. Otherwise, it prompts the user to input one."
-  (interactive)
-  (let* ((name (or name (read-string "Item name: ")))
-         (item (silver-brain-client-create-item name silver-brain-default-content-type)))
-    (silver-brain-hello-refresh)
-    (silver-brain-item-show item)))
-
 (defun silver-brain--item-update-content-type ()
   (let ((new-content-type (read-string "Content type: "
                                        (silver-brain--prop-content-type silver-brain-current-item))))
     (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
                          :content-type new-content-type)
     (silver-brain-item-refresh)))
-
-(defun silver-brain-item-delete ()
-  (interactive)
-  (silver-brain--verify-current-item)
-  (when (y-or-n-p "I will delete this item and all the related links. Continue?")
-    (let ((current-item silver-brain-current-item))
-      (silver-brain-client-delete-item (silver-brain--prop-id))
-      (kill-buffer)
-      (silver-brain-item-refresh-all)
-      (silver-brain-hello-refresh))))
 
 (defun silver-brain--verify-current-item ()
   (unless silver-brain-current-item
@@ -173,45 +147,6 @@ of new item. Otherwise, it prompts the user to input one."
   (seq-sort-by #'silver-brain--prop-id #'string< 
                (seq-sort-by #'silver-brain--prop-name #'string< items)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                        Content Buffer                        ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun silver-brain-item-open-content ()
-  (interactive)
-  (silver-brain--verify-current-item)
-  (let ((item silver-brain-current-item))
-    (with-current-buffer (get-buffer-create
-                          (format silver-brain-item-content-buffer-name-format
-                                  (silver-brain--prop-name item)))
-      (insert (silver-brain--prop-content item))
-
-      ;; Decide major mode.
-      (funcall (cdr (assoc (silver-brain--prop-content-type item)
-                           silver-brain-content-mode-alist)))
-      
-      ;; Set local vars.
-      (setq silver-brain-current-item item)
-      
-      ;; Set local keys.
-      (let ((keymap (make-sparse-keymap)))
-        (set-keymap-parent keymap (current-local-map))
-        (use-local-map keymap)
-        (define-key keymap (kbd "C-x C-s") 'silver-brain-item-save-content))
-
-      (set-buffer-modified-p nil)
-      (pop-to-buffer-same-window (current-buffer)))))
-
-(defun silver-brain-item-save-content ()
-  (interactive)
-  (let* ((old-item (seq-copy silver-brain-current-item))
-         (new-content (buffer-string))
-         (new-item (silver-brain--update-prop-content new-content old-item)))
-    (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
-                         :content new-content)
-    (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-id)))
-    (set-buffer-modified-p nil)))
-
 ;; ============================================================
 ;;  Refresh
 ;; ============================================================
@@ -240,7 +175,17 @@ of new item. Otherwise, it prompts the user to input one."
 ;;  Commands
 ;; ============================================================
 
+(cl-defun silver-brain-create-item (&optional name)
+  "Create a new item. If NAME is given, it is used as the name
+of new item. Otherwise, it prompts the user to input one."
+  (interactive)
+  (let* ((name (or name (read-string "Item name: ")))
+         (item (silver-brain-client-create-item name silver-brain-default-content-type)))
+    (silver-brain-hello-refresh)
+    (silver-brain-item-show item)))
+
 (cl-defun silver-brain-item-rename ()
+  "Rename current item."
   (interactive)
   (silver-brain--verify-current-item)
 
@@ -251,5 +196,23 @@ of new item. Otherwise, it prompts the user to input one."
                          :name new-name)
     (silver-brain-item-refresh-all)
     (silver-brain-hello-refresh)))
+
+(defun silver-brain-item-delete ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (when (y-or-n-p "I will delete this item and all the related links. Continue?")
+    (let ((current-item silver-brain-current-item))
+      (silver-brain-client-delete-item (silver-brain--prop-id))
+      (kill-buffer)
+      (silver-brain-item-refresh-all)
+      (silver-brain-hello-refresh))))
+
+(defun silver-brain-item-refresh ()
+  "Refresh current item."
+  (interactive)
+  (let* ((new-item (silver-brain-client-get-item (silver-brain--prop-id)))
+         (new-buffer-name (silver-brain--item-get-buffer-name new-item)))
+    (rename-buffer new-buffer-name)
+    (silver-brain--item-prepare-buffer new-item)))
 
 (provide 'silver-brain-item)
