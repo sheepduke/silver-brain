@@ -113,4 +113,22 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (defun silver-brain-client-delete-child (id child-id)
   (silver-brain--client-delete (format "items/%s/children/%s" id child-id)))
 
+(defun silver-brain-client-create-reference (source target annotation)
+  (let* ((response (silver-brain--client-post "references"
+                                  (list (cons "source" source)
+                                        (cons "target" target)
+                                        (cons "annotation" annotation))))
+         (reference-id (silver-brain--prop-id response)))
+    reference-id))
+
+(defun silver-brain-client-get-references (ids)
+  (silver-brain--client-get (format "references?ids=%s" (string-join ids ","))))
+
+(defun silver-brain-client-update-reference (id annotation)
+  (silver-brain--client-patch (format "references/%s" id)
+                  (list (cons "annotation" annotation))))
+
+(defun silver-brain-client-delete-reference (id)
+  (silver-brain--client-delete (format "references/%s" id)))
+
 (provide 'silver-brain-client)

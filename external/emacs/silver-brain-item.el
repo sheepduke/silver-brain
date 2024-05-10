@@ -93,7 +93,7 @@
   (silver-brain--item-insert-references)
 
   ;; Insert content.
-  (widget-insert "\n\n")
+  (widget-insert "\n")
   (silver-brain--widget-insert-with-face "Content\n" 'silver-brain-h1)
   (widget-insert (make-horizontal-bar 60)
                  "\n"
@@ -127,7 +127,7 @@
     
     (widget-insert "  ")
     
-    (dolist (other (silver-brain--item-get-sorted others))
+    (dolist (other (silver-brain--item-get-sorted-items others))
       (silver-brain--widget-create-button
        "Del" (lambda (&rest _)
                (when (y-or-n-p "Confirm? ")
@@ -143,12 +143,85 @@
       (widget-insert "\n  "))))
 
 (defun silver-brain--item-insert-references ()
-  ;; TODO
-  )
+  (silver-brain--widget-insert-with-face "References " 'silver-brain-h2)
+  (silver-brain--widget-create-button
+   "New" (lambda ()
+           (let* ((source (silver-brain--prop-id))
+                  (target (silver-brain--search-items-and-select
+                           (read-string "Search for target item: "))))
+             (when target
+               (let ((annotation (read-string "Annotation: ")))
+                 (silver-brain-client-create-reference source target annotation)
+                 (silver-brain-item-refresh-when-id-in (list source target)))))))
+  (widget-insert "\n")
 
-(defun silver-brain--item-get-sorted (items)
+  (let* ((references-out (silver-brain-client-get-references (silver-brain--prop-references-out)))
+         (references-in (silver-brain-client-get-references (silver-brain--prop-references-in)))
+         (items-seq (silver-brain-client-get-items
+                     (append (seq-map #'silver-brain--prop-target references-out)
+                             (seq-map #'silver-brain--prop-source references-in))))
+         (items (seq-map (lambda (x)
+                           (cons (silver-brain--prop-id x) x))
+                         items-seq)))
+
+    ;; Insert outbound references.
+    (dolist (reference (silver-brain--item-references-sort-by-target
+                        (silver-brain-client-get-references (silver-brain--prop-references-out))))
+      (silver-brain--item-insert-reference reference items))
+
+    ;; Insert inbound references.
+    (dolist (reference (silver-brain--item-references-sort-by-source
+                        (silver-brain-client-get-references (silver-brain--prop-references-in))))
+      (silver-brain--item-insert-reference reference items))))
+
+(defun silver-brain--item-insert-reference (reference items)
+  (widget-insert "  ")
+  (silver-brain--widget-create-button
+   "Edit" (lambda ()
+            (let ((new-annotation (read-string "New annotation: ")))
+              (silver-brain-client-update-reference (silver-brain--prop-id reference) new-annotation)
+              (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-source reference)
+                                              (silver-brain--prop-target reference))))))
+  (widget-insert " ")
+  (silver-brain--widget-create-button
+   "Del" (lambda ()
+           (when (y-or-n-p "Delete this reference? ")
+             (silver-brain-client-delete-reference (silver-brain--prop-id reference))
+             (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-source reference)
+                                             (silver-brain--prop-target reference))))))
+  (widget-insert " ")
+
+  (if (string= (silver-brain--prop-source reference) (silver-brain--prop-id))
+      (widget-insert (silver-brain--prop-name))
+    (silver-brain--widget-create-item (silver-brain--prop (silver-brain--prop-target reference) items)))
+
+  (widget-insert " -["
+                 (silver-brain--prop-annotation reference)
+                 "]-> ")
+
+  (if (string= (silver-brain--prop-target reference) (silver-brain--prop-id))
+      (widget-insert (silver-brain--prop-name))
+    (silver-brain--widget-create-item (silver-brain--prop (silver-brain--prop-target reference) items)))
+
+  (widget-insert "\n"))
+
+(defun silver-brain--item-get-sorted-items (items)
   (seq-sort-by #'silver-brain--prop-id #'string< 
                (seq-sort-by #'silver-brain--prop-name #'string< items)))
+
+(defun silver-brain--item-references-sort-by-source (references)
+  (seq-sort-by (lambda (x) (silver-brain--prop-id (silver-brain--prop-source x)))
+               #'string<
+               (seq-sort-by (lambda (x) (silver-brain--prop-name (silver-brain--prop-source x)))
+                            #'string<
+                            references)))
+
+(defun silver-brain--item-references-sort-by-target (references)
+  (seq-sort-by (lambda (x) (silver-brain--prop-id (silver-brain--prop-target x)))
+               #'string<
+               (seq-sort-by (lambda (x) (silver-brain--prop-name (silver-brain--prop-target x)))
+                            #'string<
+                            references)))
 
 ;; ============================================================
 ;;  Refresh

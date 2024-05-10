@@ -40,6 +40,21 @@
 (defun silver-brain--prop-siblings (&optional obj)
   (silver-brain--prop "siblings" obj))
 
+(defun silver-brain--prop-references-out (&optional obj)
+  (silver-brain--prop "referencesFromThis" obj))
+
+(defun silver-brain--prop-references-in (&optional obj)
+  (silver-brain--prop "referencesToThis" obj))
+
+(defun silver-brain--prop-source (&optional obj)
+  (silver-brain--prop "source" obj))
+
+(defun silver-brain--prop-target (&optional obj)
+  (silver-brain--prop "target" obj))
+
+(defun silver-brain--prop-annotation (&optional obj)
+  (silver-brain--prop "annotation" obj))
+
 (defun silver-brain--update-prop-content (value &optional obj)
   (silver-brain--update-prop "content" value obj))
 
