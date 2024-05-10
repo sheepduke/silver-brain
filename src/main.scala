@@ -12,7 +12,8 @@ import org.slf4j.Logger
 import ch.qos.logback.classic.Level
 
 @main def main() =
-  given store: SqliteStore = SqliteStore(os.home / "temp" / "test")
+  // given store: SqliteStore = SqliteStore(os.home / "temp" / "test")
+  given store: SqliteStore = SqliteStore(os.home / ".silver-brain")
   given itemService: ItemService = SqlItemService(store)
 
   // Set the log level to INFO.
