@@ -30,6 +30,9 @@
     (define-key map (kbd "D") 'silver-brain-item-delete)
     (define-key map (kbd "r") 'silver-brain-item-rename)
     (define-key map (kbd "u t") 'silver-brain-item-update-content-type)
+    (define-key map (kbd "n i") 'silver-brain-create-item)
+    (define-key map (kbd "n p") 'silver-brain-item-add-parent)
+    (define-key map (kbd "n c") 'silver-brain-item-add-child)
     map))
 
 (define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
@@ -114,16 +117,9 @@
   (silver-brain--widget-insert-with-face (if parentp "Parents " "Children ") 'silver-brain-h2)
   (silver-brain--widget-create-button
    "New" (lambda (&rest _)
-           (let* ((this-id (silver-brain--prop-id))
-                  (other-id (silver-brain--search-items-and-select
-                             (read-string (format "Search for %s: "
-                                                  (if parentp
-                                                      "parent"
-                                                    "child"))))))
-             (if parentp
-                 (silver-brain-client-create-child other-id this-id)
-               (silver-brain-client-create-child this-id other-id))
-             (silver-brain-item-refresh-when-id-in (list this-id other-id)))))
+           (if parentp
+               (silver-brain-item-add-parent)
+             (silver-brain-item-add-child))))
 
   (let ((others (silver-brain-client-get-items (if parentp
                                        (silver-brain--prop-parents)
@@ -143,7 +139,8 @@
                        (silver-brain-client-delete-child other-id this-id)
                      (silver-brain-client-delete-child this-id other-id))
                    
-                   (silver-brain-item-refresh-when-id-in (list this-id other-id))))))
+                   (silver-brain-item-refresh-when-id-in (append (list this-id other-id)
+                                                     (silver-brain--prop-siblings)))))))
       (widget-insert " ")
       (silver-brain--widget-create-item other)
       (widget-insert "\n  "))))
@@ -276,7 +273,8 @@
 of new item. Otherwise, it prompts the user to input one."
   (interactive)
   (let* ((name (or name (read-string "Item name: ")))
-         (item (silver-brain-client-create-item name silver-brain-default-content-type)))
+         (item (silver-brain-client-get-item
+                (silver-brain-client-create-item name silver-brain-default-content-type))))
     (silver-brain-hello-refresh)
     (silver-brain-item-show item)))
 
@@ -308,6 +306,22 @@ of new item. Otherwise, it prompts the user to input one."
     (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
                          :content-type new-content-type)
     (silver-brain-item-refresh)))
+
+(defun silver-brain-item-add-parent ()
+  (interactive)
+  (let* ((this-id (silver-brain--prop-id))
+         (parent-id (silver-brain--search-items-and-select
+                    (read-string (format "Search for parent: ")))))
+    (silver-brain-client-create-child parent-id this-id)
+    (silver-brain-item-refresh-when-id-in (list this-id parent-id))))
+
+(defun silver-brain-item-add-child ()
+  (interactive)
+  (let* ((this-id (silver-brain--prop-id))
+         (child-id (silver-brain--search-items-and-select
+                    (read-string (format "Search for child: ")))))
+    (silver-brain-client-create-child this-id child-id)
+    (silver-brain-item-refresh-when-id-in (list this-id child-id))))
 
 (defun silver-brain-item-refresh ()
   "Refresh current item."

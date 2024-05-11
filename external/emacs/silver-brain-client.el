@@ -89,10 +89,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (defun silver-brain-client-create-item (name content-type)
   (let* ((response (silver-brain--client-post "items"
                                   (list (cons "name" name)
-                                        (cons "contentType" content-type))))
-         (id (silver-brain--prop-id response))
-         (item (silver-brain-client-get-item id)))
-    item))
+                                        (cons "contentType" content-type)))))
+    (silver-brain--prop-id response)))
 
 (cl-defun silver-brain-client-update-item (id &key name content-type content)
   (let ((data '()))

@@ -109,9 +109,12 @@ PROMPT is the prompt for search string."
                                          (silver-brain--prop-id item))
                                  (silver-brain--prop-id item)))
                          result)))
-    (and items
-         (let ((key (completing-read "Choose item: " items)))
-           (cdr (assoc-string key items))))))
+    (if items
+        (cdr (assoc-string (completing-read "Choose item: " items)
+                           items))
+      (and (y-or-n-p "No item found. Create new one? ")
+           (silver-brain-client-create-item (read-string "Name: " search-string)
+                                silver-brain-default-content-type)))))
 
 (defun silver-brain-delete-item-at-point ()
   (interactive)
