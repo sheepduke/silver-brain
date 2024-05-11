@@ -4,6 +4,7 @@
 (require 'wid-edit)
 
 (require 'silver-brain-util)
+(require 'silver-brain-item)
 
 (defvar silver-brain-hello-buffer-name "*Silver Brain Hello*")
 
