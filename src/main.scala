@@ -11,17 +11,23 @@ import ch.qos.logback.classic.LoggerContext
 import org.slf4j.Logger
 import ch.qos.logback.classic.Level
 
-@main def main() =
-  // given store: SqliteStore = SqliteStore(os.home / "temp" / "test")
-  given store: SqliteStore = SqliteStore(os.home / ".silver-brain")
-  given itemService: ItemService = SqlItemService(store)
+val defaultStoreName = "main"
 
+@main def main() =
   // Set the log level to INFO.
   LoggerFactory
     .getILoggerFactory()
     .asInstanceOf[LoggerContext]
     .exists(Logger.ROOT_LOGGER_NAME)
     .setLevel(Level.INFO)
+
+  // given store: SqliteStore = SqliteStore(os.home / "temp" / "test")
+  given store: SqliteStore = SqliteStore(os.home / ".silver-brain")
+  given itemService: ItemService = SqlItemService(store)
+
+  // Create default (main) database for the first run.
+  if !store.storeExists(defaultStoreName) then
+    migrateDatabase(store, defaultStoreName)
 
   val httpServer = HttpServer()
   httpServer.start()
