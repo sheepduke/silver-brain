@@ -12,15 +12,18 @@ import scalikejdbc.DB
 import scala.util.Using
 import java.sql.Connection
 import scala.util.Try
+import org.flywaydb.core.Flyway
 
 class SqliteStore(rootPath: Path) extends Store:
   override def createStore(
       storeName: StoreName
   ): Either[ServiceError, Unit] =
     if this.storeExists(storeName) then
+      Left(ServiceError.Conflict(s"Store already exists"))
+    else
       os.makeDir.all(this.storePath(storeName))
+      this.migrateDatabase(storeName)
       Right(())
-    else Left(ServiceError.Conflict(s"Store already exists"))
 
   override def storeExists(storeName: StoreName): Boolean =
     os.exists(this.storePath(storeName))
@@ -53,10 +56,20 @@ class SqliteStore(rootPath: Path) extends Store:
       Right(DB(ConnectionPool.borrow(storeName)))
     else Left(ServiceError.StoreNotFound(storeName))
 
-  def ensureConnectionPoolInitialized(storeName: StoreName) =
+  private def ensureConnectionPoolInitialized(storeName: StoreName) =
     if !ConnectionPool.isInitialized(storeName) then
       val config = SQLiteConfig()
       val dataSource = SQLiteDataSource(config)
       dataSource.setUrl(this.jdbcUrl(storeName))
       val connectionPool = DataSourceConnectionPool(dataSource)
       ConnectionPool.add(storeName, connectionPool)
+
+  private def migrateDatabase(storeName: StoreName) =
+    val flyway =
+      Flyway
+        .configure()
+        .locations("classpath:migrations")
+        .dataSource(this.jdbcUrl(storeName), null, null)
+        .load()
+
+    flyway.migrate()

@@ -2,7 +2,6 @@ package silver_brain.core
 
 import scala.util.Try
 import java.time.Instant
-import com.github.ksuid.Ksuid
 
 type Id = String
 

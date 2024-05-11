@@ -27,20 +27,10 @@ val defaultStoreName = "main"
 
   // Create default (main) database for the first run.
   if !store.storeExists(defaultStoreName) then
-    migrateDatabase(store, defaultStoreName)
+    store.createStore(defaultStoreName)
 
   val httpServer = HttpServer()
   httpServer.start()
-
-def migrateDatabase(store: SqliteStore, storeName: StoreName) =
-  val flyway =
-    Flyway
-      .configure()
-      .locations("classpath:migrations")
-      .dataSource(store.jdbcUrl(storeName), null, null)
-      .load()
-
-  flyway.migrate()
 
 def repl() =
   main()
