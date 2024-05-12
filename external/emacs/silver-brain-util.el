@@ -79,6 +79,7 @@
 
 (defvar silver-brain-common-keymap
   (let ((keymap (make-sparse-keymap)))
+    (define-key keymap (kbd "h") 'silver-brain-hello)
     (define-key keymap (kbd "j") 'silver-brain-widget-jump)
     (define-key keymap (kbd "q") 'quit-window)
     (define-key keymap (kbd "Q") 'silver-brain-quit-all)
@@ -105,8 +106,7 @@
                         (string-prefix-p "*Silver Brain" (buffer-name buffer)))
                       (buffer-list))))
 
-(cl-defun silver-brain--search-items-and-select (search-string
-                                     &optional (create-if-not-exists-p t))
+(cl-defun silver-brain--search-items-and-select (search-string)
   "Ask for a search string, search for items and select one.
 PROMPT is the prompt for search string."
   (let* ((result (silver-brain-client-search-items search-string))
@@ -116,13 +116,9 @@ PROMPT is the prompt for search string."
                                          (silver-brain--prop-id item))
                                  (silver-brain--prop-id item)))
                          result)))
-    (if items
-        (cdr (assoc-string (completing-read "Choose item: " items)
-                           items))
-      (and create-if-not-exists-p
-           (y-or-n-p "No item found. Create new one? ")
-           (silver-brain-client-create-item (read-string "Name: " search-string)
-                                silver-brain-default-content-type)))))
+    (and items
+         (cdr (assoc-string (completing-read "Choose item: " items)
+                            items)))))
 
 (defun silver-brain-delete-item-at-point ()
   (interactive)

@@ -28,11 +28,10 @@
     (define-key keymap (kbd "D") 'silver-brain-item-delete)
     (define-key keymap (kbd "r") 'silver-brain-item-rename)
     (define-key keymap (kbd "u t") 'silver-brain-item-update-content-type)
-    (define-key keymap (kbd "c p") 'silver-brain-item-add-parent)
-    (define-key keymap (kbd "c c") 'silver-brain-item-add-child)
-    (define-key keymap (kbd "c C") 'silver-brain-item-create-children)
-    (define-key keymap (kbd "c p") 'silver-brain-item-add-parent)
+    (define-key keymap (kbd "c p") 'silver-brain-item-add-or-create-parent)
     (define-key keymap (kbd "c P") 'silver-brain-item-create-parents)
+    (define-key keymap (kbd "c c") 'silver-brain-item-add-or-create-child)
+    (define-key keymap (kbd "c C") 'silver-brain-item-create-children)
     keymap))
 
 (define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
@@ -315,7 +314,12 @@ Input an empty string to finish."
                          :content-type new-content-type)
     (silver-brain-item-refresh)))
 
-(cl-defun silver-brain-item-add-parent (&optional (create-if-not-exists-p t))
+(defun silver-brain-item-add-or-create-parent ()
+  (interactive)
+  (unless (silver-brain-item-add-parent)
+    (silver-brain-item-create-parent)))
+
+(defun silver-brain-item-add-parent ()
   "Search for an item and set it as a parent.
 
 If nothing is found and CREATE-IF-NOT-EXISTS-P is set to T (default),
@@ -324,11 +328,19 @@ create a new item."
   (silver-brain--verify-current-item)
   (let* ((this-id (silver-brain--prop-id))
          (parent-id (silver-brain--search-items-and-select
-                     (read-string (format "Search for parent: "))
-                     create-if-not-exists-p)))
+                     (read-string (format "Search for parent: ")))))
     (when parent-id
       (silver-brain-client-add-child parent-id this-id)
       (silver-brain-item-refresh-when-id-in (list this-id parent-id)))))
+
+(defun silver-brain-item-create-parent ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let* ((this-id (silver-brain--prop-id))
+         (parent-id (silver-brain-client-create-item (read-string "Name: " search-string)
+                                         silver-brain-default-content-type)))
+    (silver-brain-client-add-child parent-id this-id)
+    (silver-brain-item-refresh-when-id-in (list this-id parent-id))))
 
 (defun silver-brain-item-create-parents ()
   "Create items and set them as the parent of current item.
@@ -341,6 +353,28 @@ This function will continuously prompt for new items. Input empty string to stop
                          (silver-brain--prop-id))))
   (silver-brain-item-refresh))
 
+(defun silver-brain-item-add-or-create-child ()
+  (interactive)
+  (unless (silver-brain-item-add-child)
+    (silver-brain-item-create-child)))
+
+(defun silver-brain-item-add-child ()
+  (interactive)
+  (let* ((this-id (silver-brain--prop-id))
+         (child-id (silver-brain--search-items-and-select
+                    (read-string (format "Search for child: ")))))
+    (when child-id
+      (silver-brain-client-add-child this-id child-id)
+      (silver-brain-item-refresh-when-id-in (list this-id child-id)))))
+
+(defun silver-brain-item-create-child ()
+  (interactive)
+  (let* ((this-id (silver-brain--prop-id))
+         (child-id (silver-brain-client-create-item (read-string "Name: " search-string)
+                                        silver-brain-default-content-type)))
+    (silver-brain-client-add-child this-id child-id)
+    (silver-brain-item-refresh-when-id-in (list this-id child-id))))
+
 (defun silver-brain-item-create-children ()
   "Create items and set them as the parent of current item.
 This function will continuously prompt for new items. Input empty string to stop."
@@ -350,14 +384,6 @@ This function will continuously prompt for new items. Input empty string to stop
       (silver-brain-client-add-child (silver-brain--prop-id)
                          (silver-brain-client-create-item name silver-brain-default-content-type))))
   (silver-brain-item-refresh))
-
-(defun silver-brain-item-add-child ()
-  (interactive)
-  (let* ((this-id (silver-brain--prop-id))
-         (child-id (silver-brain--search-items-and-select
-                    (read-string (format "Search for child: ")))))
-    (silver-brain-client-add-child this-id child-id)
-    (silver-brain-item-refresh-when-id-in (list this-id child-id))))
 
 (defun silver-brain-item-refresh ()
   "Refresh current item."
