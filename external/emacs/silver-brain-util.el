@@ -78,12 +78,18 @@
 ;; ============================================================
 
 (defvar silver-brain-common-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "j") 'silver-brain-widget-jump)
-    (define-key map (kbd "q") 'quit-window)
-    (define-key map (kbd "Q") 'silver-brain-quit-all)
-    (define-key map [remap self-insert-command] 'silver-brain--no-edit)
-    map)
+  (let ((keymap (make-sparse-keymap)))
+    (define-key keymap (kbd "j") 'silver-brain-widget-jump)
+    (define-key keymap (kbd "q") 'quit-window)
+    (define-key keymap (kbd "Q") 'silver-brain-quit-all)
+    (define-key keymap (kbd "o") 'silver-brain-open)
+    (define-key keymap (kbd "n") 'silver-brain-widget-forward-item)
+    (define-key keymap (kbd "p") 'silver-brain-widget-backward-item)
+    (define-key keymap (kbd "c i") 'silver-brain-create-item)
+    (define-key keymap (kbd "c I") 'silver-brain-create-items)
+    (define-key keymap (kbd "d") 'silver-brain-delete-item-at-point)
+    (define-key keymap [remap self-insert-command] 'silver-brain--no-edit)
+    keymap)
   "Common keymap shared by all the Silver Brain buffers.")
 
 (defun silver-brain--no-edit ()
@@ -149,7 +155,7 @@ PROMPT is the prompt for search string."
               (buffer-list)))
 
 ;; ============================================================
-;;  Widget
+;;  Widget Creation
 ;; ============================================================
 
 (defmacro silver-brain--with-widget-buffer (buffer-name &rest body)
@@ -174,33 +180,6 @@ length to be removed."
   "Format given TIMESTRING corresponding to silver-brain-time-format."
   (format-time-string silver-brain-time-format (encode-time (iso8601-parse timestring))))
 
-(defun silver-brain--get-widgets ()
-  "Get a list of points of widgets."
-  (let (widget-points)
-    (save-excursion
-      (goto-char (point-min))
-      (when (widget-at)
-        (push (point) widget-points))
-      (widget-forward 1)
-
-      (while (and (widget-at)
-                  (not (member (point) widget-points)))
-        (push (point) widget-points)
-        (widget-forward 1)))
-    (nreverse widget-points)))
-
-(defun silver-brain-widget-jump ()
-  "Jump to the widgets."
-  (interactive)
-  (avy-action-goto 
-   (avy-process (mapcar (lambda (point)
-                          (cons point (selected-window)))
-                        (silver-brain--get-widgets)))))
-
-;; ============================================================
-;;  Buffer
-;; ============================================================
-
 (defmacro silver-brain--with-item-hyperlink-face (&rest body)
   `(let ((widget-button-face 'silver-brain-item-hyperlink)
          (widget-push-button-prefix nil)
@@ -217,8 +196,8 @@ length to be removed."
                                  (silver-brain--prop-name item))))
       (widget-put widget 'item item))))
 
-(cl-defun silver-brain--widget-get-item (&optional (widget (widget-at)))
-  (widget-get widget 'item))
+(cl-defun silver-brain--widget-get-item (&optional (point (point)))
+  (widget-get (widget-at point) 'item))
 
 (defun silver-brain--widget-create-button (name notify)
   (silver-brain--with-push-button-face 
@@ -239,9 +218,53 @@ length to be removed."
       (add-face-text-property start end face))))
 
 ;; ============================================================
-;;  Commands
+;;  Widget Movement
 ;; ============================================================
 
+(defun silver-brain-widget-jump ()
+  "Jump to the widgets."
+  (interactive)
+  (avy-action-goto 
+   (avy-process (mapcar (lambda (point)
+                          (cons point (selected-window)))
+                        (silver-brain--widgets-get-in-buffer)))))
 
+(defun silver-brain-widget-forward-item ()
+  (interactive)
+  (if-let ((point (silver-brain-widget-next-item))) 
+      (progn (goto-char point)
+             (message ""))
+    (message "No more item")))
+
+(defun silver-brain-widget-backward-item ()
+  (interactive)
+  (if-let ((point (silver-brain-widget-next-item nil)))
+      (progn (goto-char point)
+             (message ""))
+    (message "No more item")))
+
+(cl-defun silver-brain-widget-next-item (&optional (forwardp t))
+  (let ((points (silver-brain--widgets-get-in-buffer))
+        (filter-fun (if forwardp #'> #'<)))
+    (seq-find (lambda (widget-point)
+                (silver-brain--widget-get-item widget-point))
+              (seq-filter (lambda (point)
+                            (funcall filter-fun point (point)))
+                          (if forwardp points (reverse points))))))
+
+(defun silver-brain--widgets-get-in-buffer ()
+  "Get a list of points of widgets."
+  (let (widget-points)
+    (save-excursion
+      (goto-char (point-min))
+      (when (widget-at)
+        (push (point) widget-points))
+      (widget-forward 1)
+
+      (while (and (widget-at)
+                  (not (member (point) widget-points)))
+        (push (point) widget-points)
+        (widget-forward 1)))
+    (nreverse widget-points)))
 
 (provide 'silver-brain-util)
