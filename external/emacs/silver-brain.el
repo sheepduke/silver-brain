@@ -12,11 +12,6 @@
   (silver-brain-item-open (silver-brain--search-items-and-select
                (read-string "Search items: "))))
 
-(defun silver-brain-install ()
-  (silver-brain--list-install)
-  (silver-brain--item-install)
-  nil)
-
 (provide 'silver-brain)
 
 ;;; silver-brain.el ends here
