@@ -132,7 +132,18 @@ PROMPT is the prompt for search string."
 
     (silver-brain--delete-item item)))
 
-(defun silver-brain--delete-item (item)
+(cl-defun silver-brain--delete-items (ids)
+  (when (y-or-n-p (format "Delete %d items? " (length ids)))
+    (dolist (id ids)
+      (silver-brain-client-delete-item id)
+      (dolist (buffer (silver-brain--get-all-item-buffers))
+        (with-current-buffer buffer
+          (if (string= (silver-brain--prop-id) id)
+              (kill-buffer)
+            (silver-brain-item-refresh))))
+      (silver-brain-hello-refresh))))
+
+(cl-defun silver-brain--delete-item (item)
   (when (y-or-n-p (format "Delete item `%s [%s]`?"
                           (silver-brain--prop-name item)
                           (silver-brain--prop-id item)))
@@ -229,21 +240,21 @@ length to be removed."
                           (cons point (selected-window)))
                         (silver-brain--widgets-get-in-buffer)))))
 
-(defun silver-brain-widget-forward-item ()
+(defun silver-brain-forward-item ()
   (interactive)
-  (if-let ((point (silver-brain-widget-next-item))) 
+  (if-let ((point (silver-brain--widget-next-item))) 
       (progn (goto-char point)
              (message ""))
     (message "No more item")))
 
-(defun silver-brain-widget-backward-item ()
+(defun silver-brain-backward-item ()
   (interactive)
-  (if-let ((point (silver-brain-widget-next-item nil)))
+  (if-let ((point (silver-brain--widget-next-item nil)))
       (progn (goto-char point)
              (message ""))
     (message "No more item")))
 
-(cl-defun silver-brain-widget-next-item (&optional (forwardp t))
+(cl-defun silver-brain--widget-next-item (&optional (forwardp t))
   (let ((points (silver-brain--widgets-get-in-buffer))
         (filter-fun (if forwardp #'> #'<)))
     (seq-find (lambda (widget-point)
@@ -266,5 +277,19 @@ length to be removed."
         (push (point) widget-points)
         (widget-forward 1)))
     (nreverse widget-points)))
+
+(defun silver-brain--widget-get-item-in-line ()
+  (if (silver-brain--widget-has-item-in-line)
+      (save-excursion
+        (move-end-of-line 0)
+        (silver-brain-forward-item)
+        (silver-brain--widget-get-item))
+    (message "No widget in this line")))
+
+(defun silver-brain--widget-has-item-in-line ()
+  (save-excursion
+    (let ((line-number (line-number-at-pos)))
+      (move-beginning-of-line 1)
+      (= line-number (line-number-at-pos (silver-brain--widget-next-item))))))
 
 (provide 'silver-brain-util)

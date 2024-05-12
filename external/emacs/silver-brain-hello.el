@@ -16,9 +16,11 @@
   (let ((keymap (make-composed-keymap (list (make-sparse-keymap)
                                             widget-keymap))))
     (set-keymap-parent keymap silver-brain-common-keymap)
-    (define-key keymap (kbd "d") 'silver-brain-delete-item-at-point)
     (define-key keymap (kbd "g") 'silver-brain-hello-refresh)
     (define-key keymap (kbd "G") 'silver-brain-hello-clear)
+    (define-key keymap (kbd "m") 'silver-brain-mark-item-and-forward)
+    (define-key keymap (kbd "u") 'silver-brain-unmark-item-and-forward)
+    (define-key keymap (kbd "x d") 'silver-brain-delete-marked-items)
     keymap))
 
 (define-derived-mode silver-brain-hello-mode fundamental-mode "SB-Hello"
@@ -86,7 +88,7 @@
     (pop-to-buffer-same-window buffer)))
 
 ;; ============================================================
-;;  Commands
+;;  Refresh & Clear
 ;; ============================================================
 
 (defun silver-brain-hello-refresh ()
@@ -97,5 +99,50 @@
   (interactive)
   (setq silver-brain-hello-search-string nil)
   (silver-brain--hello-prepare-buffer))
+
+;; ============================================================
+;;  Mark
+;; ============================================================
+
+(defvar-local silver-brain--marked-items '())
+
+(defun silver-brain-mark-item-and-forward ()
+  (interactive)
+  (silver-brain-mark-item)
+  (silver-brain-forward-item))
+
+(defun silver-brain-unmark-item-and-forward ()
+  (interactive)
+  (silver-brain-unmark-item)
+  (silver-brain-forward-item))
+
+(defun silver-brain-mark-item ()
+  (interactive)
+  (if (silver-brain--widget-has-item-in-line)
+      (let ((inhibit-read-only t))
+        (save-excursion
+          (move-beginning-of-line 1)
+          (delete-char 1)
+          (insert ">")
+          (push (silver-brain--widget-get-item-in-line) silver-brain--marked-items)
+          (set-buffer-modified-p nil)))
+    (message "Must be invoked at a line with item")))
+
+(defun silver-brain-unmark-item ()
+  (interactive)
+  (if (silver-brain--widget-has-item-in-line)
+      (let ((inhibit-read-only t))
+        (save-excursion
+          (move-beginning-of-line 1)
+          (delete-char 1)
+          (insert " ")
+          (setq silver-brain--marked-items
+                (delete (silver-brain--widget-get-item-in-line) silver-brain--marked-items))
+          (set-buffer-modified-p nil)))
+    (message "Must be invoked at a line with item")))
+
+(defun silver-brain-hello-delete-marked-items ()
+  (interactive)
+  (silver-brain--delete-items (seq-map #'silver-brain--prop-id silver-brain--marked-items)))
 
 (provide 'silver-brain-hello)
