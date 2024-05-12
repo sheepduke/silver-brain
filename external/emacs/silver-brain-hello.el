@@ -19,6 +19,8 @@
     (define-key keymap (kbd "d") 'silver-brain-delete-item-at-point)
     (define-key keymap (kbd "g") 'silver-brain-hello-refresh)
     (define-key keymap (kbd "G") 'silver-brain-hello-clear)
+    (define-key keymap (kbd "c i") 'silver-brain-create-item)
+    (define-key keymap (kbd "c I") 'silver-brain-create-items)
     keymap))
 
 (define-derived-mode silver-brain-hello-mode fundamental-mode "SB-Hello"

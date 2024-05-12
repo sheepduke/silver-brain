@@ -87,6 +87,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (silver-brain--client-get (format "items?search=%s" search-string)))
 
 (defun silver-brain-client-create-item (name content-type)
+  "Create an item with given NAME and CONTENT-TYPE.
+Return the ID of newly created item."
   (let* ((response (silver-brain--client-post "items"
                                   (list (cons "name" name)
                                         (cons "contentType" content-type)))))
@@ -105,7 +107,7 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (defun silver-brain-client-delete-item (id)
   (silver-brain--client-delete (format "items/%s" id)))
 
-(defun silver-brain-client-create-child (id child-id)
+(defun silver-brain-client-add-child (id child-id)
   (silver-brain--client-post (format "items/%s/children/%s" id child-id)))
 
 (defun silver-brain-client-delete-child (id child-id)

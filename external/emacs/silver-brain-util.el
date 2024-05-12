@@ -99,7 +99,8 @@
                         (string-prefix-p "*Silver Brain" (buffer-name buffer)))
                       (buffer-list))))
 
-(cl-defun silver-brain--search-items-and-select (search-string)
+(cl-defun silver-brain--search-items-and-select (search-string
+                                     &optional (create-if-not-exists-p t))
   "Ask for a search string, search for items and select one.
 PROMPT is the prompt for search string."
   (let* ((result (silver-brain-client-search-items search-string))
@@ -112,7 +113,8 @@ PROMPT is the prompt for search string."
     (if items
         (cdr (assoc-string (completing-read "Choose item: " items)
                            items))
-      (and (y-or-n-p "No item found. Create new one? ")
+      (and create-if-not-exists-p
+           (y-or-n-p "No item found. Create new one? ")
            (silver-brain-client-create-item (read-string "Name: " search-string)
                                 silver-brain-default-content-type)))))
 
