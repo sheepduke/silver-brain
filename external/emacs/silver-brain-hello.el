@@ -51,8 +51,10 @@
     (widget-create 'editable-field
                    :size (silver-brain--get-textfield-length 8)
                    :action (lambda (widget &rest _event)
-                             (setq silver-brain-hello-search-string (widget-value widget))
-                             (silver-brain--hello-prepare-buffer))
+                             (let ((point (point)))
+                               (setq silver-brain-hello-search-string (widget-value widget))
+                               (silver-brain--hello-prepare-buffer)
+                               (goto-char point)))
                    (or silver-brain-hello-search-string ""))
     (widget-insert "\n")
     
