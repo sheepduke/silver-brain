@@ -1,4 +1,4 @@
-// package silver_brain
+package silver_brain
 
 import silver_brain.sql.*
 import silver_brain.core.*
