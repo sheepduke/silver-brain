@@ -317,7 +317,8 @@ Input an empty string to finish."
 (defun silver-brain-item-add-or-create-parent ()
   (interactive)
   (unless (silver-brain-item-add-parent)
-    (silver-brain-item-create-parent)))
+    (when (y-or-n-p "Child not found. Create a new one? ")
+      (silver-brain-item-create-parent))))
 
 (defun silver-brain-item-add-parent ()
   "Search for an item and set it as a parent.
@@ -337,7 +338,7 @@ create a new item."
   (interactive)
   (silver-brain--verify-current-item)
   (let* ((this-id (silver-brain--prop-id))
-         (parent-id (silver-brain-client-create-item (read-string "Name: " search-string)
+         (parent-id (silver-brain-client-create-item (read-string "Name: ")
                                          silver-brain-default-content-type)))
     (silver-brain-client-add-child parent-id this-id)
     (silver-brain-item-refresh-when-id-in (list this-id parent-id))))
@@ -356,7 +357,8 @@ This function will continuously prompt for new items. Input empty string to stop
 (defun silver-brain-item-add-or-create-child ()
   (interactive)
   (unless (silver-brain-item-add-child)
-    (silver-brain-item-create-child)))
+    (when (y-or-n-p "Child not found. Create a new one? ")
+      (silver-brain-item-create-child))))
 
 (defun silver-brain-item-add-child ()
   (interactive)
@@ -370,7 +372,7 @@ This function will continuously prompt for new items. Input empty string to stop
 (defun silver-brain-item-create-child ()
   (interactive)
   (let* ((this-id (silver-brain--prop-id))
-         (child-id (silver-brain-client-create-item (read-string "Name: " search-string)
+         (child-id (silver-brain-client-create-item (read-string "Name: ")
                                         silver-brain-default-content-type)))
     (silver-brain-client-add-child this-id child-id)
     (silver-brain-item-refresh-when-id-in (list this-id child-id))))
