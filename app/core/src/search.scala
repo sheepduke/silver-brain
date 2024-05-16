@@ -49,7 +49,7 @@ private def notQuery[$: P]: P[Query] = P(
   (not ~ queryTerm).map(Query.Not(_)) | queryTerm
 )
 
-private def not[$: P]: P[Unit] = P("!")
+private def not[$: P]: P[Unit] = P("!" ~ spaces.?)
 
 // ============================================================
 //  Query Term

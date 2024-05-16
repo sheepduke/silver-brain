@@ -38,20 +38,16 @@ class SqlItemService(store: SqliteStore) extends ItemService:
     )
 
   override def searchItems(
-      search: String,
+      searchString: String,
       options: ItemLoadOptions = ItemLoadOptions()
   )(using StoreName): ServiceResponse[Seq[Item]] =
-    this.store.withTransaction(implicit session =>
-      val ids = sql"""
-      select id from item
-      where props ->> '$$.name' like ${"%" + search + "%"}
-      """
-        .map(rs => rs.string("id"))
-        .list
-        .apply()
-
-      Right(SqlItemService.getItems(ids, options))
-    )
+    SearchParser.parse(searchString) match
+      case Right(query) =>
+        this.store.withTransaction(implicit session =>
+          val ids = search(query)
+          Right(SqlItemService.getItems(ids, options))
+        )
+      case Left(message) => Left(ServiceError.InvalidArgument(message))
 
   override def createItem(
       name: String,
