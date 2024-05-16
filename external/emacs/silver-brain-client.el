@@ -84,7 +84,8 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
                         (string-join ids ","))))
 
 (defun silver-brain-client-search-items (search-string)
-  (silver-brain--client-get (format "items?search=%s" search-string)))
+  (silver-brain--client-get (format "items?search=%s"
+                        (url-hexify-string search-string))))
 
 (defun silver-brain-client-create-item (name content-type)
   "Create an item with given NAME and CONTENT-TYPE.
