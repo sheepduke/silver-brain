@@ -17,11 +17,12 @@ def search(query: Query)(using DBSession): List[Id] =
 
 def toSql(query: Query): SQLSyntax =
   query match
-    case q: Query.Keyword  => toSql(q)
-    case q: Query.Not      => toSql(q)
-    case q: Query.And      => toSql(q)
-    case q: Query.Or       => toSql(q)
-    case q: Query.Property => toSql(q)
+    case q: Query.Keyword          => toSql(q)
+    case q: Query.Not              => toSql(q)
+    case q: Query.And              => toSql(q)
+    case q: Query.Or               => toSql(q)
+    case q: Query.InternalProperty => toSql(q)
+    case q: Query.ExternalProperty => toSql(q)
 
 def toSql(query: Query.Keyword): SQLSyntax =
   val keys = Seq("name")
@@ -35,12 +36,15 @@ def toSql(query: Query.Keyword): SQLSyntax =
     sqls"$keySql LIKE $value"
   )*)
 
-def toSql(query: Query.Property): SQLSyntax =
+def toSql(query: Query.InternalProperty): SQLSyntax =
   val keySql =
     if query.key == "id" then sqls"id"
     else SQLSyntax.createUnsafely(s"props ->> '$$.${query.key}'")
 
   toSql(keySql, query.operator, query.value)
+
+def toSql(query: Query.ExternalProperty): SQLSyntax =
+  SQLSyntax.createUnsafely("true")
 
 def toSql(query: Query.Not): SQLSyntax =
   val subQuery = toSql(query.query)

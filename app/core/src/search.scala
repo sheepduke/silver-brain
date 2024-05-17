@@ -7,7 +7,8 @@ import fastparse.NoWhitespace.given
 
 enum Query:
   case Keyword(value: String)
-  case Property(key: String, operator: CompareOperator, value: String)
+  case InternalProperty(key: String, operator: CompareOperator, value: String)
+  case ExternalProperty(key: String, operator: CompareOperator, value: String)
   case Not(query: Query)
   case Or(queries: Seq[Query])
   case And(queries: Seq[Query])
@@ -66,7 +67,7 @@ private def not[$: P]: P[Unit] = P("!" ~ spaces.?)
 // ============================================================
 
 private def queryTerm[$: P]: P[Query] = P(
-  parenedQuery | propertyQuery | keywordQuery
+  parenedQuery | internalPropertyQuery | externalPropertyQuery | keywordQuery
 )
 
 private def parenedQuery[$: P]: P[Query] = P(
@@ -81,19 +82,26 @@ private def keywordQuery[$: P]: P[Query] = P(
 //  Property
 // ============================================================
 
-private def propertyQuery[$: P]: P[Query] = P(
-  (basicString ~ propertyQueryOperator ~ anyString).map(
-    (key, operator, value) => Query.Property(key, operator, value)
+private def internalPropertyQuery[$: P]: P[Query] = P(
+  ("$" ~ basicString ~ propertyQueryOperator ~ anyString).map(
+    (key, operator, value) => Query.InternalProperty(key, operator, value)
+  )
+)
+
+private def externalPropertyQuery[$: P]: P[Query] = P(
+  (anyString ~ propertyQueryOperator ~ anyString).map((key, operator, value) =>
+    Query.ExternalProperty(key, operator, value)
   )
 )
 
 private def propertyQueryOperator[$: P]: P[CompareOperator] = P(
-  (spaces.? ~ ("<" | "<=" | "==" | "!=" | "~=" | ">=" | ">").! ~ spaces.?)
+  (spaces.? ~ ("<" | "<=" | "==" | "!=" | "~=" | "=~" | ">=" | ">").! ~ spaces.?)
     .map(_ match
       case "<"  => CompareOperator.LessThan
       case "<=" => CompareOperator.LessEqual
       case "==" => CompareOperator.Equal
       case "~=" => CompareOperator.Match
+      case "=~" => CompareOperator.Match
       case "!=" => CompareOperator.NotEqual
       case ">=" => CompareOperator.GreaterEqual
       case ">"  => CompareOperator.GreaterThan
@@ -122,7 +130,7 @@ private def quotedEscapedString[$: P]: P[String] = P(
 )
 
 private def basicString[$: P]: P[String] = P(
-  CharIn("a-zA-Z0-9._\\-").rep(min = 1).!
+  CharIn("a-zA-Z0-9._*\\-").rep(min = 1).!
 )
 
 private def spaces[$: P]: P[Unit] = P(" ".rep(min = 1))
