@@ -8,37 +8,61 @@ import scalikejdbc.SQL
 import scalikejdbc.interpolation.SQLSyntax
 
 def search(query: Query)(using DBSession): List[Id] =
-  val condition = SQLSyntax.createUnsafely(queryToSql(query), Seq())
+  val condition = toSql(query)
 
   sql"select id from item where $condition"
     .map(rs => rs.string("id"))
     .list
     .apply()
 
-def queryToSql(query: Query): String =
+def toSql(query: Query): SQLSyntax =
   query match
-    case q: Query.Keyword => queryToSql(q)
-    case q: Query.Not     => queryToSql(q)
-    case q: Query.And     => queryToSql(q)
-    case q: Query.Or      => queryToSql(q)
+    case q: Query.Keyword  => toSql(q)
+    case q: Query.Not      => toSql(q)
+    case q: Query.And      => toSql(q)
+    case q: Query.Or       => toSql(q)
+    case q: Query.Property => toSql(q)
 
-def queryToSql(query: Query.Keyword): String =
+def toSql(query: Query.Keyword): SQLSyntax =
   val keys = Seq("name")
-  val escaped = LikeConditionEscapeUtil.contains(query.value)
 
-  keys
-    .map(key => s"props ->> '$$.$key' like '$escaped'")
-    .mkString(" AND ")
+  val value = LikeConditionEscapeUtil.contains(
+    LikeConditionEscapeUtil.escape(query.value)
+  )
 
-def queryToSql(query: Query.Not): String =
-  s"NOT (${queryToSql(query.query)})"
+  SQLSyntax.joinWithAnd(keys.map(key =>
+    val keySql = SQLSyntax.createUnsafely(s"props ->> '$$.$key'")
+    sqls"$keySql LIKE $value"
+  )*)
 
-def queryToSql(query: Query.And): String =
-  query.queries
-    .map(q => queryToSql(q))
-    .mkString("(", " AND ", ")")
+def toSql(query: Query.Property): SQLSyntax =
+  val keySql =
+    if query.key == "id" then sqls"id"
+    else SQLSyntax.createUnsafely(s"props ->> '$$.${query.key}'")
 
-def queryToSql(query: Query.Or): String =
-  query.queries
-    .map(q => queryToSql(q))
-    .mkString("(", " OR ", ")")
+  toSql(keySql, query.operator, query.value)
+
+def toSql(query: Query.Not): SQLSyntax =
+  val subQuery = toSql(query.query)
+  sqls"NOT ($subQuery)"
+
+def toSql(query: Query.And): SQLSyntax =
+  SQLSyntax.joinWithAnd(query.queries.map(toSql(_))*)
+
+def toSql(query: Query.Or): SQLSyntax =
+  SQLSyntax.joinWithOr(query.queries.map(toSql(_))*)
+
+def toSql(
+    column: SQLSyntax,
+    operator: CompareOperator,
+    value: String
+): SQLSyntax =
+  operator match
+    case CompareOperator.LessThan  => SQLSyntax.lt(column, value)
+    case CompareOperator.LessEqual => SQLSyntax.le(column, value)
+    case CompareOperator.Equal     => SQLSyntax.eq(column, value)
+    case CompareOperator.NotEqual  => SQLSyntax.ne(column, value)
+    case CompareOperator.Match =>
+      SQLSyntax.like(column, value.replace('*', '%'))
+    case CompareOperator.GreaterEqual => SQLSyntax.ge(column, value)
+    case CompareOperator.GreaterThan  => SQLSyntax.gt(column, value)

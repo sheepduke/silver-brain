@@ -7,9 +7,19 @@ import fastparse.NoWhitespace.given
 
 enum Query:
   case Keyword(value: String)
+  case Property(key: String, operator: CompareOperator, value: String)
   case Not(query: Query)
   case Or(queries: Seq[Query])
   case And(queries: Seq[Query])
+
+enum CompareOperator:
+  case LessThan
+  case LessEqual
+  case Match
+  case Equal
+  case NotEqual
+  case GreaterEqual
+  case GreaterThan
 
 object SearchParser:
   def parse(searchString: String): Either[String, Query] =
@@ -56,7 +66,7 @@ private def not[$: P]: P[Unit] = P("!" ~ spaces.?)
 // ============================================================
 
 private def queryTerm[$: P]: P[Query] = P(
-  parenedQuery | keywordQuery
+  parenedQuery | propertyQuery | keywordQuery
 )
 
 private def parenedQuery[$: P]: P[Query] = P(
@@ -65,6 +75,29 @@ private def parenedQuery[$: P]: P[Query] = P(
 
 private def keywordQuery[$: P]: P[Query] = P(
   anyString.map(Query.Keyword.apply)
+)
+
+// ============================================================
+//  Property
+// ============================================================
+
+private def propertyQuery[$: P]: P[Query] = P(
+  (basicString ~ propertyQueryOperator ~ anyString).map(
+    (key, operator, value) => Query.Property(key, operator, value)
+  )
+)
+
+private def propertyQueryOperator[$: P]: P[CompareOperator] = P(
+  (spaces.? ~ ("<" | "<=" | "==" | "!=" | "~=" | ">=" | ">").! ~ spaces.?)
+    .map(_ match
+      case "<"  => CompareOperator.LessThan
+      case "<=" => CompareOperator.LessEqual
+      case "==" => CompareOperator.Equal
+      case "~=" => CompareOperator.Match
+      case "!=" => CompareOperator.NotEqual
+      case ">=" => CompareOperator.GreaterEqual
+      case ">"  => CompareOperator.GreaterThan
+    )
 )
 
 // ============================================================
