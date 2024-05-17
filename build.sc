@@ -2,6 +2,15 @@ import mill._, scalalib._
 
 trait SilverBrainModule extends ScalaModule {
   def scalaVersion = "3.3.1"
+
+  trait SilverBrainTests extends ScalaTests {
+    def ivyDeps = Agg(
+      ivy"org.scalactic::scalactic:3.2.18",
+      ivy"org.scalatest::scalatest:3.2.18"
+    )
+
+    def testFramework = "org.scalatest.tools.Framework"
+  }
 }
 
 object app extends SilverBrainModule {
@@ -61,5 +70,7 @@ object app extends SilverBrainModule {
     def ivyDeps = Agg(
       ivy"com.lihaoyi::fastparse:3.1.0"
     )
+
+    object test extends SilverBrainTests
   }
 }
