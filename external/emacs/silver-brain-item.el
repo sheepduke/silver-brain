@@ -117,8 +117,8 @@
   (silver-brain--widget-create-button
    "New" (lambda (&rest _)
            (if parentp
-               (silver-brain-item-add-parent)
-             (silver-brain-item-add-child))))
+               (silver-brain-item-add-or-create-parent)
+             (silver-brain-item-add-or-create-child))))
 
   (let ((others (silver-brain-client-get-items (if parentp
                                        (silver-brain--prop-parents)
@@ -330,9 +330,10 @@ create a new item."
   (let* ((this-id (silver-brain--prop-id))
          (parent-id (silver-brain--search-items-and-select
                      (read-string (format "Search for parent: ")))))
-    (when parent-id
-      (silver-brain-client-add-child parent-id this-id)
-      (silver-brain-item-refresh-when-id-in (list this-id parent-id)))))
+    (and parent-id
+         (silver-brain-client-add-child parent-id this-id)
+         (silver-brain-item-refresh-when-id-in (list this-id parent-id))
+         t)))
 
 (defun silver-brain-item-create-parent ()
   (interactive)
@@ -365,9 +366,10 @@ This function will continuously prompt for new items. Input empty string to stop
   (let* ((this-id (silver-brain--prop-id))
          (child-id (silver-brain--search-items-and-select
                     (read-string (format "Search for child: ")))))
-    (when child-id
-      (silver-brain-client-add-child this-id child-id)
-      (silver-brain-item-refresh-when-id-in (list this-id child-id)))))
+    (and child-id
+         (silver-brain-client-add-child this-id child-id)
+         (silver-brain-item-refresh-when-id-in (list this-id child-id))
+         t)))
 
 (defun silver-brain-item-create-child ()
   (interactive)
