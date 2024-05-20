@@ -25,21 +25,29 @@ def toSql(query: Query): SQLSyntax =
     case q: Query.ExternalProperty => toSql(q)
 
 def toSql(query: Query.Keyword): SQLSyntax =
-  val keys = Seq("name")
+  val keys = Seq("name", "content")
 
   val value = LikeConditionEscapeUtil.contains(
     LikeConditionEscapeUtil.escape(query.value)
   )
 
-  SQLSyntax.joinWithAnd(keys.map(key =>
+  SQLSyntax.joinWithOr(keys.map(key =>
     val keySql = SQLSyntax.createUnsafely(s"props ->> '$$.$key'")
     sqls"$keySql LIKE $value"
   )*)
 
 def toSql(query: Query.InternalProperty): SQLSyntax =
   val keySql =
-    if query.key == "id" then sqls"id"
-    else SQLSyntax.createUnsafely(s"props ->> '$$.${query.key}'")
+    if query.key.toUpperCase() == "ID" then sqls"id"
+    else
+      val key = query.key.toUpperCase() match
+        case "NAME"         => "name"
+        case "CONTENT-TYPE" => "contentType"
+        case "CONTENT_TYPE" => "contentType"
+        case "CONTENTTYPE"  => "contentType"
+        case "CONTENT"      => "content"
+
+      SQLSyntax.createUnsafely(s"props ->> '$$.${key}'")
 
   toSql(keySql, query.operator, query.value)
 
