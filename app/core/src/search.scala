@@ -83,8 +83,19 @@ private def keywordQuery[$: P]: P[Query] = P(
 // ============================================================
 
 private def internalPropertyQuery[$: P]: P[Query] = P(
-  ("$" ~ basicString ~ propertyQueryOperator ~ anyString).map(
+  ("$" ~ internalPropertyKey ~ propertyQueryOperator ~ anyString).map(
     (key, operator, value) => Query.InternalProperty(key, operator, value)
+  )
+)
+
+private def internalPropertyKey[$: P]: P[String] = P(
+  (IgnoreCase("id") | IgnoreCase("name") | IgnoreCase("contentType")
+    | IgnoreCase("content") | IgnoreCase("createTime")
+    | IgnoreCase("updateTime")).!.map(_.toLowerCase() match
+    case "contenttype" => "contentType"
+    case "createtime"  => "createTime"
+    case "udpatetime"  => "updateTime"
+    case value         => value
   )
 )
 

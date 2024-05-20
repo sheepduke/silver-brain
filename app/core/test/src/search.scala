@@ -4,28 +4,45 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class SearchParserSpec extends AnyFunSuite:
   test("Parse input of combinations"):
-    val input = """
-        $id == "1234" || name =~ "aa" && (bb || cc || dd) || ee
-        """.trim()
-
-    val result = SearchParser.parse(input).right.get
-    val expected = Query.Or(
-      Seq(
-        Query.InternalProperty("id", CompareOperator.Equal, "1234"),
-        Query.And(
+    assertResult(
+      Right(
+        Query.Or(
           Seq(
-            Query.ExternalProperty("name", CompareOperator.Match, "aa"),
-            Query.Or(
+            Query.InternalProperty("id", CompareOperator.Equal, "1234"),
+            Query.And(
               Seq(
-                Query.Keyword("bb"),
-                Query.Keyword("cc"),
-                Query.Keyword("dd")
+                Query.ExternalProperty("name", CompareOperator.Match, "aa"),
+                Query.Or(
+                  Seq(
+                    Query.Keyword("bb"),
+                    Query.Keyword("cc"),
+                    Query.Keyword("dd")
+                  )
+                )
               )
-            )
+            ),
+            Query.Keyword("ee")
           )
-        ),
-        Query.Keyword("ee")
+        )
       )
+    )(SearchParser.parse("""
+        $id == "1234" || name =~ "aa" && (bb || cc || dd) || ee
+        """.trim()))
+
+  test("Parse internal property id"):
+    assertResult(
+      Right(Query.InternalProperty("id", CompareOperator.Match, "100"))
+    )(
+      SearchParser.parse("$id =~ 100")
     )
 
-    assert(result == expected)
+  test("Parse internal property contentType"):
+    assertResult(
+      Right(
+        Query.InternalProperty(
+          "contentType",
+          CompareOperator.Equal,
+          "text/plain"
+        )
+      )
+    )(SearchParser.parse("""$ConTentType == "text/plain""""))
