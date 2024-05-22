@@ -236,14 +236,14 @@ length to be removed."
                           (cons point (selected-window)))
                         (silver-brain--widgets-get-in-buffer)))))
 
-(defun silver-brain-forward-item ()
+(defun silver-brain-widget-forward-item ()
   (interactive)
   (if-let ((point (silver-brain--widget-next-item))) 
       (progn (goto-char point)
              (message ""))
     (message "No more item")))
 
-(defun silver-brain-backward-item ()
+(defun silver-brain-widget-backward-item ()
   (interactive)
   (if-let ((point (silver-brain--widget-next-item nil)))
       (progn (goto-char point)
