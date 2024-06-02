@@ -143,7 +143,7 @@ private def quotedEscapedString[$: P]: P[String] = P(
 )
 
 private def basicString[$: P]: P[String] = P(
-  CharIn("a-zA-Z0-9._*\\-").rep(min = 1).!
+  CharsWhile(char => !"!$&*()=|\\~\"<>".contains(char)).rep(min = 1).!
 )
 
 private def spaces[$: P]: P[Unit] = P(" ".rep(min = 1))
