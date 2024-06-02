@@ -24,9 +24,11 @@ enum CompareOperator:
 
 object SearchParser:
   def parse(searchString: String): Either[String, Query] =
-    fastparse.parse(searchString, query) match
-      case Success(value, _) => Right(value)
-      case failure: Failure  => Left(failure.msg)
+    if searchString.isBlank() then Right(Query.Keyword(""))
+    else
+      fastparse.parse(searchString, query) match
+        case Success(value, _) => Right(value)
+        case failure: Failure  => Left(failure.msg)
 
 private def query[$: P]: P[Query] = P(orQuery ~ End)
 
