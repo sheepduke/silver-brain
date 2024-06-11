@@ -1,19 +1,36 @@
 package silver_brain
 
-import silver_brain.sql.*
-import silver_brain.core.*
-import org.flywaydb.core.Flyway
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
 import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import silver_brain.http.HttpServer
-import org.slf4j.LoggerFactory
-import ch.qos.logback.classic.LoggerContext
+import org.flywaydb.core.Flyway
+import org.rogach.scallop._
 import org.slf4j.Logger
-import ch.qos.logback.classic.Level
+import org.slf4j.LoggerFactory
+import org.rogach.scallop.*
+import org.rogach.scallop.ValueConverter
 
+import silver_brain.core.*
+import silver_brain.http.HttpServer
+import silver_brain.sql.*
+
+val defaultDataRoot = os.home / ".silver-brain"
 val defaultStoreName = "main"
 
-@main def main() =
+class CliArgs(args: Seq[String]) extends ScallopConf(args):
+  val dataRoot = opt[java.nio.file.Path](
+    "data-root",
+    descr = "The root directory of data",
+    default = None
+  )
+  verify()
+
+@main def main(argList: String*) =
+  val args = CliArgs(argList.toSeq)
+
+  val dataRoot = args.dataRoot.map(os.Path(_)).getOrElse(defaultDataRoot)
+
   // Set the log level to INFO.
   LoggerFactory
     .getILoggerFactory()
@@ -21,8 +38,10 @@ val defaultStoreName = "main"
     .exists(Logger.ROOT_LOGGER_NAME)
     .setLevel(Level.INFO)
 
-  // given store: SqliteStore = SqliteStore(os.home / "temp" / "test")
-  given store: SqliteStore = SqliteStore(os.home / ".silver-brain")
+  val logger = LoggerFactory.getLogger("main")
+  logger.info(s"Setting data root to $dataRoot")
+
+  given store: SqliteStore = SqliteStore(dataRoot)
   given itemService: ItemService = SqlItemService(store)
 
   // Create default (main) database for the first run.
@@ -31,6 +50,3 @@ val defaultStoreName = "main"
 
   val httpServer = HttpServer()
   httpServer.start()
-
-def repl() =
-  main()

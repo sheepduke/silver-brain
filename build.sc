@@ -25,7 +25,8 @@ object app extends SilverBrainModule {
 
   object cli extends SilverBrainModule {
     def ivyDeps = Agg(
-      ivy"ch.qos.logback:logback-classic:1.3.6"
+      ivy"ch.qos.logback:logback-classic:1.3.6",
+      ivy"org.rogach::scallop:5.1.0"
     ) ++ loggingApiDeps
 
     def moduleDeps = Seq(
