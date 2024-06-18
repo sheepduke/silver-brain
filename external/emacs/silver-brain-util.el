@@ -120,6 +120,15 @@ PROMPT is the prompt for search string."
          (cdr (assoc-string (completing-read "Choose item: " items)
                             items)))))
 
+(cl-defun silver-brain-create-item ()
+  "Create a new item. It prompts the user to input name."
+  (interactive)
+  (let* ((name (read-string "Item name: "))
+         (item (silver-brain-client-get-item
+                (silver-brain-client-create-item name silver-brain-default-content-type))))
+    (silver-brain-hello-refresh)
+    (silver-brain-item-show item)))
+
 (defun silver-brain-delete-item-at-point ()
   (interactive)
   (let ((item (silver-brain--widget-get-item)))

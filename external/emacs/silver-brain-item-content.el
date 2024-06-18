@@ -4,6 +4,8 @@
 (require 'silver-brain-util)
 (require 'silver-brain-client)
 
+(defvar silver-brain-item-content-buffer-name-format "*SB/Item Content - %s*")
+
 (defun silver-brain-item-open-content ()
   (interactive)
   (silver-brain--verify-current-item)

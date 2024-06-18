@@ -1,16 +1,20 @@
 ;;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
 
-(require 'silver-brain-hello)
+(require 'silver-brain-list)
+(require 'silver-brain-util)
+(require 'silver-brain-item)
 
-(defun silver-brain ()
-  (interactive)
-  (silver-brain-hello))
+(require 'pretty-hydra)
 
-(defun silver-brain-open ()
-  "Search and open concept."
-  (interactive)
-  (silver-brain-item-open (silver-brain--search-items-and-select
-               (read-string "Search items: "))))
+;; ============================================================
+;;  Hydra
+;; ============================================================
+
+(pretty-hydra-define silver-brain-hydra ()
+  ("Item"
+   (("c" silver-brain-create-item "create")
+    ("o" silver-brain-open-item "open")
+    ("l" silver-brain-list-items "list"))))
 
 (provide 'silver-brain)
 
