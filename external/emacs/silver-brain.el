@@ -12,8 +12,8 @@
 
 (pretty-hydra-define silver-brain-hydra ()
   ("Item"
-   (("c" silver-brain-create-item "create")
-    ("o" silver-brain-open-item "open")
+   (("c" silver-brain-create-and-open-item "create")
+    ("o" silver-brain-search-and-open-item "open")
     ("l" silver-brain-list-items "list"))))
 
 (provide 'silver-brain)

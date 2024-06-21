@@ -12,72 +12,126 @@
 (defvar silver-brain-item-buffer-name-format "*SB/Item - %s*")
 
 (defvar-local silver-brain-current-item nil)
+(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
+
+(defvar-local silver-brain-item-parents nil)
+(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
+
+(defvar-local silver-brain-item-children nil)
+(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
+
+(defvar-local silver-brain-item-references nil)
+(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
 
 ;; ============================================================
 ;;  Mode
 ;; ============================================================
 
-(defvar silver-brain-item-mode-map
-  (let ((keymap (make-composed-keymap (list (make-sparse-keymap)
-                                         widget-keymap))))
-    (set-keymap-parent keymap silver-brain-common-keymap)
-    (define-key keymap (kbd "g") 'silver-brain-item-refresh)
-    (define-key keymap (kbd "e") 'silver-brain-item-open-content)
-    (define-key keymap (kbd "D") 'silver-brain-item-delete)
-    (define-key keymap (kbd "r") 'silver-brain-item-rename)
-    (define-key keymap (kbd "u t") 'silver-brain-item-update-content-type)
-    (define-key keymap (kbd "a p") 'silver-brain-item-add-parent)
-    (define-key keymap (kbd "a c") 'silver-brain-item-add-child)
-    (define-key keymap (kbd "c P") 'silver-brain-item-create-parents)
-    (define-key keymap (kbd "c C") 'silver-brain-item-create-children)
-    keymap))
-
 (define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
-  "Major mode for Silver Brain single item.")
+  "Major mode for Silver Brain single item."
+
+  (let ((keymap (make-composed-keymap (list (make-sparse-keymap)
+                                            widget-keymap))))
+    (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
+    (define-key keymap (kbd "g") #'silver-brain-item-refresh)
+    (define-key keymap (kbd "q") #'silver-brain-item-quit)
+
+    (define-key keymap (kbd "e") #'silver-brain-item-open-content)
+    (define-key keymap (kbd "r") #'silver-brain-item-rename)
+    (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
+    (define-key keymap (kbd "D") #'silver-brain-item-delete)
+
+    (define-key keymap (kbd "a p") #'silver-brain-item-add-parent)
+    (define-key keymap (kbd "a c") #'silver-brain-item-add-child)
+    (define-key keymap (kbd "a r") #'silver-brain-item-add-reference)
+
+    (define-key keymap (kbd "c i") #'silver-brain-item-create-item)
+    (define-key keymap (kbd "c p") #'silver-brain-item-create-parent)
+    (define-key keymap (kbd "c c") #'silver-brain-item-create-child)
+
+    (define-key keymap (kbd "p") #'silver-brain-item-delete-parent)
+    (define-key keymap (kbd "c") #'silver-brain-item-delete-child)
+    (define-key keymap (kbd "r") #'silver-brain-item-delete-reference)
+
+    (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
+
+    (setq silver-brain-item-mode-map keymap)))
+
+(pretty-hydra-define silver-brain-item-hydra (:color blue)
+  ("Buffer"
+   (("o" silver-brain-search-and-open-item "open")
+    ("g" silver-brain-item-refresh "refresh")
+    ("q" silver-brain-item-quit "close"))
+
+   "Item"
+   (("e" silver-brain-item-open-content "edit content")
+    ("r" silver-brain-item-rename "rename")
+    ("t" silver-brain-item-update-content-type "update content type")
+    ("D" silver-brain-item-delete "delete"))
+
+   "Operation"
+   (("a" silver-brain-item-add-hydra/body "add")
+    ("c" silver-brain-item-create-hydra/body "create")
+    ("d" silver-brain-item-delete-hydra/body "delete"))))
+
+(pretty-hydra-define silver-brain-item-add-hydra ()
+  ("Add"
+   (("p" silver-brain-item-add-parent "parent")
+    ("c" silver-brain-item-add-child "child")
+    ("r" silver-brain-item-add-reference "reference"))))
+
+(pretty-hydra-define silver-brain-item-create-hydra ()
+  ("Create"
+   (("i" silver-brain-create-and-open-item "item")
+    ("p" silver-brain-item-create-parent "parent")
+    ("c" silver-brain-item-create-child "child"))))
+
+(pretty-hydra-define silver-brain-item-delete-hydra ()
+  ("Delete"
+   (("p" silver-brain-item-delete-parent "parent")
+    ("c" silver-brain-item-delete-child "child")
+    ("r" silver-brain-item-delete-reference "reference"))))
 
 ;; ============================================================
 ;;  Buffer
 ;; ============================================================
 
-(defun silver-brain-open-item (&optional search-string)
+(defun silver-brain-search-and-open-item (&optional search-string)
   "Search and open concept."
   (interactive "sSearch item: ")
   (silver-brain-item-open (silver-brain--search-items-and-select search-string)))
 
 (defun silver-brain-item-open (id)
-  (silver-brain-item-show (silver-brain-client-get-item id)))
+  (let* ((item (silver-brain-client-get-item id))
+         (buffer (get-buffer-create (silver-brain--item-get-buffer-name item))))
+    (pop-to-buffer-same-window buffer)
 
-(defun silver-brain-item-show (item)
-  (let ((buffer (silver-brain--item-prepare-buffer item)))
-    (pop-to-buffer-same-window buffer)))
+    (silver-brain--with-widget-buffer buffer 
+      (silver-brain-item-mode)
+      (setq silver-brain-current-item item)
 
-(defun silver-brain--item-prepare-buffer (item)
-  (silver-brain--with-widget-buffer (silver-brain--item-get-buffer-name item)
-    (silver-brain-item-mode)
-    (setq silver-brain-current-item item)
-    (silver-brain--item-insert-widgets item)))
+      ;; Fetch parents.
+      (setq silver-brain-item-parents
+            (silver-brain--item-get-sorted-items (silver-brain-client-get-items (silver-brain--prop-parents item))))
+
+      ;; Fetch children.
+      (setq silver-brain-item-children
+            (silver-brain--item-get-sorted-items (silver-brain-client-get-items (silver-brain--prop-children item))))
+
+      ;; Fetch references.
+      (setq silver-brain-item-references (silver-brain-client-get-references (silver-brain--prop-references-out item)))
+
+      (silver-brain--item-insert-widgets item))))
 
 (defun silver-brain--item-get-buffer-name (item)
   (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))
 
 (defun silver-brain--item-insert-widgets (item)
-  (silver-brain--widget-insert-with-face (format "%s "
-                                     (silver-brain--prop-name silver-brain-current-item))
-                             'silver-brain-h1)
-  (silver-brain--widget-create-button "New" (lambda (&rest _) (silver-brain-create-item)))
-  (widget-insert " ")
-  (silver-brain--widget-create-button "Rename" (lambda (&rest _) (silver-brain-item-rename)))
-  (widget-insert " ")
-  (silver-brain--widget-create-button "Delete" (lambda (&rest _) (silver-brain-item-delete)))
-  (widget-insert " ")
-  (silver-brain--widget-create-button "Close" (lambda (&rest _) (kill-buffer)))
+  (silver-brain--widget-insert-with-face (silver-brain--prop-name silver-brain-current-item) 'silver-brain-h1)
 
   (widget-insert "\n\n"
                  "  Content Type: "
-                 (silver-brain--prop-content-type)
-                 " ")
-
-  (silver-brain--widget-create-button "Edit" (lambda (&rest _) (silver-brain-item-update-content-type)))
+                 (silver-brain--prop-content-type))
 
   (widget-insert "\n  Create Time: "
                  (silver-brain--format-time (silver-brain--prop-create-time item))
@@ -87,15 +141,42 @@
   
   ;; Insert parents.
   (widget-insert "\n")
-  (silver-brain--item-insert-families t)
-  
+  (silver-brain--widget-insert-with-face "Parents" 'silver-brain-h2)
+  (widget-insert (if silver-brain-item-parents "\n\n" "\n"))
+
+  (dolist (parent silver-brain-item-parents)
+    (widget-insert "  ")
+    (silver-brain--widget-create-item parent)
+    (widget-insert "\n"))
+
   ;; Insert children.
   (widget-insert "\n")
-  (silver-brain--item-insert-families nil)
+  (silver-brain--widget-insert-with-face "Children" 'silver-brain-h2)
+  (widget-insert (if silver-brain-item-children "\n\n" "\n"))
+
+  (dolist (child silver-brain-item-children)
+    (widget-insert "  ")
+    (silver-brain--widget-create-item child)
+    (widget-insert "\n"))
 
   ;; Insert siblings.
   (widget-insert "\n")
-  (silver-brain--item-insert-siblings)
+  (silver-brain--widget-insert-with-face "Siblings" 'silver-brain-h2)
+
+  (let ((siblings (silver-brain--item-get-sorted-items
+                   (silver-brain-client-get-items (silver-brain--prop-siblings)))))
+    (unless (null siblings)
+      (widget-insert "\n\n")
+      (widget-insert "  "))
+    
+    (dolist (sibling siblings)
+      (when (>= (+ 2 (current-column) (length (silver-brain--prop-name sibling)))
+               (window-width))
+        (widget-insert "\n  "))
+      (silver-brain--widget-create-item sibling)
+      (widget-insert "  "))
+
+    (widget-insert "\n"))
 
   ;; Insert references.
   (widget-insert "\n")
@@ -103,7 +184,7 @@
 
   ;; Insert content.
   (widget-insert "\n")
-  (silver-brain--widget-insert-with-face "Content\n" 'silver-brain-h1)
+  (silver-brain--widget-insert-with-face "Content\n" 'silver-brain-h2)
   (widget-insert (make-horizontal-bar 60)
                  "\n"
                  (or (silver-brain--prop-content item) "")))
@@ -114,57 +195,6 @@
 (defun silver-brain--verify-current-item ()
   (unless silver-brain-current-item
     (error "This command must be invoked within a item buffer")))
-
-(defun silver-brain--item-insert-families (parentp)
-  (silver-brain--widget-insert-with-face (if parentp "Parents " "Children ") 'silver-brain-h2)
-  (silver-brain--widget-create-button
-   "New" (lambda (&rest _)
-           (if parentp
-               (silver-brain-item-add-or-create-parent)
-             (silver-brain-item-add-or-create-child))))
-
-  (let ((others (silver-brain-client-get-items (if parentp
-                                       (silver-brain--prop-parents)
-                                     (silver-brain--prop-children)))))
-    (unless (null others)
-      (widget-insert "\n"))
-    
-    (widget-insert "\n  ")
-    
-    (dolist (other (silver-brain--item-get-sorted-items others))
-      (silver-brain--widget-create-button
-       "Del" (lambda (&rest _)
-               (when (y-or-n-p "Confirm? ")
-                 (let* ((this-id (silver-brain--prop-id))
-                        (other-id (silver-brain--prop-id other)))
-                   (if parentp
-                       (silver-brain-client-delete-child other-id this-id)
-                     (silver-brain-client-delete-child this-id other-id))
-                   
-                   (silver-brain-item-refresh-when-id-in (append (list this-id other-id)
-                                                     (silver-brain--prop-siblings)))))))
-      (widget-insert " ")
-      (silver-brain--widget-create-item other)
-      (widget-insert "\n  "))))
-
-(defun silver-brain--item-insert-siblings ()
-  (silver-brain--widget-insert-with-face "Siblings "
-                             'silver-brain-h2)
-
-  (let ((siblings (silver-brain-client-get-items (silver-brain--prop-siblings))))
-    (unless (null siblings)
-      (widget-insert "\n\n"))
-    
-    (widget-insert "  ")
-    
-    (dolist (sibling (silver-brain--item-get-sorted-items siblings))
-      (when (>= (+ 2 (current-column) (length (silver-brain--prop-name sibling)))
-               (window-width))
-        (widget-insert "\n  "))
-      (silver-brain--widget-create-item sibling)
-      (widget-insert "  "))
-
-    (widget-insert "\n")))
 
 (defun silver-brain--item-insert-references ()
   (let* ((references-out (silver-brain-client-get-references (silver-brain--prop-references-out)))
@@ -177,16 +207,7 @@
                          items-seq)))
 
     ;; Insert outbound references.
-    (silver-brain--widget-insert-with-face "References " 'silver-brain-h2)
-    (silver-brain--widget-create-button
-     "New" (lambda ()
-             (let* ((source (silver-brain--prop-id))
-                    (target (silver-brain--search-items-and-select
-                             (read-string "Search for target item: "))))
-               (when target
-                 (let ((annotation (read-string "Annotation: ")))
-                   (silver-brain-client-create-reference source target annotation)
-                   (silver-brain-item-refresh-when-id-in (list source target)))))))
+    (silver-brain--widget-insert-with-face "References" 'silver-brain-h2)
     (widget-insert "\n")
 
     (dolist (reference (silver-brain--item-references-sort-by-target
@@ -209,14 +230,6 @@
               (silver-brain-client-update-reference (silver-brain--prop-id reference) new-annotation)
               (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-source reference)
                                               (silver-brain--prop-target reference))))))
-  (widget-insert " ")
-  (silver-brain--widget-create-button
-   "Del" (lambda ()
-           (when (y-or-n-p "Delete this reference? ")
-             (silver-brain-client-delete-reference (silver-brain--prop-id reference))
-             (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-source reference)
-                                             (silver-brain--prop-target reference))))))
-  (widget-insert " ")
 
   (if (string= (silver-brain--prop-source reference) (silver-brain--prop-id))
       (widget-insert (silver-brain--prop-name))
@@ -250,34 +263,21 @@
                             references)))
 
 ;; ============================================================
-;;  Refresh
-;; ============================================================
-
-(defun silver-brain-item-refresh-all ()
-  (dolist (buffer (silver-brain--get-all-item-buffers))
-    (with-current-buffer buffer
-      (silver-brain-item-refresh))))
-
-(defun silver-brain-item-refresh-when-id-in (ids)
-  (dolist (buffer (silver-brain--get-all-item-buffers))
-    (with-current-buffer buffer
-      (when (member (silver-brain--prop-id) ids)
-        (silver-brain-item-refresh)))))
-
-;; ============================================================
 ;;  Commands
 ;; ============================================================
 
-(cl-defun silver-brain-create-items ()
-  "Create new items in batch. It prompts the user to input name.
-Input an empty string to finish."
+(cl-defun silver-brain-item-quit ()
   (interactive)
-  (let* (name (count 0))
-    (while (not (seq-empty-p (setq name (read-string "Item name: "))))
-      (silver-brain-client-create-item name silver-brain-default-content-type)
-      (cl-incf count))
-    (message "Created %d items." count))
-    (silver-brain-hello-refresh))
+  (silver-brain--verify-current-item)
+  (condition-case nil
+      (kill-buffer (silver-brain-item-get-content-buffer-name))
+    (error nil))
+  (kill-this-buffer))
+
+(cl-defun silver-brain-create-and-open-item ()
+  "Create a new item and open it. It prompts the user to input name."
+  (interactive)
+  (silver-brain-item-open (silver-brain--create-item)))
 
 (cl-defun silver-brain-item-rename ()
   "Rename current item."
@@ -289,8 +289,7 @@ Input an empty string to finish."
          (new-item (silver-brain--update-prop-name new-name)))
     (silver-brain-client-update-item (silver-brain--prop-id)
                          :name new-name)
-    (silver-brain-item-refresh-all)
-    (silver-brain-hello-refresh)))
+    (silver-brain-item-refresh-all)))
 
 (defun silver-brain-item-delete ()
   "Delete current item."
@@ -309,10 +308,7 @@ Input an empty string to finish."
     (silver-brain-item-refresh)))
 
 (defun silver-brain-item-add-parent ()
-  "Search for an item and set it as a parent.
-
-If nothing is found and CREATE-IF-NOT-EXISTS-P is set to T (default),
-create a new item."
+  "Search for an item and set it as a parent."
   (interactive)
   (silver-brain--verify-current-item)
   (let* ((this-id (silver-brain--prop-id))
@@ -322,7 +318,26 @@ create a new item."
       (silver-brain-client-add-child parent-id this-id)
       (silver-brain-item-refresh-when-id-in (list this-id parent-id)))))
 
+(defun silver-brain-item-create-parent ()
+  "Create an item and set it as a parent."
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let* ((this-id (silver-brain--prop-id))
+         (parent-id (silver-brain--create-item)))
+    (when parent-id
+      (silver-brain-client-add-child parent-id this-id)
+      (silver-brain-item-refresh-when-id-in (list this-id parent-id)))))
+
+(defun silver-brain-item-delete-parent ()
+  "Select a parent and delete the relationship."
+  (interactive)
+  (let ((this-id (silver-brain--prop-id))
+        (parent-id (silver-brain--select-item silver-brain-item-parents)))
+    (silver-brain-client-delete-child parent-id this-id)
+    (silver-brain-item-refresh-when-id-in (list this-id parent-id))))
+
 (defun silver-brain-item-add-child ()
+  "Search for an item and set it as a parent."
   (interactive)
   (let* ((this-id (silver-brain--prop-id))
          (child-id (silver-brain--search-items-and-select
@@ -331,37 +346,72 @@ create a new item."
       (silver-brain-client-add-child this-id child-id)
       (silver-brain-item-refresh-when-id-in (list this-id child-id)))))
 
-(defun silver-brain-item-create-parents ()
-  "Create items and set them as the parent of current item.
-This function will continuously prompt for new items. Input empty string to stop."
+(defun silver-brain-item-create-child ()
+  "Create an item and set it as a parent."
   (interactive)
   (silver-brain--verify-current-item)
-  (let (name parent-ids
-             (this-id (silver-brain--prop-id)))
-    (while (not (seq-empty-p (setq name (read-string "Create parent: "))))
-      (let ((parent-id (silver-brain-client-create-item name silver-brain-default-content-type)))
-        (silver-brain-client-add-child parent-id this-id)
-        (push parent-id parent-ids)))
-    (silver-brain-item-refresh-when-id-in (append (list this-id) parent-ids))))
+  (let* ((this-id (silver-brain--prop-id))
+         (child-id (silver-brain--create-item)))
+    (when child-id
+      (silver-brain-client-add-child this-id child-id)
+      (silver-brain-item-refresh-when-id-in (list this-id child-id)))))
 
-(defun silver-brain-item-create-children ()
-  "Create items and set them as the parent of current item.
-This function will continuously prompt for new items. Input empty string to stop."
+(defun silver-brain-item-delete-child ()
+  "Select a child and delete the relationship."
   (interactive)
-  (let (name child-ids
-             (this-id (silver-brain--prop-id)))
-    (while (not (seq-empty-p (setq name (read-string "Create child: "))))
-      (let ((child-id (silver-brain-client-create-item name silver-brain-default-content-type)))
-        (silver-brain-client-add-child this-id child-id)
-        (push child-id child-ids)))
-    (silver-brain-item-refresh-when-id-in (append (list this-id) child-ids))))
+  (let ((this-id (silver-brain--prop-id))
+        (child-id (silver-brain--select-item silver-brain-item-children)))
+    (silver-brain-client-delete-child this-id child-id)
+    (silver-brain-item-refresh-when-id-in (list this-id child-id))))
+
+(defun silver-brain-item-add-reference ()
+  (interactive)
+  (let* ((source (silver-brain--prop-id))
+         (target (silver-brain--search-items-and-select
+                  (read-string "Search for target item: "))))
+    (when target
+      (let ((annotation (read-string "Annotation: ")))
+        (silver-brain-client-create-reference source target annotation)
+        (silver-brain-item-refresh-when-id-in (list source target))))))
+
+(defun silver-brain-item-delete-reference ()
+  (interactive)
+  (let ((reference (silver-brain--item-select-reference)))
+    (silver-brain-client-delete-reference (silver-brain--prop-id reference))
+    (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-source reference)
+                                    (silver-brain--prop-target reference)))))
 
 (defun silver-brain-item-refresh ()
   "Refresh current item."
   (interactive)
-  (let* ((new-item (silver-brain-client-get-item (silver-brain--prop-id)))
-         (new-buffer-name (silver-brain--item-get-buffer-name new-item)))
-    (rename-buffer new-buffer-name)
-    (silver-brain--item-prepare-buffer new-item)))
+  (let ((id (silver-brain--prop-id)))
+    (silver-brain-item-quit)
+    (silver-brain-item-open id)))
+
+;; ============================================================
+;;  Internal Functions
+;; ============================================================
+
+(defun silver-brain-item-refresh-all ()
+  (dolist (buffer (silver-brain--get-all-item-buffers))
+    (with-current-buffer buffer
+      (silver-brain-item-refresh))))
+
+(defun silver-brain-item-refresh-when-id-in (ids)
+  (dolist (buffer (silver-brain--get-all-item-buffers))
+    (with-current-buffer buffer
+      (when (member (silver-brain--prop-id) ids)
+        (silver-brain-item-refresh)))))
+
+(defun silver-brain--item-select-reference ()
+  (let* ((reference-map (seq-map (lambda (reference)
+                                   (cons (format "This -[%s]-> %s"
+                                                 (silver-brain--prop-annotation reference)
+                                                 (silver-brain--prop-target reference))
+                                         reference))
+                                 silver-brain-item-references))
+         (selection (completing-read "Choose reference: " reference-map))
+         (selected-reference (cdr (assoc-string selection reference-map))))
+    selected-reference))
 
 (provide 'silver-brain-item)

@@ -77,22 +77,6 @@
 ;;  Interaction
 ;; ============================================================
 
-(defvar silver-brain-common-keymap
-  (let ((keymap (make-sparse-keymap)))
-    (define-key keymap (kbd "h") 'silver-brain-hello)
-    (define-key keymap (kbd "j") 'silver-brain-widget-jump)
-    (define-key keymap (kbd "q") 'quit-window)
-    (define-key keymap (kbd "Q") 'silver-brain-quit-all)
-    (define-key keymap (kbd "o") 'silver-brain-open)
-    (define-key keymap (kbd "n") 'silver-brain-widget-forward-item)
-    (define-key keymap (kbd "p") 'silver-brain-widget-backward-item)
-    (define-key keymap (kbd "c i") 'silver-brain-create-item)
-    (define-key keymap (kbd "c I") 'silver-brain-create-items)
-    (define-key keymap (kbd "d") 'silver-brain-delete-item-at-point)
-    (define-key keymap [remap self-insert-command] 'silver-brain--no-edit)
-    keymap)
-  "Common keymap shared by all the Silver Brain buffers.")
-
 (defun silver-brain--no-edit ()
   "Disallow editing custom buffer."
   (interactive)
@@ -109,25 +93,25 @@
 (cl-defun silver-brain--search-items-and-select (search-string)
   "Ask for a search string, search for items and select one.
 PROMPT is the prompt for search string."
-  (let* ((result (silver-brain-client-search-items search-string))
-         (items (seq-map (lambda (item)
-                           (cons (format "%s [%s]"
-                                         (silver-brain--prop-name item)
-                                         (silver-brain--prop-id item))
-                                 (silver-brain--prop-id item)))
-                         result)))
-    (and items
-         (cdr (assoc-string (completing-read "Choose item: " items)
-                            items)))))
+  (silver-brain--select-item (silver-brain-client-search-items search-string)))
 
-(cl-defun silver-brain-create-item ()
-  "Create a new item. It prompts the user to input name."
-  (interactive)
-  (let* ((name (read-string "Item name: "))
-         (item (silver-brain-client-get-item
-                (silver-brain-client-create-item name silver-brain-default-content-type))))
-    (silver-brain-hello-refresh)
-    (silver-brain-item-show item)))
+(defun silver-brain--select-item (items)
+  (let* ((sorted-items (silver-brain--get-sorted-items items))
+         (item-map (seq-map (lambda (item)
+                              (cons (format "%s [%s]"
+                                            (silver-brain--prop-name item)
+                                            (silver-brain--prop-id item))
+                                    (silver-brain--prop-id item)))
+                            sorted-items)))
+    (or (and items
+             (cdr (assoc-string (completing-read "Choose item: " item-map)
+                                item-map)))
+        (error "No item found"))))
+
+(defun silver-brain--get-sorted-items (items)
+  (seq-sort-by #'silver-brain--prop-name #'string< 
+               (seq-sort-by #'silver-brain--prop-id #'string< 
+                            items)))
 
 (defun silver-brain-delete-item-at-point ()
   (interactive)
@@ -136,6 +120,10 @@ PROMPT is the prompt for search string."
       (error "Must be invoked upon an item link"))
 
     (silver-brain--delete-item item)))
+
+(cl-defun silver-brain--create-item ()
+  (let* ((name (read-string "Item name: ")))
+    (silver-brain-client-create-item name silver-brain-default-content-type)))
 
 (cl-defun silver-brain--delete-items (ids)
   (when (y-or-n-p (format "Delete %d items? " (length ids)))
@@ -165,7 +153,7 @@ PROMPT is the prompt for search string."
   "Return all the Silver Brain Item buffers."
   (seq-filter (lambda (buffer)
                 (with-current-buffer buffer
-                  (and (string-prefix-p "*Silver Brain Item"
+                  (and (string-prefix-p "*SB/Item"
                                         (buffer-name))
                        (equal 'silver-brain-item-mode major-mode))))
               (buffer-list)))

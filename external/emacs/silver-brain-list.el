@@ -29,8 +29,7 @@
 
 (major-mode-hydra-define silver-brain-list-mode ()
   ("Buffer"
-   (("g" tablist-revert "revert")
-    ("G" silver-brain-list-refresh "refresh")
+   (("g" silver-brain-list-refresh "refresh")
     ("q" tablist-quit "quit"))
    
    "Row"

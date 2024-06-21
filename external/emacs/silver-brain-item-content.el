@@ -6,13 +6,15 @@
 
 (defvar silver-brain-item-content-buffer-name-format "*SB/Item Content - %s*")
 
+(defun silver-brain-item-get-content-buffer-name ()
+  (format silver-brain-item-content-buffer-name-format
+          (silver-brain--prop-name silver-brain-current-item)))
+
 (defun silver-brain-item-open-content ()
   (interactive)
   (silver-brain--verify-current-item)
   (let ((item silver-brain-current-item))
-    (with-current-buffer (get-buffer-create
-                          (format silver-brain-item-content-buffer-name-format
-                                  (silver-brain--prop-name item)))
+    (with-current-buffer (get-buffer-create (silver-brain-item-get-content-buffer-name))
       (insert (or (silver-brain--prop-content item) ""))
 
       ;; Decide major mode.

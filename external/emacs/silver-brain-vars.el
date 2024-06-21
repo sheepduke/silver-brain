@@ -64,7 +64,8 @@ mode used to open it."
   :group 'silver-brain)
 
 (defface silver-brain-h1 '((t :height 1.5
-                  :weight bold))
+                  :weight bold
+                  :underline t))
   "Face for level 1 header."
   :group 'silver-brain)
 
