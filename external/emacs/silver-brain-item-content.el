@@ -35,12 +35,13 @@
 
 (defun silver-brain-item-save-content ()
   (interactive)
-  (let* ((old-item (seq-copy silver-brain-current-item))
-         (new-content (buffer-string))
-         (new-item (silver-brain--update-prop-content new-content old-item)))
-    (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
-                         :content new-content)
-    (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-id)))
-    (set-buffer-modified-p nil)))
+  (save-excursion 
+    (let* ((old-item (seq-copy silver-brain-current-item))
+           (new-content (buffer-string))
+           (new-item (silver-brain--update-prop-content new-content old-item)))
+      (silver-brain-client-update-item (silver-brain--prop-id silver-brain-current-item)
+                           :content new-content)
+      (silver-brain-item-refresh)
+      (set-buffer-modified-p nil))))
 
 (provide 'silver-brain-item-content)

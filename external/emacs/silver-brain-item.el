@@ -104,10 +104,11 @@
   (silver-brain-item-open (silver-brain--search-items-and-select search-string)))
 
 (defun silver-brain-item-open (id)
-  (let* ((item (silver-brain-client-get-item id))
-         (buffer (get-buffer-create (silver-brain--item-get-buffer-name item))))
-    (pop-to-buffer-same-window buffer)
+  (pop-to-buffer-same-window (silver-brain-item-setup id)))
 
+(defun silver-brain-item-setup (id)
+  (let* ((item (silver-brain-client-get-item id))
+         (buffer (get-buffer-create (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))))
     (silver-brain--with-widget-buffer buffer 
       (silver-brain-item-mode)
       (setq silver-brain-current-item item)
@@ -123,10 +124,9 @@
       ;; Fetch references.
       (setq silver-brain-item-references (silver-brain-client-get-references (silver-brain--prop-references-out item)))
 
-      (silver-brain--item-insert-widgets item))))
+      (silver-brain--item-insert-widgets item))
 
-(defun silver-brain--item-get-buffer-name (item)
-  (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))
+    buffer))
 
 (defun silver-brain--item-insert-widgets (item)
   (silver-brain--widget-insert-with-face (silver-brain--prop-name silver-brain-current-item) 'silver-brain-h1)
@@ -187,12 +187,14 @@
   ;; Insert content.
   (widget-insert "\n")
   (silver-brain--widget-insert-with-face "Content\n" 'silver-brain-h2)
-  (widget-insert (make-horizontal-bar 60)
+  (widget-insert (make-horizontal-bar)
                  "\n"
                  (or (silver-brain--prop-content item) "")))
 
-(cl-defun make-horizontal-bar (length)
-  (string-join (cl-loop for i from 1 to length collect "⎯")))
+(cl-defun make-horizontal-bar (&optional length)
+  (let ((bar-length (or length
+                        (1- (window-width)))))
+    (string-join (cl-loop for i from 1 to bar-length collect "⎯"))))
 
 (defun silver-brain--verify-current-item ()
   (unless silver-brain-current-item
@@ -286,11 +288,11 @@
   (interactive)
   (silver-brain--verify-current-item)
 
-  (let* ((new-name (read-string (format "Rename to: ")
-                                (silver-brain--prop-name silver-brain-current-item)))
-         (new-item (silver-brain--update-prop-name new-name)))
-    (silver-brain-client-update-item (silver-brain--prop-id)
-                         :name new-name)
+  (let* ((item-id (silver-brain--prop-id))
+         (new-name (read-string (format "Rename to: ")
+                                (silver-brain--prop-name silver-brain-current-item))))
+    (silver-brain-client-update-item item-id :name new-name)
+    (rename-buffer (format silver-brain-item-buffer-name-format new-name))
     (silver-brain-item-refresh-all)))
 
 (defun silver-brain-item-delete ()
@@ -383,12 +385,10 @@
     (silver-brain-item-refresh-when-id-in (list (silver-brain--prop-source reference)
                                     (silver-brain--prop-target reference)))))
 
-(defun silver-brain-item-refresh ()
+(defun silver-brain-item-refresh (&optional id)
   "Refresh current item."
   (interactive)
-  (let ((id (silver-brain--prop-id)))
-    (silver-brain-item-quit)
-    (silver-brain-item-open id)))
+  (silver-brain-item-setup (or id (silver-brain--prop-id))))
 
 ;; ============================================================
 ;;  Internal Functions
