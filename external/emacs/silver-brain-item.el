@@ -35,6 +35,7 @@
     (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
     (define-key keymap (kbd "g") #'silver-brain-item-refresh)
     (define-key keymap (kbd "q") #'silver-brain-item-quit)
+    (define-key keymap (kbd "j") #'silver-brain-widget-jump)
 
     (define-key keymap (kbd "e") #'silver-brain-item-open-content)
     (define-key keymap (kbd "r") #'silver-brain-item-rename)
@@ -60,6 +61,7 @@
 (pretty-hydra-define silver-brain-item-hydra (:color blue)
   ("Buffer"
    (("o" silver-brain-search-and-open-item "open")
+    ("j" silver-brain-widget-jump "jump")
     ("g" silver-brain-item-refresh "refresh")
     ("q" silver-brain-item-quit "close"))
 
