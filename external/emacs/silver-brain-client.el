@@ -108,6 +108,14 @@ Return the ID of newly created item."
 (defun silver-brain-client-delete-item (id)
   (silver-brain--client-delete (format "items/%s" id)))
 
+(defun silver-brain-client-save-item-property (id key value)
+  (let ((data (list (cons "key" key)
+                    (cons "value" value))))
+    (silver-brain--client-patch (format "/items/%s/properties" id) data)))
+
+(defun silver-brain-client-delete-item-property (id key)
+  (silver-brain--client-delete (format "/items/%s/properties/%s" id key)))
+
 (defun silver-brain-client-add-child (id child-id)
   (silver-brain--client-post (format "items/%s/children/%s" id child-id)))
 
