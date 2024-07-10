@@ -52,7 +52,9 @@ def toSql(query: Query.InternalProperty): SQLSyntax =
   toSql(keySql, query.operator, query.value)
 
 def toSql(query: Query.ExternalProperty): SQLSyntax =
-  SQLSyntax.createUnsafely("true")
+  val keySql = SQLSyntax.createUnsafely(s"props ->> '$$.properties.${query.key}'")
+
+  toSql(keySql, query.operator, query.value)
 
 def toSql(query: Query.Not): SQLSyntax =
   val subQuery = toSql(query.query)
