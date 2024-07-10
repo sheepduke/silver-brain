@@ -26,6 +26,8 @@ class Routes(using
   given jsoniter.JsonValueCodec[ItemCreatePayload] = JsonCodecMaker.make
   given jsoniter.JsonValueCodec[ItemUpdatePayload] = JsonCodecMaker.make
 
+  given jsoniter.JsonValueCodec[ItemPropertySavePayload] = JsonCodecMaker.make
+
   given jsoniter.JsonValueCodec[Reference] = JsonCodecMaker.make
   given referenceSeqCodec: jsoniter.JsonValueCodec[Seq[Reference]] =
     JsonCodecMaker.make
@@ -72,6 +74,27 @@ class Routes(using
   @delete("/api/v2/items/:id/children/:child")
   def deleteChild(id: String, child: String)(using storeName: StoreName) =
     this.itemService.deleteChild(id, child).toHttpResponse(204)
+
+  // ============================================================
+  //  Item Property
+  // ============================================================
+
+  @withStoreName
+  @patch("/api/v2/items/:id/properties")
+  def saveItemProperty(id: String, request: Request)(using storeName: StoreName) =
+    request.log()
+
+    for
+      payload <- request.readJson[ItemPropertySavePayload]
+    do
+      this.itemService.saveItemProperty(id, payload.key, payload.value).toHttpResponse()
+
+  @withStoreName
+  @delete("/api/v2/items/:id/properties/:key")
+  def deleteItemProperty(id: String, key: String, request: Request)(using storeName: StoreName) =
+    request.log()
+
+    this.itemService.deleteItemProperty(id, key).toHttpResponse()
 
   // ============================================================
   //  Item
@@ -223,6 +246,10 @@ class Routes(using
 
   initialize()
 
+// ============================================================
+//  Request Types
+// ============================================================
+
 private case class ItemCreatePayload(
     name: String,
     contentType: Option[String] = None,
@@ -233,6 +260,11 @@ private case class ItemUpdatePayload(
     name: Option[String] = None,
     contentType: Option[String] = None,
     content: Option[String] = None
+)
+
+private case class ItemPropertySavePayload(
+  key: String,
+  value: String
 )
 
 private case class ReferenceCreatePayload(
@@ -254,6 +286,7 @@ private def propsToOptions(props: String): ItemLoadOptions =
       loadContent = true,
       loadCreateTime = true,
       loadUpdateTime = true,
+      loadProperties = true,
       loadParents = true,
       loadChildren = true,
       loadSiblings = true,
@@ -266,6 +299,7 @@ private def propsToOptions(props: String): ItemLoadOptions =
       loadContent = propSet.contains("content"),
       loadCreateTime = props.contains("createTime"),
       loadUpdateTime = props.contains("updateTime"),
+      loadProperties = props.contains("properties"),
       loadParents = props.contains("parents"),
       loadChildren = props.contains("children"),
       loadSiblings = props.contains("siblings"),

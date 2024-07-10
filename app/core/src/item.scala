@@ -40,6 +40,14 @@ trait ItemService:
   def deleteItem(id: Id)(using StoreName): ServiceResponse[Unit]
 
   // ============================================================
+  //  Property
+  // ============================================================
+
+  def saveItemProperty(id: Id, key: String, value: String)(using StoreName): ServiceResponse[Unit]
+
+  def deleteItemProperty(id: Id, key: String)(using StoreName): ServiceResponse[Unit]
+
+  // ============================================================
   //  Child
   // ============================================================
 

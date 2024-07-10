@@ -83,22 +83,16 @@ class SqlItemService(store: SqliteStore) extends ItemService:
       StoreName
   ): ServiceResponse[Unit] =
     this.store.withTransaction(implicit session =>
-      SqlItemService.getItem(id) match
-        case None => Left(ServiceError.IdNotFound(id))
-        case Some(item) =>
-          val newItem = item.copy(
+      SqlItemService.updateItem(
+        id,
+        item =>
+          item.copy(
             name = name.getOrElse(item.name),
             contentType = contentType.orElse(item.contentType),
             content = content.orElse(item.content),
             updateTime = Some(Instant.now())
           )
-
-          val json = jsoniter.writeToString(newItem)
-
-          sql"update item set props = $json where id = ${id}".update
-            .apply()
-
-          Right(())
+      )
     )
 
   override def deleteItem(id: Id)(using
@@ -112,6 +106,30 @@ class SqlItemService(store: SqliteStore) extends ItemService:
         .apply()
 
       Right(())
+    )
+
+  // ============================================================
+  //  Property
+  // ============================================================
+
+  def saveItemProperty(id: Id, key: String, value: String)(using
+      StoreName
+  ): ServiceResponse[Unit] =
+    this.store.withTransaction(implicit session =>
+      SqlItemService.updateItem(id, item =>
+        val properties = item.properties.getOrElse(Map[String, String]())
+        item.copy(properties = Some(properties + (key -> value)))
+      )
+    )
+
+  def deleteItemProperty(id: Id, key: String)(using
+      StoreName
+  ): ServiceResponse[Unit] =
+    this.store.withTransaction(implicit session =>
+      SqlItemService.updateItem(id, item =>
+        val properties = item.properties.getOrElse(Map[String, String]())
+        item.copy(properties = Some(properties - key))
+      )
     )
 
   // ============================================================
@@ -329,6 +347,20 @@ object SqlItemService:
       )
 
     items
+
+  private def updateItem(id: Id, updateFunc: Item => Item)(using
+      DBSession
+  ): ServiceResponse[Unit] =
+    SqlItemService.getItem(id) match
+      case None => Left(ServiceError.IdNotFound(id))
+      case Some(item) =>
+        val newItem = updateFunc(item)
+        val json = jsoniter.writeToString(newItem)
+
+        sql"update item set props = $json where id = ${id}".update
+          .apply()
+
+        Right(())
 
 private case class ParentChild(parent: Id, child: Id)
 
