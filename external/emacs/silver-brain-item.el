@@ -70,13 +70,13 @@
     ("i" silver-brain-item-basic-hydra/body "more operations"))
 
    "Parent"
-   (("p" silver-brain-item-parent-hydra "parent"))
+   (("p" silver-brain-item-parent-hydra/body "parent"))
 
    "Child"
-   (("c" silver-brain-item-child-hydra "child"))
+   (("c" silver-brain-item-child-hydra/body "child"))
 
    "Reference"
-   (("r" silver-brain-item-reference-hydra "reference"))))
+   (("r" silver-brain-item-reference-hydra/body "reference"))))
 
 (pretty-hydra-define silver-brain-item-basic-hydra ()
   ("Item"
