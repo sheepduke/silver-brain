@@ -38,21 +38,21 @@
     (define-key keymap (kbd "j") #'silver-brain-widget-jump)
 
     (define-key keymap (kbd "e") #'silver-brain-item-open-content)
-    (define-key keymap (kbd "r") #'silver-brain-item-rename)
-    (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
-    (define-key keymap (kbd "D") #'silver-brain-item-delete)
+    (define-key keymap (kbd "i c") #'silver-brain-item-create-item)
+    (define-key keymap (kbd "i r") #'silver-brain-item-rename)
+    (define-key keymap (kbd "i t") #'silver-brain-item-update-content-type)
+    (define-key keymap (kbd "i d") #'silver-brain-item-delete)
 
-    (define-key keymap (kbd "a p") #'silver-brain-item-add-parent)
-    (define-key keymap (kbd "a c") #'silver-brain-item-add-child)
-    (define-key keymap (kbd "a r") #'silver-brain-item-add-reference)
+    (define-key keymap (kbd "p a") #'silver-brain-item-add-parent)
+    (define-key keymap (kbd "p c") #'silver-brain-item-create-parent)
+    (define-key keymap (kbd "p d") #'silver-brain-item-delete-parent)
 
-    (define-key keymap (kbd "c i") #'silver-brain-item-create-item)
-    (define-key keymap (kbd "c p") #'silver-brain-item-create-parent)
+    (define-key keymap (kbd "c a") #'silver-brain-item-add-child)
     (define-key keymap (kbd "c c") #'silver-brain-item-create-child)
+    (define-key keymap (kbd "c d") #'silver-brain-item-delete-child)
 
-    (define-key keymap (kbd "p") #'silver-brain-item-delete-parent)
-    (define-key keymap (kbd "c") #'silver-brain-item-delete-child)
-    (define-key keymap (kbd "r") #'silver-brain-item-delete-reference)
+    (define-key keymap (kbd "r a") #'silver-brain-item-add-reference)
+    (define-key keymap (kbd "r d") #'silver-brain-item-delete-reference)
 
     (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
 
@@ -67,32 +67,42 @@
 
    "Item"
    (("e" silver-brain-item-open-content "edit content")
+    ("i" silver-brain-item-basic-hydra/body "more operations"))
+
+   "Parent"
+   (("p" silver-brain-item-parent-hydra "parent"))
+
+   "Child"
+   (("c" silver-brain-item-child-hydra "child"))
+
+   "Reference"
+   (("r" silver-brain-item-reference-hydra "reference"))))
+
+(pretty-hydra-define silver-brain-item-basic-hydra ()
+  ("Item"
+   (("e" silver-brain-item-open-content "edit content")
+    ("c" silver-brain-item-create-item "create")
     ("r" silver-brain-item-rename "rename")
     ("t" silver-brain-item-update-content-type "update content type")
-    ("D" silver-brain-item-delete "delete"))
+    ("d" silver-brain-item-delete "delete this"))))
 
-   "Operation"
-   (("a" silver-brain-item-add-hydra/body "add")
-    ("c" silver-brain-item-create-hydra/body "create")
-    ("d" silver-brain-item-delete-hydra/body "delete"))))
+(pretty-hydra-define silver-brain-item-parent-hydra ()
+  ("Parent"
+   (("a" silver-brain-item-add-parent "add")
+    ("c" silver-brain-item-create-parent "create")
+    ("d" silver-brain-item-delete-parent "delete"))))
 
-(pretty-hydra-define silver-brain-item-add-hydra ()
-  ("Add"
-   (("p" silver-brain-item-add-parent "parent")
-    ("c" silver-brain-item-add-child "child")
-    ("r" silver-brain-item-add-reference "reference"))))
+(pretty-hydra-define silver-brain-item-child-hydra ()
+  ("Child"
+   (("a" silver-brain-item-add-child "add")
+    ("c" silver-brain-item-create-child "create")
+    ("d" silver-brain-item-delete-child "delete"))))
 
-(pretty-hydra-define silver-brain-item-create-hydra ()
-  ("Create"
-   (("i" silver-brain-create-and-open-item "item")
-    ("p" silver-brain-item-create-parent "parent")
-    ("c" silver-brain-item-create-child "child"))))
-
-(pretty-hydra-define silver-brain-item-delete-hydra ()
-  ("Delete"
-   (("p" silver-brain-item-delete-parent "parent")
-    ("c" silver-brain-item-delete-child "child")
-    ("r" silver-brain-item-delete-reference "reference"))))
+(pretty-hydra-define silver-brain-item-reference-hydra ()
+  ("Reference"
+   (("a" silver-brain-item-add-reference "add")
+    ("c" silver-brain-item-create-reference "create")
+    ("d" silver-brain-item-delete-reference "delete"))))
 
 ;; ============================================================
 ;;  Buffer
