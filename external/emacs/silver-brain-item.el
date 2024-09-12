@@ -32,10 +32,12 @@
 
   (let ((keymap (make-composed-keymap (list (make-sparse-keymap)
                                             widget-keymap))))
-    (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
     (define-key keymap (kbd "g") #'silver-brain-item-refresh)
     (define-key keymap (kbd "q") #'silver-brain-item-quit)
     (define-key keymap (kbd "j") #'silver-brain-widget-jump)
+
+    (define-key keymap (kbd "s o") #'silver-brain-search-and-open-item)
+    (define-key keymap (kbd "s l") #'silver-brain-search)
 
     (define-key keymap (kbd "e") #'silver-brain-item-open-content)
     (define-key keymap (kbd "i c") #'silver-brain-item-create-item)
@@ -65,18 +67,12 @@
     ("g" silver-brain-item-refresh "refresh")
     ("q" silver-brain-item-quit "close"))
 
-   "Item"
-   (("e" silver-brain-item-open-content "edit content")
-    ("i" silver-brain-item-basic-hydra/body "more operations"))
-
-   "Parent"
-   (("p" silver-brain-item-parent-hydra/body "parent"))
-
-   "Child"
-   (("c" silver-brain-item-child-hydra/body "child"))
-
-   "Reference"
-   (("r" silver-brain-item-reference-hydra/body "reference"))))
+   "Groups"
+   (("i" silver-brain-item-basic-hydra/body "item")
+    ("s" silver-brain-item-search-hydra/body "search")
+    ("p" silver-brain-item-parent-hydra/body "parent")
+    ("c" silver-brain-item-child-hydra/body "child")
+    ("r" silver-brain-item-reference-hydra/body "reference"))))
 
 (pretty-hydra-define silver-brain-item-basic-hydra ()
   ("Item"
@@ -85,6 +81,11 @@
     ("r" silver-brain-item-rename "rename")
     ("t" silver-brain-item-update-content-type "update content type")
     ("d" silver-brain-item-delete "delete this"))))
+
+(pretty-hydra-define silver-brain-item-search-hydra ()
+  ("Search"
+   (("o" silver-brain-search-and-open-item "open")
+    ("l" silver-brain-list-items "search"))))
 
 (pretty-hydra-define silver-brain-item-parent-hydra ()
   ("Parent"
