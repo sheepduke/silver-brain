@@ -10,9 +10,17 @@
 import Config
 
 config :silver_brain_service,
-  data_root_path: "~/temp/test"
+  data_root_path: "~/temp/test",
+  ecto_repos: [SilverBrain.Service.Repo]
 
-config :silver_brain_service, SilverBrain.Service.Repo, name: nil
+config :silver_brain_service, SilverBrain.Service.Repo,
+  name: nil,
+  migration_primary_key: false,
+  migration_timestamps: [
+    type: :utc_datetime,
+    inserted_at: :create_time,
+    updated_at: :update_time
+  ]
 
 # Sample configuration:
 #

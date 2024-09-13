@@ -1,6 +1,8 @@
 defmodule SilverBrain.Service.RepoManager do
   alias SilverBrain.Service.RepoManager
-  # alias SilverBrain.Service.RepoManager
+  @type result :: SilverBrain.Core.result()
+  @type result(t) :: SilverBrain.Core.result(t)
+
   # State of the server.
   defmodule State do
     use TypedStruct
@@ -20,21 +22,42 @@ defmodule SilverBrain.Service.RepoManager do
 
   @spec start_link(Path.t()) :: any()
   def start_link(data_root_path) do
-    GenServer.start_link(
-      __MODULE__,
-      %State{data_root_path: data_root_path, repos: %{}},
-      name: RepoManager
-    )
+    state = %State{data_root_path: data_root_path, repos: %{}}
+
+    with {:ok, pid} <- GenServer.start_link(__MODULE__, state, name: RepoManager),
+         {:ok, repo_names} <- get_all() do
+      for repo_name <- repo_names do
+        migrate(repo_name)
+      end
+
+      {:ok, pid}
+    end
   end
 
+  @spec get_all() :: result(list(String.t()))
   def get_all() do
     GenServer.call(RepoManager, :get_all)
   end
 
+  @spec connect(String.t()) :: result(pid())
   def connect(repo_name) do
-    case GenServer.call(RepoManager, {:connect, repo_name}) do
-      {:ok, pid} -> SilverBrain.Service.Repo.put_dynamic_repo(pid)
-      error -> error
+    with {:ok, pid} <- GenServer.call(RepoManager, {:connect, repo_name}),
+         _ <- SilverBrain.Service.Repo.put_dynamic_repo(pid) do
+      {:ok, pid}
+    end
+  end
+
+  @spec create(String.t()) :: result(list(String.t()))
+  def create(repo_name) do
+    with {:ok, _} <- GenServer.call(RepoManager, {:create, repo_name}) do
+      migrate(repo_name)
+    end
+  end
+
+  @spec migrate(String.t()) :: result(list(String.t()))
+  def migrate(repo_name) do
+    with {:ok, _} <- connect(repo_name) do
+      Ecto.Migrator.run(SilverBrain.Service.Repo, :up, all: true)
     end
   end
 
@@ -61,7 +84,10 @@ defmodule SilverBrain.Service.RepoManager do
   def handle_call(:get_all, _from, state) do
     case File.ls(state.data_root_path) do
       {:ok, dirs} ->
-        repo_names = dirs |> Enum.filter(&is_valid_repo(state.data_root_path, &1))
+        repo_names =
+          dirs
+          |> Enum.filter(&is_valid_repo(state, &1))
+
         {:reply, {:ok, repo_names}, state}
 
       _ ->
@@ -73,8 +99,8 @@ defmodule SilverBrain.Service.RepoManager do
   def handle_call({:connect, repo_name}, _from, state) do
     case Map.get(state.repos, repo_name) do
       nil ->
-        if is_valid_repo(state.data_root_path, repo_name) do
-          {:ok, pid} = start_repo(state.data_root_path, repo_name)
+        if is_valid_repo(state, repo_name) do
+          {:ok, pid} = start_repo(state, repo_name)
           repos = Map.put(state.repos, repo_name, pid)
           {:reply, {:ok, pid}, %State{state | :repos => repos}}
         else
@@ -86,14 +112,33 @@ defmodule SilverBrain.Service.RepoManager do
     end
   end
 
-  defp is_valid_repo(data_root_path, repo_name) do
-    File.regular?(Path.join([data_root_path, repo_name, "data.sqlite"]))
+  @impl true
+  def handle_call({:create, repo_name}, _from, state) do
+    repo_path = Path.join(state.data_root_path, repo_name)
+
+    if File.exists?(repo_path) do
+      {:reply, {:error, "Target directory already exists"}, state}
+    else
+      case File.mkdir(repo_path) do
+        :ok ->
+          File.mkdir(repo_path)
+          File.touch(Path.join(repo_path, "data.sqlite"))
+          {:reply, {:ok, repo_name}, state}
+
+        error ->
+          {:reply, error, state}
+      end
+    end
   end
 
-  defp start_repo(data_root_path, repo_name) do
+  defp is_valid_repo(state, repo_name) do
+    File.regular?(Path.join([state.data_root_path, repo_name, "data.sqlite"]))
+  end
+
+  defp start_repo(state, repo_name) do
     db_config = [
       name: nil,
-      database: Path.join([data_root_path, repo_name, "data.sqlite"])
+      database: Path.join([state.data_root_path, repo_name, "data.sqlite"])
     ]
 
     SilverBrain.Service.Repo.start_link(db_config)
