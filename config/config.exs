@@ -22,10 +22,6 @@ config :silver_brain_service, SilverBrain.Service.Repo,
     updated_at: :update_time
   ]
 
-# Sample configuration:
-#
-#     config :logger, :console,
-#       level: :info,
-#       format: "$date $time [$level] $metadata$message\n",
-#       metadata: [:user_id]
-#
+config :logger,
+  level: :debug,
+  format: "$date $time [$level] $metadata$message\n"

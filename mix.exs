@@ -10,18 +10,21 @@ defmodule SilverBrain.MixProject do
     ]
   end
 
-  # Dependencies listed here are available only for this
-  # project and cannot be accessed from applications inside
-  # the apps folder.
-  #
-  # Run "mix help deps" for examples and options.
-  defp deps do
-    [
+  def common_deps,
+    do: [
       # For better struct definition.
       {:typed_struct, "~> 0.1.4"},
 
       # Dev only.
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
+
+  # Dependencies listed here are available only for this
+  # project and cannot be accessed from applications inside
+  # the apps folder.
+  #
+  # Run "mix help deps" for examples and options.
+  defp deps do
+    []
   end
 end

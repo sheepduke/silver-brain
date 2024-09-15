@@ -39,11 +39,11 @@ defmodule SilverBrain.Service.RepoManager do
     GenServer.call(RepoManager, :get_all)
   end
 
-  @spec connect(String.t()) :: result(pid())
+  @spec connect(String.t()) :: result()
   def connect(repo_name) do
     with {:ok, pid} <- GenServer.call(RepoManager, {:connect, repo_name}),
          _ <- SilverBrain.Service.Repo.put_dynamic_repo(pid) do
-      {:ok, pid}
+      :ok
     end
   end
 

@@ -28,7 +28,11 @@ defmodule SilverBrain.Service.MixProject do
     [
       {:ecto, "~> 3.12.3"},
       {:ecto_sqlite3, "~> 0.16"},
-      {:ksuid, "~> 0.1.2"}
+      {:ksuid, "~> 0.1.2"},
+
+      # Sibling deps.
+      {:silver_brain_core, in_umbrella: true}
+      | SilverBrain.MixProject.common_deps()
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
       # {:sibling_app_in_umbrella, in_umbrella: true}
