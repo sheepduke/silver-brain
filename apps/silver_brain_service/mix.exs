@@ -26,7 +26,6 @@ defmodule SilverBrain.Service.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:typed_struct, "~> 0.1.4"},
       {:ecto, "~> 3.12.3"},
       {:ecto_sqlite3, "~> 0.16"},
       {:ksuid, "~> 0.1.2"}

@@ -16,6 +16,12 @@ defmodule SilverBrain.MixProject do
   #
   # Run "mix help deps" for examples and options.
   defp deps do
-    []
+    [
+      # For better struct definition.
+      {:typed_struct, "~> 0.1.4"},
+
+      # Dev only.
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+    ]
   end
 end
