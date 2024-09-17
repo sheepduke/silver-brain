@@ -1,9 +1,9 @@
-defmodule SilverBrain.Server.MixProject do
+defmodule SilverBrainMigrator.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :silver_brain_server,
+      app: :silver_brain_migrator,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -18,14 +18,15 @@ defmodule SilverBrain.Server.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {SilverBrain.Server.Application, []}
+      extra_applications: [:logger]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:ecto, "~> 3.12.3"},
+      {:ecto_sqlite3, "~> 0.16"},
       {:jason, "~> 1.4"}
 
       # {:dep_from_hexpm, "~> 0.3.0"},

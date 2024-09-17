@@ -25,6 +25,7 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   end
 
   def create_item(store, name) do
+    id = "i_" <> Ksuid.generate()
   end
 
   def update_item(store, item) do

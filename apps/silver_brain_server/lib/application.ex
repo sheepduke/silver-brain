@@ -28,13 +28,3 @@ defimpl Jason.Encoder, for: SilverBrain.Core.Item do
     Jason.Encode.map(map, opts)
   end
 end
-
-# item = %SilverBrain.Core.Item{
-#   id: "100",
-#   name: "Emacs"
-# }
-
-# Jason.encode(item)
-
-# SilverBrain.Service.RepoManager.connect("main")
-# SilverBrain.Service.Repo.all(Ecto.Query.from("item", select: [:id, :props]))

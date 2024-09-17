@@ -56,7 +56,7 @@ defmodule SilverBrain.Service.RepoManager do
 
   @spec migrate(String.t()) :: result(list(String.t()))
   def migrate(repo_name) do
-    with {:ok, _} <- connect(repo_name) do
+    with :ok <- connect(repo_name) do
       Ecto.Migrator.run(SilverBrain.Service.Repo, :up, all: true)
     end
   end

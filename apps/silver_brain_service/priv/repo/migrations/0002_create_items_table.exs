@@ -1,8 +1,10 @@
-defmodule SilverBrain.Service.Repo.Migrations.CreateItemTable do
+defmodule SilverBrain.Service.Repo.Migrations.CreateItemsTable do
   use Ecto.Migration
 
+  @table_name "items"
+
   def up() do
-    create table("items") do
+    create table(@table_name) do
       add(:id, :string, primary_key: true)
       add(:name, :string)
       add(:content_type, :string)
@@ -10,5 +12,9 @@ defmodule SilverBrain.Service.Repo.Migrations.CreateItemTable do
 
       timestamps()
     end
+  end
+
+  def down() do
+    drop_if_exists(@table_name)
   end
 end
