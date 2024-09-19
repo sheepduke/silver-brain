@@ -1,222 +1,172 @@
+* Table of Contents                                                    :TOC:
+- [[#about][About]]
+  - [[#prologue][Prologue]]
+  - [[#introduction][Introduction]]
+  - [[#technical-designs][Technical Designs]]
+- [[#installation][Installation]]
+  - [[#dependencies][Dependencies]]
+- [[#manual][Manual]]
+  - [[#core-functionality][Core Functionality]]
+  - [[#search-engine][Search Engine]]
+  - [[#emacs-ui][Emacs UI]]
+  - [[#http-api][HTTP API]]
 
-* Silver-Brain
+* About
 
-** Notice
+** Prologue
 
-I have been using it for a year or so and have been re-thinking of this software for some time. I would like to re-design it and make it more useful for general purpose (and surely for myself).
+Back to the time when I was preparing the final examinations as a bachelor student. I wrote down all the concepts to a big white paper in a structured way in order to review what I have learned. I draw lines between concepts and labeled the relationship. For each concept, I wrote some text describing it (usually the paper was too small for large trunk of text).
 
-1.4.4 is the last stable version of existing functionality.
+After Emacs and its decent Org Mode became best partner for my electronic life, I always wanted a software that helps me record everything in a structured way, like described above.
 
-Next release will be a re-implementation of whole software, versioned starting from 2.0.0.
+I want a software that has the following characteristics:
+- Data are stored in a format that is transferable and can be easily parsed by any programming language.
+- Data are transparent to the user and are easily hackable.
+- Feature rich yet user-friendly search function.
+- Convenience to access and manipulate the data in multiple platforms and scenarios.
+- Good performance.
 
-** Overview
+I decided to roll my own.
 
-*** Prologue
+** Introduction
 
-Back to the time when I was preparing the final examinations as a bachelor
-student. I wrote down all the concepts to a big white paper in a structured
-way in order to review what I have learned. I draw lines between concepts and
-labeled the relationship. For each concept, I wrote some text describing it
-(usually the paper was too small for large trunk of text).
-
-After Emacs and its decent Org Mode became best partner for my electronic
-life, I always wanted a software that helps me record everything in a
-structured way, like described above.
-
-I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that
-made me stop using it:
-- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text in it
-  really made me sad. (This issue has been fixed now.)
-- Although it is doable via ~org-brain-rename-file~, but the inconsistency
-  between file name and concept name made me uncomfortable, really.
-- I was concerned about the performance of plain text when the number of
-  concepts grow too large.
-
-*** Introduction
-
-Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is directly inspired by
-[[https://github.com/Kungsgeten/org-brain][org-brain]]. It helps you build your very own personal knowledge center.
+Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and was initially inspired by [[https://github.com/Kungsgeten/org-brain][org-brain]]. It helps you build your very own personal knowledge center.
 
 It has the following features:
 
-- Edit concepts using Emacs Org Mode (or probably other major modes in
-  future).
-- Maintain the relationship between concepts, including paternity and
-  friendship.
+- Emacs UI for all the functionality mentioned below.
+- Data are stored in different workspaces that guarantee complete data isolation.
+- An item (thought in the /Brain/ software) can store anything, including texts, hyper links, documents, images etc.
+- An item may have custom properties (key/value pairs) that grant you super power to implement your own data classification system or a simple tagging mechanism.
+- Items can be linked to consist a leveled graph of nodes.
+- Items can reference each other with textual annotations in a free form.
+- A comprehensive search engine that supports both basic text match and advanced search functions such as property match, glob patterns and more.
 
-The following technical decisions were made:
+** Technical Designs
 
-- Concepts are stored in a single SQLite file. Easy to maintain and
-  synchronize.
-- Separation between back-end and front-end. This makes it possible to develop
-  another UI. The directory ~web-ui/~ contains a proof-of-concept
-  demonstration.
-- Back-end code was written in Common Lisp (a bless or a curse).
-
-*** Screenshots
-
-[[screenshots/concept.jpg]]
-
-*** Change Log
+- Each workspace is a folder.
+- Items are stored in a SQLite database.
+- It works in a C/S architecture. You may implement your own client if you wish.
+- Back-end code was written in Elixir.
+  (It was originally written in Common Lisp yet I found Elixir a very acceptable Lisp.)
 
 Please refer to [[./CHANGELOG.org][CHANGELOG.org]].
 
-** Usage
+* Installation
 
-*** Installation
-
-**** External Dependencies
+** Dependencies
 
 Make sure ~SQLite 3~ is installed on your system.
 
-**** Add silver-brain System to ASDF Path
+And you need Elixir compiler if you want to compile the server code.
 
-It is essential for the following installation process. And it is a good idea
-if you would like to load silver-brain using ASDF during manual installation.
+* Manual
 
-- When using Roswell, you may simply create a symbolic link of ~silver-brain~
-directory in =~/.roswell/local-projects/= directory.
+** Core Functionality
 
-- Otherwise, you need to add the path of Silver Brain to
-  ~asdf:*central-registry*~.
+*** Workspace
 
-**** Using Installation Script
+The workspace is the unit of a complete data set. Data stored in different workspaces cannot be shared and are completely isolated.
 
-An installation script is provided for the sake of quick installation. Before
-running it, you need to put Silver Brain project under a directory that your
-local ASDF can find, i.e. ~(ql:quickload :silver-brain)~ does work.
+All the content below assumes that a single workspace is active.
 
-#+BEGIN_SRC sh
-cd /path/to/silver-brain/
-./install.sh
+*** Item
+
+An item is the fundamental unit to store any information. It has the following properties:
+- =id=. Globally unique unchangeable identifier.
+- =name=. The name/title/subject.
+- =content-type=. The content type of this item.
+  - For Org notes the value should be =text/org= or =application/org=.
+  - For Markdown notes the value should be =text/markdown=.
+  - For hyper links the value should be =application/x.silver-brain.hyper-link=.
+  - For multi-media types it should be the registered MIME values.
+- =content=. The content of this item.
+- =create-time=. The UTC time when this item was created. Unchangeable.
+- =update-time=. The UTC time when this item was last modified.
+  Note that only changes to the properties mentioned above will modify it.
+
+*** Item Link
+
+A link indicates the hierarchical relationship between 2 items, which is considered "parent" or "child" respectively.
+
+For example, a /Travel Plan/ may contain multiple /Airplane Tickets/ and /Hotel Reservations/.
+
+It is forbidden for an item to become a parent and a child of another item at the same time.
+
+*** Item Reference
+
+Items may reference each other to add supplementary information. A reference may contain annotation and has no requirement upon the source and target items.
+
+For example, a /Travel Plan/ mentioned above may reference an item of destination country.
+
+*** Item Property
+
+An item may contain multiple custom properties that is treated and stored as key-value pairs.
+
+** Search Engine
+
+A simple yet powerful search engine is designed to search it.
+
+#+BEGIN_SRC ebnf
+  <query> ::= <simple-query> | <logical-query> | <property-query>
+
+  <simple-query> ::= <basic-string> | <glob-string>
+  <basic-string> ::= <simple-string> | <quoted-string>
+  <simple-string> ::= [^" ]
+  <quoted-string> ::= "\"" (<character> | "\\" | "\"") "\""
+  <glob-string> ::= ("*"?) <basic-string> ("*"?)
+
+  <logical-query> ::= <not-query> | <and-query> | <or-query> | <grouped-query>
+  <not-query> ::= "!" <query>
+  <and-query> ::= <query> ("&&" | <space>) <query>
+  <or-query> ::= <query> "||" <query>
+  <grouped-query> ::= "(" <query> ")"
+
+  <property-query> ::= <basic-string> <property-op> <glob-string>
+  <property-op> ::= ":" | "<" | "<=" | ">=" | ">"
 #+END_SRC
 
-It mainly does the following things:
-1. Build back-end server using Roswell.
-2. Install the generated binary to =~/.roswell/bin/= directory.
-3. Copy Emacs Lisp files to =~/.silver-brain/= directory.
+** Emacs UI
 
-You may need to add =~/.roswell/bin/= to your ~PATH~ in order to use
-~silver-brain~ anywhere.
+|---------+---------+-------------|
+| Command | Binding | Description |
+|---------+---------+-------------|
+| TBD     |         |             |
+|---------+---------+-------------|
 
-**** Installing Manually
+** HTTP API
 
-***** Installing Back-End Server
+Unless specified, the following rules apply to all the endpoints:
+- The endpoints should be prefixed with =/api/v2=, which is omitted in this section.
+- HTTP header =X-SB-Store= is used to specify the name of workspace.
+- GET endpoints return =200 OK= on success.
+- GET endpoints return =400 Not Found= when the resource is not found.
+- POST endpoints return =201 Created= on success. The body is ={"id": "xxx"}= for newly created resource.
+- POST endpoints return =400 Bad Request= when the JSON payload is invalid.
+- PATCH endpoints return =204 No Content= on success.
+- PATCH endpoints return =400 Bad Request= when the JSON payload is invalid.
+- DELETE endpoints return =204 No Content= on success.
 
-****** Roswell Way
+The POST body is a JSON payload. The value of a property should be a string unless specified.
 
-It is highly recommended to use Roswell to build and install Lisp systems for
-its simplicity.
+Unless specified, 
 
-#+BEGIN_SRC sh
-cd /path/to/silver-brain/backend/
-ros build silver-brain.ros
-#+END_SRC
+*** =GET /items/:id=
 
-****** Legacy Way
+*** =POST /items=
 
-It is a little bit complicated not to use Roswell. You may load Silver Brain
-into an image and dump it.
+Body:
+- =name=. Required.
+- =contentType= and =content=. Optional.
 
-See [[https://lispcookbook.github.io/cl-cookbook/scripting.html][The Common Lisp Cookbook]] for more details.
+*** =PATCH /items=
 
-***** Installing Emacs UI Code
+*** =DELETE /items=
 
-Copy the ~emacs/~ directory to somewhere Emacs can find.
+*** =GET /item-references=
 
-**** Configuration
+*** =POST /item-references=
 
-The server uses ~5000~ as the port. Currently this cannot be changed unless
-modifying the source code.
+*** =PATCH /item-references/:id=
 
-For Emacs UI to work, the following snippet needs to be added into the Emacs
-configuration file:
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'load-path "~/.silver-brain/emacs/")
-(use-package silver-brain
-  :init
-  ;; The port of back-end server. Does NOT affect server side.
-  (setq silver-brain-server-port 5000)
-
-  :bind
-  ("C-c b" . silver-brain))
-#+END_SRC
-
-*** Manual
-
-**** Concepts
-
-The core concept of Silver Brain is /concept/. A concept a node in your
-knowledge network. It contains title, content etc.
-
-Concepts are connected via /relations/. A concept can be either parent, child
-or friend of another one. You may think of parent/child as a single
-directional link, while friend is a bi-directional link.
-
-Practically, parent/child can be used to connect concepts with logical
-precedence, e.g. ~Editor~ and ~Emacs~. And friend can be used to connect
-concepts with slightly weak relations, e.g. ~Emacs~ and ~Vim~, hopefully ;-)
-
-**** Software
-
-The back-end server accepts ~-h~ or ~--help~ argument. Please refer to the
-help.
-
-For Emacs side, the command ~silver-brain~ is the entry point of the software.
-
-The following is a list of commands defined for ~silver-brain-mode~:
-
-|--------------------------------+---------+----------------------------------|
-| Command                        | Binding | Description                      |
-|--------------------------------+---------+----------------------------------|
-| silver-brain-refresh           | g       | Refresh current concept          |
-| silver-brain-new-concept       | n       | Create a new concept             |
-| silver-brain-rename            | r       | Rename current concept           |
-| silver-brain-save              | s       | Save changes of current concept  |
-| silver-brain                   | o       | Open a new concept               |
-| silver-brain-new-window        | O       | Open a new concept in new window |
-| silver-brain-delete            | d       | Delete current concept           |
-| silver-brain-add-parent        | p       | Add a parent of current concept  |
-| silver-brain-add-child         | c       | Add a child of current concept   |
-| silver-brain-add-friend        | f       | Add a friend of current concept  |
-| silver-brain-remove-relation   | R       | Remove a relational concept      |
-| silver-brain-kill-concept      | q       | Kill the concept window          |
-| silver-brain-kill-all-concepts | Q       | Kill all the concept windows     |
-|--------------------------------+---------+----------------------------------|
-
-*** Implementation
-
-Silver Brain was designed as a traditional Web application that back-end and
-front-end code communicates via HTTP requests. The concepts and relations are
-stored in a local SQLite file.
-
-The ~web-ui~ directory contains browser UI code written using Vuetify.
-
-** Known Issues
-
-*** The Software Needs to Be Restarted If DB file is Changed Externally
-
-If you use a synchronization software, such as Syncthing, you may need to
-restart the software after the DB file got synchronized.
-
-This is because the database needs to be re-connected while the current
-version of Silver Brain cannot handle it well.
-
-*** The Newly Updated Content is Not Shown
-
-If you run ~silver-brain-refresh~ after some modification and says ~yes~ to
-save the new contents, you may notice that the content buffer reverts to the
-original state.
-
-The solution is simply refreshing the buffer again.
-
-This is because when ~silver-brain-save~ is triggered, the modifications are
-not transferred to the server, thus the first ~silver-brain-refresh~ command
-will receive the old content.
-
-*** Silver Brain Fails to Start After Quicklisp Update
-
-Because Mito and Clack ~quickload~ its dependencies at run-time dynamically,
-the dependency packages cannot be built into the image. So after upgrading
-Quicklisp dist, you need to re-build the Roswell binary.
+*** =DELETE /item-references/:id=
