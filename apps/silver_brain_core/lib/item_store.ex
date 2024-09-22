@@ -10,6 +10,9 @@ defprotocol SilverBrain.Core.ItemStore do
   #  Item
   # ============================================================
 
+  @spec get_item(t, Item.id()) :: result(Item.t())
+  def get_item(store, item_id)
+
   @spec get_item(t, Item.id(), [atom()]) :: result(Item.t())
   def get_item(store, item_id, select)
 
@@ -24,18 +27,6 @@ defprotocol SilverBrain.Core.ItemStore do
 
   @spec delete_item(t, Item.id()) :: result()
   def delete_item(store, item_id)
-
-  # ============================================================
-  #  Attachments
-  # ============================================================
-
-  alias SilverBrain.Core.Attachment
-
-  @spec get_attachments(t, Item.id()) :: [Attachment.t()]
-  def get_attachments(store, item_id)
-
-  @spec remove_attachment(t, Item.id(), Attachment.id()) :: result()
-  def remove_attachment(store, item_id, attachment_id)
 
   # ============================================================
   #  Link

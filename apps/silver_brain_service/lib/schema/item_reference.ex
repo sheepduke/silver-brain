@@ -3,9 +3,8 @@ defmodule SilverBrain.Service.Schema.ItemReference do
 
   import Ecto.Changeset
 
-  @primary_key false
+  @primary_key {:id, :string, autogenerate: false}
   schema "item_references" do
-    field :id, :string, primary_key: true
     field :source, :string
     field :target, :string
     field :annotation, :string

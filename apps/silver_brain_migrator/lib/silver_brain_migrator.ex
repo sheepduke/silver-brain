@@ -1,4 +1,5 @@
 defmodule SilverBrain.Migrator do
+  alias Ecto.Changeset
   alias SilverBrain.Service.RepoManager
   alias SilverBrain.Service.Repo
   alias SilverBrain.Service.Schema
@@ -27,6 +28,7 @@ defmodule SilverBrain.Migrator do
     RepoManager.connect("old")
 
     Repo.all(from("item_child", select: [:parent, :child, :create_time]))
+    |> Stream.filter(&(Map.get(&1, :child) != "nil"))
     |> Enum.map(fn row ->
       datetime =
         row
@@ -72,17 +74,34 @@ defmodule SilverBrain.Migrator do
 
   def convert_item_id(id), do: "i_" <> id
 
+  def refresh() do
+    File.rm_rf!(Path.expand("~/temp/test/new"))
+    File.rm_rf!(Path.expand("~/temp/test/old"))
+
+    File.cp_r!(Path.expand("~/.silver-brain/main"), Path.expand("~/temp/test/old"))
+    RepoManager.create("new")
+  end
+
   def run() do
     items = load_items()
     item_links = load_item_links()
     item_references = load_item_references()
 
     RepoManager.connect("new")
+
     Repo.insert_all(Schema.Item, items)
     Repo.insert_all(Schema.ItemLink, item_links)
     Repo.insert_all(Schema.ItemReference, item_references)
+
+    count_all()
+  end
+
+  def count_all() do
+    {{:item, Repo.one(from(Schema.Item, select: count()))},
+     {:item_link, Repo.one(from(Schema.ItemLink, select: count()))},
+     {:item_reference, Repo.one(from(Schema.ItemReference, select: count()))}}
   end
 end
 
-# SilverBrain.Service.RepoManager.create("new")
-# Main.run()
+# SilverBrain.Migrator.refresh()
+# SilverBrain.Migrator.run()

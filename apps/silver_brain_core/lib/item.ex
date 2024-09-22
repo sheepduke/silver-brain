@@ -1,5 +1,4 @@
 defmodule SilverBrain.Core.Item do
-  alias SilverBrain.Core.Attachment
   use TypedStruct
 
   @type id() :: String.t()
@@ -12,6 +11,7 @@ defmodule SilverBrain.Core.Item do
     field :create_time, String.t()
     field :update_time, String.t()
     field :properties, %{String.t() => String.t()}
-    field :attachments, [Attachment.t()]
+    field :parents, [id()]
+    field :children, [id()]
   end
 end

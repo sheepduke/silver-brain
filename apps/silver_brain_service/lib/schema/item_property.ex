@@ -1,14 +1,15 @@
-defmodule SilverBrain.Service.Schema.Item do
+defmodule SilverBrain.Service.Schema.ItemProperty do
   use Ecto.Schema
 
-  @primary_key {:id, :string, autogenerate: false}
-  schema "items" do
+  schema "item_properties" do
     field :name, :string
     field :content_type, :string
     field :content, :string
     field :create_time, :utc_datetime
     field :update_time, :utc_datetime
 
-    has_many(:properties, SilverBrain.Service.Schema.ItemProperty)
+    belongs_to(:item, SilverBrain.Service.Schema.Item)
   end
 end
+
+
