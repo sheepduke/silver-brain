@@ -24,6 +24,9 @@ defmodule SilverBrain.Core.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    SilverBrain.MixProject.common_deps()
+    [
+      {:nimble_parsec, "~> 1.4"}
+      | SilverBrain.MixProject.common_deps()
+    ]
   end
 end
