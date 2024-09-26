@@ -138,14 +138,10 @@ defmodule SilverBrain.Core.SearchQuery do
     end
 
     def reduce_query(result) do
-      IO.puts("Enter reduce_query with: #{inspect(result)}")
-
       chunks =
         result
         |> Enum.filter(fn x -> x != :and end)
         |> Enum.chunk_by(fn x -> x == :or end)
-
-      IO.puts("Chunks are: #{inspect(chunks)}")
 
       if Enum.count(chunks) > 1 do
         # Has :or operator.

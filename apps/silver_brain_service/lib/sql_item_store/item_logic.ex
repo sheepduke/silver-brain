@@ -7,6 +7,23 @@ defmodule SilverBrain.Service.SqlItemStore.ItemLogic do
 
   import Ecto.Query, only: [from: 2]
 
+  def create_item(store, name) do
+    now_time = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    new_item = %Schema.Item{
+      id: "i_" <> Ksuid.generate(),
+      name: name,
+      content_type: "",
+      content: "",
+      create_time: now_time,
+      update_time: now_time
+    }
+
+    Repo.insert(new_item)
+
+    {:ok, new_item.id}
+  end
+
   def get_item(store, item_id) do
     internal_get_item(store, item_id)
   end

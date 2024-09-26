@@ -25,6 +25,10 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
 
   require Item
 
+  def create_item(store, name) do
+    SqlItemStore.ItemLogic.create_item(store, name)
+  end
+
   def get_item(store, item_id) do
     SqlItemStore.ItemLogic.get_item(store, item_id)
   end
@@ -34,10 +38,6 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   end
 
   def get_items(store, item_ids, select) do
-  end
-
-  def create_item(store, name) do
-    id = "i_" <> Ksuid.generate()
   end
 
   def update_item(store, item) do
