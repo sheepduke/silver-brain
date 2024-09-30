@@ -1,4 +1,5 @@
 defprotocol SilverBrain.Core.ItemReferenceStore do
+  alias SilverBrain.Core.Item
   alias SilverBrain.Core.ItemReference
 
   @type result(t) :: SilverBrain.Core.result(t)

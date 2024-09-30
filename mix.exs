@@ -16,7 +16,8 @@ defmodule SilverBrain.MixProject do
       {:typed_struct, "~> 0.1.4"},
 
       # Dev only.
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
 
   # Dependencies listed here are available only for this

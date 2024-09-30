@@ -25,25 +25,59 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
 
   require Item
 
+  # ============================================================
+  #  Item
+  # ============================================================
+
   def create_item(store, name) do
-    SqlItemStore.ItemLogic.create_item(store, name)
+    with _ <- RepoManager.connect(store.repo_name) do
+      SqlItemStore.ItemLogic.create_item(store, name)
+    end
   end
 
   def get_item(store, item_id) do
-    SqlItemStore.ItemLogic.get_item(store, item_id)
+    with _ <- RepoManager.connect(store.repo_name) do
+      SqlItemStore.ItemLogic.get_item(store, item_id)
+    end
   end
 
   def get_item(store, item_id, select) do
-    SqlItemStore.ItemLogic.get_item(store, item_id, select)
+    with _ <- RepoManager.connect(store.repo_name) do
+      SqlItemStore.ItemLogic.get_item(store, item_id, select)
+    end
   end
 
   def get_items(store, item_ids, select) do
   end
 
-  def update_item(store, item) do
+  def update_item(%SqlItemStore{repo_name: repo_name}, item) do
+    with _ <- RepoManager.connect(repo_name) do
+      SqlItemStore.ItemLogic.update_item(item)
+    end
   end
 
   def delete_item(store, item_id) do
+  end
+
+  # ============================================================
+  #  Property
+  # ============================================================
+
+  def create_item_property(store, item_id, key, value) do
+    property = %Schema.ItemProperty{
+      item_id: item_id,
+      key: key,
+      value: value
+    }
+
+    Repo.insert(Schema.ItemProperty, property)
+  end
+
+  def delete_item_property(store, item_id, key) do
+    from(property in Schema.ItemProperty,
+      where: property.item_id == ^item_id and property.key == ^key
+    )
+    |> Repo.delete_all()
   end
 
   # ============================================================

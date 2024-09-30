@@ -3,9 +3,8 @@ defmodule SilverBrain.Service.Repo.Migrations.CreateItemPropertiesTable do
 
   def change() do
     create table(:item_properties) do
-      add :id, :string, primary_key: true
-      add :item_id, references(:items)
-      add :key, :string
+      add :item_id, references(:items, column: :id, type: :string), primary_key: true
+      add :key, :string, primary_key: true
       add :value, :string
 
       timestamps()
