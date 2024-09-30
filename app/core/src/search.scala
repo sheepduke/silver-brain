@@ -26,7 +26,7 @@ object SearchParser:
   def parse(searchString: String): Either[String, Query] =
     if searchString.isBlank() then Right(Query.Keyword(""))
     else
-      fastparse.parse(searchString, query) match
+      fastparse.parse(searchString.trim(), query) match
         case Success(value, _) => Right(value)
         case failure: Failure  => Left(failure.msg)
 
