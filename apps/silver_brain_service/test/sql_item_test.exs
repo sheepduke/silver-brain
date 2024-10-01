@@ -41,11 +41,29 @@ defmodule SilverBrain.Service.SqlItemStoreTest do
     assert item.content == ""
     assert item.create_time != nil
     assert item.create_time == item.update_time
+  end
+
+  @tag :tmp_dir
+  test "get item with custom select", context do
+    store = context[:store]
+
+    {:ok, item_id} = ItemStore.create_item(store, "Emacs")
 
     item = ItemStore.get_item(store, item_id, [:name])
     assert item.id == nil
     assert item.content == nil
     assert item.content_type == nil
+    assert item.create_time == nil
+    assert item.update_time == nil
+    assert item.properties == nil
+  end
+
+  @tag :tmp_dir
+  test "get non-existing item", context do
+    store = context[:store]
+
+    result = ItemStore.get_item(store, "invalid_id")
+    assert result == {:error, :not_found}
   end
 
   @tag :tmp_dir

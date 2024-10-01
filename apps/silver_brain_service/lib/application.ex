@@ -8,10 +8,8 @@ defmodule SilverBrain.Service.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: SilverBrainService.Worker.start_link(arg)
-      # {SilverBrainService.Worker, arg}
-      {SilverBrain.Service.RepoManager,
-       Path.expand(Application.get_env(:silver_brain_service, :data_root_path))}
+      # {SilverBrain.Service.RepoManager,
+      #  Path.expand(Application.get_env(:silver_brain_service, :data_root_path))}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

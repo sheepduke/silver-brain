@@ -53,5 +53,3 @@ defmodule SilverBrain.Core.SearchQueryTest do
                ]}}
   end
 end
-
-ExUnit.run()

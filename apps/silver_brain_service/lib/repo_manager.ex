@@ -24,10 +24,11 @@ defmodule SilverBrain.Service.RepoManager do
   def start_link(data_root_path) do
     state = %State{data_root_path: data_root_path, repos: %{}}
 
-    with {:ok, pid} <- GenServer.start_link(__MODULE__, state, name: RepoManager),
-         {:ok, repo_names} <- get_all() do
-      for repo_name <- repo_names do
-        migrate(repo_name)
+    with {:ok, pid} <- GenServer.start_link(__MODULE__, state, name: RepoManager) do
+      with {:ok, repo_names} <- get_all() do
+        for repo_name <- repo_names do
+          migrate(repo_name)
+        end
       end
 
       {:ok, pid}

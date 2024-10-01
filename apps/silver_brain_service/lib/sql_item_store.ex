@@ -10,9 +10,6 @@ defmodule SilverBrain.Service.SqlItemStore do
   end
 end
 
-# store = %SilverBrain.Service.SqlItemStore{repo_name: "main"}
-# SilverBrain.Core.ItemStore.get_item(store, "i_1KECzKOCyJlvx0kGfvyPJAU030T")
-
 defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   alias SilverBrain.Core.ItemStore
   alias SilverBrain.Core.Item
@@ -29,30 +26,67 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   #  Item
   # ============================================================
 
-  def create_item(store, name) do
-    with _ <- RepoManager.connect(store.repo_name) do
-      SqlItemStore.ItemLogic.create_item(store, name)
+  def create_item(store = %SqlItemStore{}, name) when is_binary(name) do
+    time = now_time()
+
+    new_item = %Schema.Item{
+      id: "i_" <> Ksuid.generate(),
+      name: name,
+      content_type: "",
+      content: "",
+      create_time: time,
+      update_time: time
+    }
+
+    with :ok <- RepoManager.connect(store.repo_name),
+         {:ok, _} <- Repo.insert(new_item) do
+      {:ok, new_item.id}
     end
   end
 
-  def get_item(store, item_id) do
-    with _ <- RepoManager.connect(store.repo_name) do
-      SqlItemStore.ItemLogic.get_item(store, item_id)
+  def get_item(store = %SqlItemStore{}, item_id) when is_binary(item_id) do
+    with :ok <- RepoManager.connect(store.repo_name) do
+      internal_get_item(item_id, [:id, :name, :content_type, :content, :create_time, :update_time])
     end
   end
 
-  def get_item(store, item_id, select) do
-    with _ <- RepoManager.connect(store.repo_name) do
-      SqlItemStore.ItemLogic.get_item(store, item_id, select)
+  def get_item(store = %SqlItemStore{}, item_id, select)
+      when is_binary(item_id) and is_list(select) do
+    allowed_fields = [
+      :id,
+      :name,
+      :content_type,
+      :content,
+      :create_time,
+      :update_time,
+      :properties
+    ]
+
+    field_allowed? = fn field ->
+      Enum.member?(allowed_fields, field)
+    end
+
+    if Enum.all?(select, field_allowed?) do
+      with :ok <- RepoManager.connect(store.repo_name) do
+        internal_get_item(item_id, select)
+      end
+    else
+      {:error, :bad_request}
     end
   end
 
-  def get_items(store, item_ids, select) do
+  def get_items(store = %SqlItemStore{}, item_ids, select)
+      when is_list(item_ids) and is_list(select) do
   end
 
-  def update_item(%SqlItemStore{repo_name: repo_name}, item) do
-    with _ <- RepoManager.connect(repo_name) do
-      SqlItemStore.ItemLogic.update_item(item)
+  def update_item(store = %SqlItemStore{}, item = %ItemStore.UpdateItem{}) do
+    with :ok <- RepoManager.connect(store.repo_name) do
+      old_item = Repo.get_by(Schema.Item, id: item.id)
+      changeset = Ecto.Changeset.change(old_item, Map.from_struct(item))
+
+      with {:ok, _} <- Repo.update(changeset) do
+        :ok
+      end
     end
   end
 
@@ -94,5 +128,33 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   end
 
   def delete_child(store, item_id, child_id) do
+  end
+
+  # ============================================================
+  #  Internal
+  # ============================================================
+
+  defp internal_get_item(item_id, select) when is_binary(item_id) and is_list(select) do
+    properties_selected? = Enum.member?(select, :properties)
+    select = Enum.filter(select, fn x -> x != :properties end)
+
+    case Repo.one(from(item in Schema.Item, where: item.id == ^item_id, select: ^select)) do
+      nil ->
+        {:error, :not_found}
+
+      item ->
+        %Item{
+          id: item.id,
+          name: item.name,
+          content_type: item.content_type,
+          content: item.content,
+          create_time: item.create_time,
+          update_time: item.update_time
+        }
+    end
+  end
+
+  defp now_time() do
+    DateTime.utc_now() |> DateTime.truncate(:second)
   end
 end
