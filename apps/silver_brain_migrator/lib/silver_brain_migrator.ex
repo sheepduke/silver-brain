@@ -105,3 +105,17 @@ end
 
 # SilverBrain.Migrator.refresh()
 # SilverBrain.Migrator.run()
+
+# import Ecto.Query
+# alias SilverBrain.Core.SearchEngine
+# alias SilverBrain.Core.ItemStore
+# alias SilverBrain.Service.SqlItemStore
+# alias SilverBrain.Service.Schema
+# alias SilverBrain.Service.RepoManager
+# alias SilverBrain.Service.Repo
+# alias SilverBrain.Service.SqlSearchEngine
+
+# RepoManager.start_link(Path.expand("~/temp/test/"))
+
+# store = %SqlItemStore{repo_name: "main"}
+# SearchEngine.search(store, "Emacs Lisp")

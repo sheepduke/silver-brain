@@ -1,4 +1,6 @@
 defprotocol SilverBrain.Core.SearchEngine do
-  @spec search(String.t()) :: tuple()
-  def search(search_string)
+  alias SilverBrain.Core.Item
+
+  @spec search(t, String.t()) :: list(Item.id())
+  def search(store, search_string)
 end

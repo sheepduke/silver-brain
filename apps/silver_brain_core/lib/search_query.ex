@@ -8,14 +8,15 @@ defmodule SilverBrain.Core.SearchQuery do
   - {:less_than, "key", "value"}
   - {:less_equal, "key", "value"}
   - {:equal, "key", "value"}
+  - {:not_equal, "key", "value"}
   - {:greater_than, "key", "value"}
   - {:greater_equal, "key", "value"}
-  - "keyword"
+  - {:keyword, "keyword"}
   """
 
   import NimbleParsec
 
-  def parse(search_string) do
+  def parse(search_string) when is_binary(search_string) do
     case String.trim(search_string) do
       "" ->
         nil
@@ -86,12 +87,13 @@ defmodule SilverBrain.Core.SearchQuery do
       op =
         case op_string do
           ":" -> :match
-          "<" -> :less
+          "<" -> :less_than
           "<=" -> :less_equal
           "=" -> :equal
           "==" -> :equal
+          "!=" -> :not_equal
           ">=" -> :greater_equal
-          ">" -> :greater
+          ">" -> :greater_than
         end
 
       {op, key, value}
@@ -107,6 +109,7 @@ defmodule SilverBrain.Core.SearchQuery do
       string(":"),
       string("<="),
       string("<"),
+      string("!="),
       string("=="),
       string("="),
       string(">="),

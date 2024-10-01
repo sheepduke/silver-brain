@@ -14,8 +14,8 @@ defprotocol SilverBrain.Core.ItemStore do
     use TypedStruct
 
     typedstruct do
-      field :id, :string
-      field :name, :string
+      field :id, String.t()
+      field :name, String.t()
     end
   end
 

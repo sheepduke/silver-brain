@@ -158,3 +158,19 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
     DateTime.utc_now() |> DateTime.truncate(:second)
   end
 end
+
+defimpl SilverBrain.Core.SearchEngine, for: SilverBrain.Service.SqlItemStore do
+  alias SilverBrain.Service.Schema
+  alias SilverBrain.Service.SqlSearchEngine
+  alias SilverBrain.Service.Repo
+  alias SilverBrain.Service.RepoManager
+  alias SilverBrain.Core.SearchQuery
+  alias SilverBrain.Service.SqlItemStore
+
+  def search(store = %SqlItemStore{}, search_string) when is_binary(search_string) do
+    with {:ok, query} <- SearchQuery.parse(search_string),
+         RepoManager.connect(store.repo_name) do
+      Repo.all(SqlSearchEngine.search(query)) |> Enum.map(& &1.id)
+    end
+  end
+end
