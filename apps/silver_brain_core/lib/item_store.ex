@@ -52,7 +52,7 @@ defprotocol SilverBrain.Core.ItemStore do
   # ============================================================
 
   @spec create_child(t, Item.id(), Item.id()) :: result()
-  def create_child(store, item_id, child_id)
+  def create_child(store, parent_id, child_id)
 
   @spec get_parents(t, Item.id()) :: result([Item.id()])
   def get_parents(store, item_id)
@@ -61,5 +61,5 @@ defprotocol SilverBrain.Core.ItemStore do
   def get_children(store, item_id)
 
   @spec delete_child(t, Item.id(), Item.id()) :: result()
-  def delete_child(store, item_id, child_id)
+  def delete_child(store, parent_id, child_id)
 end

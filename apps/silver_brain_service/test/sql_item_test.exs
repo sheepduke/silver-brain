@@ -21,12 +21,12 @@ defmodule SilverBrain.Service.SqlItemStoreTest do
 
     {:ok, item_id} = ItemStore.create_item(store, "Emacs")
 
-    item = ItemStore.get_item(store, item_id)
+    {:ok, item} = ItemStore.get_item(store, item_id)
     assert item.id == item_id
     assert item.name == "Emacs"
     assert item.create_time == item.update_time
 
-    item =
+    {:ok, item} =
       ItemStore.get_item(store, item_id, [
         :id,
         :name,
@@ -49,7 +49,7 @@ defmodule SilverBrain.Service.SqlItemStoreTest do
 
     {:ok, item_id} = ItemStore.create_item(store, "Emacs")
 
-    item = ItemStore.get_item(store, item_id, [:name])
+    {:ok, item} = ItemStore.get_item(store, item_id, [:name])
     assert item.id == nil
     assert item.content == nil
     assert item.content_type == nil
@@ -80,8 +80,18 @@ defmodule SilverBrain.Service.SqlItemStoreTest do
     result = ItemStore.update_item(store, new_item)
     assert result == :ok
 
-    item = ItemStore.get_item(store, item_id)
+    {:ok, item} = ItemStore.get_item(store, item_id)
     assert item.name == "Emacs"
+  end
+
+  @tag :tmp_dir
+  test "delete item", context do
+    store = context[:store]
+
+    {:ok, item_id} = ItemStore.create_item(store, "Emacs")
+    {:ok, _} = ItemStore.get_item(store, item_id)
+    :ok = ItemStore.delete_item(store, item_id)
+    {:error, :not_found} = ItemStore.get_item(store, item_id)
   end
 end
 

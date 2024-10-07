@@ -90,7 +90,11 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
     end
   end
 
-  def delete_item(store, item_id) do
+  def delete_item(%SqlItemStore{repo_name: repo_name}, item_id) do
+    with :ok <- RepoManager.connect(repo_name) do
+      Repo.delete_all(from(item in Schema.Item, where: item.id == ^item_id))
+      :ok
+    end
   end
 
   # ============================================================
@@ -118,7 +122,26 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   #  Link
   # ============================================================
 
-  def create_child(store, item_id, child_id) do
+  def create_child(store, parent_id, child_id) do
+    query =
+      from(link in Schema.ItemLink, where: link.parent == ^parent_id and link.child == ^child_id)
+
+    now = now_time()
+
+    case Repo.one(query) do
+      nil ->
+        Repo.insert(%Schema.ItemLink{
+          parent: parent_id,
+          child: child_id,
+          create_time: now,
+          update_time: now
+        })
+
+        :ok
+
+      _ ->
+        nil
+    end
   end
 
   def get_parents(store, item_id) do
@@ -135,7 +158,7 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
   # ============================================================
 
   defp internal_get_item(item_id, select) when is_binary(item_id) and is_list(select) do
-    properties_selected? = Enum.member?(select, :properties)
+    # properties_selected? = Enum.member?(select, :properties)
     select = Enum.filter(select, fn x -> x != :properties end)
 
     case Repo.one(from(item in Schema.Item, where: item.id == ^item_id, select: ^select)) do
@@ -143,14 +166,15 @@ defimpl SilverBrain.Core.ItemStore, for: SilverBrain.Service.SqlItemStore do
         {:error, :not_found}
 
       item ->
-        %Item{
-          id: item.id,
-          name: item.name,
-          content_type: item.content_type,
-          content: item.content,
-          create_time: item.create_time,
-          update_time: item.update_time
-        }
+        {:ok,
+         %Item{
+           id: item.id,
+           name: item.name,
+           content_type: item.content_type,
+           content: item.content,
+           create_time: item.create_time,
+           update_time: item.update_time
+         }}
     end
   end
 
@@ -170,7 +194,8 @@ defimpl SilverBrain.Core.SearchEngine, for: SilverBrain.Service.SqlItemStore do
   def search(store = %SqlItemStore{}, search_string) when is_binary(search_string) do
     with {:ok, query} <- SearchQuery.parse(search_string),
          RepoManager.connect(store.repo_name) do
-      Repo.all(SqlSearchEngine.search(query)) |> Enum.map(& &1.id)
+      Repo.all(SqlSearchEngine.search(query))
+      |> Enum.map(fn %Schema.Item{id: id} -> id end)
     end
   end
 end

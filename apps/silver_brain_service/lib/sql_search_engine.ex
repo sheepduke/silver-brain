@@ -1,6 +1,5 @@
 defmodule SilverBrain.Service.SqlSearchEngine do
   alias SilverBrain.Service.Schema
-  alias SilverBrain.Core.SearchQuery
 
   import Ecto.Query
 

@@ -20,10 +20,10 @@ defmodule SilverBrain.Core.SearchQueryTest do
     assert parse("key: value") == {:ok, {:match, "key", "value"}}
     assert parse("key == value") == {:ok, {:equal, "key", "value"}}
     assert parse("key = value") == {:ok, {:equal, "key", "value"}}
-    assert parse("key < value") == {:ok, {:less, "key", "value"}}
+    assert parse("key < value") == {:ok, {:less_than, "key", "value"}}
     assert parse("key <= value") == {:ok, {:less_equal, "key", "value"}}
     assert parse("key >= value") == {:ok, {:greater_equal, "key", "value"}}
-    assert parse("key > value") == {:ok, {:greater, "key", "value"}}
+    assert parse("key > value") == {:ok, {:greater_than, "key", "value"}}
   end
 
   test "parse combinations" do

@@ -3,7 +3,7 @@ defmodule SilverBrain.Migrator do
   alias SilverBrain.Service.RepoManager
   alias SilverBrain.Service.Repo
   alias SilverBrain.Service.Schema
-  alias SilverBrain.Core.Item
+
   import Ecto.Query, only: [from: 2]
 
   def load_items() do

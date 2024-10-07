@@ -16,6 +16,7 @@ defmodule SilverBrain.Core.SearchQuery do
 
   import NimbleParsec
 
+  @spec parse(String.t()) :: {:ok, tuple()} | {:error, String.t()} | nil
   def parse(search_string) when is_binary(search_string) do
     case String.trim(search_string) do
       "" ->
@@ -26,7 +27,7 @@ defmodule SilverBrain.Core.SearchQuery do
           {:ok, [result], "", _context, _line, _column} ->
             {:ok, result}
 
-          {:ok, [result], rest, _context, _line, _column} ->
+          {:ok, [_result], rest, _context, _line, _column} ->
             {:error, "Unrecognized input `#{rest}`"}
 
           {:error, reason, _rest, _context, _line, _column} ->
@@ -79,7 +80,7 @@ defmodule SilverBrain.Core.SearchQuery do
   # ============================================================
 
   defmodule PropertyHelper do
-    def reduce_result(result, op) do
+    def reduce_result(result, _op) do
       [key | rest] = result
       [op_string | rest] = rest
       [value] = rest
