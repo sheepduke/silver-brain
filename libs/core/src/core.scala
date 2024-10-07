@@ -16,30 +16,42 @@ case class Item(
     parents: Option[Seq[Id]] = None,
     children: Option[Seq[Id]] = None,
     siblings: Option[Seq[Id]] = None,
-    referencesFromThis: Option[Seq[Id]] = None,
-    referencesToThis: Option[Seq[Id]] = None,
     createTime: Option[Instant] = None,
     updateTime: Option[Instant] = None
 )
 
-case class ItemLoadOptions(
-    loadContentType: Boolean = false,
-    loadContent: Boolean = false,
-    loadCreateTime: Boolean = false,
-    loadUpdateTime: Boolean = false,
-    loadProperties: Boolean = false,
-    loadParents: Boolean = false,
-    loadChildren: Boolean = false,
-    loadSiblings: Boolean = false,
-    loadReferencesFromThis: Boolean = false,
-    loadReferencesToThis: Boolean = false
-)
+enum ItemSelect:
+  case Id
+  case Name
+  case ContentType
+  case Content
+  case Properties
+  case Parents
+  case Children
+  case Siblings
+  case CreateTime
+  case UpdateTime
+
+// case class ItemLoadOptions(
+//     loadContentType: Boolean = false,
+//     loadContent: Boolean = false,
+//     loadCreateTime: Boolean = false,
+//     loadUpdateTime: Boolean = false,
+//     loadProperties: Boolean = false,
+//     loadParents: Boolean = false,
+//     loadChildren: Boolean = false,
+//     loadSiblings: Boolean = false,
+//     loadReferencesFromThis: Boolean = false,
+//     loadReferencesToThis: Boolean = false
+// )
 
 case class Reference(
     id: Id,
     source: Id,
     target: Id,
-    annotation: String
+    annotation: String,
+    createTime: Instant,
+    updateTime: Instant
 )
 
 enum ServiceError:
