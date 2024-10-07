@@ -15,7 +15,11 @@ val commonSettings = Seq(
 //  Dependencies
 // ============================================================
 
-val libFastparse = "com.lihaoyi" %% "fastparse" % "3.1.0"
+val libFastParse = "com.lihaoyi" %% "fastparse" % "3.1.0"
+val libsScalaTest = Seq(
+  "org.scalactic" %% "scalactic" % "3.2.19",
+  "org.scalatest" %% "scalatest" % "3.2.19" % "test"
+)
 
 // ============================================================
 //  Silver Brain
@@ -42,6 +46,7 @@ lazy val silverBrainCore =
       commonSettings,
       name := "Silver Brain Core",
       libraryDependencies ++= Seq(
-        libFastparse
+        libFastParse
       )
+        ++ libsScalaTest
     )
