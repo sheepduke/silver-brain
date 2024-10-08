@@ -8,69 +8,69 @@ trait ItemStore:
   //  Item
   // ============================================================
 
-  def getItem(id: Id): ServiceResponse[Item]
+  def getItem(id: String): StoreResult[Item]
 
-  def getItem(id: Id, select: Seq[ItemSelect]): ServiceResponse[Item]
+  def getItem(id: String, select: Seq[ItemSelect]): StoreResult[Item]
 
   def getItems(
-      ids: Seq[Id],
+      ids: Seq[String],
       select: Seq[ItemSelect]
-  ): ServiceResponse[Seq[Item]]
+  ): StoreResult[Seq[Item]]
 
   def searchItems(
       search: String,
       select: Seq[ItemSelect]
-  ): ServiceResponse[Seq[Item]]
+  ): StoreResult[Seq[Item]]
 
   def createItem(
       name: String,
       contentType: Option[String] = None,
       content: Option[String] = None
-  ): ServiceResponse[Id]
+  ): StoreResult[String]
 
   def updateItem(
-      id: Id,
+      id: String,
       name: Option[String] = None,
       contentType: Option[String] = None,
       content: Option[String] = None
-  ): ServiceResponse[Unit]
+  ): StoreResult[Unit]
 
-  def deleteItem(id: Id): ServiceResponse[Unit]
+  def deleteItem(id: String): StoreResult[Unit]
 
   // ============================================================
   //  Property
   // ============================================================
 
   def saveItemProperty(
-      id: Id,
+      id: String,
       key: String,
       value: String
-  ): ServiceResponse[Unit]
+  ): StoreResult[Unit]
 
-  def deleteItemProperty(id: Id, key: String): ServiceResponse[Unit]
+  def deleteItemProperty(id: String, key: String): StoreResult[Unit]
 
   // ============================================================
   //  Child
   // ============================================================
 
-  def createChild(parent: Id, child: Id): ServiceResponse[Unit]
+  def createChild(parent: String, child: String): StoreResult[Unit]
 
-  def deleteChild(parent: Id, child: Id): ServiceResponse[Unit]
+  def deleteChild(parent: String, child: String): StoreResult[Unit]
 
   // ============================================================
   //  Reference
   // ============================================================
 
-  def getReference(id: Id): ServiceResponse[Reference]
+  def getReference(id: String): StoreResult[Reference]
 
-  def getReferences(ids: Seq[Id]): ServiceResponse[Seq[Reference]]
+  def getReferences(ids: Seq[String]): StoreResult[Seq[Reference]]
 
   def createReference(
-      source: Id,
-      target: Id,
+      source: String,
+      target: String,
       annotation: String
-  ): ServiceResponse[Id]
+  ): StoreResult[String]
 
-  def updateReference(id: Id, annotation: String): ServiceResponse[Unit]
+  def updateReference(id: String, annotation: String): StoreResult[Unit]
 
-  def deleteReference(id: Id): ServiceResponse[Unit]
+  def deleteReference(id: String): StoreResult[Unit]

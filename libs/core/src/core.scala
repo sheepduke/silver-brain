@@ -3,19 +3,15 @@ package silver_brain.core
 import scala.util.Try
 import java.time.Instant
 
-type Id = String
-
-type StoreName = String
-
 case class Item(
-    id: Id,
+    id: String,
     name: String,
     contentType: Option[String] = None,
     content: Option[String] = None,
     properties: Option[Map[String, String]] = None,
-    parents: Option[Seq[Id]] = None,
-    children: Option[Seq[Id]] = None,
-    siblings: Option[Seq[Id]] = None,
+    parents: Option[Seq[String]] = None,
+    children: Option[Seq[String]] = None,
+    siblings: Option[Seq[String]] = None,
     createTime: Option[Instant] = None,
     updateTime: Option[Instant] = None
 )
@@ -32,41 +28,29 @@ enum ItemSelect:
   case CreateTime
   case UpdateTime
 
-// case class ItemLoadOptions(
-//     loadContentType: Boolean = false,
-//     loadContent: Boolean = false,
-//     loadCreateTime: Boolean = false,
-//     loadUpdateTime: Boolean = false,
-//     loadProperties: Boolean = false,
-//     loadParents: Boolean = false,
-//     loadChildren: Boolean = false,
-//     loadSiblings: Boolean = false,
-//     loadReferencesFromThis: Boolean = false,
-//     loadReferencesToThis: Boolean = false
-// )
-
 case class Reference(
-    id: Id,
-    source: Id,
-    target: Id,
+    id: String,
+    source: String,
+    target: String,
     annotation: String,
     createTime: Instant,
     updateTime: Instant
 )
 
-enum ServiceError:
-  case StoreNotFound(id: StoreName)
-  case IdNotFound(id: Id)
+enum StoreError:
+  case StoreNotFound(name: String)
+  case IdNotFound(id: String)
   case Conflict(message: String)
   case InvalidArgument(message: String)
+  case DataMigrationError(message: String)
   case InternalError(message: String)
 
+type StoreResult[A] = Either[StoreError, A]
+
 extension [A](result: Try[A])
-  def toServiceResponse: ServiceResponse[A] =
+  def toStoreResult: StoreResult[A] =
     result.toEither.left.map(error =>
-      ServiceError.InternalError(
+      StoreError.InternalError(
         error.getMessage() + "\n" + error.getStackTrace().mkString("\n")
       )
     )
-
-type ServiceResponse[A] = Either[ServiceError, A]
