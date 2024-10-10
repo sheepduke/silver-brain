@@ -4,5 +4,5 @@ import silver_brain.core.*
 
 import os.Path
 
-// SqliteStoreManager extends StoreManager
-class SqliteStore(rootPath: Path)
+class SqliteStore(dataRootPath: Path, storeName: String)
+    extends ItemStoreImpl(dataRootPath, storeName)

@@ -1,20 +1,22 @@
 package silver_brain.sqlite_store
 
 import org.scalatest.funsuite.AnyFunSuite
-import java.nio.file.Files
 
 class StoreManagerSpec extends AnyFunSuite:
   test("CRUD store"):
-    val rootPath = os.temp.dir()
-    val store = SqliteStoreManager(rootPath = rootPath)
-    val storeName = "main"
+    val dataRootPath = os.temp.dir()
 
-    assert(store.createStore(storeName).isRight)
-    assert(store.storeExists(storeName).right.get)
+    try
+      val storeManager = SqliteStoreManager(dataRootPath = dataRootPath)
+      val storeName = "main"
 
-    assert(store.createStore("another").isRight)
+      assert(storeManager.createStore(storeName).isRight)
+      assert(storeManager.storeExists(storeName).right.get)
 
-    val stores = store.listStore().right.get
-    assertResult(2)(stores.size)
-    assert(stores.contains("main"))
-    assert(stores.contains("another"))
+      assert(storeManager.createStore("another").isRight)
+
+      val stores = storeManager.listStore().right.get
+      assertResult(2)(stores.size)
+      assert(stores.contains("main"))
+      assert(stores.contains("another"))
+    finally os.remove.all(dataRootPath)
