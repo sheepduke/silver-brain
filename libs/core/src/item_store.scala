@@ -21,18 +21,19 @@ trait ItemStore:
   //  Item
   // ============================================================
 
-  def getItem(id: String): StoreResult[Item]
-
-  def getItem(id: String, select: Seq[ItemSelect]): StoreResult[Item]
+  def getItem(
+      id: String,
+      loadOptions: ItemLoadOptions = ItemLoadOptions()
+  ): StoreResult[Item]
 
   def getItems(
       ids: Seq[String],
-      select: Seq[ItemSelect]
+      loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): StoreResult[Seq[Item]]
 
   def searchItems(
       search: String,
-      select: Seq[ItemSelect]
+      loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): StoreResult[Seq[Item]]
 
   def createItem(item: CreateItemArgs): StoreResult[String]

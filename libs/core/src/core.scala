@@ -16,17 +16,16 @@ case class Item(
     updateTime: Option[Instant] = None
 )
 
-enum ItemSelect:
-  case Id
-  case Name
-  case ContentType
-  case Content
-  case Properties
-  case Parents
-  case Children
-  case Siblings
-  case CreateTime
-  case UpdateTime
+case class ItemLoadOptions(
+    contentType: Boolean = false,
+    content: Boolean = false,
+    properties: Boolean = false,
+    parents: Boolean = false,
+    children: Boolean = false,
+    siblings: Boolean = false,
+    createTime: Boolean = false,
+    updateTime: Boolean = false
+)
 
 case class Reference(
     id: String,

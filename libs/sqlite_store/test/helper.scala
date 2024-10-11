@@ -4,14 +4,16 @@ import org.scalatest.fixture
 
 import org.scalatest.Outcome
 import silver_brain.core.CreateItemArgs
+import com.github.ksuid.Ksuid
 
 def withTempStore(fun: (SqliteStore) => Any): Any =
   val dataRootPath = os.temp.dir()
 
   try
     val storeManager = SqliteStoreManager(dataRootPath)
-    storeManager.createStore("main").right.get
+    val storeName = Ksuid.newKsuid().toString()
+    storeManager.createStore(storeName).right.get
 
-    val store = SqliteStore(dataRootPath, "main")
+    val store = SqliteStore(dataRootPath, storeName)
     fun(store)
   finally os.remove.all(dataRootPath)
