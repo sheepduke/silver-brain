@@ -31,7 +31,10 @@ class SqliteStore(dataRootPath: Path, storeName: String) extends ItemStore:
       loadOptions: ItemLoadOptions
   ): StoreResult[Seq[Item]] = ???
 
-  def updateItem(item: UpdateItemArgs): StoreResult[Unit] = ???
+  def updateItem(item: UpdateItemArgs): StoreResult[Unit] =
+    SqliteStoreManager.withTransaction(implicit session =>
+      db.ItemTable.update(item)
+    )
 
   def deleteItem(id: String): StoreResult[Unit] =
     SqliteStoreManager.withTransaction(implicit session =>

@@ -12,7 +12,7 @@ import scalikejdbc.interpolation.SQLSyntax
 object ItemTable:
   def newItemId: String = "i_" + Ksuid.newKsuid()
 
-  def getOne(id: String, loadOptions: ItemLoadOptions)(using
+  def getOne(id: String, loadOptions: ItemLoadOptions = ItemLoadOptions())(using
       DBSession
   ): StoreResult[Item] =
     val fields = loadOptions.toSqlSyntax
@@ -39,6 +39,26 @@ object ItemTable:
     )""".update.apply()
 
     Right(id)
+
+  def update(item: UpdateItemArgs)(using DBSession): StoreResult[Unit] =
+    this.getOne(item.id) match
+      case Left(error) => Left(error)
+      case Right(_) =>
+        var setClauseSyntax = sqls"update_time = ${Instant.now().toString()}"
+
+        if item.name.nonEmpty then
+          setClauseSyntax += sqls", name = ${item.name}"
+
+        if item.contentType.nonEmpty then
+          setClauseSyntax += sqls", content_type = ${item.contentType}"
+
+        if item.content.nonEmpty then
+          setClauseSyntax += sqls", content = ${item.content}"
+
+        sql"update item set ${setClauseSyntax} where id = ${item.id}".update
+          .apply()
+
+        Right(())
 
   def delete(id: String)(using DBSession): StoreResult[Unit] =
     sql"delete from item where id = $id".update.apply()

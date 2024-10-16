@@ -31,6 +31,42 @@ class ItemStoreSpec extends AnyFunSuite:
       assert(item.createTime == item.updateTime, item)
     )
 
+  test("update item"):
+    val getItem = (store: SqliteStore, id: String) =>
+      store
+        .getItem(
+          id,
+          ItemLoadOptions(
+            contentType = true,
+            content = true,
+            createTime = true,
+            updateTime = true
+          )
+        )
+        .right
+        .get
+
+    withTempStore(store =>
+      val id = store.createItem(CreateItemArgs(name = "Emacs")).right.get
+      val oldItem = getItem(store, id)
+
+      var itemUpdateArgs = UpdateItemArgs(
+        id = id,
+        name = Some("Vim"),
+        contentType = Some("text/plain"),
+        content = Some("Test")
+      )
+
+      store.updateItem(itemUpdateArgs)
+
+      val item = getItem(store, id)
+      assertResult(itemUpdateArgs.name.get)(item.name)
+      assertResult(itemUpdateArgs.contentType)(item.contentType)
+      assertResult(itemUpdateArgs.content)(item.content)
+      assertResult(oldItem.createTime)(item.createTime)
+      assert(item.updateTime.get.isAfter(oldItem.updateTime.get), item)
+    )
+
   test("delete item"):
     withTempStore(store =>
       val id = store.createItem(CreateItemArgs(name = "Emacs")).right.get
