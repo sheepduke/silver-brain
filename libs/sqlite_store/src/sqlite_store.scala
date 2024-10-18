@@ -40,3 +40,23 @@ class SqliteStore(dataRootPath: Path, storeName: String) extends ItemStore:
     SqliteStoreManager.withTransaction(implicit session =>
       db.ItemTable.delete(id)
     )
+
+  def createLink(parent: String, child: String): StoreResult[Unit] =
+    SqliteStoreManager.withTransaction(implicit session =>
+      db.LinkTable.create(parent, child)
+    )
+
+  def getParents(id: String): StoreResult[Seq[String]] =
+    SqliteStoreManager.withTransaction(implicit session =>
+      db.LinkTable.getParents(id)
+    )
+
+  def getChildren(id: String): StoreResult[Seq[String]] =
+    SqliteStoreManager.withTransaction(implicit session =>
+      db.LinkTable.getChildren(id)
+    )
+
+  def deleteLink(parent: String, child: String): StoreResult[Unit] =
+    SqliteStoreManager.withTransaction(implicit session =>
+      db.LinkTable.delete(parent, child)
+    )

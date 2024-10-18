@@ -54,13 +54,17 @@ trait ItemStore:
 
   // def deleteItemProperty(id: String, key: String): StoreResult[Unit]
 
-  // // ============================================================
-  // //  Child
-  // // ============================================================
+  // ============================================================
+  //  Child
+  // ============================================================
 
-  // def createChild(parent: String, child: String): StoreResult[Unit]
+  def createLink(parent: String, child: String): StoreResult[Unit]
 
-  // def deleteChild(parent: String, child: String): StoreResult[Unit]
+  def getParents(id: String): StoreResult[Seq[String]]
+
+  def getChildren(id: String): StoreResult[Seq[String]]
+
+  def deleteLink(parent: String, child: String): StoreResult[Unit]
 
   // // ============================================================
   // //  Reference

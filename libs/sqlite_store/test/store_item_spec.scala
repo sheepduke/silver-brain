@@ -4,7 +4,7 @@ import silver_brain.core.*
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class ItemStoreSpec extends AnyFunSuite:
+class StoreItemSpec extends AnyFunSuite:
   test("create item"):
     withTempStore(store =>
       val itemIdResult = store.createItem(CreateItemArgs(name = "Emacs"))

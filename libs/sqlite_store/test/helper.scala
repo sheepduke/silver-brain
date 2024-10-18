@@ -8,7 +8,7 @@ import com.github.ksuid.Ksuid
 
 def withTempStore(fun: (SqliteStore) => Any): Any =
   val dataRootPath = os.temp.dir()
-
+  println(s"Data root path: $dataRootPath")
   try
     val storeManager = SqliteStoreManager(dataRootPath)
     val storeName = Ksuid.newKsuid().toString()
