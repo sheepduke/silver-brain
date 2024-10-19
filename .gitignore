@@ -11,3 +11,4 @@ out/
 project/**/metals.sbt
 src_managed/
 target/
+**/*worksheet.sc
