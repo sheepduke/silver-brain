@@ -15,27 +15,40 @@ val commonSettings = Seq(
 //  Dependencies
 // ============================================================
 
+// CLI option parser.
+val libCliArgsParser = "org.rogach" %% "scallop" % "5.1.0"
+
+// HTTP server.
+val libHttpServer = "com.lihaoyi" %% "cask" % "0.9.2"
+
+// JSON.
+val libsJson = Seq(
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.28.4",
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4"
+)
+
 // Unique ID.
-val libKsuid = "com.github.ksuid" % "ksuid" % "1.1.2"
+val libUniqueId = "com.github.ksuid" % "ksuid" % "1.1.2"
 
 // Parser combinator.
-val libFastParse = "com.lihaoyi" %% "fastparse" % "3.1.1"
+val libParserCombinator = "com.lihaoyi" %% "fastparse" % "3.1.1"
 
 // OS interaction.
 val libOsLib = "com.lihaoyi" %% "os-lib" % "0.11.1"
 
 // Database access.
-val libScalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.0.0"
-val libSqliteJdbc = "org.xerial" % "sqlite-jdbc" % "3.45.2.0"
-
-// Database migration.
-val libFlyway = "org.flywaydb" % "flyway-core" % "9.0.4"
+val libsDatabase = Seq(
+  "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
+  "org.xerial" % "sqlite-jdbc" % "3.45.2.0",
+  "org.flywaydb" % "flyway-core" % "9.0.4"
+)
 
 // Logging.
-val libSlf4j = "org.slf4j" % "slf4j-api" % "2.0.13"
+val libLoggerInterface = "org.slf4j" % "slf4j-api" % "2.0.13"
+val libLoggerImplementation = "ch.qos.logback" % "logback-classic" % "1.3.6"
 
 // Test.
-val libsScalaTest = Seq(
+val libTestFramework = Seq(
   "org.scalactic" %% "scalactic" % "3.2.19",
   "org.scalatest" %% "scalatest" % "3.2.19" % "test"
 )
@@ -44,15 +57,37 @@ val libsScalaTest = Seq(
 //  Silver Brain
 // ============================================================
 
-lazy val silverBrain = (project in file("."))
+lazy val silverBrain = project
+  .in(file("apps/main"))
   .settings(
     commonSettings,
-    name := "Silver Brain",
+    name := "silver-brain",
+    // assembly / mainClass := Some("silver_brain.main"),
     libraryDependencies ++= Seq(
+      libCliArgsParser,
+      libLoggerImplementation
     )
   )
-  .aggregate(silverBrainSqliteStore)
-  .dependsOn(silverBrainSqliteStore)
+  .dependsOn(silverBrainHttpServer, silverBrainSqliteStore)
+  .aggregate(silverBrainHttpServer, silverBrainSqliteStore)
+  .enablePlugins(JavaAppPackaging)
+
+// ============================================================
+//  Silver Brain Http Server
+// ============================================================
+
+lazy val silverBrainHttpServer = project
+  .in(file("libs/http_server"))
+  .settings(
+    commonSettings,
+    name := "silver-brain-http-server",
+    libraryDependencies ++= Seq(
+      libHttpServer,
+      libLoggerInterface
+    ) ++ libsJson
+  )
+  .dependsOn(silverBrainCore)
+  .aggregate(silverBrainCore)
 
 // ============================================================
 //  Sqlite Store
@@ -62,18 +97,15 @@ lazy val silverBrainSqliteStore = project
   .in(file("libs/sqlite_store"))
   .settings(
     commonSettings,
-    name := "Silver Brain Sqlite Store",
+    name := "silver-brain-sqlite-store",
     libraryDependencies ++= Seq(
-      libKsuid,
+      libUniqueId,
       libOsLib,
-      libScalikeJdbc,
-      libSqliteJdbc,
-      libFlyway,
-      libSlf4j
-    ) ++ libsScalaTest
+      libLoggerInterface
+    ) ++ libsDatabase ++ libTestFramework
   )
-  .aggregate(silverBrainCore)
   .dependsOn(silverBrainCore)
+  .aggregate(silverBrainCore)
 
 // ============================================================
 //  Silver Brain Core
@@ -84,8 +116,8 @@ lazy val silverBrainCore =
     .in(file("libs/core"))
     .settings(
       commonSettings,
-      name := "Silver Brain Core",
+      name := "silver-brain-core",
       libraryDependencies ++= Seq(
-        libFastParse
-      ) ++ libsScalaTest
+        libParserCombinator
+      ) ++ libTestFramework
     )
