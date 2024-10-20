@@ -10,7 +10,7 @@ class StoreLinkSpec extends AnyFunSuite:
       val parent = store.createItem(CreateItemArgs(name = "Editor")).right.get
       val child = store.createItem(CreateItemArgs(name = "Emacs")).right.get
 
-      val result = store.createLink(parent, child)
+      val result = store.saveLink(parent, child)
       assertResult(Right(()))(result)
 
       val children = store.getChildren(parent).right.get
@@ -24,7 +24,7 @@ class StoreLinkSpec extends AnyFunSuite:
     withTempStore(store =>
       val parent = store.createItem(CreateItemArgs(name = "Editor")).right.get
       val child = store.createItem(CreateItemArgs(name = "Emacs")).right.get
-      store.createLink(parent, child)
+      store.saveLink(parent, child)
 
       val result = store.deleteLink(parent, child)
       assertResult(Right(()))(result)

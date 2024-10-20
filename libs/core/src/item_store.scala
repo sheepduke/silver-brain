@@ -58,7 +58,7 @@ trait ItemStore:
   //  Child
   // ============================================================
 
-  def createLink(parent: String, child: String): StoreResult[Unit]
+  def saveLink(parent: String, child: String): StoreResult[Unit]
 
   def getParents(id: String): StoreResult[Seq[String]]
 

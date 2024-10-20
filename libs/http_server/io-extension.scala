@@ -1,4 +1,4 @@
-package silver_brain.http
+package silver_brain.http_server
 
 import cask.*
 import cask.Logger as _
@@ -30,7 +30,7 @@ extension (request: Request)
 //  Response Extension
 // ============================================================
 
-extension [A](response: ServiceResponse[A])(using jsoniter.JsonValueCodec[A])
+extension [A](response: StoreResult[A])(using jsoniter.JsonValueCodec[A])
   def toHttpResponse(statusCode: Int = 200): Response[String] =
     response match
       case Right(value) =>
@@ -39,14 +39,14 @@ extension [A](response: ServiceResponse[A])(using jsoniter.JsonValueCodec[A])
           statusCode,
           Seq(("Content-Type", "application/json; charset=utf-8"))
         )
-      case Left(ServiceError.StoreNotFound(storeName)) =>
+      case Left(StoreError.StoreNotFound(storeName)) =>
         Response(s"Store not found: $storeName", 404)
-      case Left(ServiceError.IdNotFound(id)) =>
+      case Left(StoreError.IdNotFound(id)) =>
         Response(s"Resource with ID `$id` not found", 404)
-      case Left(ServiceError.InvalidArgument(message)) =>
+      case Left(StoreError.InvalidArgument(message)) =>
         Response(message, 400)
-      case Left(ServiceError.Conflict(message))      => Response(message, 409)
-      case Left(ServiceError.InternalError(message)) => Response(message, 500)
+      case Left(StoreError.Conflict(message))      => Response(message, 409)
+      case Left(StoreError.InternalError(message)) => Response(message, 500)
 
 // ============================================================
 //  Unit Codec
