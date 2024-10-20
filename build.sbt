@@ -48,9 +48,9 @@ val libLoggerInterface = "org.slf4j" % "slf4j-api" % "2.0.13"
 val libLoggerImplementation = "ch.qos.logback" % "logback-classic" % "1.3.6"
 
 // Test.
-val libTestFramework = Seq(
-  "org.scalactic" %% "scalactic" % "3.2.19",
-  "org.scalatest" %% "scalatest" % "3.2.19" % "test"
+val libsTestFramework = Seq(
+  "org.scalactic" %% "scalactic" % "3.2.19" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.19" % Test
 )
 
 // ============================================================
@@ -62,7 +62,6 @@ lazy val silverBrain = project
   .settings(
     commonSettings,
     name := "silver-brain",
-    // assembly / mainClass := Some("silver_brain.main"),
     libraryDependencies ++= Seq(
       libCliArgsParser,
       libLoggerImplementation
@@ -84,7 +83,7 @@ lazy val silverBrainHttpServer = project
     libraryDependencies ++= Seq(
       libHttpServer,
       libLoggerInterface
-    ) ++ libsJson
+    ) ++ libsJson ++ libsTestFramework
   )
   .dependsOn(silverBrainCore)
   .aggregate(silverBrainCore)
@@ -102,7 +101,7 @@ lazy val silverBrainSqliteStore = project
       libUniqueId,
       libOsLib,
       libLoggerInterface
-    ) ++ libsDatabase ++ libTestFramework
+    ) ++ libsDatabase ++ libsTestFramework
   )
   .dependsOn(silverBrainCore)
   .aggregate(silverBrainCore)
@@ -119,5 +118,5 @@ lazy val silverBrainCore =
       name := "silver-brain-core",
       libraryDependencies ++= Seq(
         libParserCombinator
-      ) ++ libTestFramework
+      ) ++ libsTestFramework
     )
