@@ -54,7 +54,7 @@ val libsTestFramework = Seq(
 )
 
 // ============================================================
-//  Silver Brain
+//  Main
 // ============================================================
 
 lazy val silverBrain = project
@@ -67,47 +67,76 @@ lazy val silverBrain = project
       libLoggerImplementation
     )
   )
-  .dependsOn(silverBrainHttpServer, silverBrainSqliteStore)
-  .aggregate(silverBrainHttpServer, silverBrainSqliteStore)
+  .dependsOn(silverBrainSqliteRepo)
+  .aggregate(silverBrainSqliteRepo)
+  // .dependsOn(silverBrainHttpServer, silverBrainSqliteStore)
+  // .aggregate(silverBrainHttpServer, silverBrainSqliteStore)
   .enablePlugins(JavaAppPackaging)
 
 // ============================================================
-//  Silver Brain Http Server
+//  Http Server
 // ============================================================
 
-lazy val silverBrainHttpServer = project
-  .in(file("libs/http_server"))
+// lazy val silverBrainHttpServer = project
+//   .in(file("libs/http_server"))
+//   .settings(
+//     commonSettings,
+//     name := "silver-brain-http-server",
+//     libraryDependencies ++= Seq(
+//       libHttpServer,
+//       libLoggerInterface
+//     ) ++ libsJson ++ libsTestFramework
+//   )
+//   .dependsOn(silverBrainStore)
+//   .aggregate(silverBrainStore)
+
+// ============================================================
+//  Domain
+// ============================================================
+
+lazy val silverBrainLocalStore = project
+  .in(file("libs/store.local"))
   .settings(
     commonSettings,
-    name := "silver-brain-http-server",
+    name := "silver-brain-local-store",
     libraryDependencies ++= Seq(
-      libHttpServer,
-      libLoggerInterface
-    ) ++ libsJson ++ libsTestFramework
+    )
+  )
+  .dependsOn(silverBrainRepo)
+  .aggregate(silverBrainRepo)
+
+// ============================================================
+//  Repo
+// ============================================================
+
+lazy val silverBrainRepo = project
+  .in(file("libs/repo"))
+  .settings(
+    commonSettings,
+    name := "silver-brain-repo",
+    libraryDependencies ++= Seq(
+      libUniqueId
+    )
   )
   .dependsOn(silverBrainCore)
   .aggregate(silverBrainCore)
 
-// ============================================================
-//  Sqlite Store
-// ============================================================
-
-lazy val silverBrainSqliteStore = project
-  .in(file("libs/sqlite_store"))
+lazy val silverBrainSqliteRepo = project
+  .in(file("libs/repo.sqlite"))
   .settings(
     commonSettings,
-    name := "silver-brain-sqlite-store",
+    name := "silver-brain-sqlite-repo",
     libraryDependencies ++= Seq(
       libUniqueId,
       libOsLib,
       libLoggerInterface
     ) ++ libsDatabase ++ libsTestFramework
   )
-  .dependsOn(silverBrainCore)
-  .aggregate(silverBrainCore)
+  .dependsOn(silverBrainRepo)
+  .aggregate(silverBrainRepo)
 
 // ============================================================
-//  Silver Brain Core
+//  Core
 // ============================================================
 
 lazy val silverBrainCore =

@@ -16,7 +16,6 @@ case class UpdateItemArgs(
 )
 
 trait ItemStore:
-
   // ============================================================
   //  Item
   // ============================================================
@@ -65,21 +64,3 @@ trait ItemStore:
   def getChildren(id: String): StoreResult[Seq[String]]
 
   def deleteLink(parent: String, child: String): StoreResult[Unit]
-
-  // // ============================================================
-  // //  Reference
-  // // ============================================================
-
-  // def getReference(id: String): StoreResult[Reference]
-
-  // def getReferences(ids: Seq[String]): StoreResult[Seq[Reference]]
-
-  // def createReference(
-  //     source: String,
-  //     target: String,
-  //     annotation: String
-  // ): StoreResult[String]
-
-  // def updateReference(id: String, annotation: String): StoreResult[Unit]
-
-  // def deleteReference(id: String): StoreResult[Unit]
