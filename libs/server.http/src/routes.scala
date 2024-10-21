@@ -1,4 +1,4 @@
-package silver_brain.http_server
+package silver_brain.server.http
 
 import cask.*
 import silver_brain.core.*
@@ -7,14 +7,14 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import scala.util.boundary
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
-import silver_brain.http_server.log
 
 // ============================================================
 //  Routes
 // ============================================================
 
 class Routes(
-    storeCreator: String => ItemStore,
+    storeManager: StoreManager[_],
+    itemStoreCreator: String => ItemStore,
     logger: Logger = LoggerFactory.getLogger("http")
 ) extends MainRoutes:
   given Logger = logger
@@ -67,26 +67,22 @@ class Routes(
   @withStoreName
   @post("/api/v2/items/:id/parents/:parent")
   def saveParent(id: String, parent: String)(storeName: String) =
-    val store = this.storeCreator(storeName)
-    store.saveLink(parent, id).toHttpResponse(201)
+    ???
 
   @withStoreName
   @delete("/api/v2/items/:id/parents/:parent")
   def deleteParent(id: String, parent: String)(storeName: String) =
-    val store = storeCreator(storeName)
-    store.deleteLink(parent, id).toHttpResponse(204)
+    ???
 
   @withStoreName
   @post("/api/v2/items/:id/children/:child")
   def saveChild(id: String, child: String)(storeName: String) =
-    val store = this.storeCreator(storeName)
-    store.saveLink(id, child).toHttpResponse(201)
+    ???
 
   @withStoreName
   @delete("/api/v2/items/:id/children/:child")
   def deleteChild(id: String, child: String)(storeName: String) =
-    val store = storeCreator(storeName)
-    store.deleteLink(id, child).toHttpResponse(204)
+    ???
 
   // ============================================================
   //  Item Property
@@ -123,9 +119,9 @@ class Routes(
       storeName: String
   ) =
     request.log()
-    val store = this.storeCreator(storeName)
 
-    store.getItem(id, propsToOptions(props)).toHttpResponse()
+    val itemStore = this.itemStoreCreator(storeName)
+    itemStore.getItem(id, propsToOptions(props)).toHttpResponse()
 
   // @withStoreName
   // @get("/api/v2/items")
@@ -155,11 +151,11 @@ class Routes(
   @post("/api/v2/items")
   def createItem(request: Request)(storeName: String) =
     request.log()
-    val store = this.storeCreator(storeName)
 
+    val itemStore = this.itemStoreCreator(storeName)
     val result =
       for item <- request.readJson[CreateItemArgs]
-      yield store
+      yield itemStore
         .createItem(item)
         .map(id => Map("id" -> id))
         .toHttpResponse(201)
@@ -170,11 +166,11 @@ class Routes(
   @patch("/api/v2/items/:id")
   def updateItem(id: String, request: Request)(storeName: String) =
     request.log()
-    val store = this.storeCreator(storeName)
 
+    val itemStore = this.itemStoreCreator(storeName)
     val result =
       for item <- request.readJson[UpdateItemArgs]
-      yield store
+      yield itemStore
         .updateItem(item)
         .toHttpResponse(204)
 
@@ -184,9 +180,8 @@ class Routes(
   @delete("/api/v2/items/:id")
   def deleteItem(id: String, request: Request)(storeName: String) =
     request.log()
-    val store = this.storeCreator(storeName)
-
-    store.deleteItem(id).toHttpResponse(204)
+    val itemStore = this.itemStoreCreator(storeName)
+    itemStore.deleteItem(id).toHttpResponse(204)
 
   // ============================================================
   //  References

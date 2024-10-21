@@ -1,4 +1,4 @@
-package silver_brain.store.local
+package silver_brain.domain
 
 import silver_brain.core.*
 import silver_brain.repo.ItemRepo

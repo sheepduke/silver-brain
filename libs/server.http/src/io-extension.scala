@@ -1,4 +1,4 @@
-package silver_brain.http_server
+package silver_brain.server.http
 
 import cask.*
 import cask.Logger as _
