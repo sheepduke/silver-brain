@@ -54,11 +54,11 @@ val libsTestFramework = Seq(
 )
 
 // ============================================================
-//  Main
+//  Silver Brain
 // ============================================================
 
 lazy val silverBrain = project
-  .in(file("apps/main"))
+  .in(file("apps/silver_brain"))
   .settings(
     commonSettings,
     name := "silver-brain",
