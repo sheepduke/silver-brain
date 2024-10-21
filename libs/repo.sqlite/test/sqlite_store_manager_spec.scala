@@ -1,4 +1,4 @@
-package silver_brain.sqlite_store
+package silver_brain.repo.sqlite
 
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -10,12 +10,12 @@ class StoreManagerSpec extends AnyFunSuite:
       val storeManager = SqliteStoreManager(dataRootPath = dataRootPath)
       val storeName = "main"
 
-      assert(storeManager.createStore(storeName).isRight)
-      assert(storeManager.storeExists(storeName).right.get)
+      assert(storeManager.create(storeName).isRight)
+      assert(storeManager.exists(storeName).right.get)
 
-      assert(storeManager.createStore("another").isRight)
+      assert(storeManager.create("another").isRight)
 
-      val stores = storeManager.listStore().right.get
+      val stores = storeManager.list.right.get
       assertResult(2)(stores.size)
       assert(stores.contains("main"))
       assert(stores.contains("another"))

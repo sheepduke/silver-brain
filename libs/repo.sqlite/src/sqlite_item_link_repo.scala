@@ -1,11 +1,12 @@
-package silver_brain.sqlite_store.db
+package silver_brain.repo.sqlite
 
 import silver_brain.core.*
+import silver_brain.repo.ItemLinkRepo
 
-import scalikejdbc.*
 import java.time.Instant
+import scalikejdbc.*
 
-object LinkTable:
+class SqliteItemLinkRepo extends ItemLinkRepo[DBSession]:
   def create(parent: String, child: String)(using
       DBSession
   ): StoreResult[Unit] =
@@ -23,8 +24,6 @@ object LinkTable:
     Right(ids)
 
   def getChildren(id: String)(using DBSession): StoreResult[Seq[String]] =
-    println("What???")
-
     val ids =
       sql"select child from item_link where parent = $id"
         .map(_.string(1))

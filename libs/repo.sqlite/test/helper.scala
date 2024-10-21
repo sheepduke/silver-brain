@@ -10,7 +10,7 @@ import scalikejdbc.DBSession
 
 def withTempStore(fun: (session: DBSession) => Any): Any =
   val dataRootPath = os.temp.dir()
-  println(s"Data root path: $dataRootPath")
+
   try
     val storeManager = SqliteStoreManager(dataRootPath)
     val storeName = Ksuid.newKsuid().toString()
@@ -20,7 +20,7 @@ def withTempStore(fun: (session: DBSession) => Any): Any =
 
     storeManager.withTransaction(storeName)(implicit session =>
       fun(session)
-        Right (())
+      Right(())
     )
 
   finally os.remove.all(dataRootPath)
