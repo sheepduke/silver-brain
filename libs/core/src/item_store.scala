@@ -15,6 +15,17 @@ case class UpdateItemArgs(
     content: Option[String] = None
 )
 
+case class CreateItemReferenceArgs(
+    source: String,
+    target: String,
+    annotation: String
+)
+
+case class UpdateItemReferenceArgs(
+    id: String,
+    annotation: String
+)
+
 trait ItemStore:
   // ============================================================
   //  Item
@@ -26,7 +37,7 @@ trait ItemStore:
   ): StoreResult[Item]
 
   def getItems(
-      ids: Seq[String],
+      itemIds: Seq[String],
       loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): StoreResult[Seq[Item]]
 
@@ -39,28 +50,49 @@ trait ItemStore:
 
   def updateItem(item: UpdateItemArgs): StoreResult[Unit]
 
-  def deleteItem(id: String): StoreResult[Unit]
+  def deleteItem(itemId: String): StoreResult[Unit]
 
   // // ============================================================
   // //  Property
   // // ============================================================
 
-  // def saveItemProperty(
-  //     id: String,
-  //     key: String,
-  //     value: String
-  // ): StoreResult[Unit]
+  def upsertItemProperty(
+      itemId: String,
+      key: String,
+      value: String
+  ): StoreResult[Unit]
 
-  // def deleteItemProperty(id: String, key: String): StoreResult[Unit]
+  def deleteItemProperty(itemId: String, key: String): StoreResult[Unit]
 
   // ============================================================
-  //  Child
+  //  Link
   // ============================================================
 
-  def saveLink(parent: String, child: String): StoreResult[Unit]
+  def createLink(parent: String, child: String): StoreResult[Unit]
 
-  def getParents(id: String): StoreResult[Seq[String]]
+  def getParents(itemId: String): StoreResult[Seq[String]]
 
-  def getChildren(id: String): StoreResult[Seq[String]]
+  def getChildren(itemId: String): StoreResult[Seq[String]]
 
   def deleteLink(parent: String, child: String): StoreResult[Unit]
+
+  // ============================================================
+  //  Reference
+  // ============================================================
+
+  def getReference(referenceId: String): StoreResult[Reference]
+
+  def getReferences(referenceIds: Seq[String]): StoreResult[Seq[Reference]]
+
+  def createReference(
+      source: String,
+      target: String,
+      annotation: String
+  ): StoreResult[String]
+
+  def updateReference(
+      referenceId: String,
+      annotation: String
+  ): StoreResult[Unit]
+
+  def deleteReference(referenceId: String): StoreResult[Unit]

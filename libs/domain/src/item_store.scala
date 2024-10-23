@@ -2,21 +2,31 @@ package silver_brain.domain
 
 import silver_brain.core.*
 import silver_brain.repo.ItemRepo
+import silver_brain.repo.ItemLinkRepo
 
 class LocalItemStore[StoreSession](
-    storeManager: StoreManager[StoreSession],
-    itemRepo: ItemRepo[StoreSession],
-    storeName: String
+    private val storeManager: StoreManager[StoreSession],
+    private val itemRepo: ItemRepo[StoreSession],
+    private val itemLinkRepo: ItemLinkRepo[StoreSession],
+    private val storeName: String
 ) extends ItemStore:
-  def createItem(item: CreateItemArgs): StoreResult[String] = ???
+
+  // ============================================================
+  //  Item
+  // ============================================================
+
+  def createItem(item: CreateItemArgs): StoreResult[String] =
+    this.storeManager.withTransaction(this.storeName)(implicit session =>
+      this.itemRepo.create(item)
+    )
 
   def getItem(itemId: String, loadOptions: ItemLoadOptions): StoreResult[Item] =
-    this.storeManager.withTransaction(storeName)(implicit session =>
+    this.storeManager.withTransaction(this.storeName)(implicit session =>
       this.itemRepo.getOne(itemId)
     )
 
   def getItems(
-      ids: Seq[String],
+      itemIds: Seq[String],
       loadOptions: ItemLoadOptions
   ): StoreResult[Seq[Item]] = ???
 
@@ -25,14 +35,61 @@ class LocalItemStore[StoreSession](
       loadOptions: ItemLoadOptions
   ): StoreResult[Seq[Item]] = ???
 
-  def updateItem(item: UpdateItemArgs): StoreResult[Unit] = ???
+  def updateItem(item: UpdateItemArgs): StoreResult[Unit] =
+    this.storeManager.withTransaction(this.storeName)(implicit session =>
+      this.itemRepo.update(item)
+    )
 
-  def deleteItem(id: String): StoreResult[Unit] = ???
+  def deleteItem(itemId: String): StoreResult[Unit] =
+    this.storeManager.withTransaction(this.storeName)(implicit session =>
+      this.itemRepo.delete(itemId)
+    )
 
-  def saveLink(parent: String, child: String): StoreResult[Unit] = ???
+  // ============================================================
+  //  Property
+  // ============================================================
 
-  def getParents(id: String): StoreResult[Seq[String]] = ???
+  def upsertItemProperty(
+      itemId: String,
+      key: String,
+      value: String
+  ): StoreResult[Unit] = ???
 
-  def getChildren(id: String): StoreResult[Seq[String]] = ???
+  def deleteItemProperty(itemId: String, key: String): StoreResult[Unit] = ???
+
+  // ============================================================
+  //  Link
+  // ============================================================
+
+  def createLink(parent: String, child: String): StoreResult[Unit] =
+    this.storeManager.withTransaction(this.storeName)(implicit session =>
+      this.itemLinkRepo.create(parent, child)
+    )
+
+  def getParents(itemId: String): StoreResult[Seq[String]] = ???
+
+  def getChildren(itemId: String): StoreResult[Seq[String]] = ???
 
   def deleteLink(parent: String, child: String): StoreResult[Unit] = ???
+
+  // ============================================================
+  //  Reference
+  // ============================================================
+
+  def createReference(
+      source: String,
+      target: String,
+      annotation: String
+  ): StoreResult[String] = ???
+
+  def getReference(referenceId: String): StoreResult[Reference] = ???
+
+  def getReferences(referenceIds: Seq[String]): StoreResult[Seq[Reference]] =
+    ???
+
+  def updateReference(
+      referenceId: String,
+      annotation: String
+  ): StoreResult[Unit] = ???
+
+  def deleteReference(referenceId: String): StoreResult[Unit] = ???
