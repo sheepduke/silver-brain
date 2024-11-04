@@ -10,49 +10,47 @@ import cats.effect.*
 import cats.implicits.*
 import doobie.*
 import doobie.implicits.*
+import cats.data.NonEmptyList
 
 object ItemRepo:
-  type ItemRow = (String, String, String, String, String, String)
+  type Row = (String, String, String, String, String, String)
 
-  def getOne(
-      itemId: String,
-      loadOptions: ItemLoadOptions
-  ): ConnectionIO[Option[Item]] =
-    val x = sql"select * from item where id = $itemId".query[ItemRow]
+  def getOne(id: String): Query0[Row] =
+    sql"select * from item where id = $id".query[Row]
 
-    for item <- sql"select * from item where id = $itemId".query[ItemRow].option
-    yield item.map(this.rowToItem(_, loadOptions))
+  def getMany(ids: Seq[String]): Query0[Row] =
+    assert(ids.nonEmpty)
 
-  def create(item: CreateItemArgs): ConnectionIO[String] =
-    val id = "i_" + Ksuid.newKsuid().toString()
-    val name = item.name
-    val contentType = item.contentType.getOrElse("")
-    val content = item.content.getOrElse("")
-    val time = Instant.now().toString()
+    val condition =
+      Fragments.in(fr"id", NonEmptyList.fromListUnsafe(ids.toList))
 
-    for _ <-
-        sql"insert into item values($id, $name, $contentType, $content, $time, $time)".update.run
-    yield id
+    sql"select * from item where $condition".query[Row]
 
-  def update(item: UpdateItemArgs): ConnectionIO[Int] =
-    val time = Instant.now().toString()
-    var updateSql = fr"update_time = $time"
+  def create(id: String, item: CreateItemArgs, createTime: Instant): Update0 =
+    val time = createTime.toString()
+    sql"""insert into item(id, name, content_type, content, create_time, update_time) values(
+      $id, ${item.name},
+      ${item.contentType.getOrElse("")},
+      ${item.content.getOrElse("")},
+      $time, $time)""".update
 
-    if item.name.nonEmpty then
-      updateSql = updateSql ++ fr", name = ${item.name}"
+  def update(item: UpdateItemArgs, updateTime: Instant): Update0 =
+    var sql = fr"update item set update_time = ${updateTime.toString()}"
 
+    if item.name.nonEmpty then sql = sql ++ fr",item.name = ${item.name}"
     if item.contentType.nonEmpty then
-      updateSql = updateSql ++ fr", content_type = ${item.contentType}"
+      sql = sql ++ fr",content_type = ${item.contentType}"
+    if item.content.nonEmpty then sql = sql ++ fr",content = ${item.content}"
 
-    if item.content.nonEmpty then
-      updateSql = updateSql ++ fr", content = ${item.content}"
+    sql = sql ++ fr"where id = ${item.id}"
 
-    fr"update item set $updateSql where id = ${item.id}".update.run
+    sql.update
 
-  def delete(id: String): ConnectionIO[Int] =
-    sql"delete from item where id = $id".update.run
+  def delete(id: String): Update0 =
+    sql"delete from item where id = $id".update
 
-  private def rowToItem(row: ItemRow, loadOptions: ItemLoadOptions): Item =
+extension (row: ItemRepo.Row)
+  def toItem(loadOptions: ItemLoadOptions = ItemLoadOptions()) =
     val (id, name, contentType, content, createTime, updateTime) = row
 
     Item(

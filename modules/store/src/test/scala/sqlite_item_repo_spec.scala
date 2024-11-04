@@ -9,6 +9,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import cats.effect.IO
 import doobie.util.transactor.Transactor
 import scala.io.Source
+import silver_brain.store.repo.ItemRepo
+import java.time.Instant
 
 class StoreItemSpec extends AnyFunSuite with IOChecker:
   def transactor: Transactor[IO] =
@@ -20,10 +22,11 @@ class StoreItemSpec extends AnyFunSuite with IOChecker:
       logHandler = None
     )
 
-  test("create item"):
-    val query = sql"select * from item where id = '1'".query
+  test("get single"):
+    checkOutput(ItemRepo.getOne("10"))
 
-    check(query)
+  test("get many"):
+    checkOutput(ItemRepo.getMany(Seq("001", "002")))
 
   // test("create item"):
   //   withTempStore(implicit session =>

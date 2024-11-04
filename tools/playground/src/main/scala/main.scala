@@ -1,5 +1,7 @@
 //package silver_brain.tools.playground
 
+import silver_brain.store
+
 import cats._
 import cats.effect._
 import cats.effect.unsafe.implicits.global

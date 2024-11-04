@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS item_reference(
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY NOT NULL,
   source TEXT NOT NULL,
   target TEXT NOT NULL,
   annotation TEXT NOT NULL,

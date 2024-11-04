@@ -1,4 +1,4 @@
-package silver_brain.store.repo
+package silver_brain.store
 
 import silver_brain.core.*
 

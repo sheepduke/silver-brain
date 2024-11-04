@@ -40,7 +40,7 @@ trait ItemStore:
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): StoreResult[Seq[Item]]
+  ): IO[StoreResult[Seq[Item]]]
 
   def searchItems(
       search: String,

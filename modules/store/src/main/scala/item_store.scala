@@ -10,6 +10,8 @@ import doobie.*
 import doobie.implicits.*
 import doobie.util.transactor.Transactor
 import cats.effect.IO
+import com.github.ksuid.Ksuid
+import java.time.Instant
 
 class SqlItemStore(
     private val transactor: Transactor[IO],
@@ -20,39 +22,53 @@ class SqlItemStore(
   //  Item
   // ============================================================
 
-  def createItem(item: CreateItemArgs): IO[StoreResult[String]] =
-    for itemId <- ItemRepo.create(item).transact(this.transactor)
-    yield Right(itemId)
-
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions
   ): IO[StoreResult[Item]] =
-    for itemOpt <- ItemRepo
-        .getOne(itemId, loadOptions)
+    for rowOpt <- ItemRepo
+        .getOne(itemId)
+        .option
         .transact(this.transactor)
-    yield itemOpt match
-      case Some(item) => Right(item)
-      case None       => Left(StoreError.IdNotFound(itemId))
+    yield rowOpt match
+      case Some(row) => Right(row.toItem(loadOptions))
+      case None      => Left(StoreError.IdNotFound(itemId))
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions
-  ): StoreResult[Seq[Item]] = ???
+  ): IO[StoreResult[Seq[Item]]] =
+    if itemIds.isEmpty then
+      IO.pure(Left(StoreError.InvalidArgument("Empty id list")))
+    else
+      for result <- ItemRepo.getMany(itemIds).to[List].transact(this.transactor)
+      yield Right(result.map(_.toItem(loadOptions)))
 
   def searchItems(
       search: String,
       loadOptions: ItemLoadOptions
   ): StoreResult[Seq[Item]] = ???
 
+  def createItem(item: CreateItemArgs): IO[StoreResult[String]] =
+    val id = "i_" + Ksuid.newKsuid().toString()
+
+    for itemId <- ItemRepo
+        .create(id, item, Instant.now())
+        .run
+        .transact(this.transactor)
+    yield Right(id)
+
   def updateItem(item: UpdateItemArgs): IO[StoreResult[Unit]] =
-    for updatedCount <- ItemRepo.update(item).transact(this.transactor)
+    for updatedCount <- ItemRepo
+        .update(item, Instant.now())
+        .run
+        .transact(this.transactor)
     yield
       if updatedCount == 0 then Left(StoreError.IdNotFound(item.id))
       else Right(())
 
   def deleteItem(itemId: String): IO[StoreResult[Unit]] =
-    for _ <- ItemRepo.delete(itemId).transact(this.transactor)
+    for _ <- ItemRepo.delete(itemId).run.transact(this.transactor)
     yield Right(())
 
   // ============================================================
