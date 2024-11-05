@@ -1,4 +1,4 @@
-package silver_brain.core
+package silverbrain.core
 
 case class ItemLoadOptions(
     contentType: Boolean = false,

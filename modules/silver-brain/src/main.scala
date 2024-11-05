@@ -1,4 +1,4 @@
-// package silver_brain
+// package silverbrain
 
 // import ch.qos.logback.classic.Level
 // import ch.qos.logback.classic.LoggerContext
@@ -9,12 +9,12 @@
 // import org.rogach.scallop.*
 // import org.rogach.scallop.ValueConverter
 
-// import silver_brain.core.*
-// // import silver_brain.http_server.HttpServer
-// import silver_brain.repo.sqlite.*
+// import silverbrain.core.*
+// // import silverbrain.http_server.HttpServer
+// import silverbrain.repo.sqlite.*
 // import os.Path
-// import silver_brain.domain.LocalItemStore
-// import silver_brain.server.http.HttpServer
+// import silverbrain.domain.LocalItemStore
+// import silverbrain.server.http.HttpServer
 
 // val defaultDataRoot = os.home / ".silver-brain"
 // val defaultStoreName = "main"

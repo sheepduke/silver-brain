@@ -1,8 +1,8 @@
-package silver_brain.store
+package silverbrain.store
 
-import silver_brain.core.CreateItemArgs
-import silver_brain.store.SqliteStoreManager
-import silver_brain.store.ItemRepo
+import silverbrain.core.CreateItemArgs
+import silverbrain.store.SqliteStoreManager
+import silverbrain.store.ItemRepo
 
 import cats.effect.*
 import com.github.ksuid.Ksuid

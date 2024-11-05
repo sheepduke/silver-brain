@@ -1,6 +1,6 @@
-package silver_brain.store
+package silverbrain.store
 
-import silver_brain.core.*
+import silverbrain.core.*
 
 import cats.effect.IO
 import doobie.*

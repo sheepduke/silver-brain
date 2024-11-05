@@ -1,6 +1,6 @@
-// package silver_brain.repo.sqlite
+// package silverbrain.repo.sqlite
 
-// import silver_brain.core.*
+// import silverbrain.core.*
 
 // import org.scalatest.funsuite.AnyFunSuite
 

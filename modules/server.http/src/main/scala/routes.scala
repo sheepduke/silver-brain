@@ -1,7 +1,7 @@
-// package silver_brain.server.http
+// package silverbrain.server.http
 
 // import cask.*
-// import silver_brain.core.*
+// import silverbrain.core.*
 // import com.github.plokhotnyuk.jsoniter_scala.core as json
 // import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 // import scala.util.boundary

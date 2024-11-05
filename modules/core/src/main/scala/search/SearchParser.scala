@@ -1,4 +1,4 @@
-package silver_brain.core
+package silverbrain.core
 
 import fastparse.*
 import fastparse.Parsed.Success

@@ -1,4 +1,4 @@
-package silver_brain.repo.sqlite
+package silverbrain.repo.sqlite
 
 import org.scalatest.funsuite.AnyFunSuite
 

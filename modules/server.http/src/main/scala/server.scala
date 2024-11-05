@@ -1,7 +1,7 @@
-// package silver_brain.server.http
+// package silverbrain.server.http
 
 // import cask.*
-// import silver_brain.core.*
+// import silverbrain.core.*
 // import io.undertow.Undertow
 
 // class HttpServer(

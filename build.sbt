@@ -55,7 +55,7 @@ val libsTestFramework = Seq(
 // ============================================================
 
 lazy val silverBrain = project
-  .in(file("modules/silver_brain"))
+  .in(file("modules/silver-brain"))
   .settings(
     name := "silver-brain",
     libraryDependencies ++= Seq(

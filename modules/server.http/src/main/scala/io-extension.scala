@@ -1,8 +1,8 @@
-// package silver_brain.server.http
+// package silverbrain.server.http
 
 // import cask.*
 // import cask.Logger as _
-// import silver_brain.core.*
+// import silverbrain.core.*
 // import com.github.plokhotnyuk.jsoniter_scala.core as jsoniter
 // import scala.util.Try
 // import org.slf4j.Logger
@@ -30,7 +30,7 @@
 // //  Response Extension
 // // ============================================================
 
-// extension [A](response: StoreResult[A])(using jsoniter.JsonValueCodec[A])
+// extension [A](response: AppResult[A])(using jsoniter.JsonValueCodec[A])
 //   def toHttpResponse(statusCode: Int = 200): Response[String] =
 //     response match
 //       case Right(value) =>
@@ -39,14 +39,14 @@
 //           statusCode,
 //           Seq(("Content-Type", "application/json; charset=utf-8"))
 //         )
-//       case Left(StoreError.StoreNotFound(storeName)) =>
+//       case Left(StoreNotFound(storeName)) =>
 //         Response(s"Store not found: $storeName", 404)
-//       case Left(StoreError.IdNotFound(id)) =>
+//       case Left(IdNotFound(id)) =>
 //         Response(s"Resource with ID `$id` not found", 404)
-//       case Left(StoreError.InvalidArgument(message)) =>
+//       case Left(InvalidArgument(message)) =>
 //         Response(message, 400)
-//       case Left(StoreError.Conflict(message))      => Response(message, 409)
-//       case Left(StoreError.InternalError(message)) => Response(message, 500)
+//       case Left(Conflict(message))      => Response(message, 409)
+//       case Left(InternalError(message)) => Response(message, 500)
 
 // // ============================================================
 // //  Unit Codec

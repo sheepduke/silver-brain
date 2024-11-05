@@ -1,4 +1,4 @@
-package silver_brain.core
+package silverbrain.core
 
 enum CompareOperator:
   case LessThan

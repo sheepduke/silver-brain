@@ -1,4 +1,4 @@
-package silver_brain.core
+package silverbrain.core
 
 import cats.effect.*
 import java.time.Instant
@@ -11,23 +11,23 @@ trait ItemStore:
   def getItem(
       id: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): IO[StoreResult[Item]]
+  ): IO[AppResult[Item]]
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): IO[StoreResult[Seq[Item]]]
+  ): IO[AppResult[Seq[Item]]]
 
   def searchItems(
       search: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): StoreResult[Seq[Item]]
+  ): AppResult[Seq[Item]]
 
-  def createItem(item: CreateItemArgs): IO[StoreResult[String]]
+  def createItem(item: CreateItemArgs): IO[AppResult[String]]
 
-  def updateItem(item: UpdateItemArgs): IO[StoreResult[Unit]]
+  def updateItem(item: UpdateItemArgs): IO[AppResult[Unit]]
 
-  def deleteItem(itemId: String): IO[StoreResult[Unit]]
+  def deleteItem(itemId: String): IO[AppResult[Unit]]
 
   // // ============================================================
   // //  Property
@@ -37,39 +37,39 @@ trait ItemStore:
       itemId: String,
       key: String,
       value: String
-  ): StoreResult[Unit]
+  ): AppResult[Unit]
 
-  def deleteItemProperty(itemId: String, key: String): StoreResult[Unit]
+  def deleteItemProperty(itemId: String, key: String): AppResult[Unit]
 
   // ============================================================
   //  Link
   // ============================================================
 
-  def createLink(parent: String, child: String): StoreResult[Unit]
+  def createLink(parent: String, child: String): AppResult[Unit]
 
-  def getParents(itemId: String): StoreResult[Seq[String]]
+  def getParents(itemId: String): AppResult[Seq[String]]
 
-  def getChildren(itemId: String): StoreResult[Seq[String]]
+  def getChildren(itemId: String): AppResult[Seq[String]]
 
-  def deleteLink(parent: String, child: String): StoreResult[Unit]
+  def deleteLink(parent: String, child: String): AppResult[Unit]
 
   // ============================================================
   //  Reference
   // ============================================================
 
-  def getReference(referenceId: String): StoreResult[Reference]
+  def getReference(referenceId: String): AppResult[Reference]
 
-  def getReferences(referenceIds: Seq[String]): StoreResult[Seq[Reference]]
+  def getReferences(referenceIds: Seq[String]): AppResult[Seq[Reference]]
 
   def createReference(
       source: String,
       target: String,
       annotation: String
-  ): StoreResult[String]
+  ): AppResult[String]
 
   def updateReference(
       referenceId: String,
       annotation: String
-  ): StoreResult[Unit]
+  ): AppResult[Unit]
 
-  def deleteReference(referenceId: String): StoreResult[Unit]
+  def deleteReference(referenceId: String): AppResult[Unit]

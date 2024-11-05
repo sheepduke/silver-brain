@@ -1,7 +1,7 @@
-package silver_brain.core
+package silverbrain.core
 
 import org.scalatest.funsuite.AnyFunSuite
-import silver_brain.core.SearchParser.parse
+import silverbrain.core.SearchParser.parse
 
 class SearchParserSpec extends AnyFunSuite:
   test("Parse blank query"):

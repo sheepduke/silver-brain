@@ -1,6 +1,6 @@
-//package silver_brain.tools.playground
+//package silverbrain.tools.playground
 
-import silver_brain.store
+import silverbrain.core
 
 import cats._
 import cats.effect._

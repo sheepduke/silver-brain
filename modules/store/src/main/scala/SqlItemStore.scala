@@ -1,6 +1,6 @@
-package silver_brain.store
+package silverbrain.store
 
-import silver_brain.core.*
+import silverbrain.core.*
 
 import cats.*
 import cats.effect.*
@@ -24,21 +24,21 @@ class SqlItemStore(
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions
-  ): IO[StoreResult[Item]] =
+  ): IO[AppResult[Item]] =
     for rowOpt <- ItemRepo
         .getOne(itemId)
         .option
         .transact(this.transactor)
     yield rowOpt match
       case Some(row) => Right(row.toItem(loadOptions))
-      case None      => Left(StoreError.IdNotFound(itemId))
+      case None      => Left(IdNotFound(itemId))
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions
-  ): IO[StoreResult[Seq[Item]]] =
+  ): IO[AppResult[Seq[Item]]] =
     if itemIds.isEmpty then
-      IO.pure(Left(StoreError.InvalidArgument("Empty id list")))
+      IO.pure(Left(InvalidArgument("Empty id list")))
     else
       for result <- ItemRepo.getMany(itemIds).to[List].transact(this.transactor)
       yield Right(result.map(_.toItem(loadOptions)))
@@ -46,9 +46,9 @@ class SqlItemStore(
   def searchItems(
       search: String,
       loadOptions: ItemLoadOptions
-  ): StoreResult[Seq[Item]] = ???
+  ): AppResult[Seq[Item]] = ???
 
-  def createItem(item: CreateItemArgs): IO[StoreResult[String]] =
+  def createItem(item: CreateItemArgs): IO[AppResult[String]] =
     val id = "i_" + Ksuid.newKsuid().toString()
 
     for itemId <- ItemRepo
@@ -57,16 +57,16 @@ class SqlItemStore(
         .transact(this.transactor)
     yield Right(id)
 
-  def updateItem(item: UpdateItemArgs): IO[StoreResult[Unit]] =
+  def updateItem(item: UpdateItemArgs): IO[AppResult[Unit]] =
     for updatedCount <- ItemRepo
         .update(item, Instant.now())
         .run
         .transact(this.transactor)
     yield
-      if updatedCount == 0 then Left(StoreError.IdNotFound(item.id))
+      if updatedCount == 0 then Left(IdNotFound(item.id))
       else Right(())
 
-  def deleteItem(itemId: String): IO[StoreResult[Unit]] =
+  def deleteItem(itemId: String): IO[AppResult[Unit]] =
     for _ <- ItemRepo.delete(itemId).run.transact(this.transactor)
     yield Right(())
 
@@ -78,21 +78,21 @@ class SqlItemStore(
       itemId: String,
       key: String,
       value: String
-  ): StoreResult[Unit] = ???
+  ): AppResult[Unit] = ???
 
-  def deleteItemProperty(itemId: String, key: String): StoreResult[Unit] = ???
+  def deleteItemProperty(itemId: String, key: String): AppResult[Unit] = ???
 
   // ============================================================
   //  Link
   // ============================================================
 
-  def createLink(parent: String, child: String): StoreResult[Unit] = ???
+  def createLink(parent: String, child: String): AppResult[Unit] = ???
 
-  def getParents(itemId: String): StoreResult[Seq[String]] = ???
+  def getParents(itemId: String): AppResult[Seq[String]] = ???
 
-  def getChildren(itemId: String): StoreResult[Seq[String]] = ???
+  def getChildren(itemId: String): AppResult[Seq[String]] = ???
 
-  def deleteLink(parent: String, child: String): StoreResult[Unit] = ???
+  def deleteLink(parent: String, child: String): AppResult[Unit] = ???
 
   // ============================================================
   //  Reference
@@ -102,16 +102,16 @@ class SqlItemStore(
       source: String,
       target: String,
       annotation: String
-  ): StoreResult[String] = ???
+  ): AppResult[String] = ???
 
-  def getReference(referenceId: String): StoreResult[Reference] = ???
+  def getReference(referenceId: String): AppResult[Reference] = ???
 
-  def getReferences(referenceIds: Seq[String]): StoreResult[Seq[Reference]] =
+  def getReferences(referenceIds: Seq[String]): AppResult[Seq[Reference]] =
     ???
 
   def updateReference(
       referenceId: String,
       annotation: String
-  ): StoreResult[Unit] = ???
+  ): AppResult[Unit] = ???
 
-  def deleteReference(referenceId: String): StoreResult[Unit] = ???
+  def deleteReference(referenceId: String): AppResult[Unit] = ???
