@@ -42,4 +42,4 @@ class SqliteStoreManager(dataRootPath: Path) extends StoreManager:
     val result = flyway.migrate()
 
     if result.success then Right(())
-    else Left(AppInternalError("Failed to run migration"))
+    else Left(AppInternalError(new RuntimeException("Failed to run migration")))

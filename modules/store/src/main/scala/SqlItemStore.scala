@@ -37,8 +37,7 @@ class SqlItemStore(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions
   ): IO[AppResult[Seq[Item]]] =
-    if itemIds.isEmpty then
-      IO.pure(Left(InvalidArgument("Empty id list")))
+    if itemIds.isEmpty then IO.pure(Left(InvalidArgument("Empty id list")))
     else
       for result <- ItemRepo.getMany(itemIds).to[List].transact(this.transactor)
       yield Right(result.map(_.toItem(loadOptions)))
