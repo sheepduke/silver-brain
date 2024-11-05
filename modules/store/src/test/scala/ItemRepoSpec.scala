@@ -1,18 +1,17 @@
-package silver_brain.repo.sqlite
+package silver_brain.store
 
 import silver_brain.core.*
 
+import cats.effect.IO
 import doobie.*
 import doobie.implicits.*
 import doobie.scalatest.IOChecker
-import org.scalatest.funsuite.AnyFunSuite
-import cats.effect.IO
 import doobie.util.transactor.Transactor
-import scala.io.Source
-import silver_brain.store.repo.ItemRepo
 import java.time.Instant
+import org.scalatest.funsuite.AnyFunSuite
+import scala.io.Source
 
-class StoreItemSpec extends AnyFunSuite with IOChecker:
+class ItemRepoSpec extends AnyFunSuite with IOChecker:
   def transactor: Transactor[IO] =
     val sqliteFilePath = getClass().getResource("/data.sqlite").getPath()
 

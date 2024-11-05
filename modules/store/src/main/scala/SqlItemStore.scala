@@ -1,7 +1,6 @@
 package silver_brain.store
 
 import silver_brain.core.*
-import silver_brain.store.repo.*
 
 import cats.*
 import cats.effect.*

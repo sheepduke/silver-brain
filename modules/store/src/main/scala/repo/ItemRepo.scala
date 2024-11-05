@@ -1,4 +1,4 @@
-package silver_brain.store.repo
+package silver_brain.store
 
 import silver_brain.core.*
 
@@ -12,7 +12,7 @@ import doobie.*
 import doobie.implicits.*
 import cats.data.NonEmptyList
 
-object ItemRepo:
+private[store] object ItemRepo:
   type Row = (String, String, String, String, String, String)
 
   def getOne(id: String): Query0[Row] =

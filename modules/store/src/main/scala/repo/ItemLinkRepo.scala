@@ -1,4 +1,4 @@
-package silver_brain.store.repo
+package silver_brain.store
 
 import silver_brain.core.*
 
@@ -9,7 +9,7 @@ import doobie.*
 import doobie.implicits.*
 import java.time.Instant
 
-object ItemLinkRepo:
+private[store] object ItemLinkRepo:
   def create(parent: String, child: String): ConnectionIO[Int] =
     val time = Instant.now().toString()
     sql"insert into item_link values($parent, $child, $time)".update.run
