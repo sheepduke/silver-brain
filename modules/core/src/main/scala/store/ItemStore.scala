@@ -3,30 +3,6 @@ package silver_brain.core
 import cats.effect.*
 import java.time.Instant
 
-case class CreateItemArgs(
-    name: String,
-    contentType: Option[String] = None,
-    content: Option[String] = None
-)
-
-case class UpdateItemArgs(
-    id: String,
-    name: Option[String] = None,
-    contentType: Option[String] = None,
-    content: Option[String] = None
-)
-
-case class CreateItemReferenceArgs(
-    source: String,
-    target: String,
-    annotation: String
-)
-
-case class UpdateItemReferenceArgs(
-    id: String,
-    annotation: String
-)
-
 trait ItemStore:
   // ============================================================
   //  Item

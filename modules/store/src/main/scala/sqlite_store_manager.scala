@@ -25,7 +25,7 @@ class SqliteStoreManager(dataRootPath: Path) extends StoreManager:
     )
 
   def exists(storeName: String): StoreResult[Boolean] =
-    Try(os.exists(dataRootPath / storeName / "data.sqlite")).toStoreResult
+    Right(os.exists(dataRootPath / storeName / "data.sqlite"))
 
   def delete(storeName: String): StoreResult[Unit] = ???
 
