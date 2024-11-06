@@ -2,35 +2,51 @@ package silverbrain.store
 
 import silverbrain.core.*
 
+import cats.effect.IO
 import org.flywaydb.core.Flyway
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import os.Path
 import scala.util.Try
+import doobie.util.transactor.Transactor
 
 class SqliteStoreManager(dataRootPath: Path) extends StoreManager:
-  def create(storeName: String): AppResult[Unit] =
-    for exists <- this.exists(storeName)
-    yield
-      if exists then Left(Conflict(s"Store already exists"))
+  def create(storeName: String): AppIOResult[Unit] =
+    val thunk = () =>
+      if SqliteStoreManager.exists(this.dataRootPath, storeName) then
+        Left(ConflictError("Store already exists"))
       else
         os.makeDir.all(this.dataRootPath / storeName)
-        this.migrate(storeName)
+        SqliteStoreManager.migrate(this.dataRootPath, storeName)
+        Right(())
 
-  def list: AppResult[Seq[String]] =
-    Right(
+    AppIOResult.blockingFlatTry(thunk())
+
+  def list(): AppIOResult[Seq[String]] =
+    AppIOResult.blockingLiftTry(
       os.list(dataRootPath)
         .filter(path => os.isFile(path / "data.sqlite"))
         .map(_.last.toString)
     )
 
-  def exists(storeName: String): AppResult[Boolean] =
-    Right(os.exists(dataRootPath / storeName / "data.sqlite"))
+  def exists(storeName: String): AppIOResult[Boolean] =
+    AppIOResult.blockingLiftTry(
+      SqliteStoreManager.exists(this.dataRootPath, storeName)
+    )
 
-  def delete(storeName: String): AppResult[Unit] = ???
+  def delete(storeName: String): IO[AppResult[Unit]] = ???
 
-  def migrate(storeName: String): AppResult[Unit] =
-    val path = this.dataRootPath / storeName / "data.sqlite"
+  def migrate(storeName: String): IO[AppResult[Unit]] =
+    AppIOResult.blockingLiftTry(
+      SqliteStoreManager.migrate(this.dataRootPath, storeName)
+    )
+
+object SqliteStoreManager:
+  def exists(dataRootPath: Path, storeName: String): Boolean =
+    os.exists(dataRootPath / storeName / "data.sqlite")
+
+  def migrate(dataRootPath: Path, storeName: String): Unit =
+    val path = dataRootPath / storeName / "data.sqlite"
 
     val flyway =
       Flyway
@@ -41,5 +57,19 @@ class SqliteStoreManager(dataRootPath: Path) extends StoreManager:
 
     val result = flyway.migrate()
 
-    if result.success then Right(())
-    else Left(AppInternalError(new RuntimeException("Failed to run migration")))
+    if !result.success then
+      throw new RuntimeException("Failed to migrate database")
+
+  def createTransactor(
+      dataRootPath: Path,
+      storeName: String
+  ): Transactor[IO] =
+    val sqliteFilePath = dataRootPath / storeName / "data.sqlite"
+    this.createTransactor(sqliteFilePath.toString)
+
+  def createTransactor(sqliteFilePath: String): Transactor[IO] =
+    Transactor.fromDriverManager[IO](
+      driver = "org.sqlite.JDBC",
+      url = s"jdbc:sqlite:$sqliteFilePath",
+      logHandler = None
+    )

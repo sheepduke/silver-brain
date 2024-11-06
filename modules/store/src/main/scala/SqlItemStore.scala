@@ -13,8 +13,7 @@ import com.github.ksuid.Ksuid
 import java.time.Instant
 
 class SqlItemStore(
-    private val transactor: Transactor[IO],
-    private val storeName: String
+    private val transactor: Transactor[IO]
 ) extends ItemStore:
 
   // ============================================================
@@ -24,20 +23,21 @@ class SqlItemStore(
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions
-  ): IO[AppResult[Item]] =
+  ): AppIOResult[Item] =
     for rowOpt <- ItemRepo
         .getOne(itemId)
         .option
         .transact(this.transactor)
     yield rowOpt match
       case Some(row) => Right(row.toItem(loadOptions))
-      case None      => Left(IdNotFound(itemId))
+      case None      => Left(IdNotFoundError(itemId))
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions
-  ): IO[AppResult[Seq[Item]]] =
-    if itemIds.isEmpty then IO.pure(Left(InvalidArgument("Empty id list")))
+  ): AppIOResult[Seq[Item]] =
+    if itemIds.isEmpty then
+      AppIOResult.pureLeft(InvalidArgumentError("Empty id list"))
     else
       for result <- ItemRepo.getMany(itemIds).to[List].transact(this.transactor)
       yield Right(result.map(_.toItem(loadOptions)))
@@ -47,7 +47,7 @@ class SqlItemStore(
       loadOptions: ItemLoadOptions
   ): AppResult[Seq[Item]] = ???
 
-  def createItem(item: CreateItemArgs): IO[AppResult[String]] =
+  def createItem(item: CreateItemArgs): AppIOResult[String] =
     val id = "i_" + Ksuid.newKsuid().toString()
 
     for itemId <- ItemRepo
@@ -56,16 +56,16 @@ class SqlItemStore(
         .transact(this.transactor)
     yield Right(id)
 
-  def updateItem(item: UpdateItemArgs): IO[AppResult[Unit]] =
+  def updateItem(item: UpdateItemArgs): AppIOResult[Unit] =
     for updatedCount <- ItemRepo
         .update(item, Instant.now())
         .run
         .transact(this.transactor)
     yield
-      if updatedCount == 0 then Left(IdNotFound(item.id))
+      if updatedCount == 0 then Left(IdNotFoundError(item.id))
       else Right(())
 
-  def deleteItem(itemId: String): IO[AppResult[Unit]] =
+  def deleteItem(itemId: String): AppIOResult[Unit] =
     for _ <- ItemRepo.delete(itemId).run.transact(this.transactor)
     yield Right(())
 

@@ -39,13 +39,13 @@
 //           statusCode,
 //           Seq(("Content-Type", "application/json; charset=utf-8"))
 //         )
-//       case Left(StoreNotFound(storeName)) =>
+//       case Left(StoreNotFoundError(storeName)) =>
 //         Response(s"Store not found: $storeName", 404)
-//       case Left(IdNotFound(id)) =>
+//       case Left(IdNotFoundError(id)) =>
 //         Response(s"Resource with ID `$id` not found", 404)
-//       case Left(InvalidArgument(message)) =>
+//       case Left(InvalidArgumentError(message)) =>
 //         Response(message, 400)
-//       case Left(Conflict(message))      => Response(message, 409)
+//       case Left(ConflictError(message))      => Response(message, 409)
 //       case Left(InternalError(message)) => Response(message, 500)
 
 // // ============================================================

@@ -37,7 +37,7 @@ private[store] object ItemRepo:
   def update(item: UpdateItemArgs, updateTime: Instant): Update0 =
     var sql = fr"update item set update_time = ${updateTime.toString()}"
 
-    if item.name.nonEmpty then sql = sql ++ fr",item.name = ${item.name}"
+    if item.name.nonEmpty then sql = sql ++ fr",name = ${item.name}"
     if item.contentType.nonEmpty then
       sql = sql ++ fr",content_type = ${item.contentType}"
     if item.content.nonEmpty then sql = sql ++ fr",content = ${item.content}"

@@ -1,48 +1,36 @@
 package silverbrain.store
 
-import silverbrain.core.CreateItemArgs
-import silverbrain.store.SqliteStoreManager
-import silverbrain.store.ItemRepo
+import silverbrain.core.*
 
 import cats.effect.*
+import cats.effect.unsafe.implicits.global
 import com.github.ksuid.Ksuid
+import doobie.free.driver
 import doobie.util.transactor.Transactor
 import org.scalatest.Outcome
 import org.scalatest.fixture
-import doobie.free.driver
+import os.Path
 
-// def withTempStore(fun: (session: DBSession) => Any): Any =
-//   val dataRootPath = os.temp.dir()
-
-//   try
-//     val storeManager = SqliteStoreManager(dataRootPath)
-//     val storeName = Ksuid.newKsuid().toString()
-//     storeManager.create(storeName).right.get
-
-//     storeManager.withTransaction(storeName)(implicit session =>
-//       fun(session)
-//       Right(())
-//     )
-
-//   finally os.remove.all(dataRootPath)
-
-def withTempStore(fun: Transactor[IO] => Any): Unit =
-  val tempStore = Resource.make(IO.blocking(os.temp.dir()))(dataRootPath =>
-    IO.blocking(os.remove.all(dataRootPath))
-  )
-
-  tempStore.use(dir =>
-    val storeManager = SqliteStoreManager(dir)
+def withTempItemStore(testFun: ItemStore => IO[Any]): Any =
+  withTempDirectory(dataRootPath =>
+    // Setup database.
+    val storeManager = SqliteStoreManager(dataRootPath)
     val storeName = Ksuid.newKsuid().toString()
-    storeManager.create(storeName).right.get
+    storeManager.create(storeName).unsafeRunSync()
 
-    val transactor = Transactor.fromDriverManager[IO](
-      driver = "org.sqlite.JDBC",
-      url = s"jdbc:sqlite:${dir / storeName}/data.sqlite",
-      logHandler = None
-    )
+    // Setup transactor and item store.
+    val transactor =
+      SqliteStoreManager.createTransactor(dataRootPath, storeName)
+    val itemStore = SqlItemStore(transactor)
 
-    fun(transactor)
-
-    IO(())
+    // Invoke test logic.
+    testFun(itemStore).unsafeRunSync()
   )
+
+def withTempDirectory(testFun: (Path) => Any): Any =
+  val dataRootPath = os.temp.dir()
+
+  try
+    testFun(dataRootPath)
+
+  finally os.remove.all(dataRootPath)

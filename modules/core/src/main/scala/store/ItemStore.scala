@@ -11,23 +11,23 @@ trait ItemStore:
   def getItem(
       id: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): IO[AppResult[Item]]
+  ): AppIOResult[Item]
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): IO[AppResult[Seq[Item]]]
+  ): AppIOResult[Seq[Item]]
 
   def searchItems(
       search: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): AppResult[Seq[Item]]
 
-  def createItem(item: CreateItemArgs): IO[AppResult[String]]
+  def createItem(item: CreateItemArgs): AppIOResult[String]
 
-  def updateItem(item: UpdateItemArgs): IO[AppResult[Unit]]
+  def updateItem(item: UpdateItemArgs): AppIOResult[Unit]
 
-  def deleteItem(itemId: String): IO[AppResult[Unit]]
+  def deleteItem(itemId: String): AppIOResult[Unit]
 
   // // ============================================================
   // //  Property

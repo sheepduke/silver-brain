@@ -14,12 +14,7 @@ import scala.io.Source
 class ItemRepoSpec extends AnyFunSuite with IOChecker:
   def transactor: Transactor[IO] =
     val sqliteFilePath = getClass().getResource("/data.sqlite").getPath()
-
-    Transactor.fromDriverManager[IO](
-      driver = "org.sqlite.JDBC",
-      url = s"jdbc:sqlite:$sqliteFilePath",
-      logHandler = None
-    )
+    SqliteStoreManager.createTransactor(sqliteFilePath)
 
   test("get single"):
     checkOutput(ItemRepo.getOne("10"))
