@@ -5,8 +5,14 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AnyFunSuite
 import silverbrain.core.ItemLoadOptions
 import silverbrain.core.UpdateItemArgs
+import silverbrain.core.ConflictError
 
 class SqlItemStoreSpec extends AnyFunSuite with Matchers:
+
+  // ============================================================
+  //  Item
+  // ============================================================
+
   test("create item with name only"):
     withTempItemStore(itemStore =>
       for
@@ -75,5 +81,55 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         // Check item is deleted.
         item <- itemStore.getItem(itemId)
         _ = item.isLeft.shouldBe(true)
+      yield ()
+    )
+
+  // ============================================================
+  //  ItemLink
+  // ============================================================
+
+  test("create item link"):
+    withTempItemStore(itemStore =>
+      for
+        parent <- itemStore
+          .createItem(CreateItemArgs("Parent"))
+          .map(_.right.get)
+        child <- itemStore.createItem(CreateItemArgs("Child")).map(_.right.get)
+        _ <- itemStore.createLink(parent, child)
+        childrenOfParent <- itemStore.getChildren(parent).map(_.right.get)
+        parentsOfChild <- itemStore.getParents(child).map(_.right.get)
+      yield
+        childrenOfParent.shouldBe(Seq(child))
+        parentsOfChild.shouldBe(Seq(parent))
+    )
+
+  test("create item link for linked items"):
+    withTempItemStore(itemStore =>
+      for
+        parent <- itemStore.createItem(CreateItemArgs("A")).map(_.right.get)
+        child <- itemStore.createItem(CreateItemArgs("B")).map(_.right.get)
+        _ <- itemStore.createLink(parent, child)
+        successResult <- itemStore.createLink(parent, child)
+        failResult <- itemStore.createLink(child, parent)
+      yield
+        successResult.shouldBe(Right(()))
+        failResult.isInstanceOf[Left[ConflictError, Unit]].shouldBe(true)
+    )
+
+  test("delete link"):
+    withTempItemStore(itemStore =>
+      for
+        parent <- itemStore.createItem(CreateItemArgs("A")).map(_.right.get)
+        child <- itemStore.createItem(CreateItemArgs("B")).map(_.right.get)
+
+        // Create a link and verify it.
+        result <- itemStore.createLink(parent, child).map(_.right.get)
+        children <- itemStore.getChildren(parent).map(_.right.get)
+        _ = children.shouldBe(Seq(child))
+
+        // Delete the link and verify it.
+        _ <- itemStore.deleteLink(parent, child).map(_.right.get)
+        children <- itemStore.getChildren(parent).map(_.right.get)
+        _ = children.shouldBe(Seq())
       yield ()
     )

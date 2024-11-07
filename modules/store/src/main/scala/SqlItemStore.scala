@@ -11,6 +11,7 @@ import doobie.util.transactor.Transactor
 import cats.effect.IO
 import com.github.ksuid.Ksuid
 import java.time.Instant
+import silverbrain.store.ItemLinkRepo.isParent
 
 class SqlItemStore(
     private val transactor: Transactor[IO]
@@ -85,13 +86,32 @@ class SqlItemStore(
   //  Link
   // ============================================================
 
-  def createLink(parent: String, child: String): AppResult[Unit] = ???
+  def getParents(itemId: String): AppIOResult[Seq[String]] =
+    for parents <- ItemLinkRepo.getParents(itemId).transact(this.transactor)
+    yield Right(parents)
 
-  def getParents(itemId: String): AppResult[Seq[String]] = ???
+  def getChildren(itemId: String): AppIOResult[Seq[String]] =
+    for children <- ItemLinkRepo.getChildren(itemId).transact(this.transactor)
+    yield Right(children)
 
-  def getChildren(itemId: String): AppResult[Seq[String]] = ???
+  def createLink(parent: String, child: String): AppIOResult[Unit] =
+    val result = (for
+      isParent <- ItemLinkRepo.isParent(parent, child)
+      isChild <- ItemLinkRepo.isParent(child, parent)
+      _ <-
+        if !isParent && !isChild then ItemLinkRepo.create(parent, child)
+        else fr"select 1".query[Int].unique
+    yield
+      if isParent then Right(())
+      else if isChild then
+        Left(ConflictError(s"$parent is already a child of $child"))
+      else Right(())).transact(this.transactor)
 
-  def deleteLink(parent: String, child: String): AppResult[Unit] = ???
+    result
+
+  def deleteLink(parent: String, child: String): AppIOResult[Unit] =
+    for _ <- ItemLinkRepo.delete(parent, child).transact(this.transactor)
+    yield Right(())
 
   // ============================================================
   //  Reference

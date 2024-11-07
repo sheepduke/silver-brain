@@ -45,13 +45,13 @@ trait ItemStore:
   //  Link
   // ============================================================
 
-  def createLink(parent: String, child: String): AppResult[Unit]
+  def getParents(itemId: String): AppIOResult[Seq[String]]
 
-  def getParents(itemId: String): AppResult[Seq[String]]
+  def getChildren(itemId: String): AppIOResult[Seq[String]]
 
-  def getChildren(itemId: String): AppResult[Seq[String]]
+  def createLink(parent: String, child: String): AppIOResult[Unit]
 
-  def deleteLink(parent: String, child: String): AppResult[Unit]
+  def deleteLink(parent: String, child: String): AppIOResult[Unit]
 
   // ============================================================
   //  Reference
