@@ -1,4 +1,4 @@
-package silverbrain.http.server
+package silverbrain.server
 
 import silverbrain.core.*
 import silverbrain.store.SqlItemStore

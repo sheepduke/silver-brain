@@ -1,4 +1,4 @@
-package silverbrain.http.contract
+package silverbrain.server
 
 import silverbrain.core.*
 
@@ -11,14 +11,16 @@ import sttp.tapir.EndpointIO.annotations.statusCode
 
 case class IdOnly(id: String)
 
-trait ItemEndpoints extends StoreBasedEndpoint:
+trait HttpEndpoints:
   given JsonValueCodec[IdOnly] = JsonCodecMaker.make
   given JsonValueCodec[Item] = JsonCodecMaker.make
   given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
   given JsonValueCodec[UpdateItemArgs] = JsonCodecMaker.make
 
   private val endpointBase =
-    this.storeBasedEndpoint.errorOut(statusCode.and(plainBody[String]))
+    endpoint
+      .in(header[String]("X-SB-Store").default("main"))
+      .errorOut(statusCode.and(plainBody[String]))
 
   val getItemEndpoint =
     this.endpointBase.get

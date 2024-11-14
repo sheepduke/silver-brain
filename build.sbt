@@ -15,11 +15,8 @@ val tapirVersion = "1.11.8"
 val libsHttpServer = Seq(
   "org.http4s" %% "http4s-ember-server" % http4sVersion,
   "org.http4s" %% "http4s-dsl" % http4sVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion
-)
-
-val libsHttpContract = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion,
+  "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
   "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
 )
 
@@ -80,14 +77,14 @@ lazy val silverBrain = project
       libLoggerImplementation
     )
   )
-  .dependsOn(silverBrainHttpServer)
-  .aggregate(silverBrainHttpServer)
+  .dependsOn(server)
+  .aggregate(server)
 
 // ============================================================
 //  Http Server
 // ============================================================
 
-lazy val silverBrainHttpServer = project
+lazy val server = project
   .in(file("modules/http-server"))
   .settings(
     name := "silver-brain-http-server",
@@ -96,8 +93,8 @@ lazy val silverBrainHttpServer = project
       libLoggerImplementation
     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework
   )
-  .dependsOn(silverBrainHttpContract, silverBrainStore)
-  .aggregate(silverBrainHttpContract, silverBrainStore)
+  .dependsOn(silverBrainStore)
+  .aggregate(silverBrainStore)
   .enablePlugins(JavaAppPackaging)
 
 // ============================================================
@@ -110,21 +107,8 @@ lazy val clientHttp = project
     name := "silver-brain-http-client",
     libraryDependencies ++= libsHttpClient ++ libsJson
   )
-  .dependsOn(silverBrainHttpContract, silverBrainCore)
-  .dependsOn(silverBrainHttpContract, silverBrainCore)
-
-// ============================================================
-//  Http Contract
-// ============================================================
-
-lazy val silverBrainHttpContract = project
-  .in(file("modules/http-contract"))
-  .settings(
-    name := "silver-brain-http-contract",
-    libraryDependencies ++= Seq() ++ libsHttpContract ++ libsJson
-  )
   .dependsOn(silverBrainCore)
-  .aggregate(silverBrainCore)
+  .dependsOn(silverBrainCore)
 
 // ============================================================
 //  Store

@@ -1,12 +1,11 @@
-package silverbrain.http.server
+package silverbrain.server
 
 import silverbrain.core.*
-import silverbrain.http.contract.*
 
 import cats.effect.*
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 
-trait HttpRoutes(itemStoreCreator: String => ItemStore) extends ItemEndpoints:
+trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
   val getItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.getItemEndpoint
       .serverLogic[IO]((storeName: String, itemId: String) =>

@@ -1,7 +1,6 @@
-package silverbrain.http.server
+package silverbrain.server
 
 import silverbrain.core.*
-import silverbrain.http.contract.*
 import cats.effect.*
 import sttp.model.StatusCode
 
