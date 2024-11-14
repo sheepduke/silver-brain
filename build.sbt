@@ -65,27 +65,11 @@ val libsTestFramework = Seq(
 )
 
 // ============================================================
-//  Silver Brain
-// ============================================================
-
-lazy val silverBrain = project
-  .in(file("modules/silver-brain"))
-  .settings(
-    name := "silver-brain",
-    libraryDependencies ++= Seq(
-      libCliArgsParser,
-      libLoggerImplementation
-    )
-  )
-  .dependsOn(server)
-  .aggregate(server)
-
-// ============================================================
-//  Http Server
+//  Server
 // ============================================================
 
 lazy val server = project
-  .in(file("modules/http-server"))
+  .in(file("modules/server"))
   .settings(
     name := "silver-brain-http-server",
     libraryDependencies ++= Seq(
@@ -93,28 +77,28 @@ lazy val server = project
       libLoggerImplementation
     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework
   )
-  .dependsOn(silverBrainStore)
-  .aggregate(silverBrainStore)
+  .dependsOn(store)
+  .aggregate(store)
   .enablePlugins(JavaAppPackaging)
 
 // ============================================================
-//  Http Client
+//  Client Http
 // ============================================================
 
 lazy val clientHttp = project
-  .in(file("modules/http-client"))
+  .in(file("modules/client-http"))
   .settings(
-    name := "silver-brain-http-client",
+    name := "silver-brain-client-http",
     libraryDependencies ++= libsHttpClient ++ libsJson
   )
-  .dependsOn(silverBrainCore)
-  .dependsOn(silverBrainCore)
+  .dependsOn(core)
+  .dependsOn(core)
 
 // ============================================================
 //  Store
 // ============================================================
 
-lazy val silverBrainStore = project
+lazy val store = project
   .in(file("modules/store"))
   .settings(
     name := "silver-brain-store",
@@ -123,14 +107,14 @@ lazy val silverBrainStore = project
       libOsLib
     ) ++ libsDatabase ++ libsTestFramework
   )
-  .dependsOn(silverBrainCore)
-  .aggregate(silverBrainCore)
+  .dependsOn(core)
+  .aggregate(core)
 
 // ============================================================
 //  Core
 // ============================================================
 
-lazy val silverBrainCore =
+lazy val core =
   project
     .in(file("modules/core"))
     .settings(
@@ -145,7 +129,7 @@ lazy val silverBrainCore =
 //  Playground
 // ============================================================
 
-lazy val silverBrainPlayground =
+lazy val playground =
   project
     .in(file("tools/playground"))
     .settings(
@@ -155,5 +139,5 @@ lazy val silverBrainPlayground =
         libOsLib
       ) ++ libsDatabase ++ libsJson
     )
-    .dependsOn(silverBrainCore)
-    .aggregate(silverBrainCore)
+    .dependsOn(core)
+    .aggregate(core)
