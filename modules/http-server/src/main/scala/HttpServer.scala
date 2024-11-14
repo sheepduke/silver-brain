@@ -17,7 +17,8 @@ import sttp.tapir.*
 class HttpServer(itemStoreCreator: String => ItemStore)
     extends HttpRoutes(itemStoreCreator):
 
-  private val routes = this.getItemRoute <+> this.createItemRoutes
+  private val routes =
+    this.getItemRoute <+> this.createItemRoute <+> this.updateItemRoute <+> this.deleteItemRoute
 
   private val router = Router("/api/v2" -> this.routes).orNotFound
 

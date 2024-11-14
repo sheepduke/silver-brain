@@ -17,7 +17,7 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends ItemEndpoints:
       )
   )
 
-  val createItemRoutes = Http4sServerInterpreter[IO]().toRoutes(
+  val createItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.createItemEndpoint
       .serverLogic[IO]((storeName, item) =>
         this
@@ -27,7 +27,7 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends ItemEndpoints:
       )
   )
 
-  val updateItemRoutes = Http4sServerInterpreter[IO]().toRoutes(
+  val updateItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.updateItemEndpoint
       .serverLogic[IO]((storeName, item) =>
         this
@@ -35,4 +35,13 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends ItemEndpoints:
           .updateItem(item)
           .toNoContentHttpResponse
       )
+  )
+
+  val deleteItemRoute = Http4sServerInterpreter[IO]().toRoutes(
+    this.deleteItemEndpoint.serverLogic[IO]((storeName, itemId) =>
+      this
+        .itemStoreCreator(storeName)
+        .deleteItem(itemId)
+        .toNoContentHttpResponse
+    )
   )

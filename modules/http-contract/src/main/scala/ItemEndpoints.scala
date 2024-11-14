@@ -20,7 +20,6 @@ trait ItemEndpoints extends StoreBasedEndpoint:
   private val endpointBase =
     this.storeBasedEndpoint.errorOut(statusCode.and(plainBody[String]))
 
-  // TODO refine this part using oneOf variant.
   val getItemEndpoint =
     this.endpointBase.get
       .in("items")
@@ -39,4 +38,4 @@ trait ItemEndpoints extends StoreBasedEndpoint:
       .out(statusCode)
 
   val deleteItemEndpoint =
-    this.endpointBase.delete.in(path[String]("id")).out(statusCode)
+    this.endpointBase.delete.in("items").in(path[String]("id")).out(statusCode)

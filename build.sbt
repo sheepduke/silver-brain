@@ -23,7 +23,10 @@ val libsHttpContract = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
 )
 
-val libHttpClient = "org.http4s" %% "http4s-ember-client" % http4sVersion
+val libsHttpClient = Seq(
+  "org.http4s" %% "http4s-ember-client" % http4sVersion,
+  "com.softwaremill.sttp.tapir" %% "tapir-http4s-client" % tapirVersion
+)
 
 // JSON.
 val libsJson = Seq(
@@ -96,6 +99,19 @@ lazy val silverBrainHttpServer = project
   .dependsOn(silverBrainHttpContract, silverBrainStore)
   .aggregate(silverBrainHttpContract, silverBrainStore)
   .enablePlugins(JavaAppPackaging)
+
+// ============================================================
+//  Http Client
+// ============================================================
+
+lazy val clientHttp = project
+  .in(file("modules/http-client"))
+  .settings(
+    name := "silver-brain-http-client",
+    libraryDependencies ++= libsHttpClient ++ libsJson
+  )
+  .dependsOn(silverBrainHttpContract, silverBrainCore)
+  .dependsOn(silverBrainHttpContract, silverBrainCore)
 
 // ============================================================
 //  Http Contract
