@@ -77,7 +77,10 @@ lazy val server = project
       libLoggerImplementation
     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework
   )
-  .dependsOn(store)
+  .dependsOn(
+    store % "compile->compile;test->test",
+    httpClient % "test->compile"
+  )
   .aggregate(store)
   .enablePlugins(JavaAppPackaging)
 

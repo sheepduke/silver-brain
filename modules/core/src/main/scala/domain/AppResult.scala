@@ -8,6 +8,9 @@ import scala.util.Failure
 type AppIOResult[A] = IO[AppResult[A]]
 
 extension [A](result: AppIOResult[A])
+  def mapValue[B](fun: A => B): AppIOResult[B] =
+    result.map(_.map(value => fun(value)))
+
   def unsafeGet: IO[A] =
     result.map(_.right.get)
 
@@ -30,4 +33,4 @@ object AppResult:
   def flatTry[A](thunk: => AppResult[A]): AppResult[A] =
     Try(thunk) match
       case Success(value)     => value
-      case Failure(exception) => Left(AppInternalError(exception))
+      case Failure(throwable) => Left(AppInternalError(throwable))

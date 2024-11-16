@@ -11,11 +11,11 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
   //  Item
   // ============================================================
 
-  test("create item with name only"):
+  test("Create item with name only"):
     withTempItemStore(store =>
       for
         itemId <- store
-          .createItem(CreateItemArgs(name = "Emacs"))
+          .createItem(CreateItemArgs("Emacs"))
           .unsafeGet
         item <- store.getItem(itemId).unsafeGet
       yield
@@ -23,16 +23,14 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         item.name.shouldBe("Emacs")
     )
 
-  test("create item with all fields"):
+  test("Create item with all fields"):
     withTempItemStore(store =>
       for
         itemId <- store
           .createItem(
-            CreateItemArgs(
-              name = "Emacs",
-              contentType = Some("application/org"),
-              content = Some("Hello")
-            )
+            CreateItemArgs("Emacs")
+              .withContentType("application/org")
+              .withContent("Hello")
           )
           .unsafeGet
         item <- store
@@ -45,7 +43,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         item.content.shouldBe(Some("Hello"))
     )
 
-  test("update item"):
+  test("Update item"):
     withTempItemStore(store =>
       for
         itemId <- store
@@ -64,7 +62,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         item.updateTime.get.isAfter(item.createTime.get).shouldBe(true)
     )
 
-  test("delete item"):
+  test("Delete item"):
     withTempItemStore(store =>
       for
         // Create item.
@@ -86,7 +84,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
   //  ItemLink
   // ============================================================
 
-  test("create item link"):
+  test("Create item link"):
     withTempItemStore(store =>
       for
         parent <- store
@@ -101,7 +99,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         parentsOfChild.shouldBe(Seq(parent))
     )
 
-  test("create item link for linked items"):
+  test("Create item link for linked items"):
     withTempItemStore(store =>
       for
         parent <- store.createItem(CreateItemArgs("A")).unsafeGet
@@ -114,7 +112,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         failResult.isInstanceOf[Left[ConflictError, Unit]].shouldBe(true)
     )
 
-  test("delete link"):
+  test("Delete link"):
     withTempItemStore(store =>
       for
         parent <- store.createItem(CreateItemArgs("A")).unsafeGet
@@ -136,7 +134,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
   //  Get Item
   // ============================================================
 
-  test("get single item"):
+  test("Get single item"):
     withTempItemStore(store =>
       for
         emacsId <- store.createItem(CreateItemArgs("Emacs")).unsafeGet

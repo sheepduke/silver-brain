@@ -8,13 +8,13 @@ import cats.effect.*
 import cats.effect.unsafe.IORuntime
 import cats.syntax.all.*
 import com.comcast.ip4s.ipv4
-import com.comcast.ip4s.port
 import org.http4s.dsl.io.*
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Router
 import sttp.tapir.*
+import com.comcast.ip4s.Port
 
-class HttpServer(itemStoreCreator: String => ItemStore)
+class HttpServer(itemStoreCreator: String => ItemStore, port: Int)
     extends HttpRoutes(itemStoreCreator):
 
   private val routes =
@@ -26,7 +26,7 @@ class HttpServer(itemStoreCreator: String => ItemStore)
     EmberServerBuilder
       .default[IO]
       .withHost(ipv4"127.0.0.1")
-      .withPort(port"8080")
+      .withPort(Port.fromInt(port).get)
       .withHttpApp(router)
       .build
 
@@ -41,4 +41,7 @@ object Main extends IOApp:
 
       SqlItemStore(transactor)
 
-    HttpServer(itemStoreCreator).build().useForever.as(ExitCode.Success)
+    HttpServer(itemStoreCreator, port = 8080)
+      .build()
+      .useForever
+      .as(ExitCode.Success)

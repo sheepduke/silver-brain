@@ -15,6 +15,7 @@ import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.headers.Accept
 import scala.collection.mutable
+import org.http4s.Status
 
 class HttpClient(
     scheme: String = "http",
@@ -24,6 +25,9 @@ class HttpClient(
   given JsonValueCodec[IdOnly] = JsonCodecMaker.make
   given JsonValueCodec[Item] = JsonCodecMaker.make
   given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
+  given JsonValueCodec[IdNotFoundError] = JsonCodecMaker.make
+  given JsonValueCodec[ConflictError] = JsonCodecMaker.make
+  given JsonValueCodec[InvalidArgumentError] = JsonCodecMaker.make
 
   private val baseUrl =
     Uri.unsafeFromString(s"${scheme}://${host}:${port}/api/v2/")
@@ -34,18 +38,17 @@ class HttpClient(
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): IO[Item] =
+  ): AppIOResult[Item] =
     val select = this.itemLoadOptionsToSelect(loadOptions)
 
-    for itemJson <- this.get(
-        Uri.unsafeFromString(s"items/$itemId?select=$select")
-      )
-    yield json.readFromString[Item](itemJson)
+    this
+      .get(Uri.unsafeFromString(s"items/$itemId?select=$select"))
+      .mapValue(json.readFromString[Item](_))
 
-  def createItem(item: CreateItemArgs): IO[String] =
+  def createItem(item: CreateItemArgs): AppIOResult[String] =
     this.post(Uri.unsafeFromString("items"), item)
 
-  def deleteItem(itemId: String): IO[Unit] =
+  def deleteItem(itemId: String): AppIOResult[Unit] =
     this.delete(Uri.unsafeFromString(s"items/$itemId"))
 
   private def itemLoadOptionsToSelect(loadOptions: ItemLoadOptions): String =
@@ -61,7 +64,7 @@ class HttpClient(
 
     selectKeys.mkString(",")
 
-  private def get(url: Uri): IO[String] =
+  private def get(url: Uri): AppIOResult[String] =
     val request = Request[IO](
       method = Method.GET,
       uri = this.baseUrl.resolve(url),
@@ -72,7 +75,7 @@ class HttpClient(
 
   private def post[A](url: Uri, content: A)(using
       JsonValueCodec[A]
-  ): IO[String] =
+  ): AppIOResult[String] =
     val requestBody = json.writeToString(content).getBytes()
 
     val request = Request[IO](
@@ -82,11 +85,11 @@ class HttpClient(
       body = fs2.Stream.emits(requestBody)
     )
 
-    this.send(request).map(json.readFromString[IdOnly](_).id)
+    this.send(request).mapValue(json.readFromString[IdOnly](_).id)
 
   private def udpate[A](url: Uri, content: A)(using
       JsonValueCodec[A]
-  ): IO[Unit] =
+  ): AppIOResult[Unit] =
     val requestBody = json.writeToString(content).getBytes()
 
     val request = Request[IO](
@@ -96,18 +99,34 @@ class HttpClient(
       body = fs2.Stream.emits(requestBody)
     )
 
-    this.send(request).map(_ => ())
+    this.send(request).mapValue(_ => Right(()))
 
-  private def delete(url: Uri): IO[Unit] =
+  private def delete(url: Uri): AppIOResult[Unit] =
     val request = Request[IO](
       method = Method.DELETE,
       uri = this.baseUrl.resolve(url)
     )
 
-    this.send(request).map(_ => ())
+    this.send(request).mapValue(_ => Right(()))
 
-  private def send(request: Request[IO]): IO[String] =
-    this.clientResource.use(client => client.expect[String](request))
+  private def send(request: Request[IO]): AppIOResult[String] =
+    this.clientResource.use(client =>
+      client
+        .run(request)
+        .use(response =>
+          for body <- response.as[String]
+          yield response.status match
+            case Status.Ok | Status.Created | Status.NoContent => Right(body)
+            case Status.NotFound =>
+              Left(json.readFromString[IdNotFoundError](body))
+            case Status.Conflict =>
+              Left(json.readFromString[ConflictError](body))
+            case Status.BadRequest =>
+              Left(json.readFromString[InvalidArgumentError](body))
+            case Status.InternalServerError =>
+              Left(AppInternalError(RuntimeException(body)))
+        )
+    )
 
 // project /
 // project httpClient

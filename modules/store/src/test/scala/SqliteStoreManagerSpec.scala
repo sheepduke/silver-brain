@@ -6,7 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 class StoreManagerSpec extends AnyFunSuite with Matchers:
-  test("create 2 stores and verify them"):
+  test("Create 2 stores and verify them"):
     withTempDirectory(dataRootPath =>
       val storeManager = SqliteStoreManager(dataRootPath)
 
