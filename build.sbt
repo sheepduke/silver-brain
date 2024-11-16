@@ -71,7 +71,7 @@ val libsTestFramework = Seq(
 lazy val server = project
   .in(file("modules/server"))
   .settings(
-    name := "silver-brain-http-server",
+    name := "silver-brain",
     libraryDependencies ++= Seq(
       libLoggerInterface,
       libLoggerImplementation
@@ -82,13 +82,13 @@ lazy val server = project
   .enablePlugins(JavaAppPackaging)
 
 // ============================================================
-//  Client Http
+//  Http Client
 // ============================================================
 
-lazy val clientHttp = project
-  .in(file("modules/client-http"))
+lazy val httpClient = project
+  .in(file("modules/http-client"))
   .settings(
-    name := "silver-brain-client-http",
+    name := "silver-brain-http-client",
     libraryDependencies ++= libsHttpClient ++ libsJson
   )
   .dependsOn(core)

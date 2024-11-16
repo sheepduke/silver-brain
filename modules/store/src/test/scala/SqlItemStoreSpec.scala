@@ -1,11 +1,9 @@
 package silverbrain.store
 
-import silverbrain.core.CreateItemArgs
+import silverbrain.core.*
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AnyFunSuite
-import silverbrain.core.ItemLoadOptions
-import silverbrain.core.UpdateItemArgs
-import silverbrain.core.ConflictError
 
 class SqlItemStoreSpec extends AnyFunSuite with Matchers:
 
@@ -14,21 +12,21 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
   // ============================================================
 
   test("create item with name only"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
-        itemId <- itemStore
+        itemId <- store
           .createItem(CreateItemArgs(name = "Emacs"))
-          .map(_.right.get)
-        item <- itemStore.getItem(itemId).map(_.right.get)
+          .unsafeGet
+        item <- store.getItem(itemId).unsafeGet
       yield
         item.id.shouldBe(itemId)
         item.name.shouldBe("Emacs")
     )
 
   test("create item with all fields"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
-        itemId <- itemStore
+        itemId <- store
           .createItem(
             CreateItemArgs(
               name = "Emacs",
@@ -36,10 +34,10 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
               content = Some("Hello")
             )
           )
-          .map(_.right.get)
-        item <- itemStore
+          .unsafeGet
+        item <- store
           .getItem(itemId, ItemLoadOptions(contentType = true, content = true))
-          .map(_.right.get)
+          .unsafeGet
       yield
         item.id.shouldBe(itemId)
         item.name.shouldBe("Emacs")
@@ -48,18 +46,18 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
     )
 
   test("update item"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
-        itemId <- itemStore
+        itemId <- store
           .createItem(CreateItemArgs("Emacs"))
-          .map(_.right.get)
-        _ <- itemStore.updateItem(UpdateItemArgs(itemId, name = Some("Vim")))
-        item <- itemStore
+          .unsafeGet
+        _ <- store.updateItem(UpdateItemArgs(itemId, name = Some("Vim")))
+        item <- store
           .getItem(
             itemId,
             ItemLoadOptions(createTime = true, updateTime = true)
           )
-          .map(_.right.get)
+          .unsafeGet
       yield
         item.id.shouldBe(itemId)
         item.name.shouldBe("Vim")
@@ -67,19 +65,19 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
     )
 
   test("delete item"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
         // Create item.
-        itemId <- itemStore.createItem(CreateItemArgs("Emacs")).map(_.right.get)
-        item <- itemStore.getItem(itemId)
+        itemId <- store.createItem(CreateItemArgs("Emacs")).unsafeGet
+        item <- store.getItem(itemId)
         _ = item.isRight.shouldBe(true)
 
         // Delete item.
-        result <- itemStore.deleteItem(itemId)
+        result <- store.deleteItem(itemId)
         _ = result.isRight.shouldBe(true)
 
         // Check item is deleted.
-        item <- itemStore.getItem(itemId)
+        item <- store.getItem(itemId)
         _ = item.isLeft.shouldBe(true)
       yield ()
     )
@@ -89,47 +87,85 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
   // ============================================================
 
   test("create item link"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
-        parent <- itemStore
+        parent <- store
           .createItem(CreateItemArgs("Parent"))
-          .map(_.right.get)
-        child <- itemStore.createItem(CreateItemArgs("Child")).map(_.right.get)
-        _ <- itemStore.createLink(parent, child)
-        childrenOfParent <- itemStore.getChildren(parent).map(_.right.get)
-        parentsOfChild <- itemStore.getParents(child).map(_.right.get)
+          .unsafeGet
+        child <- store.createItem(CreateItemArgs("Child")).unsafeGet
+        _ <- store.createLink(parent, child)
+        childrenOfParent <- store.getChildren(parent).unsafeGet
+        parentsOfChild <- store.getParents(child).unsafeGet
       yield
         childrenOfParent.shouldBe(Seq(child))
         parentsOfChild.shouldBe(Seq(parent))
     )
 
   test("create item link for linked items"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
-        parent <- itemStore.createItem(CreateItemArgs("A")).map(_.right.get)
-        child <- itemStore.createItem(CreateItemArgs("B")).map(_.right.get)
-        _ <- itemStore.createLink(parent, child)
-        successResult <- itemStore.createLink(parent, child)
-        failResult <- itemStore.createLink(child, parent)
+        parent <- store.createItem(CreateItemArgs("A")).unsafeGet
+        child <- store.createItem(CreateItemArgs("B")).unsafeGet
+        _ <- store.createLink(parent, child)
+        successResult <- store.createLink(parent, child)
+        failResult <- store.createLink(child, parent)
       yield
         successResult.shouldBe(Right(()))
         failResult.isInstanceOf[Left[ConflictError, Unit]].shouldBe(true)
     )
 
   test("delete link"):
-    withTempItemStore(itemStore =>
+    withTempItemStore(store =>
       for
-        parent <- itemStore.createItem(CreateItemArgs("A")).map(_.right.get)
-        child <- itemStore.createItem(CreateItemArgs("B")).map(_.right.get)
+        parent <- store.createItem(CreateItemArgs("A")).unsafeGet
+        child <- store.createItem(CreateItemArgs("B")).unsafeGet
 
         // Create a link and verify it.
-        result <- itemStore.createLink(parent, child).map(_.right.get)
-        children <- itemStore.getChildren(parent).map(_.right.get)
+        result <- store.createLink(parent, child).unsafeGet
+        children <- store.getChildren(parent).unsafeGet
         _ = children.shouldBe(Seq(child))
 
         // Delete the link and verify it.
-        _ <- itemStore.deleteLink(parent, child).map(_.right.get)
-        children <- itemStore.getChildren(parent).map(_.right.get)
+        _ <- store.deleteLink(parent, child).unsafeGet
+        children <- store.getChildren(parent).unsafeGet
         _ = children.shouldBe(Seq())
       yield ()
+    )
+
+  // ============================================================
+  //  Get Item
+  // ============================================================
+
+  test("get single item"):
+    withTempItemStore(store =>
+      for
+        emacsId <- store.createItem(CreateItemArgs("Emacs")).unsafeGet
+        vimId <- store.createItem(CreateItemArgs("Vim")).unsafeGet
+        editorId <- store.createItem(CreateItemArgs("Editor")).unsafeGet
+
+        _ <- store.createLink(editorId, emacsId)
+        _ <- store.createLink(editorId, vimId)
+
+        emacs <- store
+          .getItem(emacsId, ItemLoadOptions().withParents.withChildren)
+          .unsafeGet
+
+        vim <- store
+          .getItem(vimId, ItemLoadOptions().withParents.withChildren)
+          .unsafeGet
+
+        editor <- store
+          .getItem(editorId, ItemLoadOptions().withChildren)
+          .unsafeGet
+      yield
+        emacs.parents.get.shouldBe(Seq(editorId))
+        emacs.children.get.shouldBe(Seq())
+
+        vim.parents.get.shouldBe(Seq(editorId))
+        vim.children.get.shouldBe(Seq())
+
+        editor.parents.shouldBe(None)
+        editor.children.get.size.shouldBe(2)
+        editor.children.get.contains(emacsId).shouldBe(true)
+        editor.children.get.contains(vimId).shouldBe(true)
     )

@@ -25,13 +25,28 @@ class SqlItemStore(
       itemId: String,
       loadOptions: ItemLoadOptions
   ): AppIOResult[Item] =
-    for rowOpt <- ItemRepo
-        .getOne(itemId)
-        .option
-        .transact(this.transactor)
-    yield rowOpt match
-      case Some(row) => Right(row.toItem(loadOptions))
-      case None      => Left(IdNotFoundError(itemId))
+    val getParents =
+      if loadOptions.parents then ItemLinkRepo.getParents(itemId)
+      else ItemLinkRepo.getNoop()
+
+    val getChildren =
+      if loadOptions.children then ItemLinkRepo.getChildren(itemId)
+      else ItemLinkRepo.getNoop()
+
+    val getAll =
+      for
+        item <- ItemRepo.getOne(itemId, loadOptions)
+        parents <- getParents
+        children <- getChildren
+      yield item.map(
+        _.copy(
+          parents = if loadOptions.parents then Some(parents) else None,
+          children = if loadOptions.children then Some(children) else None
+        )
+      )
+
+    for itemOpt <- getAll.transact(this.transactor)
+    yield itemOpt.toRight(IdNotFoundError(itemId))
 
   def getItems(
       itemIds: Seq[String],
@@ -40,8 +55,10 @@ class SqlItemStore(
     if itemIds.isEmpty then
       AppIOResult.pureLeft(InvalidArgumentError("Empty id list"))
     else
-      for result <- ItemRepo.getMany(itemIds).to[List].transact(this.transactor)
-      yield Right(result.map(_.toItem(loadOptions)))
+      for result <- ItemRepo
+          .getMany(itemIds, loadOptions)
+          .transact(this.transactor)
+      yield Right(result)
 
   def searchItems(
       search: String,
@@ -53,21 +70,19 @@ class SqlItemStore(
 
     for itemId <- ItemRepo
         .create(id, item, Instant.now())
-        .run
         .transact(this.transactor)
     yield Right(id)
 
   def updateItem(item: UpdateItemArgs): AppIOResult[Unit] =
     for updatedCount <- ItemRepo
         .update(item, Instant.now())
-        .run
         .transact(this.transactor)
     yield
       if updatedCount == 0 then Left(IdNotFoundError(item.id))
       else Right(())
 
   def deleteItem(itemId: String): AppIOResult[Unit] =
-    for _ <- ItemRepo.delete(itemId).run.transact(this.transactor)
+    for _ <- ItemRepo.delete(itemId).transact(this.transactor)
     yield Right(())
 
   // ============================================================

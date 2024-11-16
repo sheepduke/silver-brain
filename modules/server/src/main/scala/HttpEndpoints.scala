@@ -26,6 +26,7 @@ trait HttpEndpoints:
     this.endpointBase.get
       .in("items")
       .in(path[String]("id"))
+      .in(query[String]("select"))
       .out(jsonBody[Item])
 
   val createItemEndpoint =

@@ -14,6 +14,7 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.headers.Accept
+import scala.collection.mutable
 
 class HttpClient(
     scheme: String = "http",
@@ -30,8 +31,15 @@ class HttpClient(
   private val clientResource: Resource[IO, Client[IO]] =
     EmberClientBuilder.default[IO].build
 
-  def getItem(itemId: String): IO[Item] =
-    for itemJson <- this.get(Uri.unsafeFromString(s"items/$itemId"))
+  def getItem(
+      itemId: String,
+      loadOptions: ItemLoadOptions = ItemLoadOptions()
+  ): IO[Item] =
+    val select = this.itemLoadOptionsToSelect(loadOptions)
+
+    for itemJson <- this.get(
+        Uri.unsafeFromString(s"items/$itemId?select=$select")
+      )
     yield json.readFromString[Item](itemJson)
 
   def createItem(item: CreateItemArgs): IO[String] =
@@ -39,6 +47,19 @@ class HttpClient(
 
   def deleteItem(itemId: String): IO[Unit] =
     this.delete(Uri.unsafeFromString(s"items/$itemId"))
+
+  private def itemLoadOptionsToSelect(loadOptions: ItemLoadOptions): String =
+    val selectKeys = mutable.ArrayBuffer[String]()
+
+    if loadOptions.contentType then selectKeys += "contentType"
+    if loadOptions.content then selectKeys += "content"
+    if loadOptions.parents then selectKeys += "parents"
+    if loadOptions.children then selectKeys += "children"
+    if loadOptions.properties then selectKeys += "properties"
+    if loadOptions.createTime then selectKeys += "createTime"
+    if loadOptions.updateTime then selectKeys += "updateTime"
+
+    selectKeys.mkString(",")
 
   private def get(url: Uri): IO[String] =
     val request = Request[IO](
@@ -87,3 +108,17 @@ class HttpClient(
 
   private def send(request: Request[IO]): IO[String] =
     this.clientResource.use(client => client.expect[String](request))
+
+// project /
+// project httpClient
+object Main extends IOApp:
+  def run(args: List[String]): IO[ExitCode] =
+    val client = HttpClient()
+
+    for
+      item <- client.getItem(
+        "i_2gMnxuTPOdmZINO3e2ExYfzHbxL",
+        ItemLoadOptions().withAll
+      )
+      _ <- IO.println(item)
+    yield ExitCode.Success

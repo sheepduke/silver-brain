@@ -7,6 +7,10 @@ import scala.util.Failure
 
 type AppIOResult[A] = IO[AppResult[A]]
 
+extension [A](result: AppIOResult[A])
+  def unsafeGet: IO[A] =
+    result.map(_.right.get)
+
 object AppIOResult:
   def blockingLiftTry[A](thunk: => A): AppIOResult[A] =
     IO.blocking(AppResult.liftTry(thunk))

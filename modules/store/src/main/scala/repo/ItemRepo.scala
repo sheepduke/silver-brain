@@ -15,26 +15,40 @@ import cats.data.NonEmptyList
 private[store] object ItemRepo:
   type Row = (String, String, String, String, String, String)
 
-  def getOne(id: String): Query0[Row] =
-    sql"select * from item where id = $id".query[Row]
+  def getOne(
+      id: String,
+      loadOptions: ItemLoadOptions
+  ): ConnectionIO[Option[Item]] =
+    for row <- sql"select * from item where id = $id".query[Row].option
+    yield row.map(_.toItem(loadOptions))
 
-  def getMany(ids: Seq[String]): Query0[Row] =
+  def getMany(
+      ids: Seq[String],
+      loadOptions: ItemLoadOptions
+  ): ConnectionIO[Seq[Item]] =
     assert(ids.nonEmpty)
 
     val condition =
       Fragments.in(fr"id", NonEmptyList.fromListUnsafe(ids.toList))
 
-    sql"select * from item where $condition".query[Row]
+    for rows <- sql"select * from item where $condition"
+        .query[Row]
+        .to[Seq]
+    yield rows.map(_.toItem(loadOptions))
 
-  def create(id: String, item: CreateItemArgs, createTime: Instant): Update0 =
+  def create(
+      id: String,
+      item: CreateItemArgs,
+      createTime: Instant
+  ): ConnectionIO[Int] =
     val time = createTime.toString()
     sql"""insert into item(id, name, content_type, content, create_time, update_time) values(
       $id, ${item.name},
       ${item.contentType.getOrElse("")},
       ${item.content.getOrElse("")},
-      $time, $time)""".update
+      $time, $time)""".update.run
 
-  def update(item: UpdateItemArgs, updateTime: Instant): Update0 =
+  def update(item: UpdateItemArgs, updateTime: Instant): ConnectionIO[Int] =
     var sql = fr"update item set update_time = ${updateTime.toString()}"
 
     if item.name.nonEmpty then sql = sql ++ fr",name = ${item.name}"
@@ -44,10 +58,10 @@ private[store] object ItemRepo:
 
     sql = sql ++ fr"where id = ${item.id}"
 
-    sql.update
+    sql.update.run
 
-  def delete(id: String): Update0 =
-    sql"delete from item where id = $id".update
+  def delete(id: String): ConnectionIO[Int] =
+    sql"delete from item where id = $id".update.run
 
 extension (row: ItemRepo.Row)
   def toItem(loadOptions: ItemLoadOptions = ItemLoadOptions()) =

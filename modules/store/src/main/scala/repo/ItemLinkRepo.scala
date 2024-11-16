@@ -33,3 +33,7 @@ private[store] object ItemLinkRepo:
 
   def delete(parent: String, child: String): ConnectionIO[Int] =
     sql"delete from item_link where parent = $parent and child = $child".update.run
+
+  def getNoop(): ConnectionIO[Seq[String]] =
+    val empty = ""
+    sql"select parent from item_link where child = $empty".query[String].to[Seq]

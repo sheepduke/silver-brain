@@ -8,11 +8,15 @@ import sttp.tapir.server.http4s.Http4sServerInterpreter
 trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
   val getItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.getItemEndpoint
-      .serverLogic[IO]((storeName: String, itemId: String) =>
-        this
-          .itemStoreCreator(storeName)
-          .getItem(itemId, ItemLoadOptions())
-          .toHttpResponse
+      .serverLogic[IO]((storeName: String, itemId: String, select: String) =>
+        val result = selectToItemLoadOptions(select) match
+          case Left(error) => IO.pure(Left(error))
+          case Right(loadOptions) =>
+            this
+              .itemStoreCreator(storeName)
+              .getItem(itemId, loadOptions)
+
+        result.toHttpResponse
       )
   )
 
@@ -44,3 +48,37 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
         .toNoContentHttpResponse
     )
   )
+
+  private val acceptedSelectKeys = Set(
+    "all",
+    "id",
+    "name",
+    "contentType",
+    "content",
+    "properties",
+    "parents",
+    "children",
+    "createTime",
+    "updateTime"
+  )
+
+  private def selectToItemLoadOptions(
+      select: String
+  ): AppResult[ItemLoadOptions] =
+    val selectKeys = select.split(",").map(_.trim()).filter(_.nonEmpty)
+
+    if selectKeys.toSet[String].subsetOf(acceptedSelectKeys) then
+      Right(
+        selectKeys.foldLeft(ItemLoadOptions())((loadOptions, selectKey) =>
+          selectKey match
+            case "all"         => loadOptions.withAll
+            case "contentType" => loadOptions.withContentType
+            case "content"     => loadOptions.withContent
+            case "properties"  => loadOptions.withProperties
+            case "parents"     => loadOptions.withParents
+            case "children"    => loadOptions.withChildren
+            case "createTime"  => loadOptions.withCreateTime
+            case "updateTime"  => loadOptions.withUpdatetime
+        )
+      )
+    else Left(InvalidArgumentError("Unrecognized select key"))
