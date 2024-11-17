@@ -60,10 +60,12 @@ class SqlItemStore(
           .transact(this.transactor)
       yield Right(result)
 
-  def searchItems(
-      search: String,
-      loadOptions: ItemLoadOptions
-  ): AppResult[Seq[Item]] = ???
+  def searchItems(search: String): AppIOResult[Seq[String]] =
+    SearchParser.parse(search) match
+      case Right(query) =>
+        SearchEngine.execute(query).transact(this.transactor).map(Right(_))
+      case Left(errorMessage) =>
+        AppIOResult.pureLeft(InvalidArgumentError(errorMessage))
 
   def createItem(item: CreateItemArgs): AppIOResult[String] =
     val id = "i_" + Ksuid.newKsuid().toString()
@@ -125,8 +127,7 @@ class SqlItemStore(
     result
 
   def deleteLink(parent: String, child: String): AppIOResult[Unit] =
-    for _ <- ItemLinkRepo.delete(parent, child).transact(this.transactor)
-    yield Right(())
+    ItemLinkRepo.delete(parent, child).transact(this.transactor).map(Right(_))
 
   // ============================================================
   //  Reference

@@ -18,10 +18,7 @@ trait ItemStore:
       loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): AppIOResult[Seq[Item]]
 
-  def searchItems(
-      search: String,
-      loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): AppResult[Seq[Item]]
+  def searchItems(search: String): AppIOResult[Seq[String]]
 
   def createItem(item: CreateItemArgs): AppIOResult[String]
 

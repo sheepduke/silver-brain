@@ -7,7 +7,7 @@ import fastparse.NoWhitespace.given
 
 object SearchParser:
   def parse(searchString: String): Either[String, SearchQuery] =
-    if searchString.isBlank() then Right(SearchQuery.Blank)
+    if searchString.isBlank() then Right(SearchQuery.Blank())
     else
       fastparse.parse(searchString.trim(), query) match
         case Success(value, _) => Right(value)

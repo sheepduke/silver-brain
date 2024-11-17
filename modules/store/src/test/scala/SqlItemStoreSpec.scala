@@ -4,6 +4,7 @@ import silverbrain.core.*
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AnyFunSuite
+import cats.effect.IO
 
 class SqlItemStoreSpec extends AnyFunSuite with Matchers:
 
@@ -166,4 +167,19 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         editor.children.get.size.shouldBe(2)
         editor.children.get.contains(emacsId).shouldBe(true)
         editor.children.get.contains(vimId).shouldBe(true)
+    )
+
+  test("Search item"):
+    withTempItemStore(store =>
+      for
+        emacsId <- store.createItem(CreateItemArgs("Emacs")).unsafeGet
+        vimId <- store.createItem(CreateItemArgs("Vim")).unsafeGet
+        softwareId <- store.createItem(CreateItemArgs("Software")).unsafeGet
+
+        ids <- store.searchItems("m").unsafeGet
+        _ = ids.toSet.shouldBe(Set(emacsId, vimId))
+
+        ids <- store.searchItems("emacs").unsafeGet
+        _ = ids.shouldBe(Seq(emacsId))
+      yield ()
     )

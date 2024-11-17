@@ -6,7 +6,7 @@ import silverbrain.core.SearchParser.parse
 class SearchParserSpec extends AnyFunSuite:
   test("Parse blank query"):
     val result = parse("")
-    val expected = SearchQuery.Blank
+    val expected = SearchQuery.Blank()
     assertResult(Right(expected))(result)
 
   test("Parse keyword query of basic string"):
