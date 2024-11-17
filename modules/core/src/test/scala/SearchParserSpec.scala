@@ -28,15 +28,16 @@ class SearchParserSpec extends AnyFunSuite:
 
   test("Parse match query"):
     val result = parse("key: value")
-    val expected = SearchQuery.Compare("key", CompareOperator.Match, "value")
+    val expected =
+      SearchQuery.Compare("key", SearchQuery.CompareOperator.Match, "value")
     assertResult(Right(expected))(result)
 
   test("Parse equal query"):
     val result = parse("\"aa\" = bb && cc = dd")
     val expected = SearchQuery.And(
       Seq(
-        SearchQuery.Compare("aa", CompareOperator.Equal, "bb"),
-        SearchQuery.Compare("cc", CompareOperator.Equal, "dd")
+        SearchQuery.Compare("aa", SearchQuery.CompareOperator.Equal, "bb"),
+        SearchQuery.Compare("cc", SearchQuery.CompareOperator.Equal, "dd")
       )
     )
     assertResult(Right(expected))(result)
@@ -45,8 +46,8 @@ class SearchParserSpec extends AnyFunSuite:
     val result = parse("aa != bb && cc <> dd")
     val expected = SearchQuery.And(
       Seq(
-        SearchQuery.Compare("aa", CompareOperator.NotEqual, "bb"),
-        SearchQuery.Compare("cc", CompareOperator.NotEqual, "dd")
+        SearchQuery.Compare("aa", SearchQuery.CompareOperator.NotEqual, "bb"),
+        SearchQuery.Compare("cc", SearchQuery.CompareOperator.NotEqual, "dd")
       )
     )
     assertResult(Right(expected))(result)
@@ -56,8 +57,13 @@ class SearchParserSpec extends AnyFunSuite:
     val expected =
       SearchQuery.And(
         Seq(
-          SearchQuery.Compare("aa", CompareOperator.GreaterThan, "bb"),
-          SearchQuery.Compare("cc", CompareOperator.GreaterEqual, "dd")
+          SearchQuery
+            .Compare("aa", SearchQuery.CompareOperator.GreaterThan, "bb"),
+          SearchQuery.Compare(
+            "cc",
+            SearchQuery.CompareOperator.GreaterEqual,
+            "dd"
+          )
         )
       )
     assertResult(Right(expected))(result)
@@ -66,11 +72,16 @@ class SearchParserSpec extends AnyFunSuite:
     val result = parse("aa < bb cc <= dd")
     val expected = SearchQuery.And(
       Seq(
-        SearchQuery.Compare("aa", CompareOperator.LessThan, "bb"),
-        SearchQuery.Compare("cc", CompareOperator.LessEqual, "dd")
+        SearchQuery.Compare("aa", SearchQuery.CompareOperator.LessThan, "bb"),
+        SearchQuery.Compare("cc", SearchQuery.CompareOperator.LessEqual, "dd")
       )
     )
     assertResult(Right(expected))(result)
+
+  test("Parse external property match query"):
+    val result = parse("$name: what")
+    val expected =
+      SearchQuery.Compare("$name", SearchQuery.CompareOperator.Match, "what")
 
   test("Parse complex logical query"):
     val result = parse("aa || (bb || !cc) dd")
