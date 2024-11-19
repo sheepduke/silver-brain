@@ -11,33 +11,31 @@ import scala.util.Try
 import doobie.util.transactor.Transactor
 
 class SqliteStoreManager(dataRootPath: Path) extends StoreManager:
-  def create(storeName: String): AppIOResult[Unit] =
-    val thunk = () =>
-      if SqliteStoreManager.exists(this.dataRootPath, storeName) then
-        Left(ConflictError("Store already exists"))
-      else
-        os.makeDir.all(this.dataRootPath / storeName)
-        SqliteStoreManager.migrate(this.dataRootPath, storeName)
-        Right(())
+  def create(storeName: String): IO[Unit] =
+    IO.blocking(SqliteStoreManager.exists(this.dataRootPath, storeName))
+      .flatMap:
+        case true => IO.raiseError(ConflictError("Store already exists"))
+        case false =>
+          IO.blocking:
+            os.makeDir.all(this.dataRootPath / storeName)
+            SqliteStoreManager.migrate(this.dataRootPath, storeName)
 
-    AppIOResult.blockingFlatTry(thunk())
-
-  def list(): AppIOResult[Seq[String]] =
-    AppIOResult.blockingLiftTry(
+  def list(): IO[Seq[String]] =
+    IO.blocking(
       os.list(dataRootPath)
         .filter(path => os.isFile(path / "data.sqlite"))
         .map(_.last.toString)
     )
 
-  def exists(storeName: String): AppIOResult[Boolean] =
-    AppIOResult.blockingLiftTry(
+  def exists(storeName: String): IO[Boolean] =
+    IO.blocking(
       SqliteStoreManager.exists(this.dataRootPath, storeName)
     )
 
-  def delete(storeName: String): IO[AppResult[Unit]] = ???
+  def delete(storeName: String): IO[Unit] = ???
 
-  def migrate(storeName: String): IO[AppResult[Unit]] =
-    AppIOResult.blockingLiftTry(
+  def migrate(storeName: String): IO[Unit] =
+    IO.blocking(
       SqliteStoreManager.migrate(this.dataRootPath, storeName)
     )
 

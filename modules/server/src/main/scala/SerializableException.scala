@@ -3,10 +3,11 @@ package silverbrain.server
 import silverbrain.core.*
 
 case class SerializableException(message: String, stackTrace: String)
+    extends Throwable
 
 object SerializableException:
-  def apply(error: AppInternalError): SerializableException =
+  def apply(error: Throwable): SerializableException =
     SerializableException(
-      message = error.throwable.getMessage(),
-      stackTrace = error.throwable.getStackTrace().mkString("\n")
+      message = error.getMessage(),
+      stackTrace = error.getStackTrace().mkString("\n")
     )

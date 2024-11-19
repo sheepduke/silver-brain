@@ -6,25 +6,48 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 class StoreManagerSpec extends AnyFunSuite with Matchers:
+  private def createRandomStoreName() = Ksuid.newKsuid().toString()
+
   test("Create 2 stores and verify them"):
     withTempDirectory(dataRootPath =>
       val storeManager = SqliteStoreManager(dataRootPath)
 
-      val storeName1 = Ksuid.newKsuid().toString()
-      val storeName2 = Ksuid.newKsuid().toString()
+      val storeName1 = this.createRandomStoreName()
+      val storeName2 = this.createRandomStoreName()
 
-      var result = storeManager.create(storeName1).unsafeRunSync()
-      result.shouldBe(Right(()))
+      for
+        _ <- storeManager.create(storeName1)
+        _ <- storeManager.create(storeName2)
 
-      result = storeManager.create(storeName2).unsafeRunSync()
-      result.shouldBe(Right(()))
+        // Verify list.
+        stores <- storeManager.list()
+        _ = stores.toSet[String].shouldBe(Set(storeName1, storeName2))
 
-      // Verify list.
-      val listResult = storeManager.list().unsafeRunSync()
-      listResult.isRight.shouldBe(true)
-      listResult.right.get.toSet[String].shouldBe(Set(storeName1, storeName2))
+        // Verify exists.
+        store1Exists <- storeManager.exists(storeName1)
+        _ = store1Exists.shouldBe(true)
+        store2Exists <- storeManager.exists(storeName2)
+        _ = store2Exists.shouldBe(true)
+      yield ()
+    )
 
-      // Verify exists.
-      storeManager.exists(storeName1).unsafeRunSync().right.get.shouldBe(true)
-      storeManager.exists(storeName2).unsafeRunSync().right.get.shouldBe(true)
+  test("Create duplicated store"):
+    withTempDirectory(dataRootPath =>
+      val storeManager = SqliteStoreManager(dataRootPath)
+
+      val storeName = this.createRandomStoreName()
+
+      for
+        _ <- storeManager.create(storeName)
+        exists <- storeManager.exists(storeName)
+        _ = exists.shouldBe(true)
+
+        isRaised <- storeManager
+          .create(storeName)
+          .redeem(
+            _error => true,
+            _ => false
+          )
+        _ = isRaised.shouldBe(true)
+      yield ()
     )

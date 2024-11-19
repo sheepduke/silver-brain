@@ -4,19 +4,25 @@ import silverbrain.core.*
 
 import cats.effect.*
 import sttp.tapir.server.http4s.Http4sServerInterpreter
+import silverbrain.server.toNoContentHttpResponse
 
 trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
   val getItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.getItemEndpoint
       .serverLogic[IO]((storeName: String, itemId: String, select: String) =>
-        val result = selectToItemLoadOptions(select) match
-          case Left(error) => IO.pure(Left(error))
+        selectToItemLoadOptions(select) match
+          case Left(keys) =>
+            val message = s"Invalid keys: ${keys.mkString(",")}"
+            IO.raiseError(InvalidArgumentError(message))
           case Right(loadOptions) =>
             this
               .itemStoreCreator(storeName)
               .getItem(itemId, loadOptions)
-
-        result.toHttpResponse
+              .flatMap(_ match
+                case None       => IO.raiseError(IdNotFoundError())
+                case Some(item) => IO.pure(item)
+              )
+              .toHttpResponse
       )
   )
 
@@ -64,7 +70,7 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
 
   private def selectToItemLoadOptions(
       select: String
-  ): AppResult[ItemLoadOptions] =
+  ): Either[Seq[String], ItemLoadOptions] =
     val selectKeys = select.split(",").map(_.trim()).filter(_.nonEmpty)
 
     if selectKeys.toSet[String].subsetOf(acceptedSelectKeys) then
@@ -81,4 +87,4 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
             case "updateTime"  => loadOptions.withUpdatetime
         )
       )
-    else Left(InvalidArgumentError("Unrecognized select key"))
+    else Left(selectKeys.diff(this.acceptedSelectKeys.toSeq))

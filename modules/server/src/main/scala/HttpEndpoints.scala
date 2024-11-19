@@ -7,12 +7,14 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import sttp.tapir.*
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.jsoniter.*
-import sttp.tapir.EndpointIO.annotations.statusCode
-
-case class IdOnly(id: String)
+import sttp.model.StatusCode
 
 trait HttpEndpoints:
   given JsonValueCodec[IdOnly] = JsonCodecMaker.make
+  given JsonValueCodec[ConflictError] = JsonCodecMaker.make
+  given JsonValueCodec[InvalidArgumentError] = JsonCodecMaker.make
+  given JsonValueCodec[SerializableException] = JsonCodecMaker.make
+
   given JsonValueCodec[Item] = JsonCodecMaker.make
   given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
   given JsonValueCodec[UpdateItemArgs] = JsonCodecMaker.make
@@ -21,6 +23,26 @@ trait HttpEndpoints:
     endpoint
       .in(header[String]("X-SB-Store").default("main"))
       .errorOut(statusCode.and(plainBody[String]))
+    // .errorOut(
+    //   oneOf[Throwable](
+    //     oneOfVariant(statusCode(StatusCode.NotFound).mapTo[IdNotFoundError]),
+    //     oneOfVariant(
+    //       statusCode(StatusCode.Conflict)
+    //         .and(jsonBody[ConflictError])
+    //         .mapTo[ConflictError]
+    //     ),
+    //     oneOfVariant(
+    //       statusCode(StatusCode.BadRequest)
+    //         .and(jsonBody[InvalidArgumentError])
+    //         .mapTo[InvalidArgumentError]
+    //     ),
+    //     oneOfVariant(
+    //       statusCode(StatusCode.InternalServerError)
+    //         .and(jsonBody[SerializableException])
+    //         .mapTo[SerializableException]
+    //     )
+    //   )
+    // )
 
   val getItemEndpoint =
     this.endpointBase.get

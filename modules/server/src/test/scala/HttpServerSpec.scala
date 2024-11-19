@@ -26,13 +26,12 @@ class HttpServerSpec extends AnyFunSuite with Matchers:
               .withContentType("plain/text")
               .withContent("Hello")
           )
-          .unsafeGet
-        emacs <- client.getItem(emacsId).unsafeGet
+        emacs <- client.getItem(emacsId)
         _ = emacs.id.shouldBe(emacsId)
         _ = emacs.name.shouldBe("Emacs")
 
         // Get full info of item.
-        emacs <- client.getItem(emacsId, ItemLoadOptions().withAll).unsafeGet
+        emacs <- client.getItem(emacsId, ItemLoadOptions().withAll)
         _ = emacs.name.shouldBe("Emacs")
       yield ()
     )

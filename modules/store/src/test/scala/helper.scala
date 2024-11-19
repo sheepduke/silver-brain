@@ -24,13 +24,13 @@ def withTempItemStore(testFun: ItemStore => IO[Any]): Any =
     val itemStore = SqlItemStore(transactor)
 
     // Invoke test logic.
-    testFun(itemStore).unsafeRunSync()
+    testFun(itemStore)
   )
 
-def withTempDirectory(testFun: (Path) => Any): Any =
+def withTempDirectory(testFun: (Path) => IO[Any]): Any =
   val dataRootPath = os.temp.dir()
 
   try
-    testFun(dataRootPath)
+    testFun(dataRootPath).unsafeRunSync()
 
   finally os.remove.all(dataRootPath)

@@ -28,6 +28,8 @@ class HttpClient(
   given JsonValueCodec[IdNotFoundError] = JsonCodecMaker.make
   given JsonValueCodec[ConflictError] = JsonCodecMaker.make
   given JsonValueCodec[InvalidArgumentError] = JsonCodecMaker.make
+  given JsonValueCodec[ServerInternalError] = JsonCodecMaker.make
+  given JsonValueCodec[ClientInternalError] = JsonCodecMaker.make
 
   private val baseUrl =
     Uri.unsafeFromString(s"${scheme}://${host}:${port}/api/v2/")
@@ -38,17 +40,17 @@ class HttpClient(
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): AppIOResult[Item] =
+  ): IO[Item] =
     val select = this.itemLoadOptionsToSelect(loadOptions)
 
     this
       .get(Uri.unsafeFromString(s"items/$itemId?select=$select"))
-      .mapValue(json.readFromString[Item](_))
+      .map(json.readFromString[Item](_))
 
-  def createItem(item: CreateItemArgs): AppIOResult[String] =
+  def createItem(item: CreateItemArgs): IO[String] =
     this.post(Uri.unsafeFromString("items"), item)
 
-  def deleteItem(itemId: String): AppIOResult[Unit] =
+  def deleteItem(itemId: String): IO[Unit] =
     this.delete(Uri.unsafeFromString(s"items/$itemId"))
 
   private def itemLoadOptionsToSelect(loadOptions: ItemLoadOptions): String =
@@ -64,7 +66,7 @@ class HttpClient(
 
     selectKeys.mkString(",")
 
-  private def get(url: Uri): AppIOResult[String] =
+  private def get(url: Uri): IO[String] =
     val request = Request[IO](
       method = Method.GET,
       uri = this.baseUrl.resolve(url),
@@ -75,7 +77,7 @@ class HttpClient(
 
   private def post[A](url: Uri, content: A)(using
       JsonValueCodec[A]
-  ): AppIOResult[String] =
+  ): IO[String] =
     val requestBody = json.writeToString(content).getBytes()
 
     val request = Request[IO](
@@ -85,11 +87,11 @@ class HttpClient(
       body = fs2.Stream.emits(requestBody)
     )
 
-    this.send(request).mapValue(json.readFromString[IdOnly](_).id)
+    this.send(request).map(json.readFromString[IdOnly](_).id)
 
   private def udpate[A](url: Uri, content: A)(using
       JsonValueCodec[A]
-  ): AppIOResult[Unit] =
+  ): IO[Unit] =
     val requestBody = json.writeToString(content).getBytes()
 
     val request = Request[IO](
@@ -99,32 +101,56 @@ class HttpClient(
       body = fs2.Stream.emits(requestBody)
     )
 
-    this.send(request).mapValue(_ => Right(()))
+    this.send(request).map(_ => ())
 
-  private def delete(url: Uri): AppIOResult[Unit] =
+  private def delete(url: Uri): IO[Unit] =
     val request = Request[IO](
       method = Method.DELETE,
       uri = this.baseUrl.resolve(url)
     )
 
-    this.send(request).mapValue(_ => Right(()))
+    this.send(request).map(_ => ())
 
-  private def send(request: Request[IO]): AppIOResult[String] =
+  private def send(request: Request[IO]): IO[String] =
     this.clientResource.use(client =>
       client
         .run(request)
         .use(response =>
-          for body <- response.as[String]
-          yield response.status match
-            case Status.Ok | Status.Created | Status.NoContent => Right(body)
+          response.status match
+            case Status.Ok | Status.Created | Status.NoContent =>
+              response.as[String]
             case Status.NotFound =>
-              Left(json.readFromString[IdNotFoundError](body))
+              response
+                .as[String]
+                .flatMap(body =>
+                  IO.raiseError(json.readFromString[IdNotFoundError](body))
+                )
             case Status.Conflict =>
-              Left(json.readFromString[ConflictError](body))
+              response
+                .as[String]
+                .flatMap(body =>
+                  IO.raiseError(json.readFromString[ConflictError](body))
+                )
             case Status.BadRequest =>
-              Left(json.readFromString[InvalidArgumentError](body))
+              response
+                .as[String]
+                .flatMap(body =>
+                  IO.raiseError(json.readFromString[InvalidArgumentError](body))
+                )
             case Status.InternalServerError =>
-              Left(AppInternalError(RuntimeException(body)))
+              response
+                .as[String]
+                .flatMap(body =>
+                  IO.raiseError(json.readFromString[ServerInternalError](body))
+                )
+            case _ =>
+              response
+                .as[String]
+                .flatMap(body =>
+                  IO.raiseError(
+                    ClientInternalError(message = body, stackTrace = "")
+                  )
+                )
         )
     )
 
