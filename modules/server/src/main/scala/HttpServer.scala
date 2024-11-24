@@ -14,8 +14,8 @@ import org.http4s.server.Router
 import sttp.tapir.*
 import com.comcast.ip4s.Port
 
-class HttpServer(itemStoreCreator: String => ItemStore, port: Int)
-    extends HttpRoutes(itemStoreCreator):
+class HttpServer(port: Int)(using itemStoreProvider: ItemStoreProvider)
+    extends HttpRoutes(itemStoreProvider):
 
   private val routes =
     this.getItemRoute <+> this.createItemRoute <+> this.updateItemRoute <+> this.deleteItemRoute
@@ -32,16 +32,9 @@ class HttpServer(itemStoreCreator: String => ItemStore, port: Int)
 
 object Main extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
-    val itemStoreCreator = (storeName: String) =>
-      val transactor =
-        SqliteStoreManager.createTransactor(
-          os.home / "temp" / "test",
-          storeName
-        )
+    given ItemStoreProvider = SqlItemStoreProvider(os.home / "temp" / "test")
 
-      SqlItemStore(transactor)
-
-    HttpServer(itemStoreCreator, port = 8080)
+    HttpServer(port = 8080)
       .build()
       .useForever
       .as(ExitCode.Success)

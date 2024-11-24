@@ -11,7 +11,7 @@ import org.scalatest.Outcome
 import org.scalatest.fixture
 import os.Path
 
-def withTempItemStore(testFun: ItemStore => IO[Any]): Any =
+def withTempItemStore(testFun: ItemStore[IO] => IO[Any]): Any =
   withTempDirectory(dataRootPath =>
     // Setup database.
     val storeManager = SqliteStoreManager(dataRootPath)

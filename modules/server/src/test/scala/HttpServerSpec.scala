@@ -8,10 +8,16 @@ import org.http4s.server.Server
 import cats.effect.*
 import silverbrain.client.http.HttpClient
 
+private class MockItemStoreProvider(store: ItemStore[IO])
+    extends ItemStoreProvider:
+  def create(_storeName: String): ItemStore[IO] = store
+
 class HttpServerSpec extends AnyFunSuite with Matchers:
   def withHttpServerAndClient(fun: HttpClient => IO[Any]) =
-    withTempItemStore(itemStore =>
-      val server = HttpServer(_storeName => itemStore, port = 8888)
+    withTempItemStore(store =>
+      given ItemStoreProvider = MockItemStoreProvider(store)
+
+      val server = HttpServer(port = 8888)
       val client = HttpClient(port = 8888)
       server.build().use(_ => fun(client))
     )

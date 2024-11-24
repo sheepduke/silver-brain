@@ -15,7 +15,7 @@ import silverbrain.store.ItemLinkRepo.isParent
 
 class SqlItemStore(
     private val transactor: Transactor[IO]
-) extends ItemStore:
+) extends ItemStore[IO]:
 
   // ============================================================
   //  Item

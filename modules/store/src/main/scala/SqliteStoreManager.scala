@@ -10,7 +10,7 @@ import os.Path
 import scala.util.Try
 import doobie.util.transactor.Transactor
 
-class SqliteStoreManager(dataRootPath: Path) extends StoreManager:
+class SqliteStoreManager(dataRootPath: Path) extends StoreManager[IO]:
   def create(storeName: String): IO[Unit] =
     IO.blocking(SqliteStoreManager.exists(this.dataRootPath, storeName))
       .flatMap:

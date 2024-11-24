@@ -6,7 +6,8 @@ import cats.effect.*
 import sttp.tapir.server.http4s.Http4sServerInterpreter
 import silverbrain.server.toNoContentHttpResponse
 
-trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
+trait HttpRoutes(protected val itemStoreProvider: ItemStoreProvider)
+    extends HttpEndpoints:
   val getItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.getItemEndpoint
       .serverLogic[IO]((storeName: String, itemId: String, select: String) =>
@@ -15,8 +16,8 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
             val message = s"Invalid keys: ${keys.mkString(",")}"
             IO.raiseError(InvalidArgumentError(message))
           case Right(loadOptions) =>
-            this
-              .itemStoreCreator(storeName)
+            this.itemStoreProvider
+              .create(storeName)
               .getItem(itemId, loadOptions)
               .flatMap(_ match
                 case None       => IO.raiseError(IdNotFoundError())
@@ -29,8 +30,8 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
   val createItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.createItemEndpoint
       .serverLogic[IO]((storeName, item) =>
-        this
-          .itemStoreCreator(storeName)
+        this.itemStoreProvider
+          .create(storeName)
           .createItem(item)
           .toCreatedHttpResponse
       )
@@ -39,8 +40,8 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
   val updateItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.updateItemEndpoint
       .serverLogic[IO]((storeName, item) =>
-        this
-          .itemStoreCreator(storeName)
+        this.itemStoreProvider
+          .create(storeName)
           .updateItem(item)
           .toNoContentHttpResponse
       )
@@ -48,8 +49,8 @@ trait HttpRoutes(itemStoreCreator: String => ItemStore) extends HttpEndpoints:
 
   val deleteItemRoute = Http4sServerInterpreter[IO]().toRoutes(
     this.deleteItemEndpoint.serverLogic[IO]((storeName, itemId) =>
-      this
-        .itemStoreCreator(storeName)
+      this.itemStoreProvider
+        .create(storeName)
         .deleteItem(itemId)
         .toNoContentHttpResponse
     )

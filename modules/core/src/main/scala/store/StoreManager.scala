@@ -2,23 +2,23 @@ package silverbrain.core
 
 import cats.effect.IO
 
-trait StoreManager:
+trait StoreManager[F[_]]:
   /** Create a store with given name.
     */
-  def create(storeName: String): IO[Unit]
+  def create(storeName: String): F[Unit]
 
   /** Return a list of known stores.
     */
-  def list(): IO[Seq[String]]
+  def list(): F[Seq[String]]
 
   /** Check if the given store exists.
     */
-  def exists(storeName: String): IO[Boolean]
+  def exists(storeName: String): F[Boolean]
 
   /** Delete given store.
     */
-  def delete(storeName: String): IO[Unit]
+  def delete(storeName: String): F[Unit]
 
   /** Migrate store to the newest version.
     */
-  def migrate(storeName: String): IO[Unit]
+  def migrate(storeName: String): F[Unit]
