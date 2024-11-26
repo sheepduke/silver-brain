@@ -4,10 +4,6 @@ import silverbrain.core.*
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import sttp.tapir.*
-import sttp.tapir.generic.auto.*
-import sttp.tapir.json.jsoniter.*
-import sttp.model.StatusCode
 
 trait HttpEndpoints:
   given JsonValueCodec[IdOnly] = JsonCodecMaker.make

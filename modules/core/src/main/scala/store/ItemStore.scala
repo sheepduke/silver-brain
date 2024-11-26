@@ -1,30 +1,33 @@
 package silverbrain.core
 
-import cats.effect.*
 import java.time.Instant
 
-trait ItemStore[F[_]]:
+trait ItemStore:
   // ============================================================
   //  Item
   // ============================================================
 
   def getItem(
-      id: String,
+      itemId: String,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): F[Option[Item]]
+  ): Either[StoreNotFoundError | IdNotFoundError, Item]
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions = ItemLoadOptions()
-  ): F[Seq[Item]]
+  ): Either[StoreNotFoundError, Seq[Item]]
 
-  def searchItems(search: String): F[Seq[String]]
+  def searchItems(
+      search: String
+  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[String]]
 
-  def createItem(item: CreateItemArgs): F[String]
+  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String]
 
-  def updateItem(item: UpdateItemArgs): F[Unit]
+  def updateItem(
+      item: UpdateItemArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit]
 
-  def deleteItem(itemId: String): F[Unit]
+  def deleteItem(itemId: String): Either[StoreNotFoundError, Unit]
 
   // ============================================================
   //  Property
@@ -34,39 +37,56 @@ trait ItemStore[F[_]]:
       itemId: String,
       key: String,
       value: String
-  ): F[Unit]
+  ): Either[StoreNotFoundError, Unit]
 
-  def deleteItemProperty(itemId: String, key: String): F[Unit]
+  def deleteItemProperty(
+      itemId: String,
+      key: String
+  ): Either[StoreNotFoundError, Unit]
 
   // ============================================================
   //  Link
   // ============================================================
 
-  def getParents(itemId: String): F[Seq[String]]
+  def getParents(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]]
 
-  def getChildren(itemId: String): F[Seq[String]]
+  def getChildren(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]]
 
-  def createLink(parent: String, child: String): F[Unit]
+  def createLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit]
 
-  def deleteLink(parent: String, child: String): F[Unit]
+  def deleteLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError, Unit]
 
   // ============================================================
   //  Reference
   // ============================================================
 
-  def getReference(referenceId: String): F[Reference]
+  def getReference(
+      referenceId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Reference]
 
-  def getReferences(referenceIds: Seq[String]): F[Seq[Reference]]
+  def getReferences(
+      referenceIds: Seq[String]
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[Reference]]
 
   def createReference(
       source: String,
       target: String,
       annotation: String
-  ): F[String]
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit]
 
   def updateReference(
       referenceId: String,
       annotation: String
-  ): F[Unit]
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit]
 
-  def deleteReference(referenceId: String): F[Unit]
+  def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit]

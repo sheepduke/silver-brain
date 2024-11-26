@@ -2,20 +2,12 @@ package silverbrain.store
 
 import silverbrain.core.*
 
-import cats.*
-import cats.effect.*
-import cats.implicits.*
-import doobie.*
-import doobie.implicits.*
-import doobie.util.transactor.Transactor
-import cats.effect.IO
 import com.github.ksuid.Ksuid
 import java.time.Instant
-import silverbrain.store.ItemLinkRepo.isParent
+import scalikejdbc.*
 
-class SqlItemStore(
-    private val transactor: Transactor[IO]
-) extends ItemStore[IO]:
+class SqlItemStore(using transactor: Transactor)(using StoreName)
+    extends ItemStore:
 
   // ============================================================
   //  Item
@@ -24,60 +16,61 @@ class SqlItemStore(
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions
-  ): IO[Option[Item]] =
-    val getParents =
-      if loadOptions.parents then ItemLinkRepo.getParents(itemId)
-      else ItemLinkRepo.getNoop()
-
-    val getChildren =
-      if loadOptions.children then ItemLinkRepo.getChildren(itemId)
-      else ItemLinkRepo.getNoop()
-
-    val getAll =
+  ): Either[StoreNotFoundError | IdNotFoundError, Item] =
+    transactor.withTransaction(implicit session =>
       for
-        item <- ItemRepo.getOne(itemId, loadOptions)
-        parents <- getParents
-        children <- getChildren
-      yield item.map(
-        _.copy(
-          parents = if loadOptions.parents then Some(parents) else None,
-          children = if loadOptions.children then Some(children) else None
-        )
-      )
-
-    getAll.transact(this.transactor)
+        item <- ItemRepo.getOne(itemId, loadOptions).toRight(IdNotFoundError())
+        parents <-
+          if loadOptions.parents then
+            Right(Some(ItemLinkRepo.getParents(itemId)))
+          else Right(None)
+        children <-
+          if loadOptions.children then
+            Right(Some(ItemLinkRepo.getChildren(itemId)))
+          else Right(None)
+      yield item.copy(parents = parents, children = children)
+    )
 
   def getItems(
       itemIds: Seq[String],
       loadOptions: ItemLoadOptions
-  ): IO[Seq[Item]] =
-    if itemIds.isEmpty then IO.raiseError(InvalidArgumentError("Empty id list"))
-    else ItemRepo.getMany(itemIds, loadOptions).transact(this.transactor)
+  ): Either[StoreNotFoundError, Seq[Item]] =
+    transactor.withTransaction(implicit session =>
+      Right(ItemRepo.getMany(itemIds, loadOptions))
+    )
 
-  def searchItems(search: String): IO[Seq[String]] =
+  def searchItems(
+      search: String
+  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[String]] =
     SearchParser.parse(search) match
-      case Right(query) => SearchEngine.execute(query).transact(this.transactor)
+      case Right(query) =>
+        transactor.withTransaction(implicit session =>
+          Right(SearchEngine.execute(query))
+        )
       case Left(errorMessage) =>
-        IO.raiseError(InvalidArgumentError(errorMessage))
+        Left(InvalidArgumentError(errorMessage))
 
-  def createItem(item: CreateItemArgs): IO[String] =
+  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String] =
     val id = "i_" + Ksuid.newKsuid().toString()
 
-    for _ <- ItemRepo
-        .create(id, item, Instant.now())
-        .transact(this.transactor)
-    yield id
+    transactor.withTransaction(implicit session =>
+      ItemRepo.create(id, item, Instant.now())
+      Right(id)
+    )
 
-  def updateItem(item: UpdateItemArgs): IO[Unit] =
-    for updatedCount <- ItemRepo
-        .update(item, Instant.now())
-        .transact(this.transactor)
-    yield
-      if updatedCount == 0 then IO.raiseError(IdNotFoundError())
-      else ()
+  def updateItem(
+      item: UpdateItemArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] =
+    transactor.withTransaction(implicit session =>
+      ItemRepo.getOne(item.id, ItemLoadOptions()) match
+        case None    => Left(InvalidArgumentError("ID not found"))
+        case Some(_) => Right(ItemRepo.update(item, Instant.now()))
+    )
 
-  def deleteItem(itemId: String): IO[Unit] =
-    ItemRepo.delete(itemId).transact(this.transactor).map(_ => ())
+  def deleteItem(itemId: String): Either[StoreNotFoundError, Unit] =
+    transactor.withTransaction(implicit session =>
+      Right(ItemRepo.delete(itemId))
+    )
 
   // ============================================================
   //  Property
@@ -87,37 +80,57 @@ class SqlItemStore(
       itemId: String,
       key: String,
       value: String
-  ): IO[Unit] = ???
+  ): Either[StoreNotFoundError, Unit] = ???
 
-  def deleteItemProperty(itemId: String, key: String): IO[Unit] = ???
+  def deleteItemProperty(
+      itemId: String,
+      key: String
+  ): Either[StoreNotFoundError, Unit] = ???
 
   // ============================================================
   //  Link
   // ============================================================
 
-  def getParents(itemId: String): IO[Seq[String]] =
-    ItemLinkRepo.getParents(itemId).transact(this.transactor)
-
-  def getChildren(itemId: String): IO[Seq[String]] =
-    ItemLinkRepo.getChildren(itemId).transact(this.transactor)
-
-  def createLink(parent: String, child: String): IO[Unit] =
-    val aux: ConnectionIO[Boolean] =
-      for
-        isParent <- ItemLinkRepo.isParent(parent, child)
-        isChild <- ItemLinkRepo.isParent(child, parent)
-        _ <-
-          if !isParent && !isChild then ItemLinkRepo.create(parent, child)
-          else ItemLinkRepo.getNoop()
-      yield isChild
-
-    for shouldRaise <- aux.transact(this.transactor)
-    yield IO.raiseWhen(shouldRaise)(
-      ConflictError(s"Item '$parent' is already a child of $child")
+  def getParents(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
+    transactor.withTransaction(implicit session =>
+      ItemRepo.getOne(itemId, ItemLoadOptions()) match
+        case None    => Left(IdNotFoundError())
+        case Some(_) => Right(ItemLinkRepo.getParents(itemId))
     )
 
-  def deleteLink(parent: String, child: String): IO[Unit] =
-    ItemLinkRepo.delete(parent, child).transact(this.transactor).map(Right(_))
+  def getChildren(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
+    transactor.withTransaction(implicit session =>
+      ItemRepo.getOne(itemId, ItemLoadOptions()) match
+        case None    => Left(IdNotFoundError())
+        case Some(_) => Right(ItemLinkRepo.getChildren(itemId))
+    )
+
+  def createLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit] =
+    transactor.withTransaction(implicit session =>
+      if ItemLinkRepo.isParent(parent, child) then Right(())
+      else if ItemLinkRepo.isParent(child, parent) then
+        Left(ConflictError(s"Item `$parent` is already a child of `$child`"))
+      else if !ItemRepo.exists(parent) then
+        Left(InvalidArgumentError(s"Item $parent does not exist"))
+      else if !ItemRepo.exists(child) then
+        Left(InvalidArgumentError(s"Item $child does not exist"))
+      else Right(ItemLinkRepo.create(parent, child))
+    )
+
+  def deleteLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError, Unit] =
+    transactor.withTransaction(implicit session =>
+      Right(ItemLinkRepo.delete(parent, child))
+    )
 
   // ============================================================
   //  Reference
@@ -127,16 +140,20 @@ class SqlItemStore(
       source: String,
       target: String,
       annotation: String
-  ): IO[String] = ???
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
 
-  def getReference(referenceId: String): IO[Reference] = ???
+  def getReference(
+      referenceId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Reference] = ???
 
-  def getReferences(referenceIds: Seq[String]): IO[Seq[Reference]] =
-    ???
+  def getReferences(
+      referenceIds: Seq[String]
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[Reference]] = ???
 
   def updateReference(
       referenceId: String,
       annotation: String
-  ): IO[Unit] = ???
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
 
-  def deleteReference(referenceId: String): IO[Unit] = ???
+  def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit] =
+    ???

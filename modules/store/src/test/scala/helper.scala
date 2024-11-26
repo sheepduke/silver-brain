@@ -2,35 +2,33 @@ package silverbrain.store
 
 import silverbrain.core.*
 
-import cats.effect.*
-import cats.effect.unsafe.implicits.global
 import com.github.ksuid.Ksuid
-import doobie.free.driver
-import doobie.util.transactor.Transactor
 import org.scalatest.Outcome
 import org.scalatest.fixture
 import os.Path
 
-def withTempItemStore(testFun: ItemStore[IO] => IO[Any]): Any =
+def withTempItemStore(testFun: ItemStore => Any): Any =
   withTempDirectory(dataRootPath =>
     // Setup database.
-    val storeManager = SqliteStoreManager(dataRootPath)
-    val storeName = Ksuid.newKsuid().toString()
-    storeManager.create(storeName).unsafeRunSync()
+    given DataRootPath = dataRootPath
+    given storeManager: SqliteStoreManager = SqliteStoreManager()
+    given storeName: StoreName = Ksuid.newKsuid().toString()
+    storeManager.create(storeName)
 
     // Setup transactor and item store.
-    val transactor =
-      SqliteStoreManager.createTransactor(dataRootPath, storeName)
-    val itemStore = SqlItemStore(transactor)
+    given Transactor = Transactor()
+    val itemStore = SqlItemStore()
 
     // Invoke test logic.
     testFun(itemStore)
   )
 
-def withTempDirectory(testFun: (Path) => IO[Any]): Any =
+def withTempDirectory(testFun: Path => Any): Any =
   val dataRootPath = os.temp.dir()
 
-  try
-    testFun(dataRootPath).unsafeRunSync()
+  println(s"Data root: $dataRootPath")
 
-  finally os.remove.all(dataRootPath)
+  try
+    testFun(dataRootPath)
+
+  // finally os.remove.all(dataRootPath)

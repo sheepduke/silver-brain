@@ -4,7 +4,6 @@ import silverbrain.core.*
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AnyFunSuite
-import cats.effect.IO
 
 class SqlItemStoreSpec extends AnyFunSuite with Matchers:
 
@@ -18,8 +17,8 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         itemId <- store.createItem(CreateItemArgs("Emacs"))
         item <- store.getItem(itemId)
       yield
-        item.get.id.shouldBe(itemId)
-        item.get.name.shouldBe("Emacs")
+        item.id.shouldBe(itemId)
+        item.name.shouldBe("Emacs")
     )
 
   test("Create item with all fields"):
@@ -33,7 +32,6 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
           )
         item <- store
           .getItem(itemId, ItemLoadOptions(contentType = true, content = true))
-          .map(_.get)
       yield
         item.id.shouldBe(itemId)
         item.name.shouldBe("Emacs")
@@ -52,7 +50,6 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
             itemId,
             ItemLoadOptions(createTime = true, updateTime = true)
           )
-          .map(_.get)
       yield
         item.id.shouldBe(itemId)
         item.name.shouldBe("Vim")
@@ -64,16 +61,13 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
       for
         // Create item.
         itemId <- store.createItem(CreateItemArgs("Emacs"))
-        itemOpt <- store.getItem(itemId)
-        _ = itemOpt.isDefined.shouldBe(true)
+        item <- store.getItem(itemId)
 
         // Delete item.
         result <- store.deleteItem(itemId)
-
-        // Check item is deleted.
-        itemOpt <- store.getItem(itemId)
-        _ = itemOpt.isDefined.shouldBe(false)
-      yield ()
+      yield
+      // Check item is deleted.
+      store.getItem(itemId).isLeft.shouldBe(true)
     )
 
   // ============================================================
@@ -138,15 +132,12 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
 
         emacs <- store
           .getItem(emacsId, ItemLoadOptions().withParents.withChildren)
-          .map(_.get)
 
         vim <- store
           .getItem(vimId, ItemLoadOptions().withParents.withChildren)
-          .map(_.get)
 
         editor <- store
           .getItem(editorId, ItemLoadOptions().withChildren)
-          .map(_.get)
       yield
         emacs.parents.get.shouldBe(Seq(editorId))
         emacs.children.get.shouldBe(Seq())

@@ -13,11 +13,12 @@ val libCliArgsParser = "org.rogach" %% "scallop" % "5.1.0"
 val http4sVersion = "0.23.29"
 val tapirVersion = "1.11.8"
 val libsHttpServer = Seq(
-  "org.http4s" %% "http4s-ember-server" % http4sVersion,
-  "org.http4s" %% "http4s-dsl" % http4sVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
+  // "org.http4s" %% "http4s-ember-server" % http4sVersion,
+  // "org.http4s" %% "http4s-dsl" % http4sVersion,
+  // "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion,
+  // "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
+  // "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
+  "com.lihaoyi" %% "cask" % "0.9.2"
 )
 
 val libsHttpClient = Seq(
@@ -40,17 +41,14 @@ val libParserCombinator = "com.lihaoyi" %% "fastparse" % "3.1.1"
 // OS interaction.
 val libOsLib = "com.lihaoyi" %% "os-lib" % "0.11.1"
 
-// Effect system.
-val libEffect = "org.typelevel" %% "cats-effect" % "3.5.5"
-
 // Database access.
 val doobieVersion = "1.0.0-RC4"
 val libsDatabase = Seq(
-  // "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
+  "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
   "org.xerial" % "sqlite-jdbc" % "3.45.2.0",
-  "org.tpolecat" %% "doobie-core" % doobieVersion,
-  "org.tpolecat" %% "doobie-hikari" % doobieVersion,
-  "org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test,
+  // "org.tpolecat" %% "doobie-core" % doobieVersion,
+  // "org.tpolecat" %% "doobie-hikari" % doobieVersion,
+  // "org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test,
   "org.flywaydb" % "flyway-core" % "9.0.4"
 )
 
@@ -64,38 +62,38 @@ val libsTestFramework = Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test
 )
 
-// ============================================================
-//  Server
-// ============================================================
+// // ============================================================
+// //  Server
+// // ============================================================
 
-lazy val server = project
-  .in(file("modules/server"))
-  .settings(
-    name := "silver-brain",
-    libraryDependencies ++= Seq(
-      libLoggerInterface,
-      libLoggerImplementation
-    ) ++ libsHttpServer ++ libsJson ++ libsTestFramework
-  )
-  .dependsOn(
-    store % "compile->compile;test->test",
-    httpClient % "test->compile"
-  )
-  .aggregate(store)
-  .enablePlugins(JavaAppPackaging)
+// lazy val server = project
+//   .in(file("modules/server"))
+//   .settings(
+//     name := "silver-brain",
+//     libraryDependencies ++= Seq(
+//       libLoggerInterface,
+//       libLoggerImplementation
+//     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework
+//   )
+//   .dependsOn(
+//     store % "compile->compile;test->test",
+//     httpClient % "test->compile"
+//   )
+//   .aggregate(store)
+//   .enablePlugins(JavaAppPackaging)
 
-// ============================================================
-//  Http Client
-// ============================================================
+// // ============================================================
+// //  Http Client
+// // ============================================================
 
-lazy val httpClient = project
-  .in(file("modules/http-client"))
-  .settings(
-    name := "silver-brain-http-client",
-    libraryDependencies ++= libsHttpClient ++ libsJson
-  )
-  .dependsOn(core)
-  .dependsOn(core)
+// lazy val httpClient = project
+//   .in(file("modules/http-client"))
+//   .settings(
+//     name := "silver-brain-http-client",
+//     libraryDependencies ++= libsHttpClient ++ libsJson
+//   )
+//   .dependsOn(core)
+//   .dependsOn(core)
 
 // ============================================================
 //  Store
@@ -123,8 +121,7 @@ lazy val core =
     .settings(
       name := "silver-brain-core",
       libraryDependencies ++= Seq(
-        libParserCombinator,
-        libEffect
+        libParserCombinator
       ) ++ libsTestFramework
     )
 
@@ -142,5 +139,5 @@ lazy val playground =
         libOsLib
       ) ++ libsDatabase ++ libsJson
     )
-    .dependsOn(core)
-    .aggregate(core)
+    .dependsOn(core, store)
+    .aggregate(core, store)
