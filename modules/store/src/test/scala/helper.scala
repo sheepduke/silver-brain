@@ -31,4 +31,4 @@ def withTempDirectory(testFun: Path => Any): Any =
   try
     testFun(dataRootPath)
 
-  // finally os.remove.all(dataRootPath)
+  finally os.remove.all(dataRootPath)
