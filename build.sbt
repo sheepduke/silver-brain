@@ -15,15 +15,18 @@ val tapirVersion = "1.11.8"
 val libsHttpServer = Seq(
   // "org.http4s" %% "http4s-ember-server" % http4sVersion,
   // "org.http4s" %% "http4s-dsl" % http4sVersion,
-  // "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion,
+  "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion,
+  "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion,
+  "com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % tapirVersion
   // "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
   // "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
-  "com.lihaoyi" %% "cask" % "0.9.2"
+  // "com.lihaoyi" %% "cask" % "0.9.2"
 )
 
 val libsHttpClient = Seq(
-  "org.http4s" %% "http4s-ember-client" % http4sVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-http4s-client" % tapirVersion
+  // "org.http4s" %% "http4s-ember-client" % http4sVersion,
+  // "com.softwaremill.sttp.tapir" %% "tapir-http4s-client" % tapirVersion
+  "com.softwaremill.sttp.tapir" %% "tapir-sttp-client" % tapirVersion
 )
 
 // JSON.
@@ -62,25 +65,25 @@ val libsTestFramework = Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test
 )
 
-// // ============================================================
-// //  Server
-// // ============================================================
+// ============================================================
+//  Server
+// ============================================================
 
-// lazy val server = project
-//   .in(file("modules/server"))
-//   .settings(
-//     name := "silver-brain",
-//     libraryDependencies ++= Seq(
-//       libLoggerInterface,
-//       libLoggerImplementation
-//     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework
-//   )
-//   .dependsOn(
-//     store % "compile->compile;test->test",
-//     httpClient % "test->compile"
-//   )
-//   .aggregate(store)
-//   .enablePlugins(JavaAppPackaging)
+lazy val server = project
+  .in(file("modules/server"))
+  .settings(
+    name := "silver-brain",
+    libraryDependencies ++= Seq(
+      libLoggerInterface,
+      libLoggerImplementation
+    ) ++ libsHttpServer ++ libsJson ++ libsTestFramework ++ libsHttpClient
+  )
+  .dependsOn(
+    store % "compile->compile;test->test"
+    // httpClient % "test->compile"
+  )
+  // .aggregate(store)
+  .enablePlugins(JavaAppPackaging)
 
 // // ============================================================
 // //  Http Client

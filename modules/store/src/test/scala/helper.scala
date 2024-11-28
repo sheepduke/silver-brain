@@ -12,12 +12,13 @@ def withTempItemStore(testFun: ItemStore => Any): Any =
     // Setup database.
     given DataRootPath = dataRootPath
     given storeManager: SqliteStoreManager = SqliteStoreManager()
-    given storeName: StoreName = Ksuid.newKsuid().toString()
+
+    val storeName = Ksuid.newKsuid().toString()
     storeManager.create(storeName)
 
     // Setup transactor and item store.
     given Transactor = Transactor()
-    val itemStore = SqlItemStore()
+    val itemStore = SqlItemStore(storeName)
 
     // Invoke test logic.
     testFun(itemStore)
@@ -25,8 +26,6 @@ def withTempItemStore(testFun: ItemStore => Any): Any =
 
 def withTempDirectory(testFun: Path => Any): Any =
   val dataRootPath = os.temp.dir()
-
-  println(s"Data root: $dataRootPath")
 
   try
     testFun(dataRootPath)

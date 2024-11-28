@@ -4,8 +4,11 @@ import silverbrain.core.*
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import sttp.tapir.*
+import sttp.tapir.json.jsoniter.jsonBody
+import sttp.tapir.generic.auto.*
 
-trait HttpEndpoints:
+object HttpEndpoints:
   given JsonValueCodec[IdOnly] = JsonCodecMaker.make
   given JsonValueCodec[ConflictError] = JsonCodecMaker.make
   given JsonValueCodec[InvalidArgumentError] = JsonCodecMaker.make
@@ -18,45 +21,26 @@ trait HttpEndpoints:
   private val endpointBase =
     endpoint
       .in(header[String]("X-SB-Store").default("main"))
-      .errorOut(statusCode.and(plainBody[String]))
-    // .errorOut(
-    //   oneOf[Throwable](
-    //     oneOfVariant(statusCode(StatusCode.NotFound).mapTo[IdNotFoundError]),
-    //     oneOfVariant(
-    //       statusCode(StatusCode.Conflict)
-    //         .and(jsonBody[ConflictError])
-    //         .mapTo[ConflictError]
-    //     ),
-    //     oneOfVariant(
-    //       statusCode(StatusCode.BadRequest)
-    //         .and(jsonBody[InvalidArgumentError])
-    //         .mapTo[InvalidArgumentError]
-    //     ),
-    //     oneOfVariant(
-    //       statusCode(StatusCode.InternalServerError)
-    //         .and(jsonBody[SerializableException])
-    //         .mapTo[SerializableException]
-    //     )
-    //   )
-    // )
+      .in("api" / "v2")
+      .errorOut(statusCode.and(stringBody))
 
-  val getItemEndpoint =
+  val getItem =
     this.endpointBase.get
       .in("items")
       .in(path[String]("id"))
-      .in(query[String]("select"))
+      .in(query[String]("select").default("all"))
       .out(jsonBody[Item])
 
-  val createItemEndpoint =
+  val createItem =
     this.endpointBase.post
       .in("items")
       .in(jsonBody[CreateItemArgs])
       .out(statusCode.and(jsonBody[IdOnly]))
 
-  val updateItemEndpoint =
+  val updateItem =
     this.endpointBase.patch
       .in(jsonBody[UpdateItemArgs])
       .out(statusCode)
 
-  val deleteItemEndpoint =
+  val deleteItem =
     this.endpointBase.delete.in("items").in(path[String]("id")).out(statusCode)

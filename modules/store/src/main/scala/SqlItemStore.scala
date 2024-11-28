@@ -6,8 +6,10 @@ import com.github.ksuid.Ksuid
 import java.time.Instant
 import scalikejdbc.*
 
-class SqlItemStore(using transactor: Transactor)(using StoreName)
+class SqlItemStore(storeName: StoreName)(using transactor: Transactor)
     extends ItemStore:
+
+  given StoreName = storeName
 
   // ============================================================
   //  Item
