@@ -19,8 +19,6 @@ val libsHttpServer = Seq(
 )
 
 val libsHttpClient = Seq(
-  // "org.http4s" %% "http4s-ember-client" % http4sVersion,
-  // "com.softwaremill.sttp.tapir" %% "tapir-http4s-client" % tapirVersion
   "com.softwaremill.sttp.tapir" %% "tapir-sttp-client" % tapirVersion
 )
 
@@ -40,7 +38,6 @@ val libParserCombinator = "com.lihaoyi" %% "fastparse" % "3.1.1"
 val libOsLib = "com.lihaoyi" %% "os-lib" % "0.11.1"
 
 // Database access.
-val doobieVersion = "1.0.0-RC4"
 val libsDatabase = Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
   "org.xerial" % "sqlite-jdbc" % "3.45.2.0",
