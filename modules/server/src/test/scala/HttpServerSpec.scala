@@ -4,43 +4,40 @@ import silverbrain.core.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import silverbrain.store.withTempItemStore
+import java.time.Duration
+import java.net.ServerSocket
+import scala.util.Using
+import scala.util.Try
 
 class HttpServerSpec extends AnyFunSuite with Matchers:
-  def withHttpServerAndClient(fun: HttpClient => Any) =
-    withTempItemStore(store =>
-      // given ItemStoreProvider = new ItemStoreProvider:
-      //   override def create(storeName: String): ItemStore = store
+  def findFreePort(): Try[Int] = Using(ServerSocket(0))(_.getLocalPort())
 
-      // val server = HttpServer(port = 8888)
-      val client = HttpClient()
-      // server.start()
+  def withTempServerAndClient(testFun: HttpClient => Any) =
+    withTempItemStore((dataRootPath, storeName, itemStore) =>
+      val itemStoreProvider = new ItemStoreProvider:
+        def create(storeName: String): ItemStore = itemStore
+
+      val port = findFreePort().get
+
+      val serverTask = Thread.startVirtualThread(() =>
+        val server = HttpServer(itemStoreProvider)(port = port)
+        server.start()
+      )
+
+      val httpClient = HttpClient(port = port, storeName = storeName)
+
+      // FIXME Replace this with a healthz endpoint
+      Thread.sleep(Duration.ofSeconds(1))
+
+      try
+        testFun(httpClient)
+      finally
+        serverTask.interrupt()
     )
 
-  // test("Basic scenario"):
-  //   withHttpServerAndClient(client =>
-  //     // for
-  //     //   // Get basic info of item.
-  //     //   emacsId <- client
-  //     //     .createItem(
-  //     //       CreateItemArgs("Emacs")
-  //     //         .withContentType("plain/text")
-  //     //         .withContent("Hello")
-  //     //     )
-  //     //   emacs <- client.getItem(emacsId)
-  //     //   _ = emacs.id.shouldBe(emacsId)
-  //     //   _ = emacs.name.shouldBe("Emacs")
-
-  //     //   // Get full info of item.
-  //     //   emacs <- client.getItem(emacsId, ItemLoadOptions().withAll)
-  //     //   _ = emacs.name.shouldBe("Emacs")
-  //     // yield ()
-
-  //     val result = client.getItem("i_2gHcjIW03hg0nQWLTQN1hxugIla?select=all")
-  //     println(s"RESULT: $result")
-  //     result.isRight.shouldBe(false)
-  //   )
-
-  test("It"):
-    val client = HttpClient()
-    val result = client.getItem("i_2gHcjIW03hg0nQWLTQN1hxugIla")
-    println(result)
+  test("Basic functionality"):
+    withTempServerAndClient(httpClient =>
+      val result = httpClient.getItem("invalid")
+      result.isLeft.shouldBe(true)
+      result.left.get.isInstanceOf[IdNotFoundError].shouldBe(true)
+    )

@@ -19,7 +19,8 @@ object Helper:
       case Left(_: IdNotFoundError) => Left(StatusCode.NotFound, "")
       case Left(error: ConflictError) =>
         Left(StatusCode.Conflict, json.writeToString(error))
-      case Left(_: StoreNotFoundError) => Left(StatusCode.BadRequest, "")
+      case Left(_: StoreNotFoundError) =>
+        Left(StatusCode.PreconditionFailed, "")
       case Left(error: InvalidArgumentError) =>
         Left(StatusCode.BadRequest, json.writeToString(error))
 

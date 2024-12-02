@@ -8,7 +8,7 @@ trait ItemStoreProvider:
   def create(storeName: String): ItemStore
 
 object ItemStoreProvider:
-  def create(using transactor: Transactor) =
+  def create(transactor: Transactor) =
     new ItemStoreProvider:
       def create(storeName: String): ItemStore =
-        SqlItemStore(storeName)
+        SqlItemStore(transactor)(storeName)

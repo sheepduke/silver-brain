@@ -4,7 +4,7 @@ import silverbrain.core.*
 
 import sttp.model.StatusCode
 
-trait HttpServerEndpoints(using itemStoreProvider: ItemStoreProvider):
+trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
   val getItemRoute = HttpEndpoints.getItem
     .handle((storeName: String, itemId: String, select: String) =>
       selectToItemLoadOptions(select) match
@@ -12,6 +12,8 @@ trait HttpServerEndpoints(using itemStoreProvider: ItemStoreProvider):
           val message = s"Invalid keys: ${keys.mkString(",")}"
           Left(InvalidArgumentError(message)).toHttpResponse
         case Right(loadOptions) =>
+          println(s"server inside store name: $storeName")
+
           this.itemStoreProvider
             .create(storeName)
             .getItem(itemId, loadOptions)

@@ -7,22 +7,23 @@ import org.scalatest.Outcome
 import org.scalatest.fixture
 import os.Path
 
-def withTempItemStore(testFun: ItemStore => Any): Any =
+def withTempItemStore(testFun: (Path, String, ItemStore) => Any): Any =
   withTempDirectory(dataRootPath =>
     // Setup database.
-    given DataRootPath = dataRootPath
-    given storeManager: SqliteStoreManager = SqliteStoreManager()
-
+    val storeManager = SqliteStoreManager(dataRootPath)
     val storeName = Ksuid.newKsuid().toString()
     storeManager.create(storeName)
 
     // Setup transactor and item store.
-    given Transactor = Transactor()
-    val itemStore = SqlItemStore(storeName)
+    val transactor = Transactor(storeManager)
+    val itemStore = SqlItemStore(transactor)(storeName)
 
     // Invoke test logic.
-    testFun(itemStore)
+    testFun(dataRootPath, storeName, itemStore)
   )
+
+def withTempItemStore(testFun: ItemStore => Any): Any =
+  withTempItemStore((_, _, itemStore) => testFun(itemStore))
 
 def withTempDirectory(testFun: Path => Any): Any =
   val dataRootPath = os.temp.dir()

@@ -9,7 +9,7 @@ import os.Path
 import scala.util.Try
 import scalikejdbc.*
 
-class SqliteStoreManager(using dataRootPath: DataRootPath) extends StoreManager:
+class SqliteStoreManager(dataRootPath: DataRootPath) extends StoreManager:
   def create(storeName: String): Either[ConflictError, Unit] =
     if this.exists(storeName) then Left(ConflictError("Store already exists"))
     else

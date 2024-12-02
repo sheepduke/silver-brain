@@ -102,8 +102,6 @@ class NewStore(using DBSession):
 def run() =
   given DataRootPath = os.home / "temp" / "test"
 
-  val storeManager = SqliteStoreManager()
-
   // def migrate(oldXa: Transactor[IO], newXa: Transactor[IO]): IO[Unit] = {
   //   for
   //     items <- getItems().transact(oldXa)

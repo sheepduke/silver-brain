@@ -5,7 +5,7 @@ import silverbrain.core.*
 import scalikejdbc.*
 import org.sqlite.{SQLiteConfig, SQLiteDataSource}
 
-class Transactor(using storeManager: SqliteStoreManager):
+class Transactor(storeManager: SqliteStoreManager):
   def withTransaction[A, E](
       fun: DBSession => Either[E, A]
   )(using storeName: StoreName): Either[StoreNotFoundError | E, A] =

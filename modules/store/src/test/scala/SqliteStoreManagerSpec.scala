@@ -10,8 +10,7 @@ class StoreManagerSpec extends AnyFunSuite with Matchers:
 
   test("Create 2 stores and verify them"):
     withTempDirectory(dataRootPath =>
-      given DataRootPath = dataRootPath
-      val storeManager = SqliteStoreManager()
+      val storeManager = SqliteStoreManager(dataRootPath)
 
       val storeName1 = this.createRandomStoreName()
       val storeName2 = this.createRandomStoreName()
@@ -29,9 +28,7 @@ class StoreManagerSpec extends AnyFunSuite with Matchers:
 
   test("Create duplicated store"):
     withTempDirectory(dataRootPath =>
-      given DataRootPath = dataRootPath
-
-      val storeManager = SqliteStoreManager()
+      val storeManager = SqliteStoreManager(dataRootPath)
 
       val storeName = this.createRandomStoreName()
 
