@@ -1,6 +1,7 @@
 package silverbrain.server
 
 import silverbrain.core.*
+import silverbrain.http.contract.*
 import silverbrain.store.DataRootPath
 import silverbrain.store.SqlItemStore
 import silverbrain.store.SqliteStoreManager
@@ -16,10 +17,10 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
     .port(port)
     .addEndpoints(
       List(
-        this.getItemRoute
-          // this.createItemRoute,
-          // this.updateItemRoute,
-          // this.deleteItemRoute
+        this.getItem,
+        this.createItem,
+        this.updateItem,
+        this.deleteItem
       )
     )
     .startAndWait()

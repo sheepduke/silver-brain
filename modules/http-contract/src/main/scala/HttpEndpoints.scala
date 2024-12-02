@@ -1,4 +1,4 @@
-package silverbrain.server
+package silverbrain.http.contract
 
 import silverbrain.core.*
 

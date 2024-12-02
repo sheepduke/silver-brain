@@ -1,11 +1,12 @@
 package silverbrain.server
 
 import silverbrain.core.*
+import silverbrain.http.contract.*
 
 import sttp.model.StatusCode
 
 trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
-  val getItemRoute = HttpEndpoints.getItem
+  val getItem = HttpEndpoints.getItem
     .handle((storeName: String, itemId: String, select: String) =>
       selectToItemLoadOptions(select) match
         case Left(keys) =>
@@ -20,7 +21,7 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
             .toHttpResponse
     )
 
-  val createItemRoute =
+  val createItem =
     HttpEndpoints.createItem.handle((storeName, item) =>
       this.itemStoreProvider
         .create(storeName)
@@ -28,7 +29,7 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
         .toCreatedHttpResponse
     )
 
-  val updateItemRoute =
+  val updateItem =
     HttpEndpoints.updateItem
       .handle((storeName, item) =>
         this.itemStoreProvider
@@ -37,7 +38,7 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
           .toNoContentHttpResponse
       )
 
-  val deleteItemRoute =
+  val deleteItem =
     HttpEndpoints.deleteItem.handle((storeName, itemId) =>
       this.itemStoreProvider
         .create(storeName)

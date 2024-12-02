@@ -1,6 +1,8 @@
 package silverbrain.server
 
 import silverbrain.core.*
+import silverbrain.http.contract.*
+
 import sttp.model.StatusCode
 import com.github.plokhotnyuk.jsoniter_scala.core as json
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec

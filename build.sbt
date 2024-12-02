@@ -9,18 +9,13 @@ ThisBuild / organization := "com.sheepduke"
 val libCliArgsParser = "org.rogach" %% "scallop" % "5.1.0"
 
 // HTTP server.
-// val libHttpServer = "com.lihaoyi" %% "cask" % "0.9.2"
-val http4sVersion = "0.23.29"
 val tapirVersion = "1.11.8"
-val libsHttpServer = Seq(
-  // "org.http4s" %% "http4s-ember-server" % http4sVersion,
-  // "org.http4s" %% "http4s-dsl" % http4sVersion,
+val tapirCore = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion,
-  "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion,
+  "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
+)
+val libsHttpServer = Seq(
   "com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % tapirVersion
-  // "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % tapirVersion,
-  // "com.softwaremill.sttp.tapir" %% "tapir-jsoniter-scala" % tapirVersion
-  // "com.lihaoyi" %% "cask" % "0.9.2"
 )
 
 val libsHttpClient = Seq(
@@ -49,9 +44,6 @@ val doobieVersion = "1.0.0-RC4"
 val libsDatabase = Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "4.0.0",
   "org.xerial" % "sqlite-jdbc" % "3.45.2.0",
-  // "org.tpolecat" %% "doobie-core" % doobieVersion,
-  // "org.tpolecat" %% "doobie-hikari" % doobieVersion,
-  // "org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test,
   "org.flywaydb" % "flyway-core" % "9.0.4"
 )
 
@@ -79,24 +71,35 @@ lazy val server = project
     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework ++ libsHttpClient
   )
   .dependsOn(
-    store % "compile->compile;test->test"
-    // httpClient % "test->compile"
+    httpContract,
+    store % "compile->compile;test->test",
+    httpClient % "test->compile"
   )
-  // .aggregate(store)
   .enablePlugins(JavaAppPackaging)
 
-// // ============================================================
-// //  Http Client
-// // ============================================================
+// ============================================================
+//  Http Client
+// ============================================================
 
-// lazy val httpClient = project
-//   .in(file("modules/http-client"))
-//   .settings(
-//     name := "silver-brain-http-client",
-//     libraryDependencies ++= libsHttpClient ++ libsJson
-//   )
-//   .dependsOn(core)
-//   .dependsOn(core)
+lazy val httpClient = project
+  .in(file("modules/http-client"))
+  .settings(
+    name := "silver-brain-http-client",
+    libraryDependencies ++= libsHttpClient ++ libsJson
+  )
+  .dependsOn(httpContract, core)
+
+// ============================================================
+//  Http Contract
+// ============================================================
+
+lazy val httpContract = project
+  .in(file("modules/http-contract"))
+  .settings(
+    name := "silver-brain-http-contract",
+    libraryDependencies ++= libsJson ++ tapirCore
+  )
+  .dependsOn(core)
 
 // ============================================================
 //  Store
@@ -138,8 +141,7 @@ lazy val playground =
     .settings(
       name := "silver-brain-playground",
       libraryDependencies ++= Seq(
-        libUniqueId,
-        libOsLib
+        libUniqueId
       ) ++ libsDatabase ++ libsJson
     )
     .dependsOn(core, store)
