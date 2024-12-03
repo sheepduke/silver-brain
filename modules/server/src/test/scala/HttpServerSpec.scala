@@ -1,6 +1,8 @@
 package silverbrain.server
 
 import silverbrain.core.*
+import silverbrain.client.http.HttpClient
+
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import silverbrain.store.withTempItemStore
@@ -39,5 +41,6 @@ class HttpServerSpec extends AnyFunSuite with Matchers:
     withTempServerAndClient(httpClient =>
       val result = httpClient.getItem("invalid")
       result.isLeft.shouldBe(true)
+      println(s"Left error: ${result}")
       result.left.get.isInstanceOf[IdNotFoundError].shouldBe(true)
     )

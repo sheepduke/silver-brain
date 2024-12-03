@@ -1,56 +1,109 @@
-package silverbrain.server
+package silverbrain.client.http
 
 import silverbrain.core.*
 import silverbrain.http.contract.*
 
 import sttp.client3.*
 import sttp.tapir.client.sttp.SttpClientInterpreter
-import sttp.model.StatusCode
-import scala.reflect.ClassTag
-
-import com.github.plokhotnyuk.jsoniter_scala.core as json
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import scala.reflect.TypeTest
 
 class HttpClient(
     host: String = "localhost",
     port: Int = 8080,
     storeName: StoreName = "main"
-):
+) extends ItemStore:
   private val baseUrl = s"http://$host:$port"
+
+  // ============================================================
+  //  Item
+  // ============================================================
 
   def getItem(
       itemId: String,
-      select: String = "all"
+      loadOptions: ItemLoadOptions
   ): Either[StoreNotFoundError | IdNotFoundError, Item] =
     SttpClientInterpreter()
       .toQuickClient(HttpEndpoints.getItem, Some(uri"$baseUrl"))
-      .apply((storeName, itemId, select))
+      .apply(storeName, itemId, loadOptions.toSelectString)
       .toResult
       .asInstanceOf[Either[StoreNotFoundError | IdNotFoundError, Item]]
 
-type HttpResponse[A] = Either[(StatusCode, String), A]
+  def getItems(
+      itemIds: Seq[String],
+      loadOptions: ItemLoadOptions
+  ): Either[StoreNotFoundError, Seq[Item]] = ???
 
-given JsonValueCodec[ConflictError] = JsonCodecMaker.make
-given JsonValueCodec[InvalidArgumentError] = JsonCodecMaker.make
-given JsonValueCodec[ServerSideException] = JsonCodecMaker.make
+  def searchItems(
+      search: String
+  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[String]] = ???
 
-extension [A](response: HttpResponse[A])
-  def toResult: Either[AppError, A] =
-    response match
-      case Right(value)                 => Right(value)
-      case Left(StatusCode.NotFound, _) => Left(IdNotFoundError())
-      case Left(StatusCode.BadRequest, payload) =>
-        Left(json.readFromString[InvalidArgumentError](payload))
-      case Left(StatusCode.Conflict, payload) =>
-        Left(json.readFromString[ConflictError](payload))
-      case Left(StatusCode.PreconditionFailed, message) =>
-        Left(StoreNotFoundError())
-      case Left(StatusCode.InternalServerError, payload) =>
-        throw json.readFromString[ServerSideException](payload)
-      case _ =>
-        throw RuntimeException(s"Unexpected status code. Response: $response")
+  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String] = ???
 
-case class ServerSideException(message: String, stackTrace: String)
-    extends Exception
+  def updateItem(
+      item: UpdateItemArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
+
+  def deleteItem(itemId: String): Either[StoreNotFoundError, Unit] = ???
+
+  // ============================================================
+  //  Property
+  // ============================================================
+
+  def upsertItemProperty(
+      itemId: String,
+      key: String,
+      value: String
+  ): Either[StoreNotFoundError, Unit] = ???
+
+  def deleteItemProperty(
+      itemId: String,
+      key: String
+  ): Either[StoreNotFoundError, Unit] = ???
+
+  // ============================================================
+  //  Link
+  // ============================================================
+
+  def getParents(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] = ???
+
+  def getChildren(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] = ???
+
+  def createLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit] =
+    ???
+
+  def deleteLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError, Unit] = ???
+
+  // ============================================================
+  //  Reference
+  // ============================================================
+
+  def getReference(
+      referenceId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Reference] = ???
+
+  def getReferences(
+      referenceIds: Seq[String]
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[Reference]] = ???
+
+  def createReference(
+      source: String,
+      target: String,
+      annotation: String
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
+
+  def updateReference(
+      referenceId: String,
+      annotation: String
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
+
+  def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit] =
+    ???
