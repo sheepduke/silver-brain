@@ -80,11 +80,10 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
   (silver-brain--client-get (format "items/%s?props=all" id)))
 
 (defun silver-brain-client-get-items (ids)
-  (silver-brain--client-get (format "items?ids=%s&props=name"
-                        (string-join ids ","))))
+  (silver-brain--client-get (format "items?ids=%s" (string-join ids ","))))
 
 (defun silver-brain-client-search-items (search-string)
-  (silver-brain--client-get (format "items?search=%s"
+  (silver-brain--client-get (format "items?search=%s&select="
                         (url-hexify-string search-string))))
 
 (defun silver-brain-client-create-item (name content-type)
@@ -131,7 +130,10 @@ Return the ID of newly created item."
     reference-id))
 
 (defun silver-brain-client-get-references (ids)
-  (silver-brain--client-get (format "references?ids=%s" (string-join ids ","))))
+  ;; (silver-brain--client-get (format "references?ids=%s" (string-join ids ",")))
+  ;; FIXME
+  (list)
+  )
 
 (defun silver-brain-client-update-reference (id annotation)
   (silver-brain--client-patch (format "references/%s" id)

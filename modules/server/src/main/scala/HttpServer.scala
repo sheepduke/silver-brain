@@ -18,6 +18,7 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
     .addEndpoints(
       List(
         this.getItem,
+        this.getItems,
         this.createItem,
         this.updateItem,
         this.deleteItem
@@ -30,7 +31,5 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
   val storeManager = SqliteStoreManager(dataRootPath)
   val transactor = Transactor(storeManager)
   val itemStoreProvider = ItemStoreProvider.create(transactor)
-
-  println(s"GetItem Endpoint: ${HttpEndpoints.getItem.show}")
 
   HttpServer(itemStoreProvider)(port = 8080).start()

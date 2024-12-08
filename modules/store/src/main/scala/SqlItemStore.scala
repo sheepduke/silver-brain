@@ -42,12 +42,14 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
     )
 
   def searchItems(
-      search: String
-  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[String]] =
+      search: String,
+      loadOptions: ItemLoadOptions
+  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[Item]] =
     SearchParser.parse(search) match
       case Right(query) =>
         transactor.withTransaction(implicit session =>
-          Right(SearchEngine.execute(query))
+          val ids = SearchEngine.execute(query)
+          Right(ItemRepo.getMany(ids, loadOptions))
         )
       case Left(errorMessage) =>
         Left(InvalidArgumentError(errorMessage))

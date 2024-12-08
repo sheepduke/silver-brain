@@ -1,6 +1,7 @@
 package silverbrain.http.contract
 
 import silverbrain.core.*
+import scala.collection.mutable.ArrayBuffer
 
 extension (loadOptions: ItemLoadOptions)
   def toSelectString: String =
@@ -14,35 +15,25 @@ extension (loadOptions: ItemLoadOptions)
       if loadOptions.children then "children" else ""
     ).filterNot(_.isBlank()).mkString(",")
 
-val acceptedSelectKeys = Set(
-  "all",
-  "id",
-  "name",
-  "contentType",
-  "content",
-  "properties",
-  "parents",
-  "children",
-  "createTime",
-  "updateTime"
-)
-
 extension (loadOptions: ItemLoadOptions.type)
-  def fromSelectString(select: String): Either[Seq[String], ItemLoadOptions] =
-    val selectKeys = select.split(",").map(_.trim()).filter(_.nonEmpty)
+  def fromSelectString(select: String): Option[ItemLoadOptions] =
+    val acc: Option[ItemLoadOptions] = Some(ItemLoadOptions())
 
-    if selectKeys.toSet[String].subsetOf(acceptedSelectKeys) then
-      Right(
-        selectKeys.foldLeft(ItemLoadOptions())((loadOptions, selectKey) =>
-          selectKey match
-            case "all"         => loadOptions.withAll
-            case "contentType" => loadOptions.withContentType
-            case "content"     => loadOptions.withContent
-            case "properties"  => loadOptions.withProperties
-            case "parents"     => loadOptions.withParents
-            case "children"    => loadOptions.withChildren
-            case "createTime"  => loadOptions.withCreateTime
-            case "updateTime"  => loadOptions.withUpdatetime
-        )
-      )
-    else Left(selectKeys.diff(acceptedSelectKeys.toSeq))
+    select.splitByComma.foldLeft(acc)((loadOptionsOpt, key) =>
+      loadOptionsOpt match
+        case None => None
+        case Some(loadOptions) =>
+          key.toLowerCase().replace('-', '_') match
+            case "all" => Some(loadOptions.withAll)
+            case "contenttype" | "content_type" =>
+              Some(loadOptions.withContentType)
+            case "content"    => Some(loadOptions.withContent)
+            case "properties" => Some(loadOptions.withProperties)
+            case "parents"    => Some(loadOptions.withParents)
+            case "children"   => Some(loadOptions.withChildren)
+            case "createtime" | "create_time" =>
+              Some(loadOptions.withCreateTime)
+            case "updatetime" | "update_time" =>
+              Some(loadOptions.withUpdatetime)
+            case _ => None
+    )

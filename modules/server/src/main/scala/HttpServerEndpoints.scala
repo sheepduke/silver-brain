@@ -6,17 +6,48 @@ import silverbrain.http.contract.*
 import sttp.model.StatusCode
 
 trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
-  val getItem = HttpEndpoints.getItem
-    .handle((storeName: String, itemId: String, select: String) =>
-      ItemLoadOptions.fromSelectString(select) match
-        case Left(keys) =>
-          val message = s"Invalid keys: ${keys.mkString(",")}"
-          Left(InvalidArgumentError(message)).toHttpResponse
-        case Right(loadOptions) =>
+  val getItem =
+    HttpEndpoints.getItem.handle((storeName, itemId, select) =>
+      val result = ItemLoadOptions.fromSelectString(select) match
+        case None =>
+          Left(InvalidArgumentError("Invalid select key"))
+        case Some(loadOptions) =>
           this.itemStoreProvider
             .create(storeName)
             .getItem(itemId, loadOptions)
-            .toHttpResponse
+
+      result.toHttpResponse
+    )
+
+  val getItems =
+    HttpEndpoints.getItems.handle((storeName, ids, search, select) =>
+      val result = ItemLoadOptions.fromSelectString(select) match
+        case None =>
+          Left(InvalidArgumentError("Invalid select key"))
+        case Some(loadOptions) =>
+          (ids.map(_.splitByComma), search) match
+            case (None, None) =>
+              Left(
+                InvalidArgumentError(
+                  "Neither `ids` or `search` is provided"
+                )
+              )
+            case (Some(itemIds), None) =>
+              this.itemStoreProvider
+                .create(storeName)
+                .getItems(itemIds, loadOptions)
+            case (None, Some(search)) =>
+              this.itemStoreProvider
+                .create(storeName)
+                .searchItems(search, loadOptions)
+            case (Some(_), Some(_)) =>
+              Left(
+                InvalidArgumentError(
+                  "Only one of `ids` or `search` should be provided"
+                )
+              )
+
+      result.toHttpResponse
     )
 
   val createItem =

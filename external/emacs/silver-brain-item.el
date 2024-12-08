@@ -172,25 +172,6 @@
     (silver-brain--widget-create-item child)
     (widget-insert "\n"))
 
-  ;; Insert siblings.
-  (widget-insert "\n")
-  (silver-brain--widget-insert-with-face "Siblings" 'silver-brain-h2)
-
-  (let ((siblings (silver-brain--item-get-sorted-items
-                   (silver-brain-client-get-items (silver-brain--prop-siblings)))))
-    (unless (null siblings)
-      (widget-insert "\n\n")
-      (widget-insert "  "))
-    
-    (dolist (sibling siblings)
-      (when (>= (+ 2 (current-column) (length (silver-brain--prop-name sibling)))
-               (window-width))
-        (widget-insert "\n  "))
-      (silver-brain--widget-create-item sibling)
-      (widget-insert "  "))
-
-    (widget-insert "\n"))
-
   ;; Insert references.
   (widget-insert "\n")
   (silver-brain--item-insert-references)

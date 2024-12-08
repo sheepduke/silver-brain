@@ -18,8 +18,9 @@ trait ItemStore:
   ): Either[StoreNotFoundError, Seq[Item]]
 
   def searchItems(
-      search: String
-  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[String]]
+      search: String,
+      loadOptions: ItemLoadOptions = ItemLoadOptions()
+  ): Either[StoreNotFoundError | InvalidArgumentError, Seq[Item]]
 
   def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String]
 
