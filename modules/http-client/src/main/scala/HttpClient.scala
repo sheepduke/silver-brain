@@ -21,12 +21,11 @@ class HttpClient(
       itemId: String,
       loadOptions: ItemLoadOptions
   ): Either[StoreNotFoundError | IdNotFoundError, Item] =
-    ???
-    // SttpClientInterpreter()
-    //   .toQuickClient(HttpEndpoints.getItem, Some(uri"$baseUrl"))
-    //   .apply(storeName, itemId, loadOptions.toSelectString)
-    //   .toResult
-    //   .asInstanceOf[Either[StoreNotFoundError | IdNotFoundError, Item]]
+    SttpClientInterpreter()
+      .toQuickClient(HttpEndpoints.getItem, Some(uri"$baseUrl"))
+      .apply(storeName, itemId, loadOptions.toSelectString)
+      .toResult
+      .asInstanceOf[Either[StoreNotFoundError | IdNotFoundError, Item]]
 
   def getItems(
       itemIds: Seq[String],

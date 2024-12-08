@@ -158,10 +158,10 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         vimId <- store.createItem(CreateItemArgs("Vim"))
         softwareId <- store.createItem(CreateItemArgs("Software"))
 
-        ids <- store.searchItems("m")
-        _ = ids.map(_.id).toSet.shouldBe(Set(emacsId, vimId))
+        items <- store.searchItems("m")
+        _ = items.map(_.id).toSet.shouldBe(Set(emacsId, vimId))
 
-        ids <- store.searchItems("emacs")
-        _ = ids.shouldBe(Seq(emacsId))
+        items <- store.searchItems("emacs")
+        _ = items.map(_.id).shouldBe(Seq(emacsId))
       yield ()
     )
