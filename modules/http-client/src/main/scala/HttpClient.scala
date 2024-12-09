@@ -87,23 +87,24 @@ class HttpClient(
   //  Reference
   // ============================================================
 
+  def createReference(
+      reference: CreateItemReferenceArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, String] = ???
+
   def getReference(
       referenceId: String
-  ): Either[StoreNotFoundError | IdNotFoundError, Reference] = ???
+  ): Either[StoreNotFoundError | IdNotFoundError, ItemReference] = ???
 
-  def getReferences(
-      referenceIds: Seq[String]
-  ): Either[StoreNotFoundError | IdNotFoundError, Seq[Reference]] = ???
+  def getReferencesFromItem(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]] = ???
 
-  def createReference(
-      source: String,
-      target: String,
-      annotation: String
-  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
+  def getReferencesToItem(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]] = ???
 
   def updateReference(
-      referenceId: String,
-      annotation: String
+      reference: UpdateItemReferenceArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
 
   def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit] =

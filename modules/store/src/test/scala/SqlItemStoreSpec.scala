@@ -21,6 +21,52 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         item.name.shouldBe("Emacs")
     )
 
+  test("Get single item"):
+    withTempItemStore(store =>
+      for
+        emacsId <- store.createItem(CreateItemArgs("Emacs"))
+        vimId <- store.createItem(CreateItemArgs("Vim"))
+        editorId <- store.createItem(CreateItemArgs("Editor"))
+
+        _ <- store.createLink(editorId, emacsId)
+        _ <- store.createLink(editorId, vimId)
+
+        emacs <- store
+          .getItem(emacsId, ItemLoadOptions().withParents.withChildren)
+
+        vim <- store
+          .getItem(vimId, ItemLoadOptions().withParents.withChildren)
+
+        editor <- store
+          .getItem(editorId, ItemLoadOptions().withChildren)
+      yield
+        emacs.parents.get.shouldBe(Seq(editorId))
+        emacs.children.get.shouldBe(Seq())
+
+        vim.parents.get.shouldBe(Seq(editorId))
+        vim.children.get.shouldBe(Seq())
+
+        editor.parents.shouldBe(None)
+        editor.children.get.size.shouldBe(2)
+        editor.children.get.contains(emacsId).shouldBe(true)
+        editor.children.get.contains(vimId).shouldBe(true)
+    )
+
+  test("Search item"):
+    withTempItemStore(store =>
+      for
+        emacsId <- store.createItem(CreateItemArgs("Emacs"))
+        vimId <- store.createItem(CreateItemArgs("Vim"))
+        softwareId <- store.createItem(CreateItemArgs("Software"))
+
+        items <- store.searchItems("m")
+        _ = items.map(_.id).toSet.shouldBe(Set(emacsId, vimId))
+
+        items <- store.searchItems("emacs")
+        _ = items.map(_.id).shouldBe(Seq(emacsId))
+      yield ()
+    )
+
   test("Create item with all fields"):
     withTempItemStore(store =>
       for
@@ -117,51 +163,57 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
     )
 
   // ============================================================
-  //  Get Item
+  //  Reference
   // ============================================================
 
-  test("Get single item"):
+  test("CRUD reference"):
     withTempItemStore(store =>
       for
-        emacsId <- store.createItem(CreateItemArgs("Emacs"))
-        vimId <- store.createItem(CreateItemArgs("Vim"))
-        editorId <- store.createItem(CreateItemArgs("Editor"))
+        editor <- store.createItem(CreateItemArgs("Editor"))
+        emacs <- store.createItem(CreateItemArgs("Emacs"))
+        vim <- store.createItem(CreateItemArgs("Vim"))
+        emacsEditorRefId <- store.createReference(
+          CreateItemReferenceArgs(emacs, editor, "Is a")
+        )
+        vimEditorRefId <- store.createReference(
+          CreateItemReferenceArgs(vim, editor, "Is a")
+        )
+        emacsVimRefId <- store.createReference(
+          CreateItemReferenceArgs(emacs, vim, "Partly supports")
+        )
 
-        _ <- store.createLink(editorId, emacsId)
-        _ <- store.createLink(editorId, vimId)
+        // Verify relationship between Emacs and Vim is properly set.
+        reference <- store.getReference(emacsVimRefId)
+        _ = reference.id.shouldBe(emacsVimRefId)
+        _ = reference.source.shouldBe(emacs)
+        _ = reference.target.shouldBe(vim)
+        _ = reference.annotation.shouldBe("Partly supports")
 
-        emacs <- store
-          .getItem(emacsId, ItemLoadOptions().withParents.withChildren)
+        // Verify getReferenceFromItem.
+        references <- store.getReferencesFromItem(emacs)
+        _ = references
+          .map(_.id)
+          .toSet
+          .shouldBe(Set(emacsEditorRefId, emacsVimRefId))
 
-        vim <- store
-          .getItem(vimId, ItemLoadOptions().withParents.withChildren)
+        // Verify getReferenceToItem.
+        references <- store.getReferencesToItem(editor)
+        _ = references
+          .map(_.id)
+          .toSet
+          .shouldBe(Set(emacsEditorRefId, vimEditorRefId))
 
-        editor <- store
-          .getItem(editorId, ItemLoadOptions().withChildren)
-      yield
-        emacs.parents.get.shouldBe(Seq(editorId))
-        emacs.children.get.shouldBe(Seq())
-
-        vim.parents.get.shouldBe(Seq(editorId))
-        vim.children.get.shouldBe(Seq())
-
-        editor.parents.shouldBe(None)
-        editor.children.get.size.shouldBe(2)
-        editor.children.get.contains(emacsId).shouldBe(true)
-        editor.children.get.contains(vimId).shouldBe(true)
+        // Verify deleteReference.
+        _ <- store.deleteReference(emacsVimRefId)
+        references <- store.getReferencesFromItem(emacs)
+        _ = references.map(_.id).shouldBe(Seq(emacsEditorRefId))
+      yield ()
     )
 
-  test("Search item"):
+  test("Update a non-existing reference"):
     withTempItemStore(store =>
-      for
-        emacsId <- store.createItem(CreateItemArgs("Emacs"))
-        vimId <- store.createItem(CreateItemArgs("Vim"))
-        softwareId <- store.createItem(CreateItemArgs("Software"))
+      val result =
+        store.updateReference(UpdateItemReferenceArgs("invalid", "Something"))
 
-        items <- store.searchItems("m")
-        _ = items.map(_.id).toSet.shouldBe(Set(emacsId, vimId))
-
-        items <- store.searchItems("emacs")
-        _ = items.map(_.id).shouldBe(Seq(emacsId))
-      yield ()
+      result.left.get.isInstanceOf[InvalidArgumentError].shouldBe(true)
     )

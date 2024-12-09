@@ -15,6 +15,14 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
   //  Item
   // ============================================================
 
+  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String] =
+    val id = "i_" + Ksuid.newKsuid().toString()
+
+    transactor.withTransaction(implicit session =>
+      ItemRepo.create(id, item, Instant.now())
+      Right(id)
+    )
+
   def getItem(
       itemId: String,
       loadOptions: ItemLoadOptions
@@ -54,14 +62,6 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
       case Left(errorMessage) =>
         Left(InvalidArgumentError(errorMessage))
 
-  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String] =
-    val id = "i_" + Ksuid.newKsuid().toString()
-
-    transactor.withTransaction(implicit session =>
-      ItemRepo.create(id, item, Instant.now())
-      Right(id)
-    )
-
   def updateItem(
       item: UpdateItemArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, Unit] =
@@ -95,6 +95,21 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
   //  Link
   // ============================================================
 
+  def createLink(
+      parent: String,
+      child: String
+  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit] =
+    transactor.withTransaction(implicit session =>
+      if ItemLinkRepo.isParent(parent, child) then Right(())
+      else if ItemLinkRepo.isParent(child, parent) then
+        Left(ConflictError(s"Item `$parent` is already a child of `$child`"))
+      else if !ItemRepo.exists(parent) then
+        Left(InvalidArgumentError(s"Item $parent does not exist"))
+      else if !ItemRepo.exists(child) then
+        Left(InvalidArgumentError(s"Item $child does not exist"))
+      else Right(ItemLinkRepo.create(parent, child))
+    )
+
   def getParents(
       itemId: String
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
@@ -113,21 +128,6 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
         case Some(_) => Right(ItemLinkRepo.getChildren(itemId))
     )
 
-  def createLink(
-      parent: String,
-      child: String
-  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit] =
-    transactor.withTransaction(implicit session =>
-      if ItemLinkRepo.isParent(parent, child) then Right(())
-      else if ItemLinkRepo.isParent(child, parent) then
-        Left(ConflictError(s"Item `$parent` is already a child of `$child`"))
-      else if !ItemRepo.exists(parent) then
-        Left(InvalidArgumentError(s"Item $parent does not exist"))
-      else if !ItemRepo.exists(child) then
-        Left(InvalidArgumentError(s"Item $child does not exist"))
-      else Right(ItemLinkRepo.create(parent, child))
-    )
-
   def deleteLink(
       parent: String,
       child: String
@@ -141,23 +141,53 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
   // ============================================================
 
   def createReference(
-      source: String,
-      target: String,
-      annotation: String
-  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
+      reference: CreateItemReferenceArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, String] =
+    transactor.withTransaction(implicit session =>
+      if !ItemRepo.exists(reference.source) then
+        Left(InvalidArgumentError("Invalid source id"))
+      else if !ItemRepo.exists(reference.target) then
+        Left(InvalidArgumentError("Invalid target id"))
+      else Right(ItemReferenceRepo.create(reference))
+    )
 
   def getReference(
       referenceId: String
-  ): Either[StoreNotFoundError | IdNotFoundError, Reference] = ???
+  ): Either[StoreNotFoundError | IdNotFoundError, ItemReference] =
+    transactor.withTransaction(implicit session =>
+      ItemReferenceRepo.getOne(referenceId) match
+        case Some(reference) => Right(reference)
+        case None            => Left(IdNotFoundError())
+    )
 
-  def getReferences(
-      referenceIds: Seq[String]
-  ): Either[StoreNotFoundError | IdNotFoundError, Seq[Reference]] = ???
+  def getReferencesFromItem(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]] =
+    transactor.withTransaction(implicit session =>
+      if ItemRepo.exists(itemId) then
+        Right(ItemReferenceRepo.getManyBySource(itemId))
+      else Left(IdNotFoundError())
+    )
+
+  def getReferencesToItem(
+      itemId: String
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]] =
+    transactor.withTransaction(implicit session =>
+      if ItemRepo.exists(itemId) then
+        Right(ItemReferenceRepo.getManyByTarget(itemId))
+      else Left(IdNotFoundError())
+    )
 
   def updateReference(
-      referenceId: String,
-      annotation: String
-  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
+      reference: UpdateItemReferenceArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, Unit] =
+    transactor.withTransaction(implicit session =>
+      if ItemReferenceRepo.exists(reference.id) then
+        Right(ItemReferenceRepo.update(reference))
+      else Left(InvalidArgumentError("Invalid reference id"))
+    )
 
   def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit] =
-    ???
+    transactor.withTransaction(implicit session =>
+      Right(ItemReferenceRepo.delete(referenceId))
+    )

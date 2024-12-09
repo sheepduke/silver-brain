@@ -2,7 +2,7 @@ package silverbrain.core
 
 import java.time.Instant
 
-case class Reference(
+case class ItemReference(
     id: String,
     source: String,
     target: String,
