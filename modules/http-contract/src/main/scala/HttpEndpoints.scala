@@ -18,6 +18,8 @@ object HttpEndpoints:
   given JsonValueCodec[Seq[Item]] = JsonCodecMaker.make
   given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
   given JsonValueCodec[UpdateItemArgs] = JsonCodecMaker.make
+  given JsonValueCodec[CreateItemReferenceArgs] = JsonCodecMaker.make
+  given JsonValueCodec[UpdateItemReferenceArgs] = JsonCodecMaker.make
 
   private val endpointBase =
     endpoint
@@ -25,10 +27,20 @@ object HttpEndpoints:
       .in(header[String]("X-SB-Store").default("main"))
       .errorOut(statusCode.and(stringBody))
 
+  // ============================================================
+  //  Item
+  // ============================================================
+
+  val createItem =
+    this.endpointBase.post
+      .in("items")
+      .in(jsonBody[CreateItemArgs])
+      .out(statusCode.and(jsonBody[IdOnly]))
+
   val getItem =
     this.endpointBase.get
       .in("items")
-      .in(path[String]("ids"))
+      .in(path[String]("id"))
       .in(query[String]("select").default("all"))
       .out(jsonBody[Item])
 
@@ -40,16 +52,65 @@ object HttpEndpoints:
       .in(query[String]("select").default(""))
       .out(jsonBody[Seq[Item]])
 
-  val createItem =
-    this.endpointBase.post
-      .in("items")
-      .in(jsonBody[CreateItemArgs])
-      .out(statusCode.and(jsonBody[IdOnly]))
-
   val updateItem =
     this.endpointBase.patch
+      .in("items")
+      .in(path[String]("id"))
       .in(jsonBody[UpdateItemArgs])
       .out(statusCode)
 
   val deleteItem =
     this.endpointBase.delete.in("items").in(path[String]("id")).out(statusCode)
+
+  // ============================================================
+  //  Link
+  // ============================================================
+
+  val createParent =
+    this.endpointBase.post
+      .in("items")
+      .in(path[String]("id"))
+      .in("parents")
+      .in(path[String]("parent"))
+      .out(statusCode.and(jsonBody[IdOnly]))
+
+  val createChild =
+    this.endpointBase.post
+      .in("items")
+      .in(path[String]("id"))
+      .in("children")
+      .in(path[String]("child"))
+      .out(statusCode.and(jsonBody[IdOnly]))
+
+  val deleteParent =
+    this.endpointBase.delete
+      .in("items")
+      .in(path[String]("id"))
+      .in("parents")
+      .in(path[String]("parent"))
+      .out(statusCode)
+
+  val deleteChild =
+    this.endpointBase.delete
+      .in("items")
+      .in(path[String]("id"))
+      .in("children")
+      .in(path[String]("children"))
+      .out(statusCode)
+
+  // ============================================================
+  //  Reference
+  // ============================================================
+
+  val createReference =
+    this.endpointBase.post
+      .in("references")
+      .in(jsonBody[CreateItemReferenceArgs])
+      .out(statusCode.and(jsonBody[IdOnly]))
+
+  val updateReference =
+    this.endpointBase.patch
+      .in("references")
+      .in(path[String]("id"))
+      .in(jsonBody[UpdateItemReferenceArgs])
+      .out(statusCode.and(jsonBody[IdOnly]))

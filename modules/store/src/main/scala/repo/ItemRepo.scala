@@ -40,25 +40,27 @@ private[store] object ItemRepo:
 
   def create(
       id: String,
-      item: CreateItemArgs,
+      args: CreateItemArgs,
       createTime: Instant
   )(using DBSession): Unit =
     val time = createTime.toString()
     sql"""insert into item(id, name, content_type, content, create_time, update_time) values(
-      $id, ${item.name},
-      ${item.contentType.getOrElse("")},
-      ${item.content.getOrElse("")},
+      $id, ${args.name},
+      ${args.contentType.getOrElse("")},
+      ${args.content.getOrElse("")},
       $time, $time)""".update.apply()
 
-  def update(item: UpdateItemArgs, updateTime: Instant)(using DBSession): Unit =
+  def update(id: String, args: UpdateItemArgs, updateTime: Instant)(using
+      DBSession
+  ): Unit =
     var updates = sqls"update_time = ${updateTime.toString()}"
 
-    if item.name.nonEmpty then updates += sqls",name = ${item.name}"
-    if item.contentType.nonEmpty then
-      updates += sqls",content_type = ${item.contentType}"
-    if item.content.nonEmpty then updates += sqls",content = ${item.content}"
+    if args.name.nonEmpty then updates += sqls",name = ${args.name}"
+    if args.contentType.nonEmpty then
+      updates += sqls",content_type = ${args.contentType}"
+    if args.content.nonEmpty then updates += sqls",content = ${args.content}"
 
-    updates += sqls"where id = ${item.id}"
+    updates += sqls"where id = ${id}"
 
     sql"update item set $updates".update.apply()
 

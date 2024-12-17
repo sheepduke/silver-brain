@@ -60,10 +60,10 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
 
   val updateItem =
     HttpEndpoints.updateItem
-      .handle((storeName, item) =>
+      .handle((storeName, id, item) =>
         this.itemStoreProvider
           .create(storeName)
-          .updateItem(item)
+          .updateItem(id, item)
           .toNoContentHttpResponse
       )
 

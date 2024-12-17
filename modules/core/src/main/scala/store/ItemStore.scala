@@ -7,15 +7,15 @@ trait ItemStore:
   //  Item
   // ============================================================
 
-  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String]
+  def createItem(args: CreateItemArgs): Either[StoreNotFoundError, String]
 
   def getItem(
-      itemId: String,
+      id: ItemId,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): Either[StoreNotFoundError | IdNotFoundError, Item]
 
   def getItems(
-      itemIds: Seq[String],
+      ids: Seq[ItemId],
       loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): Either[StoreNotFoundError, Seq[Item]]
 
@@ -25,23 +25,24 @@ trait ItemStore:
   ): Either[StoreNotFoundError | InvalidArgumentError, Seq[Item]]
 
   def updateItem(
-      item: UpdateItemArgs
+      id: ItemId,
+      args: UpdateItemArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, Unit]
 
-  def deleteItem(itemId: String): Either[StoreNotFoundError, Unit]
+  def deleteItem(id: ItemId): Either[StoreNotFoundError, Unit]
 
   // ============================================================
   //  Property
   // ============================================================
 
   def upsertItemProperty(
-      itemId: String,
+      id: ItemId,
       key: String,
       value: String
   ): Either[StoreNotFoundError, Unit]
 
   def deleteItemProperty(
-      itemId: String,
+      id: ItemId,
       key: String
   ): Either[StoreNotFoundError, Unit]
 
@@ -50,21 +51,21 @@ trait ItemStore:
   // ============================================================
 
   def createLink(
-      parent: String,
-      child: String
+      parent: ItemId,
+      child: ItemId
   ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit]
 
   def getParents(
-      itemId: String
+      id: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]]
 
   def getChildren(
-      itemId: String
+      id: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]]
 
   def deleteLink(
-      parent: String,
-      child: String
+      parent: ItemId,
+      child: ItemId
   ): Either[StoreNotFoundError, Unit]
 
   // ============================================================
@@ -72,23 +73,24 @@ trait ItemStore:
   // ============================================================
 
   def createReference(
-      reference: CreateItemReferenceArgs
+      args: CreateItemReferenceArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, String]
 
   def getReference(
-      referenceId: String
+      id: ReferenceId
   ): Either[StoreNotFoundError | IdNotFoundError, ItemReference]
 
-  def getReferencesFromItem(
-      itemId: String
+  def getReferencesFromSource(
+      source: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]]
 
-  def getReferencesToItem(
-      itemId: String
+  def getReferencesToTargetItem(
+      target: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]]
 
   def updateReference(
-      reference: UpdateItemReferenceArgs
+      id: ReferenceId,
+      args: UpdateItemReferenceArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, Unit]
 
-  def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit]
+  def deleteReference(id: ReferenceId): Either[StoreNotFoundError, Unit]

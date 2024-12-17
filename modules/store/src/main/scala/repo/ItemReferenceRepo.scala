@@ -43,8 +43,9 @@ private[store] object ItemReferenceRepo:
       .list
       .apply()
 
-  def update(reference: UpdateItemReferenceArgs)(using DBSession): Unit =
-    val id = reference.id
+  def update(id: String, reference: UpdateItemReferenceArgs)(using
+      DBSession
+  ): Unit =
     val annotation = reference.annotation
     val time = Instant.now().toString()
 

@@ -3,7 +3,7 @@ package silverbrain.core
 import java.time.Instant
 
 case class Item(
-    id: String,
+    id: ItemId,
     name: String,
     contentType: Option[String] = None,
     content: Option[String] = None,

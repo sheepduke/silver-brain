@@ -90,7 +90,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
       for
         itemId <- store
           .createItem(CreateItemArgs("Emacs"))
-        _ <- store.updateItem(UpdateItemArgs(itemId, name = Some("Vim")))
+        _ <- store.updateItem(itemId, UpdateItemArgs(name = Some("Vim")))
         item <- store
           .getItem(
             itemId,
@@ -190,14 +190,14 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         _ = reference.annotation.shouldBe("Partly supports")
 
         // Verify getReferenceFromItem.
-        references <- store.getReferencesFromItem(emacs)
+        references <- store.getReferencesFromSource(emacs)
         _ = references
           .map(_.id)
           .toSet
           .shouldBe(Set(emacsEditorRefId, emacsVimRefId))
 
         // Verify getReferenceToItem.
-        references <- store.getReferencesToItem(editor)
+        references <- store.getReferencesToTargetItem(editor)
         _ = references
           .map(_.id)
           .toSet
@@ -205,7 +205,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
 
         // Verify deleteReference.
         _ <- store.deleteReference(emacsVimRefId)
-        references <- store.getReferencesFromItem(emacs)
+        references <- store.getReferencesFromSource(emacs)
         _ = references.map(_.id).shouldBe(Seq(emacsEditorRefId))
       yield ()
     )
@@ -213,7 +213,7 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
   test("Update a non-existing reference"):
     withTempItemStore(store =>
       val result =
-        store.updateReference(UpdateItemReferenceArgs("invalid", "Something"))
+        store.updateReference("invalid", UpdateItemReferenceArgs("Something"))
 
       result.left.get.isInstanceOf[InvalidArgumentError].shouldBe(true)
     )

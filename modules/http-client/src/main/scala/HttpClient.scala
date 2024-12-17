@@ -18,17 +18,17 @@ class HttpClient(
   // ============================================================
 
   def getItem(
-      itemId: String,
+      id: ItemId,
       loadOptions: ItemLoadOptions
   ): Either[StoreNotFoundError | IdNotFoundError, Item] =
     SttpClientInterpreter()
       .toQuickClient(HttpEndpoints.getItem, Some(uri"$baseUrl"))
-      .apply(storeName, itemId, loadOptions.toSelectString)
+      .apply(storeName, id, loadOptions.toSelectString)
       .toResult
       .asInstanceOf[Either[StoreNotFoundError | IdNotFoundError, Item]]
 
   def getItems(
-      itemIds: Seq[String],
+      ids: Seq[ItemId],
       loadOptions: ItemLoadOptions
   ): Either[StoreNotFoundError, Seq[Item]] = ???
 
@@ -37,10 +37,11 @@ class HttpClient(
       loadOptions: ItemLoadOptions
   ): Either[StoreNotFoundError | InvalidArgumentError, Seq[Item]] = ???
 
-  def createItem(item: CreateItemArgs): Either[StoreNotFoundError, String] = ???
+  def createItem(args: CreateItemArgs): Either[StoreNotFoundError, String] = ???
 
   def updateItem(
-      item: UpdateItemArgs
+      id: ItemId,
+      args: UpdateItemArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
 
   def deleteItem(itemId: String): Either[StoreNotFoundError, Unit] = ???
@@ -50,13 +51,13 @@ class HttpClient(
   // ============================================================
 
   def upsertItemProperty(
-      itemId: String,
+      itemId: ItemId,
       key: String,
       value: String
   ): Either[StoreNotFoundError, Unit] = ???
 
   def deleteItemProperty(
-      itemId: String,
+      itemId: ItemId,
       key: String
   ): Either[StoreNotFoundError, Unit] = ???
 
@@ -65,22 +66,22 @@ class HttpClient(
   // ============================================================
 
   def getParents(
-      itemId: String
+      id: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] = ???
 
   def getChildren(
-      itemId: String
+      id: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] = ???
 
   def createLink(
-      parent: String,
-      child: String
+      parent: ItemId,
+      child: ItemId
   ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit] =
     ???
 
   def deleteLink(
-      parent: String,
-      child: String
+      parent: ItemId,
+      child: ItemId
   ): Either[StoreNotFoundError, Unit] = ???
 
   // ============================================================
@@ -88,24 +89,25 @@ class HttpClient(
   // ============================================================
 
   def createReference(
-      reference: CreateItemReferenceArgs
+      args: CreateItemReferenceArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, String] = ???
 
   def getReference(
       referenceId: String
   ): Either[StoreNotFoundError | IdNotFoundError, ItemReference] = ???
 
-  def getReferencesFromItem(
-      itemId: String
+  def getReferencesFromSource(
+      itemId: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]] = ???
 
-  def getReferencesToItem(
-      itemId: String
+  def getReferencesToTargetItem(
+      itemId: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]] = ???
 
   def updateReference(
-      reference: UpdateItemReferenceArgs
+      id: ReferenceId,
+      args: UpdateItemReferenceArgs
   ): Either[StoreNotFoundError | InvalidArgumentError, Unit] = ???
 
-  def deleteReference(referenceId: String): Either[StoreNotFoundError, Unit] =
+  def deleteReference(id: ReferenceId): Either[StoreNotFoundError, Unit] =
     ???
