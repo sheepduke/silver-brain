@@ -74,3 +74,58 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
         .deleteItem(itemId)
         .toNoContentHttpResponse
     )
+
+  val createParent =
+    HttpEndpoints.createParent.handle((storeName, itemId, parent) =>
+      itemStoreProvider
+        .create(storeName)
+        .createLink(parent, itemId)
+        .toNoContentHttpResponse
+    )
+
+  val createChild =
+    HttpEndpoints.createChild.handle((storeName, itemId, child) =>
+      itemStoreProvider
+        .create(storeName)
+        .createLink(itemId, child)
+        .toNoContentHttpResponse
+    )
+
+  val deleteParent =
+    HttpEndpoints.deleteParent.handle((storeName, itemId, parent) =>
+      itemStoreProvider
+        .create(storeName)
+        .deleteLink(parent, itemId)
+        .toNoContentHttpResponse
+    )
+
+  val deleteChild =
+    HttpEndpoints.deleteChild.handle((storeName, itemId, child) =>
+      itemStoreProvider
+        .create(storeName)
+        .deleteLink(itemId, child)
+        .toNoContentHttpResponse
+    )
+
+  val createReference =
+    HttpEndpoints.createReference.handle((storeName, args) =>
+      itemStoreProvider
+        .create(storeName)
+        .createReference(args)
+        .toCreatedHttpResponse
+    )
+
+  val updateReference =
+    HttpEndpoints.updateReference.handle((storeName, id, args) =>
+      itemStoreProvider
+        .create(storeName)
+        .updateReference(id, args)
+        .toNoContentHttpResponse
+    )
+
+  val deleteReference = HttpEndpoints.deleteReference.handle((storeName, id) =>
+    itemStoreProvider
+      .create(storeName)
+      .deleteReference(id)
+      .toNoContentHttpResponse
+  )

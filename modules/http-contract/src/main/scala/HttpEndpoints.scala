@@ -32,20 +32,20 @@ object HttpEndpoints:
   // ============================================================
 
   val createItem =
-    this.endpointBase.post
+    endpointBase.post
       .in("items")
       .in(jsonBody[CreateItemArgs])
       .out(statusCode.and(jsonBody[IdOnly]))
 
   val getItem =
-    this.endpointBase.get
+    endpointBase.get
       .in("items")
       .in(path[String]("id"))
       .in(query[String]("select").default("all"))
       .out(jsonBody[Item])
 
   val getItems =
-    this.endpointBase.get
+    endpointBase.get
       .in("items")
       .in(query[Option[String]]("ids").default(None))
       .in(query[Option[String]]("search").default(None))
@@ -53,37 +53,37 @@ object HttpEndpoints:
       .out(jsonBody[Seq[Item]])
 
   val updateItem =
-    this.endpointBase.patch
+    endpointBase.patch
       .in("items")
       .in(path[String]("id"))
       .in(jsonBody[UpdateItemArgs])
       .out(statusCode)
 
   val deleteItem =
-    this.endpointBase.delete.in("items").in(path[String]("id")).out(statusCode)
+    endpointBase.delete.in("items").in(path[String]("id")).out(statusCode)
 
   // ============================================================
   //  Link
   // ============================================================
 
   val createParent =
-    this.endpointBase.post
+    endpointBase.post
       .in("items")
       .in(path[String]("id"))
       .in("parents")
       .in(path[String]("parent"))
-      .out(statusCode.and(jsonBody[IdOnly]))
+      .out(statusCode)
 
   val createChild =
-    this.endpointBase.post
+    endpointBase.post
       .in("items")
       .in(path[String]("id"))
       .in("children")
       .in(path[String]("child"))
-      .out(statusCode.and(jsonBody[IdOnly]))
+      .out(statusCode)
 
   val deleteParent =
-    this.endpointBase.delete
+    endpointBase.delete
       .in("items")
       .in(path[String]("id"))
       .in("parents")
@@ -91,7 +91,7 @@ object HttpEndpoints:
       .out(statusCode)
 
   val deleteChild =
-    this.endpointBase.delete
+    endpointBase.delete
       .in("items")
       .in(path[String]("id"))
       .in("children")
@@ -103,14 +103,17 @@ object HttpEndpoints:
   // ============================================================
 
   val createReference =
-    this.endpointBase.post
+    endpointBase.post
       .in("references")
       .in(jsonBody[CreateItemReferenceArgs])
       .out(statusCode.and(jsonBody[IdOnly]))
 
   val updateReference =
-    this.endpointBase.patch
+    endpointBase.patch
       .in("references")
       .in(path[String]("id"))
       .in(jsonBody[UpdateItemReferenceArgs])
-      .out(statusCode.and(jsonBody[IdOnly]))
+      .out(statusCode)
+
+  val deleteReference =
+    endpointBase.delete.in("references").in(path[String]("id")).out(statusCode)
