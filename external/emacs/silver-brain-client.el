@@ -77,7 +77,7 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun silver-brain-client-get-item (id)
-  (silver-brain--client-get (format "items/%s?props=all" id)))
+  (silver-brain--client-get (format "items/%s?select=all" id)))
 
 (defun silver-brain-client-get-items (ids)
   (silver-brain--client-get (format "items?ids=%s" (string-join ids ","))))
