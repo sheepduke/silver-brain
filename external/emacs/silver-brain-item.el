@@ -27,9 +27,7 @@
 ;;  Mode
 ;; ============================================================
 
-(define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
-  "Major mode for Silver Brain single item."
-
+(defvar silver-brain-item-mode-map
   (let ((keymap (make-composed-keymap (list (make-sparse-keymap)
                                             widget-keymap))))
     (define-key keymap (kbd "g") #'silver-brain-item-refresh)
@@ -58,7 +56,11 @@
 
     (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
 
-    (setq silver-brain-item-mode-map keymap)))
+    keymap))
+
+(define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
+  "Major mode for Silver Brain single item."
+  :keymap silver-brain-item-mode-map)
 
 (pretty-hydra-define silver-brain-item-hydra (:color blue)
   ("Buffer"
