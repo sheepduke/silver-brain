@@ -95,7 +95,7 @@ object HttpEndpoints:
       .in("items")
       .in(path[String]("id"))
       .in("children")
-      .in(path[String]("children"))
+      .in(path[String]("child"))
       .out(statusCode)
 
   // ============================================================

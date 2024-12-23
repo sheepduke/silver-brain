@@ -9,6 +9,9 @@ import silverbrain.store.Transactor
 
 import sttp.tapir.*
 import sttp.tapir.server.netty.sync.NettySyncServer
+import silverbrain.http.contract.HttpEndpoints.createReference
+import silverbrain.http.contract.HttpEndpoints.updateReference
+import silverbrain.http.contract.HttpEndpoints.deleteReference
 
 class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
     extends HttpServerEndpoints(itemStoreProvider):
@@ -17,11 +20,18 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
     .port(port)
     .addEndpoints(
       List(
-        this.getItem,
-        this.getItems,
-        this.createItem,
-        this.updateItem,
-        this.deleteItem
+        getItem,
+        getItems,
+        createItem,
+        updateItem,
+        deleteItem,
+        createParent,
+        deleteParent,
+        createChild,
+        deleteChild,
+        createReference,
+        updateReference,
+        deleteReference
       )
     )
     .startAndWait()
