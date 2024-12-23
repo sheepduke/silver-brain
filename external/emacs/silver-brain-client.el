@@ -76,6 +76,14 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;                             API                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun silver-brain-client-create-item (name content-type)
+  "Create an item with given NAME and CONTENT-TYPE.
+Return the ID of newly created item."
+  (let* ((response (silver-brain--client-post "items"
+                                  (list (cons "name" name)
+                                        (cons "contentType" content-type)))))
+    (silver-brain--prop-id response)))
+
 (defun silver-brain-client-get-item (id)
   (silver-brain--client-get (format "items/%s?select=all" id)))
 
@@ -85,14 +93,6 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 (defun silver-brain-client-search-items (search-string)
   (silver-brain--client-get (format "items?search=%s&select="
                         (url-hexify-string search-string))))
-
-(defun silver-brain-client-create-item (name content-type)
-  "Create an item with given NAME and CONTENT-TYPE.
-Return the ID of newly created item."
-  (let* ((response (silver-brain--client-post "items"
-                                  (list (cons "name" name)
-                                        (cons "contentType" content-type)))))
-    (silver-brain--prop-id response)))
 
 (cl-defun silver-brain-client-update-item (id &key name content-type content)
   (let ((data '()))
@@ -107,13 +107,13 @@ Return the ID of newly created item."
 (defun silver-brain-client-delete-item (id)
   (silver-brain--client-delete (format "items/%s" id)))
 
-(defun silver-brain-client-save-item-property (id key value)
+(defun silver-brain-client-upsert-item-property (id key value)
   (let ((data (list (cons "key" key)
                     (cons "value" value))))
     (silver-brain--client-patch (format "/items/%s/properties" id) data)))
 
 (defun silver-brain-client-delete-item-property (id key)
-  (silver-brain--client-delete (format "/items/%s/properties/%s" id key)))
+  (silver-brain--client-delete (format "items/%s/properties/%s" id key)))
 
 (defun silver-brain-client-add-child (id child-id)
   (silver-brain--client-post (format "items/%s/children/%s" id child-id)))

@@ -20,7 +20,7 @@
   (silver-brain--prop "name" obj))
 
 (defun silver-brain--update-prop-name (value &optional obj)
-  (silver-brain--update-prop"name" value obj))
+  (silver-brain--update-prop "name" value obj))
 
 (defun silver-brain--prop-content-type (&optional obj)
   (silver-brain--prop "contentType" obj))
