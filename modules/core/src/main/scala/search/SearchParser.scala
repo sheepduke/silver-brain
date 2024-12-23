@@ -73,17 +73,16 @@ object SearchParser:
   )
 
   private def compareOperator[$: P]: P[SearchQuery.CompareOperator] = P(
-    (":" | "<>" | "<=" | "<" | "==" | "=" | "!=" | ">=" | ">").!.map(
+    (":" | "<>" | "<=" | "<" | "=" | "==" | "~" | "=~" | "!=" | ">=" | ">").!.map(
       _ match
-        case ":"  => SearchQuery.CompareOperator.Match
-        case "<"  => SearchQuery.CompareOperator.LessThan
-        case "<=" => SearchQuery.CompareOperator.LessEqual
-        case "="  => SearchQuery.CompareOperator.Equal
-        case "==" => SearchQuery.CompareOperator.Equal
-        case "!=" => SearchQuery.CompareOperator.NotEqual
-        case "<>" => SearchQuery.CompareOperator.NotEqual
-        case ">=" => SearchQuery.CompareOperator.GreaterEqual
-        case ">"  => SearchQuery.CompareOperator.GreaterThan
+        case ":"         => SearchQuery.CompareOperator.Match
+        case "<"         => SearchQuery.CompareOperator.LessThan
+        case "<="        => SearchQuery.CompareOperator.LessEqual
+        case "=" | "=="  => SearchQuery.CompareOperator.Equal
+        case "~" | "=~"  => SearchQuery.CompareOperator.Similar
+        case "!=" | "<>" => SearchQuery.CompareOperator.NotEqual
+        case ">="        => SearchQuery.CompareOperator.GreaterEqual
+        case ">"         => SearchQuery.CompareOperator.GreaterThan
     )
   )
 

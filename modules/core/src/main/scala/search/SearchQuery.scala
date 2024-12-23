@@ -8,6 +8,7 @@ object SearchQuery:
     case LessEqual
     case Match
     case Equal
+    case Similar
     case NotEqual
     case GreaterEqual
     case GreaterThan

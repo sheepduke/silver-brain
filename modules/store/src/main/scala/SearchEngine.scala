@@ -28,7 +28,7 @@ object SearchEngine:
       SearchQuery.Compare(
         "name",
         SearchQuery.CompareOperator.Match,
-        query.keyword
+        "*" + query.keyword + "*"
       )
     )
 
@@ -43,13 +43,27 @@ object SearchEngine:
       case value if value.startsWith("$") => (value.drop(1), false)
       case value                          => (value, false)
 
-    val value = "%" + query.value.replace('*', '%') + "%"
+    val operator = query.operator match
+      case SearchQuery.CompareOperator.Match |
+          SearchQuery.CompareOperator.Similar =>
+        sqls"like"
+      case SearchQuery.CompareOperator.Equal        => sqls"="
+      case SearchQuery.CompareOperator.NotEqual     => sqls"<>"
+      case SearchQuery.CompareOperator.LessThan     => sqls"<"
+      case SearchQuery.CompareOperator.LessEqual    => sqls"<="
+      case SearchQuery.CompareOperator.GreaterThan  => sqls">"
+      case SearchQuery.CompareOperator.GreaterEqual => sqls">="
+
+    val value =
+      if query.operator == SearchQuery.CompareOperator.Match then
+        query.value.replace('*', '%')
+      else query.value
 
     if isBuiltInKey then
       val keySql = SQLSyntax.createUnsafely(key)
-      sqls"select id from item where $keySql like $value"
-    else
-      sqls"select item_id from item_property where key = $key and value like $value"
+      sqls"select id from item where $keySql $operator $value"
+    else sqls"""select item_id from item_property
+                where key = $key and value $operator $value"""
 
   private def toSql(query: SearchQuery.Not): SQLSyntax =
     SQLSyntax.notIn(sqls"id", toSql(query.subQuery))
