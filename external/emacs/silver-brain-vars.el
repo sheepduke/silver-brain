@@ -18,12 +18,12 @@
   :type 'string
   :group 'silver-brain)
 
-(defcustom silver-brain-item-buffer-name-prefix "*SB/Item - "
+(defcustom silver-brain-item-buffer-name-prefix "*SB/Item*_"
   "The format of item buffer."
   :type 'string
   :group 'silver-brain)
 
-(defcustom silver-brain-item-content-buffer-name-prefix "*SB/Item Content - "
+(defcustom silver-brain-item-content-buffer-name-prefix "*SB/Content*_"
   "The format of item content buffer."
   :type 'string
   :group 'silver-brain)
