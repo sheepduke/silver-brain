@@ -9,8 +9,6 @@
 (require 'silver-brain-client)
 (require 'silver-brain-item-content)
 
-(defvar silver-brain-item-buffer-name-format "*SB/Item - %s*")
-
 (defvar-local silver-brain-current-item nil)
 (put 'silver-brain-current-item 'permanently-enabled-local-variables t)
 
@@ -61,6 +59,10 @@
 (define-derived-mode silver-brain-item-mode fundamental-mode "SB/Item"
   "Major mode for Silver Brain single item."
   :keymap silver-brain-item-mode-map)
+
+;; ============================================================
+;;  Hotkey
+;; ============================================================
 
 (pretty-hydra-define silver-brain-item-hydra (:color blue)
   ("Buffer"
@@ -121,7 +123,7 @@
 
 (defun silver-brain-item-setup (id)
   (let* ((item (silver-brain-client-get-item id))
-         (buffer (get-buffer-create (format silver-brain-item-buffer-name-format (silver-brain--prop-name item)))))
+         (buffer (get-buffer-create (silver-brain-get-item-buffer-name (silver-brain--prop-name item)))))
     (silver-brain--with-widget-buffer buffer 
       (silver-brain-item-mode)
       (setq silver-brain-current-item item)
@@ -272,11 +274,6 @@
     (error nil))
   (kill-this-buffer))
 
-(cl-defun silver-brain-create-and-open-item ()
-  "Create a new item and open it. It prompts the user to input name."
-  (interactive)
-  (silver-brain-item-open (silver-brain--create-item)))
-
 (cl-defun silver-brain-item-rename ()
   "Rename current item."
   (interactive)
@@ -286,7 +283,7 @@
          (new-name (read-string (format "Rename to: ")
                                 (silver-brain--prop-name silver-brain-current-item))))
     (silver-brain-client-update-item item-id :name new-name)
-    (rename-buffer (format silver-brain-item-buffer-name-format new-name))
+    (rename-buffer (silver-brain-get-item-buffer-name new-name))
     (silver-brain-item-refresh-all)))
 
 (defun silver-brain-item-delete ()

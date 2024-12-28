@@ -1,11 +1,12 @@
 ;;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
-;;; 
+
 (require 'tablist)
 (require 'seq)
 (require 'major-mode-hydra)
 
 (require 'silver-brain-client)
-(require 'silver-brain-item)
+(require 'silver-brain-prop)
+(require 'silver-brain-util)
 
 (defvar silver-brain-list-buffer-name "*SB/List*")
 
@@ -73,15 +74,15 @@
 
 (cl-defun silver-brain--list-items-to-tablist (&optional (items silver-brain-list-items))
   (seq-map (lambda (item)
-             (list (silver-brain--prop-id item)
-                   (vector (silver-brain--prop-id item)
-                           (silver-brain--prop-name item))))
+             (list (silver-brain-prop-id item)
+                   (vector (silver-brain-prop-id item)
+                           (silver-brain-prop-name item))))
            items))
 
 (defun silver-brain--list-operations (&rest args)
   (cl-case (cl-first args)
     (supported-operations '(delete find-entry edit-column complete))
-    (find-entry (silver-brain-item-open (cl-second args)))
+    (find-entry (silver-brain-open-item (cl-second args)))
     (delete (silver-brain--list-delete (cl-second args)))))
 
 (defun silver-brain--list-delete (ids)
@@ -89,7 +90,7 @@
     (silver-brain-client-delete-item id)
     (setq silver-brain-list-items
           (seq-remove (lambda (item)
-                        (string-equal (silver-brain--prop-id item) id))
+                        (string-equal (silver-brain-prop-id item) id))
                       silver-brain-list-items)))
 
   (setq tabulated-list-entries (silver-brain--list-items-to-tablist)))

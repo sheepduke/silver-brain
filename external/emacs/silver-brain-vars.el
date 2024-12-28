@@ -18,9 +18,19 @@
   :type 'string
   :group 'silver-brain)
 
+(defcustom silver-brain-item-buffer-name-prefix "*SB/Item - "
+  "The format of item buffer."
+  :type 'string
+  :group 'silver-brain)
+
+(defcustom silver-brain-item-content-buffer-name-prefix "*SB/Item Content - "
+  "The format of item content buffer."
+  :type 'string
+  :group 'silver-brain)
+
 (defcustom silver-brain-content-mode-alist '(("text/org" . org-mode)
+                                 ("application/org" . org-mode)
                                  ("text/markdown" . markdown-mode)
-                                 ("text/md" . markdown-mode)
                                  ("" . fundamental-mode))
   "The alist of mapping between item's content type and major
 mode used to open it."

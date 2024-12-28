@@ -1,3 +1,7 @@
+* To Do
+
+1. Re-implement item buffer.
+2. Finish the data migrator.
 
 * Silver-Brain
 

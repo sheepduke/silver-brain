@@ -82,7 +82,7 @@ Return the ID of newly created item."
   (let* ((response (silver-brain--client-post "items"
                                   (list (cons "name" name)
                                         (cons "contentType" content-type)))))
-    (silver-brain--prop-id response)))
+    (silver-brain-prop-id response)))
 
 (defun silver-brain-client-get-item (id)
   (silver-brain--client-get (format "items/%s?select=all" id)))
@@ -126,7 +126,7 @@ Return the ID of newly created item."
                                   (list (cons "source" source)
                                         (cons "target" target)
                                         (cons "annotation" annotation))))
-         (reference-id (silver-brain--prop-id response)))
+         (reference-id (silver-brain-prop-id response)))
     reference-id))
 
 (defun silver-brain-client-get-references (ids)
