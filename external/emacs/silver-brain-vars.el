@@ -36,7 +36,7 @@
 (defcustom silver-brain-content-mode-alist '(("text/org" . org-mode)
                                  ("application/org" . org-mode)
                                  ("text/markdown" . markdown-mode)
-                                 ("" . fundamental-mode))
+                                 (nil . fundamental-mode))
   "The alist of mapping between item's content type and major
 mode used to open it."
   :type 'alist

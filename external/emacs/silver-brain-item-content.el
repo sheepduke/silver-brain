@@ -38,4 +38,8 @@
                            :content new-content)
       (set-buffer-modified-p nil))))
 
+(defun silver-brain-item-content-decide-major-mode ()
+  ;; TODO: Implement it.
+  )
+
 (provide 'silver-brain-item-content)

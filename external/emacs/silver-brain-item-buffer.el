@@ -47,6 +47,7 @@
     ;; Hydra.
     (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
     (define-key keymap (kbd "p") 'silver-brain-item-property-hydra/body)
+    (define-key keymap (kbd "a") #'silver-brain-item-attachment-hydra/body)
     (define-key keymap (kbd "l") 'silver-brain-item-link-hydra/body)
     (define-key keymap (kbd "r") 'silver-brain-item-reference-hydra/body)
 
@@ -66,12 +67,19 @@
 
    "More"
    (("p" #'silver-brain-item-property-hydra/body "property")
+    ("a" #'silver-brain-item-attachment-hydra/body "attachment")
     ("l" #'silver-brain-item-link-hydra/body "link")
     ("r" #'silver-brain-item-reference-hydra/body "reference"))))
 
 (pretty-hydra-define silver-brain-item-property-hydra (:color blue)
   ("Property"
    (("c" nil "create")
+    ("d" nil "delete"))))
+
+(pretty-hydra-define silver-brain-item-attachment-hydra (:color blue)
+  ("Attachment"
+   (("c" nil "create")
+    ("r" nil "rename")
     ("d" nil "delete"))))
 
 (pretty-hydra-define silver-brain-item-link-hydra (:color blue)
@@ -83,7 +91,7 @@
 (pretty-hydra-define silver-brain-item-reference-hydra (:color blue)
   ("Reference"
    (("c" nil "create")
-    ("u" nil "update")
+    ("r" nil "rename")
     ("d" nil "delete"))))
 
 (define-derived-mode silver-brain-item-mode special-mode "SB/Item"
@@ -195,16 +203,8 @@
   (silver-brain--verify-current-item)
   (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
                        :content-type (read-string "New content type: "
-                                                  (silver-brain-prop-content-type silver-brain-current-item))))
-
-(defun silver-brain-item-buffer-update-content-type ()
-  (interactive)
-  (silver-brain--verify-current-item)
-  (let* ((item-id (silver-brain-prop-id silver-brain-current-item))
-         (item-name (silver-brain-prop-name silver-brain-current-item))
-         (new-name (read-string "New item name: " item-name)))
-    (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
-                         :name new-name)))
+                                                  (silver-brain-prop-content-type silver-brain-current-item)))
+  (silver-brain-item-buffer-refresh))
 
 (defun silver-brain-item-delete (&optional no-confirm?)
   "Delete current item."
