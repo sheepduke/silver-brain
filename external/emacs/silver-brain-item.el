@@ -137,15 +137,12 @@
   "Open item with given ITEM-ID."
   (let* ((item (silver-brain-client-get-item item-id))
          (buffer (get-buffer-create silver-brain-item-buffer-name)))
-    (when-let (content-window (first (->> (window-list)
-                                          (--filter (equal (buffer-name (window-buffer it))
-                                                           silver-brain-item-content-buffer-name)))))
-      (delete-window content-window))
-    
-    (silver-brain-item-buffer-setup item)
-    (pop-to-buffer-same-window buffer)
-    (silver-brain-item-buffer-edit-content)
-    (windmove-up)))
+    (silver-brain-nuke-item-content-buffer)
+    (with-current-buffer buffer
+      (silver-brain-item-buffer-setup item)
+      (pop-to-buffer-same-window buffer)
+      (silver-brain-item-edit-content))
+    (select-window (get-buffer-window buffer))))
 
 (defun silver-brain-search-and-select-item (search-string)
   "Search items with SEARCH-STRING, select it and return the id."
@@ -167,6 +164,12 @@
   (->> items
        (--sort (string< (silver-brain-prop-id it) (silver-brain-prop-id other)))
        (--sort (string< (silver-brain-prop-name it) (silver-brain-prop-name other)))))
+
+(defun silver-brain-nuke-item-content-buffer ()
+  (when-let (buffer (get-buffer silver-brain-item-content-buffer-name))
+    (when-let (windows (get-buffer-window-list buffer))
+      (-each windows #'delete-window))
+    (kill-buffer buffer)))
 
 ;; ============================================================
 ;;  Button & Text

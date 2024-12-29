@@ -33,7 +33,7 @@
 (setq silver-brain-item-mode-map
   (let ((keymap (make-sparse-keymap)))
     ;; Buffer.
-    (define-key keymap (kbd "q") #'silver-brain-item-buffer-kill)
+    (define-key keymap (kbd "k") #'silver-brain-item-buffer-kill)
     (define-key keymap (kbd "g") #'silver-brain-item-buffer-refresh)
     (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
 
@@ -54,7 +54,7 @@
 
 (pretty-hydra-define silver-brain-item-hydra (:color blue)
   ("Buffer"
-   (("q" #'silver-brain-item-buffer-kill "kill")
+   (("k" #'silver-brain-item-buffer-kill "kill")
     ("g" #'silver-brain-item-buffer-refresh "refresh")
     ("o" #'silver-brain-search-and-open-item "open"))
 
@@ -166,17 +166,15 @@
   "Kill current buffer and corresponding content buffer."
   (interactive)
   (silver-brain--verify-current-item)
-  (when-let (content-buffer (get-buffer silver-brain-item-content-buffer-name))
-    (with-current-buffer content-buffer
-      (kill-buffer)
-      (delete-window)))
+  (silver-brain-nuke-item-content-buffer)
   (kill-buffer)
   (pop-to-buffer-same-window silver-brain-list-buffer-name))
 
-(defun silver-brain-item-buffer-edit-content ()
+(defun silver-brain-item-edit-content ()
   "Open a new window and show the content there."
   (interactive)
   (silver-brain--verify-current-item)
+  (silver-brain-nuke-item-content-buffer)
   (split-window-below)
   (windmove-down)
   (silver-brain-open-item-content silver-brain-current-item))
