@@ -7,8 +7,9 @@
 (require 'silver-brain-client)
 (require 'silver-brain-prop)
 (require 'silver-brain-util)
-
-(defvar silver-brain-list-buffer-name "*SB/List*")
+(require 'silver-brain-item)
+(require 'silver-brain-item-buffer)
+(require 'silver-brain-item-content)
 
 (defvar-local silver-brain-list-items nil
   "The list of items as search results.")
@@ -55,10 +56,10 @@
 (defun silver-brain-list-items (&optional search-string)
   "Search items with given search string and display them in a buffer."
   (interactive "sSearch string: ")
-  (setq silver-brain-list-search-string search-string)
   (switch-to-buffer (get-buffer-create silver-brain-list-buffer-name))
   (silver-brain-list-mode)
 
+  (setq silver-brain-list-search-string search-string)
   (setq silver-brain-list-items (silver-brain-client-search-items search-string))
   (setq tabulated-list-entries (silver-brain--list-items-to-tablist))
 

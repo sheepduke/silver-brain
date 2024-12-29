@@ -7,9 +7,7 @@
 ;;;###autoload
 (defun silver-brain-open-item-content (item)
   "Display the content of given item. Return the buffer."
-  (let* ((buffer-name (--> (silver-brain-prop-name item)
-                           (silver-brain-get-item-content-buffer-name it)))
-         (buffer (get-buffer-create buffer-name)))
+  (let* ((buffer (get-buffer-create silver-brain-item-content-buffer-name)))
     (with-current-buffer buffer
       (insert (or (silver-brain-prop-content item) ""))
 
@@ -27,9 +25,7 @@
         (define-key keymap (kbd "C-x C-s") 'silver-brain-item-save-content))
 
       (set-buffer-modified-p nil)
-      (pop-to-buffer-same-window (current-buffer))
-
-      buffer)))
+      (pop-to-buffer-same-window (current-buffer)))))
 
 (defun silver-brain-save-item-content ()
   (interactive)

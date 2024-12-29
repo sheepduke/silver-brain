@@ -6,6 +6,7 @@
 (require 'silver-brain-vars)
 (require 'silver-brain-client)
 (require 'silver-brain-util)
+(require 'silver-brain-item)
 (require 'silver-brain-item-content)
 
 ;; ============================================================
@@ -48,8 +49,9 @@
    (("o" silver-brain-search-and-open-item "open"))))
 
 (pretty-hydra-define silver-brain-item-basic-hydra (:color blue)
-  ("Item"
-   (("c" silver-brain-create-item "create"))))
+  ("Modification"
+   (("c" silver-brain-create-item "create")
+    ("r" silver-brain-item-rename "rename"))))
 
 (define-derived-mode silver-brain-item-mode special-mode "SB/Item"
   "Major mode for Silver Brain item."
@@ -62,40 +64,34 @@
 ;;;###autoload
 (defun silver-brain-item-buffer-setup (item)
   "Setup the buffer for corresponding ITEM. Return the buffer."
-  (let* ((item-name (silver-brain-prop-name item))
-         (buffer (--> item-name
-                      (silver-brain-get-item-buffer-name it)
-                      (get-buffer-create it))))
-    (with-current-buffer buffer
-      ;; Enable major mode and set variables.
-      (silver-brain-item-mode)
-      (setq silver-brain-current-item item)
+  (with-current-buffer (get-buffer-create silver-brain-item-buffer-name)
+    ;; Enable major mode and set variables.
+    (silver-brain-item-mode)
+    (setq silver-brain-current-item item)
 
-      ;; Initialize parents.
-      (setq silver-brain-item-parents (--> (silver-brain-prop-parents item)
-                               (silver-brain-client-get-items it)
-                               (silver-brain-sort-items it)))
+    ;; Initialize parents.
+    (setq silver-brain-item-parents (--> (silver-brain-prop-parents item)
+                             (silver-brain-client-get-items it)
+                             (silver-brain-sort-items it)))
 
-      ;; Initialize children.
-      (setq silver-brain-item-children (--> (silver-brain-prop-children item)
-                                (silver-brain-client-get-items it)
-                                (silver-brain-sort-items it)))
+    ;; Initialize children.
+    (setq silver-brain-item-children (--> (silver-brain-prop-children item)
+                              (silver-brain-client-get-items it)
+                              (silver-brain-sort-items it)))
 
-      ;; Initialize references.
-      ;; TODO
+    ;; Initialize references.
+    ;; TODO
 
-      ;; Temporally disable read-only state.
-      (setq buffer-read-only nil)
-      (erase-buffer)
+    ;; Temporally disable read-only state.
+    (setq buffer-read-only nil)
+    (erase-buffer)
 
-      ;; Insert contents.
-      (silver-brain--item-buffer-insert-components)
+    ;; Insert contents.
+    (silver-brain--item-buffer-insert-components)
 
-      ;; Set the final state.
-      (setq buffer-read-only t)
-      (set-buffer-modified-p nil))
-    
-    buffer))
+    ;; Set the final state.
+    (setq buffer-read-only t)
+    (set-buffer-modified-p nil)))
 
 (defun silver-brain--item-buffer-insert-components ()
   (silver-brain-insert-h1 (silver-brain-prop-name silver-brain-current-item) "\n")
@@ -131,38 +127,47 @@
 (defun silver-brain-item-buffer-refresh ()
   (interactive)
   (silver-brain--verify-current-item)
-  (silver-brain-item-buffer-setup (--> silver-brain-current-item
-                           (silver-brain-prop-id it)
-                           (silver-brain-client-get-item it))))
+  (silver-brain-item-buffer-setup (silver-brain-client-get-item (silver-brain-prop-id silver-brain-current-item))))
 
 (defun silver-brain-item-buffer-kill ()
   "Kill current buffer and corresponding content buffer."
   (interactive)
   (silver-brain--verify-current-item)
-  (--> silver-brain-current-item
-       (silver-brain-prop-name it)
-       (silver-brain-get-item-content-buffer-name it)
-       (get-buffer it)
-       (when it
-         (with-current-buffer it
-           (kill-buffer)
-           (delete-window))))
-  (kill-buffer))
+  (when-let (content-buffer (get-buffer silver-brain-item-content-buffer-name))
+    (with-current-buffer content-buffer
+      (kill-buffer)
+      (delete-window)))
+  (kill-buffer)
+  (pop-to-buffer-same-window silver-brain-list-buffer-name))
 
-(defun silver-brain-item-edit-content ()
+(defun silver-brain-item-buffer-edit-content ()
+  "Open a new window and show the content there."
   (interactive)
   (silver-brain--verify-current-item)
   (split-window-below)
   (windmove-down)
   (silver-brain-open-item-content silver-brain-current-item))
 
-(defun silver-brain-item-buffer-rename ()
+(defun silver-brain-item-rename ()
+  "Rename current item."
   (interactive)
-  (silver-brain--verify-current-item))
+  (silver-brain--verify-current-item)
+  (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
+                       :name (read-string "New item name: "
+                                          (silver-brain-prop-name silver-brain-current-item)))
+  (silver-brain-item-buffer-refresh))
+
+(defun silver-brain-item-buffer-update-content-type ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let* ((item-id (silver-brain-prop-id silver-brain-current-item))
+         (item-name (silver-brain-prop-name silver-brain-current-item))
+         (new-name (read-string "New item name: " item-name)))
+    (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
+                         :name new-name)))
 
 (defun silver-brain--verify-current-item ()
   (or silver-brain-current-item
-      (error "This command must be invoked in an item buffer")))
+      (error "This command must be invoked in the item buffer")))
 
 (provide 'silver-brain-item-buffer)
-
