@@ -32,26 +32,59 @@
 (defvar silver-brain-item-mode-map nil)
 (setq silver-brain-item-mode-map
   (let ((keymap (make-sparse-keymap)))
-    (define-key keymap (kbd "k") #'silver-brain-item-buffer-kill)
-    (define-key keymap (kbd "q") #'bury-buffer)
+    ;; Buffer.
+    (define-key keymap (kbd "q") #'silver-brain-item-buffer-kill)
     (define-key keymap (kbd "g") #'silver-brain-item-buffer-refresh)
+    (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
 
+    ;; Item.
+    (define-key keymap (kbd "c") #'silver-brain-create-and-open-item)
+    (define-key keymap (kbd "R") #'silver-brain-item-rename)
     (define-key keymap (kbd "e") #'silver-brain-item-edit-content)
+    (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
+    (define-key keymap (kbd "d") #'silver-brain-item-delete)
 
-    (define-key keymap (kbd "i") #'silver-brain-item-basic-hydra/body)
-
+    ;; Hydra.
     (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
+    (define-key keymap (kbd "p") 'silver-brain-item-property-hydra/body)
+    (define-key keymap (kbd "l") 'silver-brain-item-link-hydra/body)
+    (define-key keymap (kbd "r") 'silver-brain-item-reference-hydra/body)
 
     keymap))
 
 (pretty-hydra-define silver-brain-item-hydra (:color blue)
   ("Buffer"
-   (("o" silver-brain-search-and-open-item "open"))))
+   (("q" #'silver-brain-item-buffer-kill "kill")
+    ("g" #'silver-brain-item-buffer-refresh "refresh")
+    ("o" #'silver-brain-search-and-open-item "open"))
 
-(pretty-hydra-define silver-brain-item-basic-hydra (:color blue)
-  ("Modification"
-   (("c" silver-brain-create-item "create")
-    ("r" silver-brain-item-rename "rename"))))
+   "Item"
+   (("c" #'silver-brain-create-and-open-item "create")
+    ("R" #'silver-brain-item-rename "rename")
+    ("u" #'silver-brain-item-update-content-type "update content type")
+    ("d" #'silver-brain-item-delete "delete"))
+
+   "More"
+   (("p" #'silver-brain-item-property-hydra/body "property")
+    ("l" #'silver-brain-item-link-hydra/body "link")
+    ("r" #'silver-brain-item-reference-hydra/body "reference"))))
+
+(pretty-hydra-define silver-brain-item-property-hydra (:color blue)
+  ("Property"
+   (("c" nil "create")
+    ("d" nil "delete"))))
+
+(pretty-hydra-define silver-brain-item-link-hydra (:color blue)
+  ("Link"
+   (("p" nil "add parent")
+    ("c" nil "add child")
+    ("d" nil "delete"))))
+
+(pretty-hydra-define silver-brain-item-reference-hydra (:color blue)
+  ("Reference"
+   (("c" nil "create")
+    ("u" nil "update")
+    ("d" nil "delete"))))
 
 (define-derived-mode silver-brain-item-mode special-mode "SB/Item"
   "Major mode for Silver Brain item."
@@ -155,7 +188,16 @@
   (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
                        :name (read-string "New item name: "
                                           (silver-brain-prop-name silver-brain-current-item)))
-  (silver-brain-item-buffer-refresh))
+  (silver-brain-item-buffer-refresh)
+  (silver-brain-list-refresh))
+
+(defun silver-brain-item-update-content-type ()
+  "Update content type."
+  (interactive)
+  (silver-brain--verify-current-item)
+  (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
+                       :content-type (read-string "New content type: "
+                                                  (silver-brain-prop-content-type silver-brain-current-item))))
 
 (defun silver-brain-item-buffer-update-content-type ()
   (interactive)
@@ -165,6 +207,19 @@
          (new-name (read-string "New item name: " item-name)))
     (silver-brain-client-update-item (silver-brain-prop-id silver-brain-current-item)
                          :name new-name)))
+
+(defun silver-brain-item-delete (&optional no-confirm?)
+  "Delete current item."
+  (interactive)
+  (silver-brain--verify-current-item)
+  (when (or no-confirm?
+            (y-or-n-p (format "Delete this item (%s)? "
+                              (silver-brain-prop-name silver-brain-current-item))))
+    (let ((item-id (silver-brain-prop-id silver-brain-current-item)))
+      (silver-brain-item-buffer-kill)
+      (silver-brain-client-delete-item item-id))
+
+    (silver-brain-list-refresh)))
 
 (defun silver-brain--verify-current-item ()
   (or silver-brain-current-item

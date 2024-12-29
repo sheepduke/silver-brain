@@ -137,10 +137,14 @@
   "Open item with given ITEM-ID."
   (let* ((item (silver-brain-client-get-item item-id))
          (buffer (get-buffer-create silver-brain-item-buffer-name)))
-    ;; These 2 functions are defined in the item-buffer.el file.
-    (funcall #'silver-brain-item-buffer-setup item)
+    (when-let (content-window (first (->> (window-list)
+                                          (--filter (equal (buffer-name (window-buffer it))
+                                                           silver-brain-item-content-buffer-name)))))
+      (delete-window content-window))
+    
+    (silver-brain-item-buffer-setup item)
     (pop-to-buffer-same-window buffer)
-    (funcall #'silver-brain-item-buffer-edit-content)
+    (silver-brain-item-buffer-edit-content)
     (windmove-up)))
 
 (defun silver-brain-search-and-select-item (search-string)
