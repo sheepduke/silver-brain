@@ -1,5 +1,8 @@
 ;;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
 
+(require 'dash)
+(require 's)
+
 (require 'silver-brain-vars)
 (require 'silver-brain-prop)
 (require 'silver-brain-client)
@@ -7,14 +10,14 @@
 ;;;###autoload
 (defun silver-brain-open-item-content (item)
   "Display the content of given item. Return the buffer."
-  (let* ((buffer (get-buffer-create silver-brain-item-content-buffer-name)))
+  (let* ((buffer (get-buffer-create silver-brain-item-content-buffer-name))
+         (content-major-mode (silver-brain-item-content-decide-major-mode (silver-brain-prop-content-type silver-brain-current-item))))
     (with-current-buffer buffer
       (erase-buffer)
       (insert (or (silver-brain-prop-content item) ""))
 
-      ;; Decide major mode.
-      (funcall (cdr (assoc (silver-brain-prop-content-type item)
-                           silver-brain-content-mode-alist)))
+      ;; Apply it.
+      (funcall content-major-mode)
       
       ;; Set local vars.
       (setq silver-brain-current-item item)
@@ -38,8 +41,16 @@
                            :content new-content)
       (set-buffer-modified-p nil))))
 
-(defun silver-brain-item-content-decide-major-mode ()
-  ;; TODO: Implement it.
-  )
+(defun silver-brain-item-content-decide-major-mode (content-type)
+  "Decide the major mode of content buffer according to given CONTENT-TYPE."
+  (cdr (--first (-let ((key (car it)))
+                  (or (s-equals? key "*")
+                      (and (s-starts-with? "*" key)
+                           (s-ends-with? (substring key 1) content-type))
+                      (and (s-ends-with? "*" key)
+                           (s-starts-with? (substring key 0 (1- (length key)))
+                                           content-type))
+                      (s-equals? key content-type)))
+                silver-brain-content-mode-alist)))
 
 (provide 'silver-brain-item-content)
