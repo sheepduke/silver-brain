@@ -64,6 +64,11 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
                                              :method :post
                                              :data data)))
 
+(defun silver-brain--client-post-no-response (uri &optional data)
+  (silver-brain--client-send-request uri
+                         :method :post
+                         :data data))
+
 (defun silver-brain--client-patch (uri data)
   (silver-brain--client-send-request uri
                   :method :patch
@@ -116,7 +121,7 @@ Return the ID of newly created item."
   (silver-brain--client-delete (format "items/%s/properties/%s" id key)))
 
 (defun silver-brain-client-add-child (id child-id)
-  (silver-brain--client-post (format "items/%s/children/%s" id child-id)))
+  (silver-brain--client-post-no-response (format "items/%s/children/%s" id child-id)))
 
 (defun silver-brain-client-delete-child (id child-id)
   (silver-brain--client-delete (format "items/%s/children/%s" id child-id)))

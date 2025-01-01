@@ -149,7 +149,7 @@
   (silver-brain-select-item (silver-brain-client-search-items search-string)))
 
 (defun silver-brain-select-item (items)
-  "Select one item from given ITEMS."
+  "Select one item from given ITEMS and return its id."
   (let ((item-map (->> (silver-brain-sort-items items)
                        (--map (cons (format "%s [%s]"
                                             (silver-brain-prop-name it)

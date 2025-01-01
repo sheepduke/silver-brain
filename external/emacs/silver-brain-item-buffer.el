@@ -84,9 +84,9 @@
 
 (pretty-hydra-define silver-brain-item-link-hydra (:color blue)
   ("Link"
-   (("p" nil "add parent")
-    ("c" nil "add child")
-    ("d" nil "delete"))))
+   (("p" #'silver-brain-item-add-parent "add parent")
+    ("c" #'silver-brain-item-add-child "add child")
+    ("d" #'silver-brain-item-delete-link "delete"))))
 
 (pretty-hydra-define silver-brain-item-reference-hydra (:color blue)
   ("Reference"
@@ -218,6 +218,33 @@
       (silver-brain-client-delete-item item-id))
 
     (silver-brain-list-refresh)))
+
+(defun silver-brain-item-add-parent ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((parent (silver-brain-search-or-create-item (read-string "Search for parent: "))))
+    (silver-brain-client-add-child parent (silver-brain-prop-id silver-brain-current-item))
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-add-child ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((child (silver-brain-search-or-create-item (read-string "Search for child: "))))
+    (silver-brain-client-add-child (silver-brain-prop-id silver-brain-current-item) child)
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-delete-link ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (when-let (target-item-id (silver-brain-select-item (-union silver-brain-item-parents silver-brain-item-children)))
+    (cond
+     ;; If it is a parent.
+     ((--first (s-equals? (silver-brain-prop-id it) target-item-id) silver-brain-item-parents)
+      (silver-brain-client-delete-child target-item-id (silver-brain-prop-id silver-brain-current-item)))
+     ;; If it is a child.
+     ((--first (s-equals? (silver-brain-prop-id it) target-item-id) silver-brain-item-children)
+      (silver-brain-client-delete-child (silver-brain-prop-id silver-brain-current-item) target-item-id)))
+    (silver-brain-item-buffer-refresh)))
 
 (defun silver-brain--verify-current-item ()
   (or silver-brain-current-item
