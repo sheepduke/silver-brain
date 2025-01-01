@@ -37,6 +37,10 @@
     (define-key keymap (kbd "g") #'silver-brain-item-buffer-refresh)
     (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
 
+    ;; History movement.
+    (define-key keymap (kbd "H") #'silver-brain-open-previous-item)
+    (define-key keymap (kbd "L") #'silver-brain-open-next-item)
+
     ;; Item.
     (define-key keymap (kbd "c") #'silver-brain-create-and-open-item)
     (define-key keymap (kbd "R") #'silver-brain-item-rename)
@@ -58,6 +62,10 @@
    (("k" #'silver-brain-item-buffer-kill "kill")
     ("g" #'silver-brain-item-buffer-refresh "refresh")
     ("o" #'silver-brain-search-and-open-item "open"))
+
+   "History"
+   (("H" #'silver-brain-open-previous-item "previous")
+    ("L" #'silver-brain-open-next-item "next"))
 
    "Item"
    (("c" #'silver-brain-create-and-open-item "create")

@@ -1,12 +1,14 @@
 ;;; -*- lexical-binding: t; nameless-current-name: "silver-brain" -*-
 
+(require 'ring)
+
 (defgroup silver-brain nil
   "Silver Brain customizations."
   :group 'applications)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                           Customs                            ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ============================================================
+;;  Custom Variables
+;; ============================================================
 
 (defcustom silver-brain-server-port 8080
   "The port of Silver Brain server."
@@ -51,9 +53,14 @@ mode used to open it."
   :type 'string
   :group 'silver-brain)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                            Faces                             ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defcustom silver-brain-item-history-size 1000
+  "The size of item history ring."
+  :type 'integer
+  :group 'silver-brain)
+
+;; ============================================================
+;;  Faces
+;; ============================================================
 
 (defface silver-brain-item-hyperlink '((((class color)
                              (background dark))
