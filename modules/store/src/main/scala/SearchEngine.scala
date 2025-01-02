@@ -4,8 +4,6 @@ import silverbrain.core.*
 import scalikejdbc.*
 
 object SearchEngine:
-  lazy val builtInKeys = Set("id", "name", "contentType", "content")
-
   def execute(query: SearchQuery)(using DBSession): Seq[String] =
     val sqls = this.toSql(query)
 
@@ -13,57 +11,24 @@ object SearchEngine:
 
   private def toSql(query: SearchQuery): SQLSyntax =
     query match
-      case query: SearchQuery.Blank   => toSql(query)
-      case query: SearchQuery.Keyword => toSql(query)
-      case query: SearchQuery.Compare => toSql(query)
-      case query: SearchQuery.Not     => toSql(query)
-      case query: SearchQuery.And     => toSql(query)
-      case query: SearchQuery.Or      => toSql(query)
+      case query: SearchQuery.Blank    => toSql(query)
+      case query: SearchQuery.Keyword  => toSql(query)
+      case query: SearchQuery.Filter   => toSql(query)
+      case query: SearchQuery.Property => toSql(query)
+      case query: SearchQuery.Not      => toSql(query)
+      case query: SearchQuery.And      => toSql(query)
+      case query: SearchQuery.Or       => toSql(query)
 
   private def toSql(query: SearchQuery.Blank): SQLSyntax =
     sqls"select id from item"
 
   private def toSql(query: SearchQuery.Keyword): SQLSyntax =
-    toSql(
-      SearchQuery.Compare(
-        "name",
-        SearchQuery.CompareOperator.Match,
-        "*" + query.keyword + "*"
-      )
-    )
+    import SearchQuery.Filter
+    toSql(Filter(Filter.Key.Name, Filter.Operator.Filter, query.keyword))
 
-  private def toSql(query: SearchQuery.Compare) =
-    val (key, isBuiltInKey) = query.key.toLowerCase().replace('-', '_') match
-      case "id"                           => ("id", true)
-      case "name"                         => ("name", true)
-      case "contenttype" | "content_type" => ("content_type", true)
-      case "content"                      => ("content", true)
-      case "createtime" | "create_time"   => ("create_time", true)
-      case "updatetime" | "update_time"   => ("update_time", true)
-      case value if value.startsWith("$") => (value.drop(1), false)
-      case value                          => (value, false)
-
-    val operator = query.operator match
-      case SearchQuery.CompareOperator.Match |
-          SearchQuery.CompareOperator.Similar =>
-        sqls"like"
-      case SearchQuery.CompareOperator.Equal        => sqls"="
-      case SearchQuery.CompareOperator.NotEqual     => sqls"<>"
-      case SearchQuery.CompareOperator.LessThan     => sqls"<"
-      case SearchQuery.CompareOperator.LessEqual    => sqls"<="
-      case SearchQuery.CompareOperator.GreaterThan  => sqls">"
-      case SearchQuery.CompareOperator.GreaterEqual => sqls">="
-
-    val value =
-      if query.operator == SearchQuery.CompareOperator.Match then
-        query.value.replace('*', '%')
-      else query.value
-
-    if isBuiltInKey then
-      val keySql = SQLSyntax.createUnsafely(key)
-      sqls"select id from item where $keySql $operator $value"
-    else sqls"""select item_id from item_property
-                where key = $key and value $operator $value"""
+  // ============================================================
+  //  Logic
+  // ============================================================
 
   private def toSql(query: SearchQuery.Not): SQLSyntax =
     SQLSyntax.notIn(sqls"id", toSql(query.subQuery))
@@ -77,12 +42,74 @@ object SearchEngine:
     if query.subQueries.isEmpty then toSql(SearchQuery.Blank())
     else query.subQueries.map(toSql(_)).reduce((acc, x) => sqls"$acc UNION $x")
 
-  private def convertToBuiltInKey(key: String): Option[String] =
-    key.toLowerCase().replace('-', '_') match
-      case "id"                           => Some("id")
-      case "name"                         => Some("name")
-      case "contenttype" | "content_type" => Some("content_type")
-      case "content"                      => Some("content")
-      case "createtime" | "create_time"   => Some("create_time")
-      case "updatetime" | "update_time"   => Some("update_time")
-      case _                              => None
+  // ============================================================
+  //  Filter
+  // ============================================================
+
+  private def toSql(query: SearchQuery.Filter): SQLSyntax =
+    import SearchQuery.Filter
+    import SearchQuery.Filter.Key
+    import SearchQuery.Filter.Operator
+
+    query.key match
+      case Key.Name | Key.ContentType | Key.Content =>
+        if query.operator == Operator.Filter then
+          filterToSql(
+            Filter(query.key, Operator.Match, '*' + query.value + '*')
+          )
+        else filterToSql(query)
+
+  private def filterToSql(query: SearchQuery.Filter): SQLSyntax =
+    import SearchQuery.Filter.Operator
+
+    val key = toSql(query.key)
+    val operator = toSql(query.operator)
+    val value =
+      if query.operator == Operator.Match then query.value.replace("*", "%")
+      else query.value
+
+    sqls"select id from item where $key $operator $value"
+
+  private def toSql(key: SearchQuery.Filter.Key): SQLSyntax =
+    import SearchQuery.Filter.Key
+
+    key match
+      case Key.Name        => sqls"name"
+      case Key.ContentType => sqls"content_type"
+      case Key.Content     => sqls"content"
+      case Key.CreateTime  => sqls"create_time"
+      case Key.UpdateTime  => sqls"update_time"
+
+  private def toSql(operator: SearchQuery.Filter.Operator): SQLSyntax =
+    import SearchQuery.Filter.Operator
+
+    operator match
+      case Operator.Filter | Operator.Match => sqls"like"
+      case Operator.Equal                   => sqls"="
+      case Operator.NotEqual                => sqls"<>"
+      case Operator.LessThan                => sqls"<"
+      case Operator.LessEqual               => sqls"<="
+      case Operator.GreaterThan             => sqls">"
+      case Operator.GreaterEqual            => sqls">="
+
+  // ============================================================
+  //  Property
+  // ============================================================
+
+  private def toSql(query: SearchQuery.Property): SQLSyntax =
+    val key = query.key
+    val op = toSql(query.operator)
+    val value = query.value
+    sqls"select item_id from item_property where key = $key and value $op $value"
+
+  private def toSql(operator: SearchQuery.Property.Operator): SQLSyntax =
+    import SearchQuery.Property.Operator
+
+    operator match
+      case Operator.Match        => sqls"like"
+      case Operator.Equal        => sqls"="
+      case Operator.NotEqual     => sqls"<>"
+      case Operator.LessThan     => sqls"<"
+      case Operator.LessEqual    => sqls"<="
+      case Operator.GreaterThan  => sqls">"
+      case Operator.GreaterEqual => sqls">="

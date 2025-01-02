@@ -4,6 +4,11 @@ import org.scalatest.funsuite.AnyFunSuite
 import silverbrain.core.SearchParser.parse
 
 class SearchParserSpec extends AnyFunSuite:
+
+  // ============================================================
+  //  Basic
+  // ============================================================
+
   test("Parse blank query"):
     val result = parse("")
     val expected = SearchQuery.Blank()
@@ -26,64 +31,91 @@ class SearchParserSpec extends AnyFunSuite:
     )
     assertResult(Right(expected))(result)
 
-  test("Parse match query"):
-    val result = parse("key: value")
-    val expected =
-      SearchQuery.Compare("key", SearchQuery.CompareOperator.Match, "value")
-    assertResult(Right(expected))(result)
+  // ============================================================
+  //  Filter
+  // ============================================================
 
-  test("Parse equal query"):
-    val result = parse("\"aa\" = bb && cc = dd")
-    val expected = SearchQuery.And(
-      Seq(
-        SearchQuery.Compare("aa", SearchQuery.CompareOperator.Equal, "bb"),
-        SearchQuery.Compare("cc", SearchQuery.CompareOperator.Equal, "dd")
-      )
+  test("Parser filter query"):
+    import SearchQuery.Filter
+    import SearchQuery.Filter.*
+
+    assertResult(Right(Filter(Key.Name, Operator.Filter, "value")))(
+      parse("name: value")
     )
-    assertResult(Right(expected))(result)
 
-  test("Parse not equal query"):
-    val result = parse("aa != bb && cc <> dd")
-    val expected = SearchQuery.And(
-      Seq(
-        SearchQuery.Compare("aa", SearchQuery.CompareOperator.NotEqual, "bb"),
-        SearchQuery.Compare("cc", SearchQuery.CompareOperator.NotEqual, "dd")
-      )
+    assertResult(Right(Filter(Key.Content, Operator.Match, "value")))(
+      parse("content :~ \"value\"")
     )
-    assertResult(Right(expected))(result)
 
-  test("Parse greater than query"):
-    val result = parse("aa > bb cc >= dd")
-    val expected =
-      SearchQuery.And(
-        Seq(
-          SearchQuery
-            .Compare("aa", SearchQuery.CompareOperator.GreaterThan, "bb"),
-          SearchQuery.Compare(
-            "cc",
-            SearchQuery.CompareOperator.GreaterEqual,
-            "dd"
-          )
-        )
-      )
-    assertResult(Right(expected))(result)
-
-  test("Parse less than query"):
-    val result = parse("aa < bb cc <= dd")
-    val expected = SearchQuery.And(
-      Seq(
-        SearchQuery.Compare("aa", SearchQuery.CompareOperator.LessThan, "bb"),
-        SearchQuery.Compare("cc", SearchQuery.CompareOperator.LessEqual, "dd")
-      )
+    assertResult(Right(Filter(Key.ContentType, Operator.NotEqual, "value")))(
+      parse("content-type :<> value")
     )
-    assertResult(Right(expected))(result)
 
-  test("Parse external property match query"):
-    val result = parse("$name: what")
-    val expected =
-      SearchQuery.Compare("$name", SearchQuery.CompareOperator.Match, "what")
+    assertResult(
+      Right(Filter(Key.CreateTime, Operator.LessThan, "2025-01-01"))
+    )(
+      parse("create_time :< 2025-01-01")
+    )
 
-  test("Parse complex logical query"):
+    assertResult(
+      Right(Filter(Key.UpdateTime, Operator.LessEqual, "2025-01-01"))
+    )(
+      parse("updateTime :<= 2025-01-01")
+    )
+
+  // ============================================================
+  //  Property
+  // ============================================================
+
+  test("Parse property query"):
+    import SearchQuery.Property
+    import SearchQuery.Property.*
+
+    assertResult(Right(Property("key", Operator.Match, "value")))(
+      parse("key =~ value")
+    )
+
+    assertResult(Right(Property("key", Operator.Match, "value")))(
+      parse("key ~ value")
+    )
+
+    assertResult(Right(Property("key", Operator.LessEqual, "value")))(
+      parse("key <= value")
+    )
+
+    assertResult(Right(Property("key", Operator.LessThan, "value")))(
+      parse("key < value")
+    )
+
+    assertResult(Right(Property("key", Operator.GreaterEqual, "value")))(
+      parse("key >= value")
+    )
+
+    assertResult(Right(Property("key", Operator.GreaterThan, "value")))(
+      parse("key > value")
+    )
+
+    assertResult(Right(Property("key", Operator.Equal, "value")))(
+      parse("key == value")
+    )
+
+    assertResult(Right(Property("key", Operator.Equal, "value")))(
+      parse("key = value")
+    )
+
+    assertResult(Right(Property("key", Operator.NotEqual, "value")))(
+      parse("key <> value")
+    )
+
+    assertResult(Right(Property("key", Operator.NotEqual, "value")))(
+      parse("key != value")
+    )
+
+  // ============================================================
+  //  Logic
+  // ============================================================
+
+  test("Parse logical query"):
     val result = parse("aa || (bb || !cc) dd")
     val expected = SearchQuery.Or(
       Seq(
