@@ -31,31 +31,31 @@
 
 (defvar silver-brain-item-mode-map nil)
 (setq silver-brain-item-mode-map
-  (let ((keymap (make-sparse-keymap)))
-    ;; Buffer.
-    (define-key keymap (kbd "k") #'silver-brain-item-buffer-kill)
-    (define-key keymap (kbd "g") #'silver-brain-item-buffer-refresh)
-    (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
+      (let ((keymap (make-sparse-keymap)))
+        ;; Buffer.
+        (define-key keymap (kbd "k") #'silver-brain-item-buffer-kill)
+        (define-key keymap (kbd "g") #'silver-brain-item-buffer-refresh)
+        (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
 
-    ;; History movement.
-    (define-key keymap (kbd "H") #'silver-brain-open-previous-item)
-    (define-key keymap (kbd "L") #'silver-brain-open-next-item)
+        ;; History movement.
+        (define-key keymap (kbd "H") #'silver-brain-open-previous-item)
+        (define-key keymap (kbd "L") #'silver-brain-open-next-item)
 
-    ;; Item.
-    (define-key keymap (kbd "c") #'silver-brain-create-and-open-item)
-    (define-key keymap (kbd "R") #'silver-brain-item-rename)
-    (define-key keymap (kbd "e") #'silver-brain-item-edit-content)
-    (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
-    (define-key keymap (kbd "d") #'silver-brain-item-delete)
+        ;; Item.
+        (define-key keymap (kbd "c") #'silver-brain-create-and-open-item)
+        (define-key keymap (kbd "R") #'silver-brain-item-rename)
+        (define-key keymap (kbd "e") #'silver-brain-item-edit-content)
+        (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
+        (define-key keymap (kbd "d") #'silver-brain-item-delete)
 
-    ;; Hydra.
-    (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
-    (define-key keymap (kbd "p") 'silver-brain-item-property-hydra/body)
-    (define-key keymap (kbd "a") #'silver-brain-item-attachment-hydra/body)
-    (define-key keymap (kbd "l") 'silver-brain-item-link-hydra/body)
-    (define-key keymap (kbd "r") 'silver-brain-item-reference-hydra/body)
+        ;; Hydra.
+        (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
+        (define-key keymap (kbd "p") 'silver-brain-item-property-hydra/body)
+        (define-key keymap (kbd "a") #'silver-brain-item-attachment-hydra/body)
+        (define-key keymap (kbd "l") 'silver-brain-item-link-hydra/body)
+        (define-key keymap (kbd "r") 'silver-brain-item-reference-hydra/body)
 
-    keymap))
+        keymap))
 
 (pretty-hydra-define silver-brain-item-hydra (:color blue)
   ("Buffer"

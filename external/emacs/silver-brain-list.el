@@ -26,32 +26,34 @@
   (setq tablist-operations-function #'silver-brain--list-operations)
 
   (define-key silver-brain-list-mode-map (kbd "<SPC>") #'major-mode-hydra)
+  (define-key silver-brain-list-mode-map (kbd "l") #'silver-brain-list-research)
   (define-key silver-brain-list-mode-map (kbd "g") #'tablist-revert)
   (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh))
 
 (major-mode-hydra-define silver-brain-list-mode ()
   ("Buffer"
-   (("g" silver-brain-list-refresh "refresh")
-    ("q" tablist-quit "quit"))
+   (("l" #'silver-brain-list-research "re-search")
+    ("g" #'silver-brain-list-refresh "refresh")
+    ("q" #'tablist-quit "quit"))
    
    "Row"
-   (("s" tablist-sort "sort")
-    ("k" tablist-do-kill-lines "hide"))
+   (("s" #'tablist-sort "sort")
+    ("k" #'tablist-do-kill-lines "hide"))
 
    "Column"
-   (("<" tablist-shrink-column "shrink column")
-    (">" tablist-enlarge-column "enlarge column"))
+   (("<" #'tablist-shrink-column "shrink column")
+    (">" #'tablist-enlarge-column "enlarge column"))
 
    "Mark"
-   (("m" tablist-mark-forward "mark")
-    ("u" tablist-unmark-forward "unmark")
-    ("U" tablist-unmark-all-marks "unmark all")
-    ("t" tablist-toggle-marks "toggle")
-    ("d" tablist-flag-forward "mark as delete"))
+   (("m" #'tablist-mark-forward "mark")
+    ("u" #'tablist-unmark-forward "unmark")
+    ("U" #'tablist-unmark-all-marks "unmark all")
+    ("t" #'tablist-toggle-marks "toggle")
+    ("d" #'tablist-flag-forward "mark as delete"))
 
    "Manipulation"
-   (("D" tablist-do-delete "delete")
-    ("x" tablist-do-flagged-delete "delete flagged"))))
+   (("D" #'tablist-do-delete "delete")
+    ("x" #'tablist-do-flagged-delete "delete flagged"))))
 
 (defun silver-brain-list-items (&optional search-string)
   "Search items with given search string and display them in a buffer."
@@ -64,6 +66,10 @@
   (setq tabulated-list-entries (silver-brain--list-items-to-tablist))
 
   (tabulated-list-print))
+
+(defun silver-brain-list-research ()
+  (interactive)
+  (silver-brain-list-items (read-string "Search string: " silver-brain-list-search-string)))
 
 (defun silver-brain-list-refresh ()
   (interactive)

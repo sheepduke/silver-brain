@@ -51,6 +51,7 @@ object SearchEngine:
     import SearchQuery.Filter.Key
     import SearchQuery.Filter.Operator
 
+    // TODO: Implement the time handling
     query.key match
       case Key.Name | Key.ContentType | Key.Content =>
         if query.operator == Operator.Filter then
