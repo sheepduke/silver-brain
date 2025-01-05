@@ -35,11 +35,3 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
       )
     )
     .startAndWait()
-
-@main def main() =
-  val dataRootPath = os.home / "temp" / "test"
-  val storeManager = SqliteStoreManager(dataRootPath)
-  val transactor = Transactor(storeManager)
-  val itemStoreProvider = ItemStoreProvider.create(transactor)
-
-  HttpServer(itemStoreProvider)(port = 8080).start()
