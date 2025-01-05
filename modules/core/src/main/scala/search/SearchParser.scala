@@ -7,7 +7,7 @@ import fastparse.NoWhitespace.given
 
 object SearchParser:
   def parse(searchString: String): Either[String, SearchQuery] =
-    if searchString.isBlank() then Right(SearchQuery.Blank())
+    if searchString.isBlank() then Right(BlankQuery())
     else
       fastparse.parse(searchString.trim(), query) match
         case Success(value, _) => Right(value)
@@ -23,7 +23,7 @@ object SearchParser:
     (andQuery ~ (or ~ andQuery).rep)
       .map((first, rest) =>
         if rest.isEmpty then first
-        else SearchQuery.Or(rest.prepended(first))
+        else OrQuery(rest.prepended(first))
       )
   )
 
@@ -33,7 +33,7 @@ object SearchParser:
     (notQuery ~ (and ~ notQuery).rep)
       .map((first, rest) =>
         if rest.isEmpty then first
-        else SearchQuery.And(rest.prepended(first))
+        else AndQuery(rest.prepended(first))
       )
   )
 
@@ -42,7 +42,7 @@ object SearchParser:
   )
 
   private def notQuery[$: P]: P[SearchQuery] = P(
-    (not ~ queryTerm).map(SearchQuery.Not(_)) | queryTerm
+    (not ~ queryTerm).map(NotQuery(_)) | queryTerm
   )
 
   private def not[$: P]: P[Unit] = P("!" ~ spaces.?)
@@ -52,7 +52,7 @@ object SearchParser:
   // ============================================================
 
   private def queryTerm[$: P]: P[SearchQuery] = P(
-    parenedQuery | filterQuery | propertyQuery | keywordQuery
+    parenedQuery | filterQuery | knownPropertyQuery | customPropertyQuery | keywordQuery
   )
 
   private def parenedQuery[$: P]: P[SearchQuery] = P(
@@ -60,20 +60,43 @@ object SearchParser:
   )
 
   private def keywordQuery[$: P]: P[SearchQuery] = P(
-    anyString.map(SearchQuery.Keyword.apply)
+    anyString.map(KeywordQuery.apply)
   )
 
   // ============================================================
-  //  Filter
+  //  Filter Query
   // ============================================================
 
-  private def filterQuery[$: P]: P[SearchQuery.Filter] = P(
-    (filterKey ~ spaces.? ~ filterOperator ~ spaces.? ~ anyString).map(
-      (key, operator, value) => SearchQuery.Filter(key, operator, value)
+  private def filterQuery[$: P]: P[FilterQuery] = P(
+    (knownProperty ~ spaces.? ~ ":" ~ spaces.? ~ anyString).map((key, value) =>
+      FilterQuery(key, value)
     )
   )
 
-  private def filterKey[$: P]: P[SearchQuery.Filter.Key] = P(
+  // ============================================================
+  //  Known Property Query
+  // ============================================================
+
+  private def knownPropertyQuery[$: P]: P[KnownPropertyQuery] = P(
+    (knownProperty ~ spaces.? ~ compareOperator ~ spaces.? ~ anyString)
+      .map(KnownPropertyQuery.apply)
+  )
+
+  // ============================================================
+  //  Custom Property
+  // ============================================================
+
+  private def customPropertyQuery[$: P]: P[CustomPropertyQuery] =
+    P(
+      ("$" ~ anyString ~ spaces.? ~ compareOperator ~ spaces.? ~ anyString)
+        .map(CustomPropertyQuery.apply)
+    )
+
+  // ============================================================
+  //  Property & Compare
+  // ============================================================
+
+  private def knownProperty[$: P]: P[KnownProperty] = P(
     StringInIgnoreCase(
       "name",
       "contentType",
@@ -88,52 +111,27 @@ object SearchParser:
       "update_time"
     ).!.map(
       _.toLowerCase() match
-        case "name" => SearchQuery.Filter.Key.Name
+        case "name" => KnownProperty.Name
         case "contenttype" | "content-type" | "content_type" =>
-          SearchQuery.Filter.Key.ContentType
-        case "content" => SearchQuery.Filter.Key.Content
+          KnownProperty.ContentType
+        case "content" => KnownProperty.Content
         case "createtime" | "create-time" | "create_time" =>
-          SearchQuery.Filter.Key.CreateTime
+          KnownProperty.CreateTime
         case "updatetime" | "update-time" | "update_time" =>
-          SearchQuery.Filter.Key.UpdateTime
+          KnownProperty.UpdateTime
     )
   )
 
-  private def filterOperator[$: P]: P[SearchQuery.Filter.Operator] =
-    import SearchQuery.Filter.Operator
-    P(
-      (":<=" | ":<>" | ":<" | ":==" | ":=~" | ":=" | ":>=" | ":>" | ":~" | ":").!.map(
-        _ match
-          case ":"           => Operator.Filter
-          case ":=~" | ":~"  => Operator.Match
-          case ":=" | ":=="  => Operator.Equal
-          case ":<>" | ":!=" => Operator.NotEqual
-          case ":<="         => Operator.LessEqual
-          case ":<"          => Operator.LessThan
-          case ":>="         => Operator.GreaterEqual
-          case ":>"          => Operator.GreaterThan
-      )
-    )
-
-  // ============================================================
-  //  Property
-  // ============================================================
-
-  private def propertyQuery[$: P]: P[SearchQuery.Property] = P(
-    (anyString ~ spaces.? ~ propertyOperator ~ spaces.? ~ anyString)
-      .map((key, operator, value) => SearchQuery.Property(key, operator, value))
-  )
-
-  private def propertyOperator[$: P]: P[SearchQuery.Property.Operator] = P(
-    ("<>" | "<=" | "<" | "==" | "=~" | "=" | "~" | "!=" | ">=" | ">").!.map(
+  private def compareOperator[$: P]: P[CompareOperator] = P(
+    ("<>" | "<=" | "<" | "=" | "~" | ">=" | ">").!.map(
       _ match
-        case "<"         => SearchQuery.Property.Operator.LessThan
-        case "<="        => SearchQuery.Property.Operator.LessEqual
-        case "=" | "=="  => SearchQuery.Property.Operator.Equal
-        case "~" | "=~"  => SearchQuery.Property.Operator.Match
-        case "!=" | "<>" => SearchQuery.Property.Operator.NotEqual
-        case ">="        => SearchQuery.Property.Operator.GreaterEqual
-        case ">"         => SearchQuery.Property.Operator.GreaterThan
+        case "<"  => CompareOperator.LessThan
+        case "<=" => CompareOperator.LessEqual
+        case "="  => CompareOperator.Equal
+        case "~"  => CompareOperator.Match
+        case "<>" => CompareOperator.NotEqual
+        case ">=" => CompareOperator.GreaterEqual
+        case ">"  => CompareOperator.GreaterThan
     )
   )
 

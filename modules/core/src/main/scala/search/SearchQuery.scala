@@ -2,42 +2,43 @@ package silverbrain.core
 
 sealed trait SearchQuery
 
-object SearchQuery:
+case class BlankQuery() extends SearchQuery
 
-  case class Blank() extends SearchQuery
-  case class Keyword(keyword: String) extends SearchQuery
+case class KeywordQuery(keyword: String) extends SearchQuery
 
-  // ============================================================
-  //  Logic
-  // ============================================================
+// ============================================================
+//  Logic
+// ============================================================
 
-  case class Not(subQuery: SearchQuery) extends SearchQuery
-  case class Or(subQueries: Seq[SearchQuery]) extends SearchQuery
-  case class And(subQueries: Seq[SearchQuery]) extends SearchQuery
+case class NotQuery(subQuery: SearchQuery) extends SearchQuery
+case class OrQuery(subQueries: Seq[SearchQuery]) extends SearchQuery
+case class AndQuery(subQueries: Seq[SearchQuery]) extends SearchQuery
 
-  // ============================================================
-  //  Filter
-  // ============================================================
+// ============================================================
+//  Property
+// ============================================================
 
-  case class Filter(key: Filter.Key, operator: Filter.Operator, value: String)
-      extends SearchQuery
+case class FilterQuery(key: KnownProperty, value: String) extends SearchQuery
 
-  object Filter:
-    enum Key:
-      case Name, ContentType, Content, CreateTime, UpdateTime
+case class KnownPropertyQuery(
+    key: KnownProperty,
+    operator: CompareOperator,
+    value: String
+) extends SearchQuery
 
-    enum Operator:
-      case Filter, LessThan, LessEqual, Match, Equal, NotEqual, GreaterEqual,
-        GreaterThan
+case class CustomPropertyQuery(
+    key: String,
+    operator: CompareOperator,
+    value: String
+) extends SearchQuery
 
-  // ============================================================
-  //  Property
-  // ============================================================
+// ============================================================
+//  Compare
+// ============================================================
 
-  case class Property(key: String, operator: Property.Operator, value: String)
-      extends SearchQuery
+enum KnownProperty:
+  case Name, ContentType, Content, CreateTime, UpdateTime
 
-  object Property:
-    enum Operator:
-      case LessThan, LessEqual, Match, Equal, NotEqual, GreaterEqual,
-        GreaterThan
+enum CompareOperator:
+  case LessThan, LessEqual, Match, Equal, NotEqual, GreaterEqual,
+    GreaterThan

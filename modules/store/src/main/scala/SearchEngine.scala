@@ -11,106 +11,100 @@ object SearchEngine:
 
   private def toSql(query: SearchQuery): SQLSyntax =
     query match
-      case query: SearchQuery.Blank    => toSql(query)
-      case query: SearchQuery.Keyword  => toSql(query)
-      case query: SearchQuery.Filter   => toSql(query)
-      case query: SearchQuery.Property => toSql(query)
-      case query: SearchQuery.Not      => toSql(query)
-      case query: SearchQuery.And      => toSql(query)
-      case query: SearchQuery.Or       => toSql(query)
+      case query: BlankQuery          => toSql(query)
+      case query: KeywordQuery        => toSql(query)
+      case query: FilterQuery         => toSql(query)
+      case query: KnownPropertyQuery  => toSql(query)
+      case query: CustomPropertyQuery => toSql(query)
+      case query: NotQuery            => toSql(query)
+      case query: AndQuery            => toSql(query)
+      case query: OrQuery             => toSql(query)
 
-  private def toSql(query: SearchQuery.Blank): SQLSyntax =
+  private def toSql(query: BlankQuery): SQLSyntax =
     sqls"select id from item"
 
-  private def toSql(query: SearchQuery.Keyword): SQLSyntax =
-    import SearchQuery.Filter
-    toSql(Filter(Filter.Key.Name, Filter.Operator.Filter, query.keyword))
+  private def toSql(query: KeywordQuery): SQLSyntax =
+    toSql(FilterQuery(KnownProperty.Name, query.keyword))
 
   // ============================================================
   //  Logic
   // ============================================================
 
-  private def toSql(query: SearchQuery.Not): SQLSyntax =
+  private def toSql(query: NotQuery): SQLSyntax =
     SQLSyntax.notIn(sqls"id", toSql(query.subQuery))
 
-  private def toSql(query: SearchQuery.And): SQLSyntax =
-    if query.subQueries.isEmpty then toSql(SearchQuery.Blank())
+  private def toSql(query: AndQuery): SQLSyntax =
+    if query.subQueries.isEmpty then toSql(BlankQuery())
     else
       query.subQueries.map(toSql(_)).reduce((acc, x) => sqls"$acc INTERSECT $x")
 
-  private def toSql(query: SearchQuery.Or): SQLSyntax =
-    if query.subQueries.isEmpty then toSql(SearchQuery.Blank())
+  private def toSql(query: OrQuery): SQLSyntax =
+    if query.subQueries.isEmpty then toSql(BlankQuery())
     else query.subQueries.map(toSql(_)).reduce((acc, x) => sqls"$acc UNION $x")
 
   // ============================================================
   //  Filter
   // ============================================================
 
-  private def toSql(query: SearchQuery.Filter): SQLSyntax =
-    import SearchQuery.Filter
-    import SearchQuery.Filter.Key
-    import SearchQuery.Filter.Operator
-
-    // TODO: Implement the time handling
+  private def toSql(query: FilterQuery): SQLSyntax =
     query.key match
-      case Key.Name | Key.ContentType | Key.Content =>
-        if query.operator == Operator.Filter then
-          filterToSql(
-            Filter(query.key, Operator.Match, '*' + query.value + '*')
+      case KnownProperty.Name | KnownProperty.ContentType |
+          KnownProperty.Content =>
+        toSql(
+          KnownPropertyQuery(
+            query.key,
+            CompareOperator.Match,
+            "*" + query.value + "*"
           )
-        else filterToSql(query)
+        )
+      case _ => throw NotImplementedError()
 
-  private def filterToSql(query: SearchQuery.Filter): SQLSyntax =
-    import SearchQuery.Filter.Operator
+  // ============================================================
+  //  Known Property
+  // ============================================================
 
+  private def toSql(query: KnownPropertyQuery): SQLSyntax =
     val key = toSql(query.key)
     val operator = toSql(query.operator)
     val value =
-      if query.operator == Operator.Match then query.value.replace("*", "%")
+      if query.operator == CompareOperator.Match then
+        query.value.replace("*", "%")
       else query.value
 
     sqls"select id from item where $key $operator $value"
 
-  private def toSql(key: SearchQuery.Filter.Key): SQLSyntax =
-    import SearchQuery.Filter.Key
-
-    key match
-      case Key.Name        => sqls"name"
-      case Key.ContentType => sqls"content_type"
-      case Key.Content     => sqls"content"
-      case Key.CreateTime  => sqls"create_time"
-      case Key.UpdateTime  => sqls"update_time"
-
-  private def toSql(operator: SearchQuery.Filter.Operator): SQLSyntax =
-    import SearchQuery.Filter.Operator
-
-    operator match
-      case Operator.Filter | Operator.Match => sqls"like"
-      case Operator.Equal                   => sqls"="
-      case Operator.NotEqual                => sqls"<>"
-      case Operator.LessThan                => sqls"<"
-      case Operator.LessEqual               => sqls"<="
-      case Operator.GreaterThan             => sqls">"
-      case Operator.GreaterEqual            => sqls">="
-
   // ============================================================
-  //  Property
+  //  Custom Property
   // ============================================================
 
-  private def toSql(query: SearchQuery.Property): SQLSyntax =
+  private def toSql(query: CustomPropertyQuery): SQLSyntax =
     val key = query.key
     val op = toSql(query.operator)
-    val value = query.value
+    val value =
+      if query.operator == CompareOperator.Match then
+        query.value.replace("*", "%")
+      else query.value
+
     sqls"select item_id from item_property where key = $key and value $op $value"
 
-  private def toSql(operator: SearchQuery.Property.Operator): SQLSyntax =
-    import SearchQuery.Property.Operator
+  // ============================================================
+  //  Property & Compare
+  // ============================================================
 
+  private def toSql(key: KnownProperty): SQLSyntax =
+    key match
+      case KnownProperty.Name        => sqls"name"
+      case KnownProperty.ContentType => sqls"content_type"
+      case KnownProperty.Content     => sqls"content"
+      case KnownProperty.CreateTime  => sqls"create_time"
+      case KnownProperty.UpdateTime  => sqls"update_time"
+
+  private def toSql(operator: CompareOperator): SQLSyntax =
     operator match
-      case Operator.Match        => sqls"like"
-      case Operator.Equal        => sqls"="
-      case Operator.NotEqual     => sqls"<>"
-      case Operator.LessThan     => sqls"<"
-      case Operator.LessEqual    => sqls"<="
-      case Operator.GreaterThan  => sqls">"
-      case Operator.GreaterEqual => sqls">="
+      case CompareOperator.Match        => sqls"like"
+      case CompareOperator.Equal        => sqls"="
+      case CompareOperator.NotEqual     => sqls"<>"
+      case CompareOperator.LessThan     => sqls"<"
+      case CompareOperator.LessEqual    => sqls"<="
+      case CompareOperator.GreaterThan  => sqls">"
+      case CompareOperator.GreaterEqual => sqls">="
