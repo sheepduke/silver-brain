@@ -203,7 +203,8 @@
                        :name (read-string "New item name: "
                                           (silver-brain-prop-name silver-brain-current-item)))
   (silver-brain-item-buffer-refresh)
-  (silver-brain-list-refresh))
+  (silver-brain-list-refresh)
+  (switch-to-buffer silver-brain-item-buffer-name))
 
 (defun silver-brain-item-update-content-type ()
   "Update content type."
