@@ -7,11 +7,11 @@ import silverbrain.store.SqlItemStore
 import silverbrain.store.SqliteStoreManager
 import silverbrain.store.Transactor
 
+import silverbrain.http.contract.HttpEndpoints.createReference
+import silverbrain.http.contract.HttpEndpoints.deleteReference
+import silverbrain.http.contract.HttpEndpoints.updateReference
 import sttp.tapir.*
 import sttp.tapir.server.netty.sync.NettySyncServer
-import silverbrain.http.contract.HttpEndpoints.createReference
-import silverbrain.http.contract.HttpEndpoints.updateReference
-import silverbrain.http.contract.HttpEndpoints.deleteReference
 
 class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
     extends HttpServerEndpoints(itemStoreProvider):
