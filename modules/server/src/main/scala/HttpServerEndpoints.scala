@@ -6,6 +6,11 @@ import silverbrain.http.contract.*
 import sttp.model.StatusCode
 
 trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
+
+  // ============================================================
+  //  Item
+  // ============================================================
+
   val getItem =
     HttpEndpoints.getItem.handle((storeName, itemId, select) =>
       val result = ItemLoadOptions.fromSelectString(select) match
@@ -75,6 +80,10 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
         .toNoContentHttpResponse
     )
 
+  // ============================================================
+  //  Link
+  // ============================================================
+
   val createParent =
     HttpEndpoints.createParent.handle((storeName, itemId, parent) =>
       itemStoreProvider
@@ -107,12 +116,41 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
         .toNoContentHttpResponse
     )
 
+  // ============================================================
+  //  Reference
+  // ============================================================
+
   val createReference =
     HttpEndpoints.createReference.handle((storeName, args) =>
       itemStoreProvider
         .create(storeName)
         .createReference(args)
         .toCreatedHttpResponse
+    )
+
+  val getReference = HttpEndpoints.getReference.handle((storeName, id) =>
+    itemStoreProvider.create(storeName).getReference(id).toHttpResponse
+  )
+
+  val getReferences =
+    HttpEndpoints.getReferences.handle((storeName, sourceOpt, targetOpt) =>
+      val result = (sourceOpt, targetOpt) match
+        case (Some(source), None) =>
+          itemStoreProvider.create(storeName).getReferencesFromSource(source)
+        case (None, Some(target)) =>
+          itemStoreProvider.create(storeName).getReferencesToTargetItem(target)
+        case (None, None) =>
+          Left(
+            InvalidArgumentError("Either `source` or `target` must be provided")
+          )
+        case (Some(_), Some(_)) =>
+          Left(
+            InvalidArgumentError(
+              "Only one of `source` or `target` can be provided"
+            )
+          )
+
+      result.toHttpResponse
     )
 
   val updateReference =

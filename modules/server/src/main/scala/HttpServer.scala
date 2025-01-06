@@ -7,9 +7,7 @@ import silverbrain.store.SqlItemStore
 import silverbrain.store.SqliteStoreManager
 import silverbrain.store.Transactor
 
-import silverbrain.http.contract.HttpEndpoints.createReference
-import silverbrain.http.contract.HttpEndpoints.deleteReference
-import silverbrain.http.contract.HttpEndpoints.updateReference
+import silverbrain.http.contract.HttpEndpoints.*
 import sttp.tapir.*
 import sttp.tapir.server.netty.sync.NettySyncServer
 
@@ -20,16 +18,23 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
     .port(port)
     .addEndpoints(
       List(
+        // Item.
         getItem,
         getItems,
         createItem,
         updateItem,
         deleteItem,
+
+        // Link.
         createParent,
         deleteParent,
         createChild,
         deleteChild,
+
+        // Reference.
         createReference,
+        getReference,
+        getReferences,
         updateReference,
         deleteReference
       )

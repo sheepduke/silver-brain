@@ -9,17 +9,16 @@ import sttp.tapir.json.jsoniter.jsonBody
 import sttp.tapir.generic.auto.*
 
 object HttpEndpoints:
+
+  // ============================================================
+  //  Basic
+  // ============================================================
+
   given JsonValueCodec[IdOnly] = JsonCodecMaker.make
   given JsonValueCodec[ConflictError] = JsonCodecMaker.make
   given JsonValueCodec[InvalidArgumentError] = JsonCodecMaker.make
   given JsonValueCodec[SerializableException] = JsonCodecMaker.make
-
-  given JsonValueCodec[Item] = JsonCodecMaker.make
-  given JsonValueCodec[Seq[Item]] = JsonCodecMaker.make
-  given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
-  given JsonValueCodec[UpdateItemArgs] = JsonCodecMaker.make
-  given JsonValueCodec[CreateItemReferenceArgs] = JsonCodecMaker.make
-  given JsonValueCodec[UpdateItemReferenceArgs] = JsonCodecMaker.make
+  given [A: JsonValueCodec]: JsonValueCodec[Seq[A]] = JsonCodecMaker.make
 
   private val endpointBase =
     endpoint
@@ -30,6 +29,10 @@ object HttpEndpoints:
   // ============================================================
   //  Item
   // ============================================================
+
+  given JsonValueCodec[Item] = JsonCodecMaker.make
+  given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
+  given JsonValueCodec[UpdateItemArgs] = JsonCodecMaker.make
 
   val createItem =
     endpointBase.post
@@ -102,11 +105,26 @@ object HttpEndpoints:
   //  Reference
   // ============================================================
 
+  given JsonValueCodec[ItemReference] = JsonCodecMaker.make
+  given JsonValueCodec[CreateItemReferenceArgs] = JsonCodecMaker.make
+  given JsonValueCodec[UpdateItemReferenceArgs] = JsonCodecMaker.make
+
   val createReference =
     endpointBase.post
       .in("references")
       .in(jsonBody[CreateItemReferenceArgs])
       .out(statusCode.and(jsonBody[IdOnly]))
+
+  val getReference = endpointBase.get
+    .in("references")
+    .in(path[String]("id"))
+    .out(jsonBody[ItemReference])
+
+  val getReferences = endpointBase.get
+    .in("references")
+    .in(query[Option[String]]("source").default(None))
+    .in(query[Option[String]]("target").default(None))
+    .out(jsonBody[Seq[ItemReference]])
 
   val updateReference =
     endpointBase.patch
