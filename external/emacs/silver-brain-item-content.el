@@ -28,6 +28,7 @@
         (use-local-map keymap)
         (define-key keymap (kbd "C-x C-s") 'silver-brain-item-content-save))
 
+      (goto-char (point-min))
       (set-buffer-modified-p nil)
       (pop-to-buffer-same-window (current-buffer)))))
 

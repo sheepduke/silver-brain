@@ -16,14 +16,11 @@
 (defvar-local silver-brain-current-item nil)
 (put 'silver-brain-current-item 'permanently-enabled-local-variables t)
 
-(defvar-local silver-brain-item-parents nil)
-(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
+(defvar-local silver-brain-item-out-references nil)
+(put 'silver-brain-item-out-references 'permanently-enabled-local-variables t)
 
-(defvar-local silver-brain-item-children nil)
-(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
-
-(defvar-local silver-brain-item-references nil)
-(put 'silver-brain-current-item 'permanently-enabled-local-variables t)
+(defvar-local silver-brain-item-in-references nil)
+(put 'silver-brain-item-in-references 'permanently-enabled-local-variables t)
 
 ;; ============================================================
 ;;  Mode & Keymap
@@ -118,18 +115,12 @@
     (silver-brain-item-mode)
     (setq silver-brain-current-item item)
 
-    ;; Initialize parents.
-    (setq silver-brain-item-parents (--> (silver-brain-prop-parents item)
-                             (silver-brain-client-get-items it)
-                             (silver-brain-sort-items it)))
+    ;; Fetch references.
+    (setq silver-brain-item-out-references
+          (silver-brain-client-get-references-from-item (silver-brain-prop-id silver-brain-current-item)))
 
-    ;; Initialize children.
-    (setq silver-brain-item-children (--> (silver-brain-prop-children item)
-                              (silver-brain-client-get-items it)
-                              (silver-brain-sort-items it)))
-
-    ;; Initialize references.
-    ;; TODO
+    (setq silver-brain-item-in-references
+          (silver-brain-client-get-references-to-item (silver-brain-prop-id silver-brain-current-item)))
 
     ;; Temporally disable read-only state.
     (setq buffer-read-only nil)
@@ -137,6 +128,7 @@
 
     ;; Insert contents.
     (silver-brain--item-buffer-insert-components)
+    (goto-char (point-min))
 
     ;; Set the final state.
     (setq buffer-read-only t)
@@ -146,27 +138,37 @@
   (silver-brain-insert-h1 (silver-brain-prop-name silver-brain-current-item) "\n")
 
   ;; Insert basic information.
-  (insert "\nContent type: " (silver-brain-prop-content-type silver-brain-current-item) "\n")
-  (insert "Create time: "
-          (silver-brain-format-time (silver-brain-prop-create-time silver-brain-current-item))
-          "\n")
-  (insert "Update time: "
-          (silver-brain-format-time (silver-brain-prop-update-time silver-brain-current-item))
-          "\n")
+  (insert "\n" "ID: " (silver-brain-prop-id silver-brain-current-item) "\n"
+          "Content Type: " (silver-brain-prop-content-type silver-brain-current-item) "\n"
+          "Create Time: " (silver-brain-format-time (silver-brain-prop-create-time silver-brain-current-item)) "\n"
+          "Update Time: " (silver-brain-format-time (silver-brain-prop-update-time silver-brain-current-item)) "\n")
 
   ;; Insert parents
   (silver-brain-insert-h2 "\n" "Parents:" "\n")
-  (dolist (item silver-brain-item-parents)
-    ;; (insert "  ")
+  (dolist (item (silver-brain-prop-parents silver-brain-current-item))
     (silver-brain-insert-item-button item)
     (insert "\n"))
   (insert "\n")
 
   ;; Insert children.
   (silver-brain-insert-h2 "Children:" "\n")
-  (dolist (item silver-brain-item-children)
-    ;; (insert "  ")
+  (dolist (item (silver-brain-prop-children silver-brain-current-item))
     (silver-brain-insert-item-button item)
+    (insert "\n"))
+  (insert "\n")
+
+  ;; Insert references.
+  (silver-brain-insert-h2 "References:" "\n")
+  (dolist (reference silver-brain-item-out-references)
+    (insert (silver-brain-prop-name silver-brain-current-item)
+            " --(" (silver-brain-prop-annotation reference) ")--> ")
+    (silver-brain-insert-item-button (silver-brain-prop-target reference))
+    (insert "\n"))
+
+  (dolist (reference silver-brain-item-in-references)
+    (silver-brain-insert-item-button (silver-brain-prop-source reference))
+    (insert " --(" (silver-brain-prop-annotation reference) ")--> "
+            (silver-brain-prop-name silver-brain-current-item))
     (insert "\n")))
 
 ;; ============================================================

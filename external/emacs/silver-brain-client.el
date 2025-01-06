@@ -89,8 +89,8 @@ Return the ID of newly created item."
                                         (cons "contentType" content-type)))))
     (silver-brain-prop-id response)))
 
-(defun silver-brain-client-get-item (id)
-  (silver-brain--client-get (format "items/%s?select=all" id)))
+(defun silver-brain-client-get-item (id &optional select)
+  (silver-brain--client-get (format "items/%s?select=%s" id (or select "all"))))
 
 (defun silver-brain-client-get-items (ids)
   (silver-brain--client-get (format "items?ids=%s" (string-join ids ","))))
@@ -134,11 +134,11 @@ Return the ID of newly created item."
          (reference-id (silver-brain-prop-id response)))
     reference-id))
 
-(defun silver-brain-client-get-references (ids)
-  ;; (silver-brain--client-get (format "references?ids=%s" (string-join ids ",")))
-  ;; FIXME
-  (list)
-  )
+(defun silver-brain-client-get-references-from-item (item-id)
+  (silver-brain--client-get (format "references?source=%s" item-id)))
+
+(defun silver-brain-client-get-references-to-item (item-id)
+  (silver-brain--client-get (format "references?target=%s" item-id)))
 
 (defun silver-brain-client-update-reference (id annotation)
   (silver-brain--client-patch (format "references/%s" id)
