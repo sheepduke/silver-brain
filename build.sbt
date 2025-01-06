@@ -6,7 +6,7 @@ ThisBuild / organization := "com.sheepduke"
 // ============================================================
 
 // CLI option parser.
-val libCliArgsParser = "org.rogach" %% "scallop" % "5.1.0"
+val libCliArgsParser = "org.rogach" %% "scallop" % "5.2.0"
 
 // HTTP server.
 val tapirVersion = "1.11.8"
@@ -63,6 +63,7 @@ lazy val server = project
   .settings(
     name := "silver-brain",
     libraryDependencies ++= Seq(
+      libCliArgsParser,
       libLoggerInterface,
       libLoggerImplementation
     ) ++ libsHttpServer ++ libsJson ++ libsTestFramework ++ libsHttpClient
