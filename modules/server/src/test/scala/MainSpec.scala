@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 class MainSpec extends AnyFunSuite with Matchers:
   test("Short forms"):
-    var conf = CliConf(Seq("-p", "8888", "-d", "~/"))
+    var conf = CliConf(Seq("-p", "8888", "-r", "~/"))
     conf.port().shouldBe(8888)
     conf.dataRoot().shouldBe("~/")
 

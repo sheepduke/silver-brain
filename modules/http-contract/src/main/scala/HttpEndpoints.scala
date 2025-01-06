@@ -30,6 +30,7 @@ object HttpEndpoints:
   //  Item
   // ============================================================
 
+  given JsonValueCodec[ItemCore] = JsonCodecMaker.make
   given JsonValueCodec[Item] = JsonCodecMaker.make
   given JsonValueCodec[CreateItemArgs] = JsonCodecMaker.make
   given JsonValueCodec[UpdateItemArgs] = JsonCodecMaker.make

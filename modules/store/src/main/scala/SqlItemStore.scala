@@ -31,10 +31,16 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
       for
         item <- ItemRepo.getOne(id, loadOptions).toRight(IdNotFoundError())
         parents <-
-          if loadOptions.parents then Right(Some(ItemLinkRepo.getParents(id)))
+          if loadOptions.parents then
+            Right(
+              Some(
+                ItemRepo.getMany(ItemLinkRepo.getParents(id))
+              )
+            )
           else Right(None)
         children <-
-          if loadOptions.children then Right(Some(ItemLinkRepo.getChildren(id)))
+          if loadOptions.children then
+            Right(Some(ItemRepo.getMany(ItemLinkRepo.getChildren(id))))
           else Right(None)
       yield item.copy(parents = parents, children = children)
     )

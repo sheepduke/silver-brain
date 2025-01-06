@@ -40,16 +40,16 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         editor <- store
           .getItem(editorId, ItemLoadOptions().withChildren)
       yield
-        emacs.parents.get.shouldBe(Seq(editorId))
+        emacs.parents.get.shouldBe(Seq(ItemCore(editorId, "Editor")))
         emacs.children.get.shouldBe(Seq())
 
-        vim.parents.get.shouldBe(Seq(editorId))
+        vim.parents.get.shouldBe(Seq(ItemCore(editorId, "Editor")))
         vim.children.get.shouldBe(Seq())
 
         editor.parents.shouldBe(None)
         editor.children.get.size.shouldBe(2)
-        editor.children.get.contains(emacsId).shouldBe(true)
-        editor.children.get.contains(vimId).shouldBe(true)
+        editor.children.get.map(_.id).contains(emacsId).shouldBe(true)
+        editor.children.get.map(_.id).contains(vimId).shouldBe(true)
     )
 
   test("Search item"):
@@ -185,8 +185,8 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
         // Verify relationship between Emacs and Vim is properly set.
         reference <- store.getReference(emacsVimRefId)
         _ = reference.id.shouldBe(emacsVimRefId)
-        _ = reference.source.shouldBe(emacs)
-        _ = reference.target.shouldBe(vim)
+        _ = reference.source.id.shouldBe(emacs)
+        _ = reference.target.id.shouldBe(vim)
         _ = reference.annotation.shouldBe("Partly supports")
 
         // Verify getReferenceFromItem.

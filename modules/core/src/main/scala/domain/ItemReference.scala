@@ -4,8 +4,8 @@ import java.time.Instant
 
 case class ItemReference(
     id: String,
-    source: String,
-    target: String,
+    source: ItemCore,
+    target: ItemCore,
     annotation: String,
     createTime: Instant,
     updateTime: Instant

@@ -8,9 +8,9 @@ case class Item(
     contentType: Option[String] = None,
     content: Option[String] = None,
     properties: Option[Map[String, String]] = None,
-    parents: Option[Seq[String]] = None,
-    children: Option[Seq[String]] = None,
-    siblings: Option[Seq[String]] = None,
+    parents: Option[Seq[ItemCore]] = None,
+    children: Option[Seq[ItemCore]] = None,
     createTime: Option[Instant] = None,
     updateTime: Option[Instant] = None
-)
+):
+  def toItemCore(): ItemCore = ItemCore(id, name)

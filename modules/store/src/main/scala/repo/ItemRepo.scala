@@ -24,6 +24,22 @@ private[store] object ItemRepo:
       .single
       .apply()
 
+  def getOne(id: String)(using DBSession): Option[ItemCore] =
+    sql"select id, name from item where id = $id"
+      .map(_.toItemCore)
+      .single
+      .apply()
+
+  def getMany(ids: Seq[String])(using DBSession): Seq[ItemCore] =
+    if ids.isEmpty then Seq()
+    else
+      val idIn = SQLSyntax.in(sqls"id", ids)
+
+      sql"select id, name from item where $idIn"
+        .map(_.toItemCore)
+        .list
+        .apply()
+
   def getMany(
       ids: Seq[String],
       loadOptions: ItemLoadOptions
@@ -95,3 +111,5 @@ extension (rs: WrappedResultSet)
           rs.stringOpt("update_time").map(Instant.parse(_))
         else None
     )
+
+  def toItemCore = ItemCore(rs.string("id"), rs.string("name"))
