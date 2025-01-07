@@ -81,14 +81,12 @@
 
 (defun silver-brain-select-item (items)
   "Select one item from given ITEMS and return its id."
-  (let ((item-map (->> (silver-brain-sort-items items)
-                       (--map (cons (format "%s [%s]"
-                                            (silver-brain-prop-name it)
-                                            (silver-brain-prop-id it))
-                                    (silver-brain-prop-id it))))))
-    (and items
-         (cdr (assoc-string (completing-read "Choose item: " item-map)
-                            item-map)))))
+  (silver-brain-completing-read (silver-brain-sort-items items)
+                    (lambda (item)
+                      (format "%s [%s]"
+                              (silver-brain-prop-name item)
+                              (silver-brain-prop-id item)))
+                    (lambda (item) (silver-brain-prop-id item))))
 
 (defun silver-brain-sort-items (items)
   "Sort items."
@@ -126,7 +124,5 @@ function that takes 0 argument and perform corresponding operation."
 (defun silver-brain-get-item-name-at-point ()
   "Get item name under the point."
   (get-text-property (point) 'item-name))
-
-
 
 (provide 'silver-brain-item)

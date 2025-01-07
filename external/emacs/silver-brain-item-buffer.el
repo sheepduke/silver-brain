@@ -16,11 +16,11 @@
 (defvar-local silver-brain-current-item nil)
 (put 'silver-brain-current-item 'permanently-enabled-local-variables t)
 
-(defvar-local silver-brain-item-out-references nil)
-(put 'silver-brain-item-out-references 'permanently-enabled-local-variables t)
+(defvar-local silver-brain-item-outbound-references nil)
+(put 'silver-brain-item-outbound-references 'permanently-enabled-local-variables t)
 
-(defvar-local silver-brain-item-in-references nil)
-(put 'silver-brain-item-in-references 'permanently-enabled-local-variables t)
+(defvar-local silver-brain-item-inbound-references nil)
+(put 'silver-brain-item-inbound-references 'permanently-enabled-local-variables t)
 
 ;; ============================================================
 ;;  Mode & Keymap
@@ -95,9 +95,10 @@
 
 (pretty-hydra-define silver-brain-item-reference-hydra (:color blue)
   ("Reference"
-   (("c" nil "create")
-    ("r" nil "rename")
-    ("d" nil "delete"))))
+   (("o" #'silver-brain-item-create-outbound-reference "create outbound")
+    ("i" #'silver-brain-item-create-inbound-reference "create inbound")
+    ("r" #'silver-brain-item-rename-reference "rename")
+    ("d" #'silver-brain-item-delete-reference "delete"))))
 
 (define-derived-mode silver-brain-item-mode special-mode "SB/Item"
   "Major mode for Silver Brain item."
@@ -116,10 +117,10 @@
     (setq silver-brain-current-item item)
 
     ;; Fetch references.
-    (setq silver-brain-item-out-references
+    (setq silver-brain-item-outbound-references
           (silver-brain-client-get-references-from-item (silver-brain-prop-id silver-brain-current-item)))
 
-    (setq silver-brain-item-in-references
+    (setq silver-brain-item-inbound-references
           (silver-brain-client-get-references-to-item (silver-brain-prop-id silver-brain-current-item)))
 
     ;; Temporally disable read-only state.
@@ -159,16 +160,16 @@
 
   ;; Insert references.
   (silver-brain-insert-h2 "References:" "\n")
-  (dolist (reference silver-brain-item-out-references)
-    (insert (silver-brain-prop-name silver-brain-current-item)
+  (dolist (reference silver-brain-item-outbound-references)
+    (insert "This"
             " --(" (silver-brain-prop-annotation reference) ")--> ")
     (silver-brain-insert-item-button (silver-brain-prop-target reference))
     (insert "\n"))
 
-  (dolist (reference silver-brain-item-in-references)
+  (dolist (reference silver-brain-item-inbound-references)
     (silver-brain-insert-item-button (silver-brain-prop-source reference))
     (insert " --(" (silver-brain-prop-annotation reference) ")--> "
-            (silver-brain-prop-name silver-brain-current-item))
+            "This")
     (insert "\n")))
 
 ;; ============================================================
@@ -256,6 +257,57 @@
      ((--first (s-equals? (silver-brain-prop-id it) target-item-id) silver-brain-item-children)
       (silver-brain-client-delete-child (silver-brain-prop-id silver-brain-current-item) target-item-id)))
     (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-create-outbound-reference ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let* ((source (silver-brain-prop-id silver-brain-current-item))
+         (target (silver-brain-search-and-select-item (read-string "Search target item: ")))
+         (annotation (read-string "Annotation: ")))
+    (silver-brain-client-create-reference source target annotation)
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-create-inbound-reference ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let* ((source (silver-brain-search-and-select-item (read-string "Search target item: ")))
+         (target (silver-brain-prop-id silver-brain-current-item))
+         (annotation (read-string "Annotation: ")))
+    (silver-brain-client-create-reference source target annotation)
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-rename-reference ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((reference (silver-brain-item-select-reference)))
+    (silver-brain-client-update-reference (silver-brain-prop-id reference)
+                              (read-string "New annotation: "
+                                           (silver-brain-prop-annotation reference)))
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-delete-reference ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((reference (silver-brain-item-select-reference)))
+    (silver-brain-client-delete-reference (silver-brain-prop-id reference))
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-select-reference ()
+  (silver-brain-completing-read (-concat silver-brain-item-outbound-references
+                             silver-brain-item-inbound-references)
+                    (lambda (reference)
+                      (let* ((item-id (silver-brain-prop-id silver-brain-current-item))
+                             (source (silver-brain-prop-source reference))
+                             (target (silver-brain-prop-target reference)))
+                        (format "%s --(%s)--> %s"
+                                (if (s-equals? (silver-brain-prop-id source) item-id)
+                                    "This"
+                                  (silver-brain-prop-name source))
+                                (silver-brain-prop-annotation reference)
+                                (if (s-equals? (silver-brain-prop-id target) item-id)
+                                    "This"
+                                  (silver-brain-prop-name target)))))
+                    #'identity))
 
 (defun silver-brain--verify-current-item ()
   (or silver-brain-current-item

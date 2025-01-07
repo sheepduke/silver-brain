@@ -22,4 +22,12 @@
 (defun silver-brain-format-time (time-string)
   (format-time-string silver-brain-time-format (encode-time (iso8601-parse time-string))))
 
+(defun silver-brain-completing-read (things key-fun value-fun)
+  (let ((thing-map (--map (cons (funcall key-fun it)
+                                (funcall value-fun it))
+                          things)))
+    (and things
+         (cdr (assoc-string (completing-read "Choose: " thing-map)
+                            thing-map)))))
+
 (provide 'silver-brain-util)
