@@ -270,7 +270,8 @@
 (defun silver-brain-item-delete-link ()
   (interactive)
   (silver-brain--verify-current-item)
-  (when-let (target-item-id (silver-brain-select-item (-union silver-brain-item-parents silver-brain-item-children)))
+  (when-let (target-item-id (silver-brain-select-item (-union (silver-brain-prop-parents silver-brain-current-item)
+                                                  (silver-brain-prop-children silver-brain-current-item))))
     (cond
      ;; If it is a parent.
      ((--first (s-equals? (silver-brain-prop-id it) target-item-id) silver-brain-item-parents)
