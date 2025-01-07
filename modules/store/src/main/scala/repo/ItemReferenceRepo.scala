@@ -55,7 +55,7 @@ private[store] object ItemReferenceRepo:
     val time = Instant.now().toString()
 
     sql"""update item_reference
-      set update_time = $time and annotation = $annotation
+      set update_time = $time, annotation = $annotation
       where id = $id""".update.apply()
 
   def delete(referenceId: String)(using DBSession): Unit =
