@@ -52,8 +52,7 @@ class HttpClient(
 
   def upsertItemProperty(
       itemId: ItemId,
-      key: String,
-      value: String
+      property: ItemProperty
   ): Either[StoreNotFoundError, Unit] = ???
 
   def deleteItemProperty(

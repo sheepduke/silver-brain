@@ -7,7 +7,7 @@ case class Item(
     name: String,
     contentType: Option[String] = None,
     content: Option[String] = None,
-    properties: Option[Map[String, String]] = None,
+    properties: Option[Seq[ItemProperty]] = None,
     parents: Option[Seq[ItemCore]] = None,
     children: Option[Seq[ItemCore]] = None,
     createTime: Option[Instant] = None,

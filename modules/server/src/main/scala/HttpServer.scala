@@ -25,6 +25,10 @@ class HttpServer(itemStoreProvider: ItemStoreProvider)(port: Int)
         updateItem,
         deleteItem,
 
+        // Property.
+        upsertProperty,
+        deleteProperty,
+
         // Link.
         createParent,
         deleteParent,

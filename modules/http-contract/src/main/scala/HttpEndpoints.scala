@@ -67,6 +67,27 @@ object HttpEndpoints:
     endpointBase.delete.in("items").in(path[String]("id")).out(statusCode)
 
   // ============================================================
+  //  Item Property
+  // ============================================================
+
+  given JsonValueCodec[ItemProperty] = JsonCodecMaker.make
+
+  val upsertProperty =
+    endpointBase.put
+      .in("items")
+      .in(path[String]("id"))
+      .in("properties")
+      .in(jsonBody[ItemProperty])
+      .out(statusCode)
+
+  val deleteProperty = endpointBase.delete
+    .in("items")
+    .in(path[String]("id"))
+    .in("properties")
+    .in(path[String]("key"))
+    .out(statusCode)
+
+  // ============================================================
   //  Link
   // ============================================================
 

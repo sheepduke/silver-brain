@@ -117,6 +117,32 @@ class SqlItemStoreSpec extends AnyFunSuite with Matchers:
     )
 
   // ============================================================
+  //  Property
+  // ============================================================
+
+  test("Upsert item property"):
+    withTempItemStore(store =>
+      for
+        itemId <- store.createItem(CreateItemArgs("Item"))
+        _ <- store.upsertItemProperty(itemId, ItemProperty("key", "value"))
+        _ <- store.upsertItemProperty(itemId, ItemProperty("key2", "value2"))
+
+        // Verify the properties.
+        item <- store.getItem(itemId, ItemLoadOptions(properties = true))
+        _ = item.properties.shouldBe(
+          Some(
+            Seq(ItemProperty("key", "value"), ItemProperty("key2", "value2"))
+          )
+        )
+
+        // Delete properties and verify it.
+        _ <- store.deleteItemProperty(itemId, "key")
+        item <- store.getItem(itemId, ItemLoadOptions(properties = true))
+        _ = item.properties.shouldBe(Some(Seq(ItemProperty("key2", "value2"))))
+      yield ()
+    )
+
+  // ============================================================
   //  ItemLink
   // ============================================================
 

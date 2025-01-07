@@ -15,14 +15,6 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
   //  Item
   // ============================================================
 
-  def createItem(args: CreateItemArgs): Either[StoreNotFoundError, String] =
-    val id = "i_" + Ksuid.newKsuid().toString()
-
-    transactor.withTransaction(implicit session =>
-      ItemRepo.create(id, args, Instant.now())
-      Right(id)
-    )
-
   def getItem(
       id: ItemId,
       loadOptions: ItemLoadOptions
@@ -30,6 +22,8 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
     transactor.withTransaction(implicit session =>
       for
         item <- ItemRepo.getOne(id, loadOptions).toRight(IdNotFoundError())
+
+        // Load parents.
         parents <-
           if loadOptions.parents then
             Right(
@@ -38,11 +32,23 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
               )
             )
           else Right(None)
+
+        // Load children.
         children <-
           if loadOptions.children then
             Right(Some(ItemRepo.getMany(ItemLinkRepo.getChildren(id))))
           else Right(None)
-      yield item.copy(parents = parents, children = children)
+
+        // Load properties.
+        properties <-
+          if loadOptions.properties then
+            Right(Some(ItemPropertyRepo.getMany(id)))
+          else Right(None)
+      yield item.copy(
+        parents = parents,
+        children = children,
+        properties = properties
+      )
     )
 
   def getItems(
@@ -66,6 +72,14 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
       case Left(errorMessage) =>
         Left(InvalidArgumentError(errorMessage))
 
+  def createItem(args: CreateItemArgs): Either[StoreNotFoundError, String] =
+    val id = "i_" + Ksuid.newKsuid().toString()
+
+    transactor.withTransaction(implicit session =>
+      ItemRepo.create(id, args, Instant.now())
+      Right(id)
+    )
+
   def updateItem(
       id: ItemId,
       args: UpdateItemArgs
@@ -85,18 +99,47 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
 
   def upsertItemProperty(
       itemId: ItemId,
-      key: String,
-      value: String
-  ): Either[StoreNotFoundError, Unit] = ???
+      property: ItemProperty
+  ): Either[StoreNotFoundError, Unit] =
+    transactor.withTransaction(implicit session =>
+      if ItemPropertyRepo.exists(itemId, property.key) then
+        ItemPropertyRepo.update(itemId, property)
+      else ItemPropertyRepo.create(itemId, property)
+
+      Right(())
+    )
 
   def deleteItemProperty(
       itemId: ItemId,
       key: String
-  ): Either[StoreNotFoundError, Unit] = ???
+  ): Either[StoreNotFoundError, Unit] =
+    transactor.withTransaction(implicit session =>
+      ItemPropertyRepo.delete(itemId, key)
+
+      Right(())
+    )
 
   // ============================================================
   //  Link
   // ============================================================
+
+  def getParents(
+      id: ItemId
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
+    transactor.withTransaction(implicit session =>
+      ItemRepo.getOne(id, ItemLoadOptions()) match
+        case None    => Left(IdNotFoundError())
+        case Some(_) => Right(ItemLinkRepo.getParents(id))
+    )
+
+  def getChildren(
+      id: ItemId
+  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
+    transactor.withTransaction(implicit session =>
+      ItemRepo.getOne(id, ItemLoadOptions()) match
+        case None    => Left(IdNotFoundError())
+        case Some(_) => Right(ItemLinkRepo.getChildren(id))
+    )
 
   def createLink(
       parent: ItemId,
@@ -117,24 +160,6 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
       else Right(ItemLinkRepo.create(parent, child))
     )
 
-  def getParents(
-      id: ItemId
-  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
-    transactor.withTransaction(implicit session =>
-      ItemRepo.getOne(id, ItemLoadOptions()) match
-        case None    => Left(IdNotFoundError())
-        case Some(_) => Right(ItemLinkRepo.getParents(id))
-    )
-
-  def getChildren(
-      id: ItemId
-  ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]] =
-    transactor.withTransaction(implicit session =>
-      ItemRepo.getOne(id, ItemLoadOptions()) match
-        case None    => Left(IdNotFoundError())
-        case Some(_) => Right(ItemLinkRepo.getChildren(id))
-    )
-
   def deleteLink(
       parent: ItemId,
       child: ItemId
@@ -146,17 +171,6 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
   // ============================================================
   //  Reference
   // ============================================================
-
-  def createReference(
-      args: CreateItemReferenceArgs
-  ): Either[StoreNotFoundError | InvalidArgumentError, String] =
-    transactor.withTransaction(implicit session =>
-      if !ItemRepo.exists(args.source) then
-        Left(InvalidArgumentError("Invalid source id"))
-      else if !ItemRepo.exists(args.target) then
-        Left(InvalidArgumentError("Invalid target id"))
-      else Right(ItemReferenceRepo.create(args))
-    )
 
   def getReference(
       id: ReferenceId
@@ -183,6 +197,17 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
       if ItemRepo.exists(target) then
         Right(ItemReferenceRepo.getManyByTarget(target))
       else Left(IdNotFoundError())
+    )
+
+  def createReference(
+      args: CreateItemReferenceArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, String] =
+    transactor.withTransaction(implicit session =>
+      if !ItemRepo.exists(args.source) then
+        Left(InvalidArgumentError("Invalid source id"))
+      else if !ItemRepo.exists(args.target) then
+        Left(InvalidArgumentError("Invalid target id"))
+      else Right(ItemReferenceRepo.create(args))
     )
 
   def updateReference(

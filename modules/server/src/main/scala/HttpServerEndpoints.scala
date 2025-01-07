@@ -81,6 +81,26 @@ trait HttpServerEndpoints(itemStoreProvider: ItemStoreProvider):
     )
 
   // ============================================================
+  //  Item Property
+  // ============================================================
+
+  val upsertProperty =
+    HttpEndpoints.upsertProperty.handle((storeName, itemId, property) =>
+      this.itemStoreProvider
+        .create(storeName)
+        .upsertItemProperty(itemId, property)
+        .toNoContentHttpResponse
+    )
+
+  val deleteProperty =
+    HttpEndpoints.deleteProperty.handle((storeName, itemId, key) =>
+      this.itemStoreProvider
+        .create(storeName)
+        .deleteItemProperty(itemId, key)
+        .toNoContentHttpResponse
+    )
+
+  // ============================================================
   //  Link
   // ============================================================
 

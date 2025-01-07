@@ -7,8 +7,6 @@ trait ItemStore:
   //  Item
   // ============================================================
 
-  def createItem(args: CreateItemArgs): Either[StoreNotFoundError, String]
-
   def getItem(
       id: ItemId,
       loadOptions: ItemLoadOptions = ItemLoadOptions()
@@ -24,6 +22,8 @@ trait ItemStore:
       loadOptions: ItemLoadOptions = ItemLoadOptions()
   ): Either[StoreNotFoundError | InvalidArgumentError, Seq[Item]]
 
+  def createItem(args: CreateItemArgs): Either[StoreNotFoundError, String]
+
   def updateItem(
       id: ItemId,
       args: UpdateItemArgs
@@ -37,8 +37,7 @@ trait ItemStore:
 
   def upsertItemProperty(
       id: ItemId,
-      key: String,
-      value: String
+      property: ItemProperty
   ): Either[StoreNotFoundError, Unit]
 
   def deleteItemProperty(
@@ -50,11 +49,6 @@ trait ItemStore:
   //  Link
   // ============================================================
 
-  def createLink(
-      parent: ItemId,
-      child: ItemId
-  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit]
-
   def getParents(
       id: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]]
@@ -62,6 +56,11 @@ trait ItemStore:
   def getChildren(
       id: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[String]]
+
+  def createLink(
+      parent: ItemId,
+      child: ItemId
+  ): Either[StoreNotFoundError | InvalidArgumentError | ConflictError, Unit]
 
   def deleteLink(
       parent: ItemId,
@@ -71,10 +70,6 @@ trait ItemStore:
   // ============================================================
   //  Reference
   // ============================================================
-
-  def createReference(
-      args: CreateItemReferenceArgs
-  ): Either[StoreNotFoundError | InvalidArgumentError, String]
 
   def getReference(
       id: ReferenceId
@@ -87,6 +82,10 @@ trait ItemStore:
   def getReferencesToTargetItem(
       target: ItemId
   ): Either[StoreNotFoundError | IdNotFoundError, Seq[ItemReference]]
+
+  def createReference(
+      args: CreateItemReferenceArgs
+  ): Either[StoreNotFoundError | InvalidArgumentError, String]
 
   def updateReference(
       id: ReferenceId,
