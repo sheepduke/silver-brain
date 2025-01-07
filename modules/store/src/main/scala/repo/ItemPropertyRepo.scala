@@ -34,7 +34,7 @@ private[store] object ItemPropertyRepo:
     val time = Instant.now().toString()
 
     sql"""
-      update item_property set value = $value and update_time = $time
+      update item_property set value = $value, update_time = $time
         where item_id = $itemId and key = ${property.key}
     """.update.apply()
 
