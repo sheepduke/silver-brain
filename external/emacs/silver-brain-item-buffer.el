@@ -78,8 +78,8 @@
 
 (pretty-hydra-define silver-brain-item-property-hydra (:color blue)
   ("Property"
-   (("c" nil "create")
-    ("d" nil "delete"))))
+   (("u" #'silver-brain-item-upsert-property "upsert")
+    ("d" #'silver-brain-item-delete-property "delete"))))
 
 (pretty-hydra-define silver-brain-item-attachment-hydra (:color blue)
   ("Attachment"
@@ -144,7 +144,13 @@
           "Create Time: " (silver-brain-format-time (silver-brain-prop-create-time silver-brain-current-item)) "\n"
           "Update Time: " (silver-brain-format-time (silver-brain-prop-update-time silver-brain-current-item)) "\n")
 
-  ;; Insert parents
+  ;; Insert properties.
+  (silver-brain-insert-h2 "\n" "Properties:" "\n")
+  (dolist (property (silver-brain-prop-properties silver-brain-current-item))
+    (insert (silver-brain-prop-key property) ": " (silver-brain-prop-value property))
+    (insert "\n"))
+
+  ;; Insert parents.
   (silver-brain-insert-h2 "\n" "Parents:" "\n")
   (dolist (item (silver-brain-prop-parents silver-brain-current-item))
     (silver-brain-insert-item-button item)
@@ -231,6 +237,22 @@
 
     (silver-brain-list-refresh)))
 
+(defun silver-brain-item-upsert-property ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((key (silver-brain-item-select-property-key t))
+        (value (read-string "Value: ")))
+    (silver-brain-client-upsert-item-property (silver-brain-prop-id silver-brain-current-item) key value)
+    (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-delete-property ()
+  (interactive)
+  (silver-brain--verify-current-item)
+  (let ((item-id (silver-brain-prop-id silver-brain-current-item))
+        (key (silver-brain-item-select-property-key nil)))
+    (silver-brain-client-delete-item-property item-id key)
+    (silver-brain-item-buffer-refresh)))
+
 (defun silver-brain-item-add-parent ()
   (interactive)
   (silver-brain--verify-current-item)
@@ -291,6 +313,12 @@
   (let ((reference (silver-brain-item-select-reference)))
     (silver-brain-client-delete-reference (silver-brain-prop-id reference))
     (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-select-property-key (allow-custom)
+  (completing-read "Property key: "
+                   (--map (silver-brain-prop-key it)
+                          (silver-brain-prop-properties silver-brain-current-item))
+                   nil (not allow-custom)))
 
 (defun silver-brain-item-select-reference ()
   (silver-brain-completing-read (-concat silver-brain-item-outbound-references

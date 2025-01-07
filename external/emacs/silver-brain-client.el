@@ -29,6 +29,7 @@
         (url-request-method (cl-case method
                               (:get "GET")
                               (:post "POST")
+                              (:put "PUT")
                               (:patch "PATCH")
                               (:delete "DELETE")))
         (url-request-data (and data (encode-coding-string (json-encode data) 'utf-8))))
@@ -74,6 +75,11 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
                   :method :patch
                   :data data))
 
+(defun silver-brain--client-put (uri data)
+  (silver-brain--client-send-request uri
+                  :method :put
+                  :data data))
+
 (defun silver-brain--client-delete (uri)
   (silver-brain--client-send-request uri :method :delete))
 
@@ -112,10 +118,10 @@ Return the ID of newly created item."
 (defun silver-brain-client-delete-item (id)
   (silver-brain--client-delete (format "items/%s" id)))
 
-(defun silver-brain-client-upsert-item-property (id key value)
+(defun silver-brain-client-upsert-item-property (item-id key value)
   (let ((data (list (cons "key" key)
                     (cons "value" value))))
-    (silver-brain--client-patch (format "/items/%s/properties" id) data)))
+    (silver-brain--client-put (format "items/%s/properties" item-id) data)))
 
 (defun silver-brain-client-delete-item-property (id key)
   (silver-brain--client-delete (format "items/%s/properties/%s" id (url-hexify-string key))))
