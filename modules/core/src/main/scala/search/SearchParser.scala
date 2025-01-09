@@ -68,8 +68,14 @@ object SearchParser:
   // ============================================================
 
   private def filterQuery[$: P]: P[FilterQuery] = P(
-    (knownProperty ~ spaces.? ~ ":" ~ spaces.? ~ anyString).map((key, value) =>
-      FilterQuery(key, value)
+    ((filterKey | knownProperty) ~ spaces.? ~ ":" ~ spaces.? ~ anyString).map(
+      (key, value) => FilterQuery(key, value)
+    )
+  )
+
+  private def filterKey[$: P]: P[FilterKey] = P(
+    StringInIgnoreCase("has").!.map(_.toLowerCase() match
+      case "has" => FilterKey.Has
     )
   )
 

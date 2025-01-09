@@ -41,6 +41,5 @@ class HttpServerSpec extends AnyFunSuite with Matchers:
     withTempServerAndClient(httpClient =>
       val result = httpClient.getItem("invalid")
       result.isLeft.shouldBe(true)
-      println(s"Left error: ${result}")
       result.left.get.isInstanceOf[IdNotFoundError].shouldBe(true)
     )

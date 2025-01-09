@@ -15,10 +15,20 @@ case class OrQuery(subQueries: Seq[SearchQuery]) extends SearchQuery
 case class AndQuery(subQueries: Seq[SearchQuery]) extends SearchQuery
 
 // ============================================================
+//  Filter Keys
+// ============================================================
+
+trait FilterKey
+
+object FilterKey:
+  object Has extends FilterKey
+
+// ============================================================
 //  Property
 // ============================================================
 
-case class FilterQuery(key: KnownProperty, value: String) extends SearchQuery
+case class FilterQuery(key: FilterKey | KnownProperty, value: String)
+    extends SearchQuery
 
 case class KnownPropertyQuery(
     key: KnownProperty,
@@ -36,8 +46,17 @@ case class CustomPropertyQuery(
 //  Compare
 // ============================================================
 
-enum KnownProperty:
-  case Name, ContentType, Content, CreateTime, UpdateTime
+trait KnownProperty
+
+object KnownProperty:
+  object Name extends KnownProperty
+  object ContentType extends KnownProperty
+  object Content extends KnownProperty
+  object CreateTime extends KnownProperty
+  object UpdateTime extends KnownProperty
+
+// enum KnownProperty:
+//   case Name, ContentType, Content, CreateTime, UpdateTime
 
 enum CompareOperator:
   case LessThan, LessEqual, Match, Equal, NotEqual, GreaterEqual,

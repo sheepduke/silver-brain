@@ -67,6 +67,7 @@ class SqlItemStore(transactor: Transactor)(storeName: StoreName)
       case Right(query) =>
         transactor.withTransaction(implicit session =>
           val ids = SearchEngine.execute(query)
+
           Right(ItemRepo.getMany(ids, loadOptions))
         )
       case Left(errorMessage) =>
