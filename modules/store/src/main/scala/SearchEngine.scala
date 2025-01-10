@@ -5,110 +5,122 @@ import scalikejdbc.*
 
 object SearchEngine:
   def execute(query: SearchQuery)(using DBSession): Seq[String] =
-    val sqls = this.toSql(query)
-
+    val sqls = dispatchToSql(query)
+    println(s"Execute $sqls")
     sql"$sqls".map(_.string(1)).list.apply()
 
-  private def toSql(query: SearchQuery): SQLSyntax =
-    query match
-      case query: BlankQuery          => convertBlankQuery()
-      case query: KeywordQuery        => convertKeywordQuery(query)
-      case query: FilterQuery         => convertFilterQuery(query)
-      case query: KnownPropertyQuery  => convertKnownPropertyQuery(query)
-      case query: CustomPropertyQuery => convertCustomPropertyQuery(query)
-      case query: NotQuery            => convertNotQuery(query)
-      case query: AndQuery            => convertAndQuery(query)
-      case query: OrQuery             => convertOrQuery(query)
+private def dispatchToSql(query: SearchQuery): SQLSyntax =
+  query match
+    case q: BlankQuery               => q.toSql
+    case q: NotQuery                 => q.toSql
+    case q: OrQuery                  => q.toSql
+    case q: AndQuery                 => q.toSql
+    case q: FilterNameQuery          => q.toSql
+    case q: FilterContentTypeQuery   => q.toSql
+    case q: FilterContentQuery       => q.toSql
+    case q: FilterHasPropertyQuery   => q.toSql
+    case q: FilterParentsCountQuery  => q.toSql
+    case q: FilterChildrenCountQuery => q.toSql
+    case q: CustomPropertyQuery      => q.toSql
 
-  private def convertBlankQuery(): SQLSyntax =
-    sqls"select id from item"
+// ============================================================
+//  Basic
+// ============================================================
 
-  private def convertKeywordQuery(query: KeywordQuery): SQLSyntax =
-    convertFilterQuery(FilterQuery(KnownProperty.Name, query.keyword))
+trait ToSql[A]:
+  extension (query: A) def toSql: SQLSyntax
 
-  // ============================================================
-  //  Logic
-  // ============================================================
+given ToSql[BlankQuery] with
+  extension (query: BlankQuery) def toSql: SQLSyntax = sqls"select id from item"
 
-  private def convertNotQuery(query: NotQuery): SQLSyntax =
-    SQLSyntax.notIn(sqls"id", toSql(query.subQuery))
+given ToSql[CompareOperator] with
+  extension (operator: CompareOperator)
+    def toSql: SQLSyntax =
+      operator match
+        case CompareOperator.Match        => sqls"like"
+        case CompareOperator.Equal        => sqls"="
+        case CompareOperator.NotEqual     => sqls"<>"
+        case CompareOperator.LessThan     => sqls"<"
+        case CompareOperator.LessEqual    => sqls"<="
+        case CompareOperator.GreaterThan  => sqls">"
+        case CompareOperator.GreaterEqual => sqls">="
 
-  private def convertAndQuery(query: AndQuery): SQLSyntax =
-    if query.subQueries.isEmpty then convertBlankQuery()
-    else
-      query.subQueries.map(toSql(_)).reduce((acc, x) => sqls"$acc INTERSECT $x")
+// ============================================================
+//  Logic
+// ============================================================
 
-  private def convertOrQuery(query: OrQuery): SQLSyntax =
-    if query.subQueries.isEmpty then convertBlankQuery()
-    else query.subQueries.map(toSql(_)).reduce((acc, x) => sqls"$acc UNION $x")
+given ToSql[NotQuery] with
+  extension (query: NotQuery)
+    def toSql: SQLSyntax =
+      SQLSyntax.notIn(sqls"id", dispatchToSql(query.subQuery))
 
-  // ============================================================
-  //  Filter
-  // ============================================================
+given ToSql[AndQuery] with
+  extension (query: AndQuery)
+    def toSql: SQLSyntax =
+      if query.subQueries.isEmpty then BlankQuery().toSql
+      else
+        query.subQueries
+          .map(dispatchToSql(_))
+          .reduce((acc, x) => sqls"$acc INTERSECT $x")
 
-  private def convertFilterQuery(query: FilterQuery): SQLSyntax =
-    query.key match
-      case KnownProperty.Name | KnownProperty.ContentType |
-          KnownProperty.Content =>
-        convertKnownPropertyQuery(
-          KnownPropertyQuery(
-            query.key.asInstanceOf[KnownProperty],
-            CompareOperator.Match,
-            "*" + query.value + "*"
-          )
-        )
-      case FilterKey.Has =>
-        sqls"select item_id from item_property where key = ${query.value}"
-      case _ => throw NotImplementedError()
+given ToSql[OrQuery] with
+  extension (query: OrQuery)
+    def toSql: SQLSyntax =
+      if query.subQueries.isEmpty then BlankQuery().toSql
+      else
+        query.subQueries
+          .map(dispatchToSql(_))
+          .reduce((acc, x) => sqls"$acc UNION $x")
 
-  // ============================================================
-  //  Known Property
-  // ============================================================
+// ============================================================
+//  Filter
+// ============================================================
 
-  private def convertKnownPropertyQuery(query: KnownPropertyQuery): SQLSyntax =
-    val key = convertKnownProperty(query.key)
-    val operator = convertCompareOperator(query.operator)
-    val value =
-      if query.operator == CompareOperator.Match then
-        query.value.replace("*", "%")
-      else query.value
+given ToSql[FilterNameQuery] with
+  extension (query: FilterNameQuery)
+    def toSql: SQLSyntax =
+      val operator = query.operator.toSql
+      sqls"select id from item where name $operator ${query.value}"
 
-    sqls"select id from item where $key $operator $value"
+given ToSql[FilterContentQuery] with
+  extension (query: FilterContentQuery)
+    def toSql: SQLSyntax =
+      val operator = query.operator.toSql
+      sqls"select id from item where content $operator ${query.value}"
 
-  // ============================================================
-  //  Custom Property
-  // ============================================================
+given ToSql[FilterContentTypeQuery] with
+  extension (query: FilterContentTypeQuery)
+    def toSql: SQLSyntax =
+      val operator = query.operator.toSql
+      sqls"select id from item where content_type $operator ${query.value}"
 
-  private def convertCustomPropertyQuery(
-      query: CustomPropertyQuery
-  ): SQLSyntax =
-    val key = query.key
-    val op = convertCompareOperator(query.operator)
-    val value =
-      if query.operator == CompareOperator.Match then
-        query.value.replace("*", "%")
-      else query.value
+given ToSql[FilterHasPropertyQuery] with
+  extension (query: FilterHasPropertyQuery)
+    def toSql: SQLSyntax =
+      sqls"select item_id from item_property where key = ${query.value}"
 
-    sqls"select item_id from item_property where key = $key and value $op $value"
+given ToSql[FilterParentsCountQuery] with
+  extension (query: FilterParentsCountQuery)
+    def toSql: SQLSyntax =
+      val op = query.operator.toSql
+      sqls"""select child from item_link
+               group by child having count(*) $op ${query.value}"""
 
-  // ============================================================
-  //  Property & Compare
-  // ============================================================
+given ToSql[FilterChildrenCountQuery] with
+  extension (query: FilterChildrenCountQuery)
+    def toSql: SQLSyntax =
+      val op = query.operator.toSql
+      sqls"""select parent from item_link
+               group by parent having count(*) $op ${query.value}"""
 
-  private def convertKnownProperty(key: KnownProperty): SQLSyntax =
-    key match
-      case KnownProperty.Name        => sqls"name"
-      case KnownProperty.ContentType => sqls"content_type"
-      case KnownProperty.Content     => sqls"content"
-      case KnownProperty.CreateTime  => sqls"create_time"
-      case KnownProperty.UpdateTime  => sqls"update_time"
+// ============================================================
+//  Custom Property
+// ============================================================
 
-  private def convertCompareOperator(operator: CompareOperator): SQLSyntax =
-    operator match
-      case CompareOperator.Match        => sqls"like"
-      case CompareOperator.Equal        => sqls"="
-      case CompareOperator.NotEqual     => sqls"<>"
-      case CompareOperator.LessThan     => sqls"<"
-      case CompareOperator.LessEqual    => sqls"<="
-      case CompareOperator.GreaterThan  => sqls">"
-      case CompareOperator.GreaterEqual => sqls">="
+given ToSql[CustomPropertyQuery] with
+  extension (query: CustomPropertyQuery)
+    def toSql: SQLSyntax =
+      val key = query.key
+      val op = query.operator.toSql
+      val value = query.value
+      sqls"select item_id from item_property where $key $op $value"

@@ -4,6 +4,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import silverbrain.core.SearchParser.parse
 
 class SearchParserSpec extends AnyFunSuite:
+  private def keywordQuery(value: String): FilterNameQuery =
+    FilterNameQuery(CompareOperator.Match, "%" + value + "%")
 
   // ============================================================
   //  Basic
@@ -16,76 +18,31 @@ class SearchParserSpec extends AnyFunSuite:
 
   test("Parse keyword query of basic string"):
     val result = parse("Something")
-    val expected = KeywordQuery("Something")
+    val expected = keywordQuery("Something")
     assertResult(Right(expected))(result)
 
   test("Parse keyword query of quoted string"):
     val result = parse("\"quoted\\\"\\\\string\"")
-    val expected = KeywordQuery("quoted\"\\string")
+    val expected = keywordQuery("quoted\"\\string")
     assertResult(Right(expected))(result)
 
   test("Parse keyword query of both"):
     val result = parse("asdf \"qwer\"")
     val expected = AndQuery(
-      Seq(KeywordQuery("asdf"), KeywordQuery("qwer"))
+      Seq(
+        keywordQuery("asdf"),
+        keywordQuery("qwer")
+      )
     )
     assertResult(Right(expected))(result)
 
   // ============================================================
-  //  Known Property
+  //  Filter
   // ============================================================
 
-  test("Parse known property query"):
-    assertResult(Right(FilterQuery(KnownProperty.Name, "value")))(
+  test("Parser filter name query"):
+    assertResult(Right(keywordQuery("value")))(
       parse("name: value")
-    )
-
-    assertResult(
-      Right(
-        KnownPropertyQuery(
-          KnownProperty.Content,
-          CompareOperator.Match,
-          "value"
-        )
-      )
-    )(
-      parse("content ~ \"value\"")
-    )
-
-    assertResult(
-      Right(
-        KnownPropertyQuery(
-          KnownProperty.ContentType,
-          CompareOperator.NotEqual,
-          "value"
-        )
-      )
-    )(
-      parse("content-type <> value")
-    )
-
-    assertResult(
-      Right(
-        KnownPropertyQuery(
-          KnownProperty.CreateTime,
-          CompareOperator.LessThan,
-          "2025-01-01"
-        )
-      )
-    )(
-      parse("create_time < 2025-01-01")
-    )
-
-    assertResult(
-      Right(
-        KnownPropertyQuery(
-          KnownProperty.UpdateTime,
-          CompareOperator.LessEqual,
-          "2025-01-01"
-        )
-      )
-    )(
-      parse("updateTime <= 2025-01-01")
     )
 
   // ============================================================
@@ -135,8 +92,6 @@ class SearchParserSpec extends AnyFunSuite:
       parse("$key <> value")
     )
 
-    assertResult(Right(KeywordQuery("$key")))(parse("$key"))
-
   // ============================================================
   //  Logic
   // ============================================================
@@ -145,16 +100,16 @@ class SearchParserSpec extends AnyFunSuite:
     val result = parse("aa || (bb || !cc) dd")
     val expected = OrQuery(
       Seq(
-        KeywordQuery("aa"),
+        keywordQuery("aa"),
         AndQuery(
           Seq(
             OrQuery(
               Seq(
-                KeywordQuery("bb"),
-                NotQuery(KeywordQuery("cc"))
+                keywordQuery("bb"),
+                NotQuery(keywordQuery("cc"))
               )
             ),
-            KeywordQuery("dd")
+            keywordQuery("dd")
           )
         )
       )

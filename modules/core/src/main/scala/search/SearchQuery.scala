@@ -1,62 +1,51 @@
 package silverbrain.core
 
-sealed trait SearchQuery
+import java.util.logging.Filter
 
-case class BlankQuery() extends SearchQuery
+type SearchQuery = BlankQuery | NotQuery | OrQuery | AndQuery |
+  FilterNameQuery | FilterContentTypeQuery | FilterContentQuery |
+  FilterHasPropertyQuery | FilterParentsCountQuery | FilterChildrenCountQuery |
+  CustomPropertyQuery
 
-case class KeywordQuery(keyword: String) extends SearchQuery
+case class BlankQuery()
 
 // ============================================================
 //  Logic
 // ============================================================
 
-case class NotQuery(subQuery: SearchQuery) extends SearchQuery
-case class OrQuery(subQueries: Seq[SearchQuery]) extends SearchQuery
-case class AndQuery(subQueries: Seq[SearchQuery]) extends SearchQuery
+case class NotQuery(subQuery: SearchQuery)
+case class OrQuery(subQueries: Seq[SearchQuery])
+case class AndQuery(subQueries: Seq[SearchQuery])
 
 // ============================================================
-//  Filter Keys
+//  Filter
 // ============================================================
 
-trait FilterKey
+case class FilterNameQuery(operator: CompareOperator, value: String)
 
-object FilterKey:
-  object Has extends FilterKey
+case class FilterContentTypeQuery(operator: CompareOperator, value: String)
+
+case class FilterContentQuery(operator: CompareOperator, value: String)
+
+case class FilterHasPropertyQuery(value: String)
+
+case class FilterParentsCountQuery(operator: CompareOperator, value: Int)
+
+case class FilterChildrenCountQuery(operator: CompareOperator, value: Int)
 
 // ============================================================
 //  Property
 // ============================================================
 
-case class FilterQuery(key: FilterKey | KnownProperty, value: String)
-    extends SearchQuery
-
-case class KnownPropertyQuery(
-    key: KnownProperty,
-    operator: CompareOperator,
-    value: String
-) extends SearchQuery
-
 case class CustomPropertyQuery(
     key: String,
     operator: CompareOperator,
     value: String
-) extends SearchQuery
+)
 
 // ============================================================
 //  Compare
 // ============================================================
-
-trait KnownProperty
-
-object KnownProperty:
-  object Name extends KnownProperty
-  object ContentType extends KnownProperty
-  object Content extends KnownProperty
-  object CreateTime extends KnownProperty
-  object UpdateTime extends KnownProperty
-
-// enum KnownProperty:
-//   case Name, ContentType, Content, CreateTime, UpdateTime
 
 enum CompareOperator:
   case LessThan, LessEqual, Match, Equal, NotEqual, GreaterEqual,
