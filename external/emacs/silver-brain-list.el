@@ -27,6 +27,8 @@
 
   (define-key silver-brain-list-mode-map (kbd "<SPC>") #'major-mode-hydra)
   (define-key silver-brain-list-mode-map (kbd "l") #'silver-brain-list-research)
+  (define-key silver-brain-list-mode-map (kbd "o") #'silver-brain-open-item)
+  (define-key silver-brain-list-mode-map (kbd "c") #'silver-brain-create-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "g") #'tablist-revert)
   (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh))
 
