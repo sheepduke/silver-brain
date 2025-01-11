@@ -6,7 +6,6 @@ import scalikejdbc.*
 object SearchEngine:
   def execute(query: SearchQuery)(using DBSession): Seq[String] =
     val sqls = dispatchToSql(query)
-    println(s"Execute $sqls")
     sql"$sqls".map(_.string(1)).list.apply()
 
 private def dispatchToSql(query: SearchQuery): SQLSyntax =
