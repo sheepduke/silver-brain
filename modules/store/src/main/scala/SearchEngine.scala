@@ -52,7 +52,8 @@ given ToSql[CompareOperator] with
 given ToSql[NotQuery] with
   extension (query: NotQuery)
     def toSql: SQLSyntax =
-      SQLSyntax.notIn(sqls"id", dispatchToSql(query.subQuery))
+      val subQuery = SQLSyntax.notIn(sqls"id", dispatchToSql(query.subQuery))
+      sqls"select id from item where $subQuery"
 
 given ToSql[AndQuery] with
   extension (query: AndQuery)
