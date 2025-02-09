@@ -35,6 +35,15 @@
   :type 'string
   :group 'silver-brain)
 
+(defcustom silver-brain-item-content-buffer-creator
+  (lambda ()
+    (split-window-right)
+    (windmove-right))
+  "The function to create a new window for item content buffer and switch to it.
+By default it creates a window to the right."
+  :type 'function
+  :group 'silver-brain)
+
 (defcustom silver-brain-content-mode-alist '(("*/org" . org-mode)
                                  ("*/markdown" . markdown-mode)
                                  ("*" . fundamental-mode))

@@ -200,8 +200,7 @@
   (interactive)
   (silver-brain--verify-current-item)
   (silver-brain-nuke-item-content-buffer)
-  (split-window-below)
-  (windmove-down)
+  (funcall silver-brain-item-content-buffer-creator)
   (silver-brain-open-item-content silver-brain-current-item))
 
 (defun silver-brain-item-rename ()
