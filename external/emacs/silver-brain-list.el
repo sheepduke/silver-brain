@@ -75,7 +75,8 @@
 
 (defun silver-brain-list-refresh ()
   (interactive)
-  (silver-brain-list-items silver-brain-list-search-string))
+  (with-current-buffer silver-brain-list-buffer-name
+    (silver-brain-list-items silver-brain-list-search-string)))
 
 ;; ============================================================
 ;;  Internal
