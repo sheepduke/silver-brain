@@ -273,10 +273,13 @@
                                                   (silver-brain-prop-children silver-brain-current-item))))
     (cond
      ;; If it is a parent.
-     ((--first (s-equals? (silver-brain-prop-id it) target-item-id) silver-brain-item-parents)
+     ((--first (s-equals? (silver-brain-prop-id it) target-item-id)
+               (silver-brain-prop-parents silver-brain-current-item))
       (silver-brain-client-delete-child target-item-id (silver-brain-prop-id silver-brain-current-item)))
      ;; If it is a child.
-     ((--first (s-equals? (silver-brain-prop-id it) target-item-id) silver-brain-item-children)
+     ((--first (s-equals? (silver-brain-prop-id it) target-item-id)
+               (silver-brain-prop-children silver-brain-current-item))
+      (message "Deleting child %s -> %s" target-item-id (silver-brain-prop-id silver-brain-current-item))
       (silver-brain-client-delete-child (silver-brain-prop-id silver-brain-current-item) target-item-id)))
     (silver-brain-item-buffer-refresh)))
 
