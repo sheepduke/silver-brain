@@ -79,6 +79,10 @@
   "Search items with SEARCH-STRING, select it and return the id."
   (silver-brain-select-item (silver-brain-client-search-items search-string)))
 
+(defun silver-brain-select-and-open-item (items)
+  "Select one item from given ITEMS and open it."
+  (silver-brain-open-item (silver-brain-select-item items)))
+
 (defun silver-brain-select-item (items)
   "Select one item from given ITEMS and return its id."
   (silver-brain-completing-read (silver-brain-sort-items items)

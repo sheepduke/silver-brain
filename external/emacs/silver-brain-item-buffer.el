@@ -34,13 +34,15 @@
         (define-key keymap (kbd "g") #'silver-brain-item-buffer-refresh)
         (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
 
-        ;; History movement.
+        ;; Quick open.
         (define-key keymap (kbd "H") #'silver-brain-open-previous-item)
         (define-key keymap (kbd "L") #'silver-brain-open-next-item)
+        (define-key keymap (kbd "P") #'silver-brain-item-open-parent)
+        (define-key keymap (kbd "C") #'silver-brain-item-open-child)
 
         ;; Item.
         (define-key keymap (kbd "c") #'silver-brain-create-and-open-item)
-        (define-key keymap (kbd "R") #'silver-brain-item-rename)
+        (define-key keymap (kbd "n") #'silver-brain-item-rename)
         (define-key keymap (kbd "e") #'silver-brain-item-edit-content)
         (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
         (define-key keymap (kbd "d") #'silver-brain-item-delete)
@@ -60,13 +62,15 @@
     ("g" #'silver-brain-item-buffer-refresh "refresh")
     ("o" #'silver-brain-search-and-open-item "open"))
 
-   "History"
+   "Quick Open"
    (("H" #'silver-brain-open-previous-item "previous")
-    ("L" #'silver-brain-open-next-item "next"))
+    ("L" #'silver-brain-open-next-item "next")
+    ("P" #'silver-brain-item-open-parent "parent")
+    ("C" #'silver-brain-item-open-child "child"))
 
    "Item"
    (("c" #'silver-brain-create-and-open-item "create")
-    ("R" #'silver-brain-item-rename "rename")
+    ("n" #'silver-brain-item-rename "rename")
     ("u" #'silver-brain-item-update-content-type "update content type")
     ("d" #'silver-brain-item-delete "delete"))
 
@@ -251,6 +255,24 @@
         (key (silver-brain-item-select-property-key nil)))
     (silver-brain-client-delete-item-property item-id key)
     (silver-brain-item-buffer-refresh)))
+
+(defun silver-brain-item-open-parent ()
+  "Open the parent if there is only one. Select otherwise."
+  (interactive)
+  (if-let (parents (silver-brain-prop-parents silver-brain-current-item))
+      (if (= (length parents) 1)
+          (silver-brain-open-item (silver-brain-prop-id (car parents)))
+        (silver-brain-select-and-open-item parents))
+    (message "No parent linked")))
+
+(defun silver-brain-item-open-child ()
+  "Open the child if there is only one. Select otherwise."
+  (interactive)
+  (if-let (children (silver-brain-prop-children silver-brain-current-item))
+      (if (= (length children) 1)
+          (silver-brain-open-item (silver-brain-prop-id (car children)))
+        (silver-brain-select-and-open-item children))
+    (message "No child linked")))
 
 (defun silver-brain-item-add-parent ()
   (interactive)
