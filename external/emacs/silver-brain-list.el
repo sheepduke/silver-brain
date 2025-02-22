@@ -27,16 +27,20 @@
 
   (define-key silver-brain-list-mode-map (kbd "<SPC>") #'major-mode-hydra)
   (define-key silver-brain-list-mode-map (kbd "l") #'silver-brain-list-research)
-  (define-key silver-brain-list-mode-map (kbd "o") #'silver-brain-open-item)
+  (define-key silver-brain-list-mode-map (kbd "o") #'silver-brain-search-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "c") #'silver-brain-create-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "g") #'tablist-revert)
   (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh))
 
 (major-mode-hydra-define silver-brain-list-mode ()
-  ("Buffer"
+  ("List"
    (("l" #'silver-brain-list-research "re-search")
     ("g" #'silver-brain-list-refresh "refresh")
     ("q" #'tablist-quit "quit"))
+
+   "Item"
+   (("o" #'silver-brain-search-and-open-item "search")
+    ("c" #'silver-brain-create-and-open-item "create"))
    
    "Row"
    (("s" #'tablist-sort "sort")
