@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum ServiceError {
     #[error("Invalid item id: `{0}`")]
     InvalidId(String),
