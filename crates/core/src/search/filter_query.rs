@@ -139,80 +139,85 @@ mod tests {
 
     use super::*;
 
+    use FilterQuery as FQ;
+    use SearchQuery as SQ;
+
+    impl FilterQuery {
+        pub fn name(operator: CompareOperator, value: impl Into<String>) -> SQ {
+            SQ::Filter(FQ::Name {
+                operator,
+                value: value.into(),
+            })
+        }
+
+        pub fn content_type(operator: CompareOperator, value: impl Into<String>) -> SQ {
+            SQ::Filter(FQ::ContentType {
+                operator,
+                value: value.into(),
+            })
+        }
+
+        pub fn content(operator: CompareOperator, value: impl Into<String>) -> SQ {
+            SQ::Filter(FQ::Content {
+                operator,
+                value: value.into(),
+            })
+        }
+
+        pub fn has_property(value: impl Into<String>) -> SQ {
+            SQ::Filter(FQ::HasProperty {
+                value: value.into(),
+            })
+        }
+
+        pub fn parents_count(operator: CompareOperator, value: i32) -> SQ {
+            SQ::Filter(FQ::ParentsCount { operator, value })
+        }
+
+        pub fn children_count(operator: CompareOperator, value: i32) -> SQ {
+            SQ::Filter(FQ::ChildrenCount { operator, value })
+        }
+    }
+
     #[test]
     fn test_filter_name_query() {
         assert_eq!(
-            filter_query("name : \"value\"").unwrap(),
-            (
-                "",
-                SearchQuery::Filter(FilterQuery::Name {
-                    operator: CompareOperator::Filter,
-                    value: "value".to_string()
-                })
-            )
+            filter_query("name : \"value\""),
+            Ok(("", FQ::name(CompareOperator::Filter, "value")))
         );
 
         assert_eq!(
-            filter_query("NAME=value").unwrap(),
-            (
-                "",
-                SearchQuery::Filter(FilterQuery::Name {
-                    operator: CompareOperator::Equal,
-                    value: "value".to_string()
-                })
-            )
+            filter_query("NAME=value"),
+            Ok(("", FQ::name(CompareOperator::Equal, "value")))
         );
 
         assert_eq!(
-            filter_query("name>=value").unwrap(),
-            (
-                "",
-                SearchQuery::Filter(FilterQuery::Name {
-                    operator: CompareOperator::GreaterEqual,
-                    value: "value".to_string()
-                })
-            )
+            filter_query("name>=value"),
+            Ok(("", FQ::name(CompareOperator::GreaterEqual, "value")))
         );
     }
 
     #[test]
     fn test_filter_content_type_query() {
         assert_eq!(
-            filter_query("content-type: value").unwrap(),
-            (
-                "",
-                SearchQuery::Filter(FilterQuery::ContentType {
-                    operator: CompareOperator::Filter,
-                    value: "value".to_string()
-                })
-            )
+            filter_query("content-type: value"),
+            Ok(("", FQ::content_type(CompareOperator::Filter, "value")))
         );
     }
 
     #[test]
     fn test_filter_parents_count_query() {
         assert_eq!(
-            filter_query("parentsCOUNT >= 3").unwrap(),
-            (
-                "",
-                SearchQuery::Filter(FilterQuery::ParentsCount {
-                    operator: CompareOperator::GreaterEqual,
-                    value: 3
-                })
-            )
+            filter_query("parentsCOUNT >= 3"),
+            Ok(("", FQ::parents_count(CompareOperator::GreaterEqual, 3)))
         );
     }
 
     #[test]
     fn test_filter_has_property_query() {
         assert_eq!(
-            filter_query("has: value").unwrap(),
-            (
-                "",
-                SearchQuery::Filter(FilterQuery::HasProperty {
-                    value: "value".to_string()
-                })
-            )
+            filter_query("has: value"),
+            Ok(("", FQ::has_property("value")))
         );
 
         let result = filter_query("has = value");

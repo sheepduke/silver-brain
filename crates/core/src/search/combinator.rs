@@ -1,4 +1,3 @@
-use super::basic_query::*;
 use nom::{
     IResult, Parser,
     branch::alt,
@@ -10,8 +9,14 @@ use nom::{
 
 use crate::{ServiceError, ServiceResponse};
 
+use super::{
+    SearchQuery,
+    basic_query::{keyword_query, property_query},
+    filter_query::filter_query,
+};
+
 fn single(input: &str) -> IResult<&str, SearchQuery> {
-    alt((keyword_query, property_query)).parse(input)
+    alt((property_query, filter_query, keyword_query)).parse(input)
 }
 
 fn group(input: &str) -> IResult<&str, SearchQuery> {
@@ -95,21 +100,36 @@ pub fn parse(search: &str) -> ServiceResponse<SearchQuery> {
 
 #[cfg(test)]
 mod tests {
+    use crate::{CompareOperator, FilterQuery};
+
     use super::*;
 
+    use CompareOperator as CO;
     use SearchQuery as SQ;
 
     #[test]
-    fn test() {
+    fn test_basic_combniation() {
         assert_eq!(
             parse("aa !(bb ||  cc) && !dd "),
             Ok(SQ::And(vec![
-                SQ::Keyword("aa".to_string()),
-                SQ::Not(Box::new(SQ::Or(vec![
-                    SQ::Keyword("bb".to_string()),
-                    SQ::Keyword("cc".to_string()),
-                ]))),
-                SQ::Not(Box::new(SQ::Keyword("dd".to_string())))
+                SQ::keyword("aa"),
+                SQ::not(SQ::Or(vec![SQ::keyword("bb"), SQ::keyword("cc"),])),
+                SQ::not(SQ::keyword("dd"))
+            ]))
+        );
+    }
+
+    #[test]
+    fn test_all_combination() {
+        assert_eq!(
+            parse("aa !name: bb $bb = cc"),
+            Ok(SQ::And(vec![
+                SQ::keyword("aa"),
+                SQ::not(SQ::Filter(FilterQuery::Name {
+                    operator: CO::Filter,
+                    value: "bb".to_string()
+                })),
+                SQ::property("bb", CO::Equal, "cc")
             ]))
         );
     }

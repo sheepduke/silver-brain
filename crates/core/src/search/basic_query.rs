@@ -132,7 +132,33 @@ pub fn property_query(input: &str) -> IResult<&str, SearchQuery> {
 
 #[cfg(test)]
 mod tests {
+    use crate::FilterQuery;
+
+    use super::CompareOperator as CO;
+    use super::SearchQuery as SQ;
     use super::*;
+
+    impl SearchQuery {
+        pub fn keyword(value: impl Into<String>) -> Self {
+            Self::Keyword(value.into())
+        }
+
+        pub fn not(value: SearchQuery) -> Self {
+            Self::Not(Box::new(value))
+        }
+
+        pub fn property(
+            key: impl Into<String>,
+            operator: CompareOperator,
+            value: impl Into<String>,
+        ) -> Self {
+            Self::Property {
+                key: key.into(),
+                operator,
+                value: value.into(),
+            }
+        }
+    }
 
     #[test]
     fn test_basic_string() {
@@ -168,76 +194,38 @@ mod tests {
 
     #[test]
     fn test_compare_operator() {
-        assert_eq!(
-            compare_operator(":").unwrap(),
-            ("", CompareOperator::Filter)
-        );
+        assert_eq!(compare_operator(":").unwrap(), ("", CO::Filter));
 
-        assert_eq!(
-            compare_operator("<=").unwrap(),
-            ("", CompareOperator::LessEqual)
-        );
+        assert_eq!(compare_operator("<=").unwrap(), ("", CO::LessEqual));
 
-        assert_eq!(
-            compare_operator("<").unwrap(),
-            ("", CompareOperator::LessThan)
-        );
+        assert_eq!(compare_operator("<").unwrap(), ("", CO::LessThan));
 
-        assert_eq!(compare_operator("=").unwrap(), ("", CompareOperator::Equal));
+        assert_eq!(compare_operator("=").unwrap(), ("", CO::Equal));
 
-        assert_eq!(
-            compare_operator("!=").unwrap(),
-            ("", CompareOperator::NotEqual)
-        );
+        assert_eq!(compare_operator("!=").unwrap(), ("", CO::NotEqual));
 
-        assert_eq!(
-            compare_operator(">").unwrap(),
-            ("", CompareOperator::GreaterThan)
-        );
+        assert_eq!(compare_operator(">").unwrap(), ("", CO::GreaterThan));
 
-        assert_eq!(
-            compare_operator(">=").unwrap(),
-            ("", CompareOperator::GreaterEqual)
-        );
+        assert_eq!(compare_operator(">=").unwrap(), ("", CO::GreaterEqual));
     }
 
     #[test]
     fn test_keyword_query() {
-        assert_eq!(
-            keyword_query("aaa").unwrap(),
-            ("", SearchQuery::Keyword("aaa".to_string()))
-        );
+        assert_eq!(keyword_query("aaa"), Ok(("", SQ::keyword("aaa"))));
 
-        assert_eq!(
-            keyword_query("aa bb").unwrap(),
-            (" bb", SearchQuery::Keyword("aa".to_string()))
-        );
+        assert_eq!(keyword_query("aa bb"), Ok((" bb", SQ::keyword("aa"))));
     }
 
     #[test]
     fn test_property_query() {
         assert_eq!(
-            property_query("$aa < bb").unwrap(),
-            (
-                "",
-                SearchQuery::Property {
-                    key: "aa".to_string(),
-                    operator: CompareOperator::LessThan,
-                    value: "bb".to_string(),
-                }
-            )
+            property_query("$aa < bb"),
+            Ok(("", SQ::property("aa", CO::LessThan, "bb")))
         );
 
         assert_eq!(
-            property_query(r#"$aa  ~ "bb" "#).unwrap(),
-            (
-                " ",
-                SearchQuery::Property {
-                    key: "aa".to_string(),
-                    operator: CompareOperator::Match,
-                    value: "bb".to_string(),
-                }
-            )
+            property_query(r#"$aa  ~ "bb" "#),
+            Ok((" ", SQ::property("aa", CO::Match, "bb")))
         );
     }
 }
