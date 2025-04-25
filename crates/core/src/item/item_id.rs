@@ -38,6 +38,14 @@ impl FromStr for ItemId {
     }
 }
 
+impl TryFrom<String> for ItemId {
+    type Error = ServiceError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        ItemId::from_str(value.as_str())
+    }
+}
+
 impl From<ItemId> for String {
     fn from(value: ItemId) -> Self {
         value.0.to_string()

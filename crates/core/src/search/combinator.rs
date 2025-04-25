@@ -44,7 +44,7 @@ fn not_operator(input: &str) -> IResult<&str, &str> {
 fn and_expr(input: &str) -> IResult<&str, SearchQuery> {
     map(
         separated_list1(alt((and_operator, space1)), not_expr),
-        |it| SearchQuery::And(Vec::from(it)),
+        SearchQuery::And,
     )
     .parse(input)
 }
@@ -110,27 +110,27 @@ mod tests {
     #[test]
     fn test_basic_combniation() {
         assert_eq!(
-            parse("aa !(bb ||  cc) && !dd "),
-            Ok(SQ::And(vec![
+            parse("aa !(bb ||  cc) && !dd ").unwrap(),
+            SQ::And(vec![
                 SQ::keyword("aa"),
                 SQ::not(SQ::Or(vec![SQ::keyword("bb"), SQ::keyword("cc"),])),
                 SQ::not(SQ::keyword("dd"))
-            ]))
+            ])
         );
     }
 
     #[test]
     fn test_all_combination() {
         assert_eq!(
-            parse("aa !name: bb $bb = cc"),
-            Ok(SQ::And(vec![
+            parse("aa !name: bb $bb = cc").unwrap(),
+            SQ::And(vec![
                 SQ::keyword("aa"),
                 SQ::not(SQ::Filter(FilterQuery::Name {
                     operator: CO::Filter,
                     value: "bb".to_string()
                 })),
                 SQ::property("bb", CO::Equal, "cc")
-            ]))
+            ])
         );
     }
 }

@@ -1,7 +1,10 @@
 [workspace]
 members = [
     "crates/core",
-    "crates/server",
+    "crates/backend",
+    "crates/http-server",
+    "apps/server-cli",
+    "apps/client-cli",
 ]
 resolver = "3"
 
@@ -11,7 +14,11 @@ anyhow = "1.0.97"
 nom = "8.0.0"
 svix-ksuid = "0.8.0"
 thiserror = "2.0.12"
-time = { version = "0.3.41", features = ["parsing", "formatting"] }
+time = "0.3.41"
+tokio = "1"
 
 # CLI.
-clap = { version = "4.5.35", features = ["derive"] }
+clap = "4.5.35"
+
+# SQL.
+sqlx = "0.8"

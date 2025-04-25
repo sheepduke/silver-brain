@@ -1,0 +1,14 @@
+[package]
+name = "silver-brain-backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+sqlx = { workspace = true, features = [ "runtime-tokio", "sqlite", "time" ] }
+time = { workspace = true }
+
+silver-brain-core = { path = "../core" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }
