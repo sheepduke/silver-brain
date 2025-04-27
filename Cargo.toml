@@ -16,6 +16,7 @@ svix-ksuid = "0.8.0"
 thiserror = "2.0.12"
 time = "0.3.41"
 tokio = "1"
+typed-builder = "0.21.0"
 
 # CLI.
 clap = "4.5.35"

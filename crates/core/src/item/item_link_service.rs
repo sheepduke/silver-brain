@@ -7,11 +7,11 @@ pub trait ItemLinkService {
 }
 
 pub struct CreateItemLinkRequest {
-    parent: String,
-    child: String,
+    pub parent: String,
+    pub child: String,
 }
 
 pub struct DeleteItemLinkRequest {
-    parent: String,
-    child: String,
+    pub parent: String,
+    pub child: String,
 }

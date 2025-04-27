@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
-sqlx = { workspace = true, features = [ "runtime-tokio", "sqlite", "time" ] }
+sqlx = { workspace = true, features = [ "runtime-tokio", "sqlite", "time", "migrate" ] }
 time = { workspace = true }
 
 silver-brain-core = { path = "../core" }

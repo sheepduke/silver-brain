@@ -1,24 +1,49 @@
-use crate::ServiceResponse;
+use typed_builder::TypedBuilder;
+
+use crate::{RequestContext, ServiceResponse};
 
 use super::{Item, ItemId};
 
 pub trait ItemService {
-    fn create_item(request: CreateItemRequest) -> ServiceResponse<ItemId>;
+    async fn get_item(
+        &self,
+        context: &RequestContext,
+        id: &str,
+        options: &ItemLoadOptions,
+    ) -> ServiceResponse<Option<Item>>;
 
-    fn get_item(id: ItemId, options: ItemLoadOptions) -> ServiceResponse<Option<Item>>;
+    async fn create_item(
+        &self,
+        context: &RequestContext,
+        request: &CreateItemRequest,
+    ) -> ServiceResponse<ItemId>;
 
-    fn update_item(request: UpdateItemRequest) -> ServiceResponse<()>;
+    async fn update_item(
+        &self,
+        context: &RequestContext,
+        request: &UpdateItemRequest,
+    ) -> ServiceResponse<()>;
 
-    fn delete_item(id: ItemId) -> ServiceResponse<()>;
+    async fn delete_item(&self, context: &RequestContext, id: &str) -> ServiceResponse<()>;
 
-    fn upsert_property(request: UpsertPropertyRequest) -> ServiceResponse<()>;
+    async fn upsert_property(
+        &self,
+        context: &RequestContext,
+        request: &UpsertPropertyRequest,
+    ) -> ServiceResponse<()>;
 
-    fn delete_property(key: &str) -> ServiceResponse<()>;
+    async fn delete_property(&self, context: &RequestContext, key: &str) -> ServiceResponse<()>;
 }
 
+#[derive(Debug, TypedBuilder)]
 pub struct CreateItemRequest {
+    #[builder(setter(into))]
     pub name: String,
+
+    #[builder(setter(into))]
     pub content_type: String,
+
+    #[builder(setter(into))]
     pub content: String,
 }
 
@@ -35,41 +60,26 @@ pub struct UpsertPropertyRequest {
     pub value: String,
 }
 
-#[derive(Default)]
+#[derive(Default, TypedBuilder)]
 pub struct ItemLoadOptions {
+    #[builder(default)]
     pub load_content_type: bool,
 
+    #[builder(default)]
     pub load_content: bool,
 
+    #[builder(default)]
     pub load_properties: bool,
 
+    #[builder(default)]
     pub load_parents: bool,
 
+    #[builder(default)]
     pub load_children: bool,
 
+    #[builder(default)]
     pub load_create_time: bool,
 
+    #[builder(default)]
     pub load_update_time: bool,
-}
-
-impl ItemLoadOptions {
-    pub fn with_content_type(mut self) -> Self {
-        self.load_content_type = true;
-        self
-    }
-
-    pub fn with_content(mut self) -> Self {
-        self.load_content = true;
-        self
-    }
-
-    pub fn with_create_time(mut self) -> Self {
-        self.load_create_time = true;
-        self
-    }
-
-    pub fn with_update_time(mut self) -> Self {
-        self.load_update_time = true;
-        self
-    }
 }

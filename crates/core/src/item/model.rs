@@ -1,6 +1,9 @@
+use std::iter::Map;
 use std::str::FromStr;
 
 use svix_ksuid::{Ksuid, KsuidLike};
+use time::OffsetDateTime;
+use typed_builder::TypedBuilder;
 
 use crate::{ServiceError, util};
 
@@ -52,10 +55,6 @@ impl From<ItemId> for String {
     }
 }
 
-// ============================================================
-//  Test
-// ============================================================
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -82,5 +81,73 @@ mod tests {
         let result = ItemId::from_str(id);
 
         assert!(matches!(result, Err(ServiceError::InvalidId(_))));
+    }
+}
+
+// ============================================================
+//  Item
+// ============================================================
+
+#[derive(Clone, Debug, TypedBuilder)]
+pub struct Item {
+    pub id: ItemId,
+
+    #[builder(setter(into))]
+    pub name: String,
+
+    #[builder(default, setter(into, strip_option))]
+    pub content_type: Option<String>,
+
+    #[builder(default, setter(into, strip_option))]
+    pub content: Option<String>,
+
+    #[builder(default, setter(strip_option))]
+    pub parents: Option<Vec<CoreItem>>,
+
+    #[builder(default, setter(strip_option))]
+    pub children: Option<Vec<CoreItem>>,
+
+    #[builder(default, setter(strip_option))]
+    pub properties: Option<Map<String, String>>,
+
+    #[builder(default, setter(strip_option))]
+    pub create_time: Option<OffsetDateTime>,
+
+    #[builder(default, setter(strip_option))]
+    pub update_time: Option<OffsetDateTime>,
+}
+
+impl Item {
+    pub fn new(id: impl Into<ItemId>, name: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            name: name.into(),
+            content_type: None,
+            content: None,
+            parents: None,
+            children: None,
+            properties: None,
+            create_time: None,
+            update_time: None,
+        }
+    }
+}
+
+// ============================================================
+//  Core Item
+// ============================================================
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CoreItem {
+    pub id: ItemId,
+    pub name: String,
+}
+
+impl CoreItem {
+    pub fn new(id: impl Into<ItemId>, name: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            name: name.into(),
+        }
     }
 }

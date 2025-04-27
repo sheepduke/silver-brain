@@ -132,8 +132,6 @@ pub fn property_query(input: &str) -> IResult<&str, SearchQuery> {
 
 #[cfg(test)]
 mod tests {
-    use crate::FilterQuery;
-
     use super::CompareOperator as CO;
     use super::SearchQuery as SQ;
     use super::*;

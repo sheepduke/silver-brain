@@ -9,3 +9,4 @@ nom = { workspace = true }
 svix-ksuid = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["parsing", "formatting"] }
+typed-builder = { workspace = true }
