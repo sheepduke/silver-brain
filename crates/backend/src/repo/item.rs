@@ -6,7 +6,7 @@ use sqlx::{
 };
 use time::OffsetDateTime;
 
-pub(crate) async fn exists<'a>(
+pub async fn exists<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
 ) -> ServiceResponse<bool> {
@@ -26,7 +26,7 @@ pub(crate) async fn exists<'a>(
     Ok(count > 0)
 }
 
-pub(crate) async fn get<'a>(
+pub async fn get<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
     options: &ItemLoadOptions,
@@ -63,7 +63,7 @@ pub(crate) async fn get<'a>(
     row.map(|it| row_to_item(it, options)).transpose()
 }
 
-pub(crate) async fn create<'a>(
+pub async fn create<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
     name: &str,
@@ -87,7 +87,7 @@ pub(crate) async fn create<'a>(
     Ok(())
 }
 
-pub(crate) async fn update<'a>(
+pub async fn update<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
     name: Option<&str>,
@@ -123,7 +123,7 @@ pub(crate) async fn update<'a>(
     Ok(())
 }
 
-pub(crate) async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceResponse<()> {
+pub async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceResponse<()> {
     let sql = "delete from item where id = ?";
     query(sql)
         .bind(id.as_str())

@@ -3,8 +3,7 @@ use std::sync::Arc;
 
 use silver_brain_core::*;
 
-use crate::item;
-use crate::repo::StoreSession;
+use crate::repo::{self, StoreSession};
 
 pub struct SqlItemService<M>
 where
@@ -36,7 +35,7 @@ where
 
         self.session
             .with_transaction(&context.store_name, async |tx| {
-                item::repo::get(tx, &item_id, options).await
+                repo::item::get(tx, &item_id, options).await
             })
             .await
     }
@@ -50,7 +49,7 @@ where
 
         self.session
             .with_transaction(&context.store_name, async |tx| {
-                item::repo::create(
+                repo::item::create(
                     tx,
                     &id,
                     &request.name,
@@ -73,8 +72,8 @@ where
 
         self.session
             .with_transaction(&context.store_name, async |tx| {
-                if item::repo::exists(&mut (*tx), &item_id).await? {
-                    item::repo::update(
+                if repo::item::exists(&mut (*tx), &item_id).await? {
+                    repo::item::update(
                         &mut (*tx),
                         &item_id,
                         request.name.as_deref(),
@@ -97,7 +96,7 @@ where
 
         self.session
             .with_transaction(&context.store_name, async |tx| {
-                item::repo::delete(tx, &item_id).await
+                repo::item::delete(tx, &item_id).await
             })
             .await
     }
@@ -120,11 +119,9 @@ mod tests {
     use std::sync::Arc;
 
     use anyhow::Result;
-    use silver_brain_core::{
-        CreateItemRequest, Item, ItemLoadOptions, ItemService, RequestContext,
-    };
+    use silver_brain_core::{CreateItemRequest, ItemLoadOptions, ItemService, RequestContext};
 
-    use crate::{item::service::SqlItemService, repo::InMemoryStoreSession};
+    use crate::{repo::InMemoryStoreSession, service::item::SqlItemService};
 
     #[tokio::test]
     async fn crud() -> Result<()> {
