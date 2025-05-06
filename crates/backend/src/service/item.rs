@@ -119,19 +119,87 @@ mod tests {
     use std::sync::Arc;
 
     use anyhow::Result;
-    use silver_brain_core::{CreateItemRequest, ItemLoadOptions, ItemService, RequestContext};
+    use silver_brain_core::{
+        CreateItemRequest, Item, ItemId, ItemLoadOptions, ItemService, RequestContext,
+        UpdateItemRequest,
+    };
 
     use crate::{repo::InMemoryStoreSession, service::item::SqlItemService};
 
+    type InMemoryItemService = SqlItemService<InMemoryStoreSession>;
+
     #[tokio::test]
-    async fn crud() -> Result<()> {
-        let session = Arc::new(InMemoryStoreSession::new()?);
-        let item_service = SqlItemService::new(session);
+    async fn create() -> Result<()> {
+        let (item_service, context, item_id) = create_all().await?;
 
-        let context = RequestContext {
-            store_name: "main".to_string(),
-        };
+        let load_options = ItemLoadOptions::builder()
+            .load_content_type(true)
+            .load_content(true)
+            .build();
 
+        let item_opt = item_service
+            .get_item(&context, item_id.as_str(), &load_options)
+            .await?;
+
+        let expected = Item::builder()
+            .id(item_id)
+            .name("Test")
+            .content_type("text/plain")
+            .content("Hello")
+            .build();
+
+        assert_eq!(item_opt, Some(expected));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn update() -> Result<()> {
+        let (item_service, context, item_id) = create_all().await?;
+
+        let request = UpdateItemRequest::builder()
+            .id(item_id.as_str())
+            .name("Test 2")
+            .content("New content")
+            .build();
+
+        item_service.update_item(&context, &request).await?;
+
+        let load_options = ItemLoadOptions::builder().load_content(true).build();
+        let item = item_service
+            .get_item(&context, item_id.as_str(), &load_options)
+            .await?
+            .unwrap();
+
+        let expected = Item::builder()
+            .id(item_id)
+            .name("Test 2")
+            .content("New content")
+            .build();
+
+        assert_eq!(item, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn delete() -> Result<()> {
+        let (item_service, context, item_id) = create_all().await?;
+
+        item_service.delete_item(&context, item_id.as_str()).await?;
+
+        let item_opt = item_service
+            .get_item(&context, item_id.as_str(), &ItemLoadOptions::all())
+            .await?;
+
+        assert_eq!(item_opt, None);
+
+        Ok(())
+    }
+
+    async fn create_all() -> Result<(impl ItemService, RequestContext, ItemId)> {
+        let item_service = create_item_service()?;
+        let context = create_request_context();
         let request = CreateItemRequest::builder()
             .name("Test")
             .content_type("text/plain")
@@ -140,21 +208,18 @@ mod tests {
 
         let item_id = item_service.create_item(&context, &request).await?;
 
-        let load_options = ItemLoadOptions::builder()
-            .load_content_type(true)
-            .load_content(true)
-            .build();
+        Ok((item_service, context, item_id))
+    }
 
-        let item = item_service
-            .get_item(&context, item_id.as_str(), &load_options)
-            .await?
-            .unwrap();
+    fn create_item_service() -> Result<impl ItemService> {
+        let session = Arc::new(InMemoryStoreSession::new()?);
 
-        assert_eq!(item.id, item_id);
-        assert_eq!(item.name, "Test".to_string());
-        assert_eq!(item.content_type, Some("text/plain".to_string()));
-        assert_eq!(item.content, Some("Hello".to_string()));
+        Ok(SqlItemService::new(session))
+    }
 
-        Ok(())
+    fn create_request_context() -> RequestContext {
+        RequestContext {
+            store_name: "main".to_string(),
+        }
     }
 }

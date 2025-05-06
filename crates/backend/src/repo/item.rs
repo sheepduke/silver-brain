@@ -1,3 +1,4 @@
+use crate::repo::util::ToServiceResponse;
 use silver_brain_core::*;
 
 use anyhow::Context;
@@ -6,21 +7,19 @@ use sqlx::{
 };
 use time::OffsetDateTime;
 
+use super::util;
+
 pub async fn exists<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
-    id: &ItemId,
+    id: &'a ItemId,
 ) -> ServiceResponse<bool> {
     let sql = "select count(*) from item where id = ?";
-
     let query = query(sql).bind(id.as_str());
-
-    let count: i32 = conn
-        .acquire()
-        .await
-        .context("")?
+    let count: i32 = util::acquire(conn)
+        .await?
         .fetch_one(query)
         .await
-        .context("Item exists db error")?
+        .to_service_response()?
         .get(0);
 
     Ok(count > 0)
@@ -28,8 +27,8 @@ pub async fn exists<'a>(
 
 pub async fn get<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
-    id: &ItemId,
-    options: &ItemLoadOptions,
+    id: &'a ItemId,
+    options: &'a ItemLoadOptions,
 ) -> ServiceResponse<Option<Item>> {
     let mut builder = QueryBuilder::new("select id, name");
 
@@ -53,14 +52,13 @@ pub async fn get<'a>(
         .push(" from item where id = ")
         .push_bind(id.as_str());
 
-    let mut conn = conn.acquire().await.context("")?;
-
-    let row = conn
+    util::acquire(conn)
+        .await?
         .fetch_optional(builder.build())
         .await
-        .context("Get item db error")?;
-
-    row.map(|it| row_to_item(it, options)).transpose()
+        .to_service_response()?
+        .map(|it| row_to_item(it, options))
+        .transpose()
 }
 
 pub async fn create<'a>(
@@ -72,7 +70,7 @@ pub async fn create<'a>(
 ) -> ServiceResponse<()> {
     let current_time = OffsetDateTime::now_utc();
 
-    let mut conn = conn.acquire().await.context("")?;
+    let mut conn = util::acquire(conn).await?;
 
     let query = query("insert into item values(?, ?, ?, ?, ?, ?)")
         .bind(id.as_str())
@@ -113,49 +111,48 @@ pub async fn update<'a>(
 
     builder.push(" where id = ").push_bind(id.as_str());
 
-    conn.acquire()
-        .await
-        .context("")?
+    util::acquire(conn)
+        .await?
         .execute(builder.build())
         .await
-        .context("Update item db error")?;
+        .to_service_response()?;
 
     Ok(())
 }
 
 pub async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceResponse<()> {
     let sql = "delete from item where id = ?";
-    query(sql)
-        .bind(id.as_str())
-        .execute(conn)
+    let query = query(sql).bind(id.as_str());
+
+    util::acquire(conn)
+        .await?
+        .execute(query)
         .await
-        .context("Delete item db error")?;
+        .to_service_response()?;
 
     Ok(())
 }
 
 fn row_to_item(row: SqliteRow, options: &ItemLoadOptions) -> ServiceResponse<Item> {
-    let id: String = row.try_get("id").context("Invalid id")?;
-    let name: String = row.try_get("name").context("Invalid name")?;
+    let id: String = row.try_get("id").to_service_response()?;
+    let name: String = row.try_get("name").to_service_response()?;
 
     let mut item = Item::new(ItemId::try_from(id)?, name);
 
     if options.load_content_type {
-        item.content_type = row
-            .try_get("content_type")
-            .context("Invalid content_type")?;
+        item.content_type = row.try_get("content_type").to_service_response()?;
     }
 
     if options.load_content {
-        item.content = Some(row.try_get("content").context("Invalid content")?);
+        item.content = Some(row.try_get("content").to_service_response()?);
     }
 
     if options.load_create_time {
-        item.create_time = Some(row.try_get("create_time").context("Invalid create_time")?);
+        item.create_time = Some(row.try_get("create_time").to_service_response()?);
     }
 
     if options.load_update_time {
-        item.update_time = Some(row.try_get("update_time").context("Invalid update_time")?);
+        item.update_time = Some(row.try_get("update_time").to_service_response()?);
     }
 
     Ok(item)

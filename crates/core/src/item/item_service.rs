@@ -47,10 +47,18 @@ pub struct CreateItemRequest {
     pub content: String,
 }
 
+#[derive(Debug, TypedBuilder)]
 pub struct UpdateItemRequest {
+    #[builder(setter(into))]
     pub id: String,
+
+    #[builder(default, setter(into, strip_option))]
     pub name: Option<String>,
+
+    #[builder(default, setter(into, strip_option))]
     pub content_type: Option<String>,
+
+    #[builder(default, setter(into, strip_option))]
     pub content: Option<String>,
 }
 
@@ -82,4 +90,18 @@ pub struct ItemLoadOptions {
 
     #[builder(default)]
     pub load_update_time: bool,
+}
+
+impl ItemLoadOptions {
+    pub fn all() -> Self {
+        Self {
+            load_content_type: true,
+            load_content: true,
+            load_properties: true,
+            load_parents: true,
+            load_children: true,
+            load_create_time: true,
+            load_update_time: true,
+        }
+    }
 }

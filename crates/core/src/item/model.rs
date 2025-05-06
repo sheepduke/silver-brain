@@ -1,5 +1,5 @@
-use std::iter::Map;
 use std::str::FromStr;
+use std::{collections::HashMap, iter::Map};
 
 use svix_ksuid::{Ksuid, KsuidLike};
 use time::OffsetDateTime;
@@ -88,7 +88,7 @@ mod tests {
 //  Item
 // ============================================================
 
-#[derive(Clone, Debug, TypedBuilder)]
+#[derive(Clone, Debug, TypedBuilder, PartialEq, Eq)]
 pub struct Item {
     pub id: ItemId,
 
@@ -108,7 +108,7 @@ pub struct Item {
     pub children: Option<Vec<CoreItem>>,
 
     #[builder(default, setter(strip_option))]
-    pub properties: Option<Map<String, String>>,
+    pub properties: Option<HashMap<String, String>>,
 
     #[builder(default, setter(strip_option))]
     pub create_time: Option<OffsetDateTime>,
