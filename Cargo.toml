@@ -11,6 +11,7 @@ resolver = "3"
 [workspace.dependencies]
 # Utility.
 anyhow = "1.0.97"
+derive_more = "2.0.1"
 nom = "8.0.0"
 svix-ksuid = "0.8.0"
 thiserror = "2.0.12"

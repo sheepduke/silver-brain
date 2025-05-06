@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true, features = [ "backtrace" ]}
+derive_more = { workspace = true, features = [ "full" ] }
 nom = { workspace = true }
 svix-ksuid = { workspace = true }
 thiserror = { workspace = true }

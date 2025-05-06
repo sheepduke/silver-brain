@@ -1,5 +1,5 @@
+use std::collections::HashMap;
 use std::str::FromStr;
-use std::{collections::HashMap, iter::Map};
 
 use svix_ksuid::{Ksuid, KsuidLike};
 use time::OffsetDateTime;

@@ -1,36 +1,34 @@
 use anyhow::Context;
-use silver_brain_core::ServiceResponse;
+use silver_brain_core::{ServiceResponse, service::RepoName};
 use sqlx::{Sqlite, SqlitePool, Transaction};
 
 // ============================================================
-//  StoreSession
+//  DatabaseConnector
 // ============================================================
 
-pub trait StoreSession {
-    async fn get_pool(&self, store_name: &str) -> ServiceResponse<SqlitePool>;
-
+pub trait DatabaseConnector {
     async fn with_transaction<R>(
         &self,
-        store_name: &str,
+        repo_name: &RepoName,
         fun: impl AsyncFnOnce(&mut Transaction<Sqlite>) -> ServiceResponse<R>,
     ) -> ServiceResponse<R>;
 }
 
 // ============================================================
-//  SqliteStoreSession
+//  SqliteConnector
 // ============================================================
 
 pub struct SqliteStoreSession {}
 
 // ============================================================
-//  InMemoryStoreSession
+//  InMemorySqliteConnector
 // ============================================================
 
-pub struct InMemoryStoreSession {
+pub struct InMemorySqliteConnector {
     pool: SqlitePool,
 }
 
-impl InMemoryStoreSession {
+impl InMemorySqliteConnector {
     pub fn new() -> anyhow::Result<Self> {
         let pool = SqlitePool::connect_lazy("sqlite::memory:").context("Create in-memory pool")?;
 
@@ -38,19 +36,10 @@ impl InMemoryStoreSession {
     }
 }
 
-impl StoreSession for InMemoryStoreSession {
-    async fn get_pool(&self, _store_name: &str) -> ServiceResponse<SqlitePool> {
-        sqlx::migrate!()
-            .run(&self.pool)
-            .await
-            .context("Run migrate")?;
-
-        Ok(self.pool.clone())
-    }
-
+impl DatabaseConnector for InMemorySqliteConnector {
     async fn with_transaction<R>(
         &self,
-        _store_name: &str,
+        _repo_name: &RepoName,
         fun: impl AsyncFnOnce(&mut Transaction<Sqlite>) -> ServiceResponse<R>,
     ) -> ServiceResponse<R> {
         with_transaction(&self.pool, fun).await

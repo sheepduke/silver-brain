@@ -1,9 +1,17 @@
-use crate::ServiceResponse;
+use crate::{RequestContext, ServiceResponse};
 
 pub trait ItemLinkService {
-    fn create_link(request: CreateItemLinkRequest) -> ServiceResponse<()>;
+    async fn create_link(
+        &self,
+        context: &RequestContext,
+        request: &CreateItemLinkRequest,
+    ) -> ServiceResponse<()>;
 
-    fn delete_link(request: DeleteItemLinkRequest) -> ServiceResponse<()>;
+    async fn delete_link(
+        &self,
+        context: &RequestContext,
+        request: &DeleteItemLinkRequest,
+    ) -> ServiceResponse<()>;
 }
 
 pub struct CreateItemLinkRequest {

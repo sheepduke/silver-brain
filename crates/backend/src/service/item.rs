@@ -1,29 +1,14 @@
 use std::str::FromStr;
-use std::sync::Arc;
 
 use silver_brain_core::*;
 
-use crate::repo::{self, StoreSession};
+use crate::repo::{self, DatabaseConnector};
 
-pub struct SqlItemService<M>
-where
-    M: StoreSession,
-{
-    session: Arc<M>,
-}
+use super::SqlService;
 
-impl<M> SqlItemService<M>
+impl<C> ItemService for SqlService<C>
 where
-    M: StoreSession,
-{
-    pub fn new(session: Arc<M>) -> Self {
-        Self { session }
-    }
-}
-
-impl<M> ItemService for SqlItemService<M>
-where
-    M: StoreSession,
+    C: DatabaseConnector,
 {
     async fn get_item(
         &self,
@@ -33,9 +18,25 @@ where
     ) -> ServiceResponse<Option<Item>> {
         let item_id = ItemId::from_str(id)?;
 
-        self.session
-            .with_transaction(&context.store_name, async |tx| {
-                repo::item::get(tx, &item_id, options).await
+        self.connector
+            .with_transaction(&context.repo_name, async |tx| {
+                let item_opt = repo::item::get(&mut (*tx), &item_id, options).await?;
+
+                if let Some(mut item) = item_opt {
+                    if options.load_parents {
+                        item.parents =
+                            Some(repo::item_link::get_parents(&mut (*tx), &item.id).await?);
+                    }
+
+                    if options.load_children {
+                        item.children =
+                            Some(repo::item_link::get_children(&mut (*tx), &item.id).await?)
+                    }
+
+                    Ok(Some(item))
+                } else {
+                    Ok(None)
+                }
             })
             .await
     }
@@ -47,8 +48,8 @@ where
     ) -> ServiceResponse<ItemId> {
         let id = ItemId::new();
 
-        self.session
-            .with_transaction(&context.store_name, async |tx| {
+        self.connector
+            .with_transaction(&context.repo_name, async |tx| {
                 repo::item::create(
                     tx,
                     &id,
@@ -70,8 +71,8 @@ where
     ) -> ServiceResponse<()> {
         let item_id = ItemId::from_str(&request.id)?;
 
-        self.session
-            .with_transaction(&context.store_name, async |tx| {
+        self.connector
+            .with_transaction(&context.repo_name, async |tx| {
                 if repo::item::exists(&mut (*tx), &item_id).await? {
                     repo::item::update(
                         &mut (*tx),
@@ -94,8 +95,8 @@ where
     async fn delete_item(&self, context: &RequestContext, id: &str) -> ServiceResponse<()> {
         let item_id = ItemId::from_str(id)?;
 
-        self.session
-            .with_transaction(&context.store_name, async |tx| {
+        self.connector
+            .with_transaction(&context.repo_name, async |tx| {
                 repo::item::delete(tx, &item_id).await
             })
             .await
@@ -124,9 +125,9 @@ mod tests {
         UpdateItemRequest,
     };
 
-    use crate::{repo::InMemoryStoreSession, service::item::SqlItemService};
+    use crate::{SqlService, repo::InMemorySqliteConnector};
 
-    type InMemoryItemService = SqlItemService<InMemoryStoreSession>;
+    type InMemoryItemService = SqlService<InMemorySqliteConnector>;
 
     #[tokio::test]
     async fn create() -> Result<()> {
@@ -199,7 +200,7 @@ mod tests {
 
     async fn create_all() -> Result<(impl ItemService, RequestContext, ItemId)> {
         let item_service = create_item_service()?;
-        let context = create_request_context();
+        let context = create_request_context()?;
         let request = CreateItemRequest::builder()
             .name("Test")
             .content_type("text/plain")
@@ -212,14 +213,14 @@ mod tests {
     }
 
     fn create_item_service() -> Result<impl ItemService> {
-        let session = Arc::new(InMemoryStoreSession::new()?);
+        let session = Arc::new(InMemorySqliteConnector::new()?);
 
-        Ok(SqlItemService::new(session))
+        Ok(SqlService::new(session))
     }
 
-    fn create_request_context() -> RequestContext {
-        RequestContext {
-            store_name: "main".to_string(),
-        }
+    fn create_request_context() -> Result<RequestContext> {
+        Ok(RequestContext {
+            repo_name: "main".parse()?,
+        })
     }
 }

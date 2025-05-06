@@ -1,3 +1,16 @@
+// ============================================================
+//  Repo Name
+// ============================================================
+
+use derive_more::{From, FromStr, Into};
+
+#[derive(From, Into, FromStr)]
+pub struct RepoName(String);
+
+// ============================================================
+//  Request Context
+// ============================================================
+
 pub struct RequestContext {
-    pub store_name: String,
+    pub repo_name: RepoName,
 }

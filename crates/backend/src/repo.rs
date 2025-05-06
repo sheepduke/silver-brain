@@ -1,5 +1,5 @@
 mod session;
-pub use session::{InMemoryStoreSession, SqliteStoreSession, StoreSession};
+pub use session::{DatabaseConnector, InMemorySqliteConnector, SqliteStoreSession};
 
 pub mod item;
 

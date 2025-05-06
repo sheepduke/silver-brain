@@ -9,7 +9,7 @@ use time::OffsetDateTime;
 
 use super::util;
 
-pub async fn exists<'a>(
+pub(crate) async fn exists<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &'a ItemId,
 ) -> ServiceResponse<bool> {
@@ -25,7 +25,7 @@ pub async fn exists<'a>(
     Ok(count > 0)
 }
 
-pub async fn get<'a>(
+pub(crate) async fn get<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &'a ItemId,
     options: &'a ItemLoadOptions,
@@ -61,7 +61,7 @@ pub async fn get<'a>(
         .transpose()
 }
 
-pub async fn create<'a>(
+pub(crate) async fn create<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
     name: &str,
@@ -85,7 +85,7 @@ pub async fn create<'a>(
     Ok(())
 }
 
-pub async fn update<'a>(
+pub(crate) async fn update<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
     name: Option<&str>,
@@ -120,7 +120,7 @@ pub async fn update<'a>(
     Ok(())
 }
 
-pub async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceResponse<()> {
+pub(crate) async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceResponse<()> {
     let sql = "delete from item where id = ?";
     let query = query(sql).bind(id.as_str());
 
