@@ -24,7 +24,7 @@ pub(crate) async fn exists<'a>(
     Ok(count > 0)
 }
 
-pub(crate) async fn get_parents<'a>(
+pub(crate) async fn select_parents<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     child: &ItemId,
 ) -> ServiceResponse<Vec<CoreItem>> {
@@ -39,11 +39,11 @@ pub(crate) async fn get_parents<'a>(
         .await
         .to_service_response()?
         .into_iter()
-        .map(row_to_core_item)
+        .map(to_core_item)
         .collect()
 }
 
-pub(crate) async fn get_children<'a>(
+pub(crate) async fn select_children<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     parent: &ItemId,
 ) -> ServiceResponse<Vec<CoreItem>> {
@@ -58,11 +58,11 @@ pub(crate) async fn get_children<'a>(
         .await
         .to_service_response()?
         .into_iter()
-        .map(row_to_core_item)
+        .map(to_core_item)
         .collect()
 }
 
-pub(crate) async fn create<'a>(
+pub(crate) async fn insert<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     parent: &ItemId,
     child: &ItemId,
@@ -99,11 +99,11 @@ pub(crate) async fn delete<'a>(
     Ok(())
 }
 
-fn row_to_core_item(row: SqliteRow) -> ServiceResponse<CoreItem> {
+fn to_core_item(row: SqliteRow) -> ServiceResponse<CoreItem> {
     let id: String = row.try_get("id").to_service_response()?;
-    let item_id = ItemId::try_from(id)?;
 
-    let name: String = row.try_get("name").to_service_response()?;
-
-    Ok(CoreItem::new(item_id, name))
+    Ok(CoreItem {
+        id: ItemId::try_from(id)?,
+        name: row.try_get("name").to_service_response()?,
+    })
 }

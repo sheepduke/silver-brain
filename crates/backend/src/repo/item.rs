@@ -25,7 +25,7 @@ pub(crate) async fn exists<'a>(
     Ok(count > 0)
 }
 
-pub(crate) async fn get<'a>(
+pub(crate) async fn select<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &'a ItemId,
     options: &'a ItemLoadOptions,
@@ -61,7 +61,7 @@ pub(crate) async fn get<'a>(
         .transpose()
 }
 
-pub(crate) async fn create<'a>(
+pub(crate) async fn insert<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &ItemId,
     name: &str,

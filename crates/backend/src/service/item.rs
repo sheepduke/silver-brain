@@ -20,17 +20,22 @@ where
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                let item_opt = repo::item::get(&mut (*tx), &item_id, options).await?;
+                let item_opt = repo::item::select(&mut (*tx), &item_id, options).await?;
 
                 if let Some(mut item) = item_opt {
                     if options.load_parents {
                         item.parents =
-                            Some(repo::item_link::get_parents(&mut (*tx), &item.id).await?);
+                            Some(repo::item_link::select_parents(&mut (*tx), &item.id).await?);
                     }
 
                     if options.load_children {
                         item.children =
-                            Some(repo::item_link::get_children(&mut (*tx), &item.id).await?)
+                            Some(repo::item_link::select_children(&mut (*tx), &item.id).await?)
+                    }
+
+                    if options.load_properties {
+                        item.properties =
+                            Some(repo::item_property::select(&mut (*tx), &item.id).await?)
                     }
 
                     Ok(Some(item))
@@ -50,7 +55,7 @@ where
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                repo::item::create(
+                repo::item::insert(
                     tx,
                     &id,
                     &request.name,
@@ -126,8 +131,6 @@ mod tests {
     };
 
     use crate::{SqlService, repo::InMemorySqliteConnector};
-
-    type InMemoryItemService = SqlService<InMemorySqliteConnector>;
 
     #[tokio::test]
     async fn create() -> Result<()> {

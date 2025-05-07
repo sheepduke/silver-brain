@@ -28,7 +28,7 @@ where
                         request.child, request.parent
                     )))
                 } else {
-                    repo::item_link::create(&mut (*tx), &parent, &child).await
+                    repo::item_link::insert(&mut (*tx), &parent, &child).await
                 }
             })
             .await
