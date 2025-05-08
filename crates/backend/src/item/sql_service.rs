@@ -2,18 +2,18 @@ use std::sync::Arc;
 
 use crate::DatabaseConnector;
 
-pub struct SqlService<M>
+pub struct SqlService<C>
 where
-    M: DatabaseConnector,
+    C: DatabaseConnector,
 {
-    pub(crate) connector: Arc<M>,
+    pub(crate) connector: Arc<C>,
 }
 
-impl<M> SqlService<M>
+impl<C> SqlService<C>
 where
-    M: DatabaseConnector,
+    C: DatabaseConnector,
 {
-    pub fn new(session: Arc<M>) -> Self {
+    pub fn new(session: Arc<C>) -> Self {
         Self { connector: session }
     }
 }

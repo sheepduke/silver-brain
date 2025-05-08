@@ -6,4 +6,4 @@ pub(crate) mod item_link;
 pub(crate) mod item_property;
 pub(crate) mod item_reference;
 
-mod util;
+pub(crate) mod util;

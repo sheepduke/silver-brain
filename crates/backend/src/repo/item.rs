@@ -3,7 +3,8 @@ use silver_brain_core::*;
 
 use anyhow::Context;
 use sqlx::{
-    Acquire, Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow,
+    Acquire, Execute, Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query,
+    sqlite::SqliteRow,
 };
 use time::OffsetDateTime;
 
@@ -14,27 +15,9 @@ pub(crate) async fn get<'a>(
     id: &'a ItemId,
     options: &'a ItemLoadOptions,
 ) -> ServiceResponse<Option<Item>> {
-    let mut builder = QueryBuilder::new("select id, name");
-
-    if options.load_content_type {
-        builder.push(", content_type");
-    }
-
-    if options.load_content {
-        builder.push(", content");
-    }
-
-    if options.load_create_time {
-        builder.push(", create_time");
-    }
-
-    if options.load_update_time {
-        builder.push(", update_time");
-    }
-
-    builder
-        .push(" from item where id = ")
-        .push_bind(id.as_str());
+    let mut builder = QueryBuilder::new("");
+    build_select_query(&mut builder, options);
+    builder.push(" where id = ").push_bind(id.as_str());
 
     util::acquire(conn)
         .await?
@@ -43,6 +26,61 @@ pub(crate) async fn get<'a>(
         .to_service_response()?
         .map(|it| row_to_item(it, options))
         .transpose()
+}
+
+pub(crate) async fn get_many<'a>(
+    conn: impl Acquire<'a, Database = Sqlite>,
+    ids: &Vec<ItemId>,
+    options: &'a ItemLoadOptions,
+) -> ServiceResponse<Vec<Item>> {
+    if ids.is_empty() {
+        Ok(Vec::new())
+    } else {
+        let mut builder = QueryBuilder::new("");
+        build_select_query(&mut builder, options);
+        builder.push(" where id in (");
+
+        if let Some((first, rest)) = ids.split_first() {
+            builder.push_bind(first.as_str());
+
+            for id in rest {
+                builder.push(",").push_bind(id.as_str());
+            }
+        }
+
+        builder.push(")");
+
+        util::acquire(conn)
+            .await?
+            .fetch_all(builder.build())
+            .await
+            .to_service_response()?
+            .into_iter()
+            .map(|it| row_to_item(it, options))
+            .collect()
+    }
+}
+
+pub(crate) async fn get_ids<'a>(
+    conn: impl Acquire<'a, Database = Sqlite>,
+    builder: &mut QueryBuilder<'a, Sqlite>,
+) -> ServiceResponse<Vec<ItemId>> {
+    let query = builder.build();
+
+    println!("SQL: ");
+    println!("{:?}", query.sql());
+
+    util::acquire(conn)
+        .await?
+        .fetch_all(query)
+        .await
+        .to_service_response()?
+        .into_iter()
+        .map(|row: SqliteRow| {
+            let id: String = row.try_get(0).to_service_response()?;
+            id.parse()
+        })
+        .collect()
 }
 
 pub(crate) async fn insert<'a>(
@@ -61,7 +99,7 @@ pub(crate) async fn insert<'a>(
         .bind(item.create_time.unwrap_or(current_time))
         .bind(item.update_time.unwrap_or(current_time));
 
-    conn.execute(query).await.context("Create item db error")?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
@@ -109,6 +147,28 @@ pub(crate) async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceR
         .to_service_response()?;
 
     Ok(())
+}
+
+fn build_select_query(builder: &mut QueryBuilder<Sqlite>, options: &ItemLoadOptions) {
+    builder.push("select id, name");
+
+    if options.load_content_type {
+        builder.push(", content_type");
+    }
+
+    if options.load_content {
+        builder.push(", content");
+    }
+
+    if options.load_create_time {
+        builder.push(", create_time");
+    }
+
+    if options.load_update_time {
+        builder.push(", update_time");
+    }
+
+    builder.push(" from item");
 }
 
 fn row_to_item(row: SqliteRow, options: &ItemLoadOptions) -> ServiceResponse<Item> {

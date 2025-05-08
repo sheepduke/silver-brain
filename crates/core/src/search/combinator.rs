@@ -89,12 +89,18 @@ fn flatten_search_query(query: SearchQuery) -> SearchQuery {
 }
 
 pub fn parse(search: &str) -> ServiceResponse<SearchQuery> {
-    match all_consuming(or_expr).parse(search.trim()) {
-        Ok((_, query)) => Ok(flatten_search_query(query)),
-        Err(error) => Err(ServiceError::InvalidArgument(format!(
-            "Invalid search string: {}",
-            error
-        ))),
+    let search = search.trim();
+
+    if search.is_empty() {
+        Ok(SearchQuery::Keyword(String::new()))
+    } else {
+        match all_consuming(or_expr).parse(search.trim()) {
+            Ok((_, query)) => Ok(flatten_search_query(query)),
+            Err(error) => Err(ServiceError::InvalidArgument(format!(
+                "Invalid search string: {}",
+                error
+            ))),
+        }
     }
 }
 

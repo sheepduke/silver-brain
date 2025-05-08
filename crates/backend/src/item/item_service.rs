@@ -21,22 +21,22 @@ where
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                let item_opt = repo::item::get(&mut (*tx), &item_id, options).await?;
+                let item_opt = repo::item::get(&mut *tx, &item_id, options).await?;
 
                 if let Some(mut item) = item_opt {
                     if options.load_parents {
                         item.parents =
-                            Some(repo::item_link::get_parents(&mut (*tx), &item.id).await?);
+                            Some(repo::item_link::get_parents(&mut *tx, &item.id).await?);
                     }
 
                     if options.load_children {
                         item.children =
-                            Some(repo::item_link::get_children(&mut (*tx), &item.id).await?)
+                            Some(repo::item_link::get_children(&mut *tx, &item.id).await?)
                     }
 
                     if options.load_properties {
                         item.properties =
-                            Some(repo::item_property::get_all(&mut (*tx), &item.id).await?)
+                            Some(repo::item_property::get_all(&mut *tx, &item.id).await?)
                     }
 
                     Ok(Some(item))
@@ -82,7 +82,7 @@ where
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
                 let item_opt =
-                    repo::item::get(&mut (*tx), &item_id, &ItemLoadOptions::core()).await?;
+                    repo::item::get(&mut *tx, &item_id, &ItemLoadOptions::core()).await?;
 
                 match item_opt {
                     Some(mut item) => {
@@ -100,7 +100,7 @@ where
 
                         item.update_time = Some(OffsetDateTime::now_utc());
 
-                        repo::item::update(&mut (*tx), &item).await
+                        repo::item::update(&mut *tx, &item).await
                     }
 
                     None => Err(ServiceError::InvalidArgument(format!(
@@ -135,10 +135,10 @@ where
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                if repo::item_property::exists(&mut (*tx), &item_id, &property.key).await? {
-                    repo::item_property::update(&mut (*tx), &item_id, &property).await
+                if repo::item_property::exists(&mut *tx, &item_id, &property.key).await? {
+                    repo::item_property::update(&mut *tx, &item_id, &property).await
                 } else {
-                    repo::item_property::insert(&mut (*tx), &item_id, &property).await
+                    repo::item_property::insert(&mut *tx, &item_id, &property).await
                 }
             })
             .await
@@ -174,16 +174,14 @@ mod tests {
 
     #[tokio::test]
     async fn create() -> Result<()> {
-        let (item_service, context, item_id) = create_all().await?;
+        let (service, context, item_id) = create_all().await?;
 
         let load_options = ItemLoadOptions::builder()
             .load_content_type(true)
             .load_content(true)
             .build();
 
-        let item_opt = item_service
-            .get_item(&context, &item_id, &load_options)
-            .await?;
+        let item_opt = service.get_item(&context, &item_id, &load_options).await?;
 
         let expected = Item::builder()
             .id(item_id)
@@ -199,7 +197,7 @@ mod tests {
 
     #[tokio::test]
     async fn update() -> Result<()> {
-        let (item_service, context, item_id) = create_all().await?;
+        let (service, context, item_id) = create_all().await?;
 
         let request = UpdateItemRequest::builder()
             .id(item_id.as_str())
@@ -207,10 +205,10 @@ mod tests {
             .content("New content")
             .build();
 
-        item_service.update_item(&context, request).await?;
+        service.update_item(&context, request).await?;
 
         let load_options = ItemLoadOptions::builder().load_content(true).build();
-        let item = item_service
+        let item = service
             .get_item(&context, item_id.as_str(), &load_options)
             .await?
             .unwrap();
@@ -228,11 +226,11 @@ mod tests {
 
     #[tokio::test]
     async fn delete() -> Result<()> {
-        let (item_service, context, item_id) = create_all().await?;
+        let (service, context, item_id) = create_all().await?;
 
-        item_service.delete_item(&context, item_id.as_str()).await?;
+        service.delete_item(&context, item_id.as_str()).await?;
 
-        let item_opt = item_service
+        let item_opt = service
             .get_item(&context, item_id.as_str(), &ItemLoadOptions::all())
             .await?;
 
@@ -243,7 +241,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_item_property() -> Result<()> {
-        let (item_service, context, item_id) = create_all().await?;
+        let (service, context, item_id) = create_all().await?;
 
         let request = UpsertItemPropertyRequest::builder()
             .item_id(item_id.to_string())
@@ -251,9 +249,9 @@ mod tests {
             .value("value")
             .build();
 
-        item_service.upsert_item_property(&context, request).await?;
+        service.upsert_item_property(&context, request).await?;
 
-        let properties = item_service
+        let properties = service
             .get_item(
                 &context,
                 item_id.as_str(),
@@ -275,7 +273,7 @@ mod tests {
 
     #[tokio::test]
     async fn delete_item_property() -> Result<()> {
-        let (item_service, context, item_id) = create_all().await?;
+        let (service, context, item_id) = create_all().await?;
 
         let request = UpsertItemPropertyRequest::builder()
             .item_id(item_id.to_string())
@@ -283,13 +281,13 @@ mod tests {
             .value("value")
             .build();
 
-        item_service.upsert_item_property(&context, request).await?;
+        service.upsert_item_property(&context, request).await?;
 
-        item_service
+        service
             .delete_item_property(&context, item_id.as_str(), "key")
             .await?;
 
-        let properties = item_service
+        let properties = service
             .get_item(
                 &context,
                 item_id.as_str(),
@@ -307,7 +305,7 @@ mod tests {
     }
 
     async fn create_all() -> Result<(impl ItemService, RequestContext, ItemId)> {
-        let item_service = create_item_service()?;
+        let service = create_service()?;
         let context = create_request_context()?;
         let request = CreateItemRequest::builder()
             .name("Test")
@@ -315,12 +313,12 @@ mod tests {
             .content("Hello")
             .build();
 
-        let item_id = item_service.create_item(&context, request).await?;
+        let item_id = service.create_item(&context, request).await?;
 
-        Ok((item_service, context, item_id))
+        Ok((service, context, item_id))
     }
 
-    pub(crate) fn create_item_service() -> Result<impl ItemService> {
+    pub(crate) fn create_service() -> Result<impl ItemService> {
         let session = Arc::new(InMemorySqliteConnector::new()?);
 
         Ok(SqlService::new(session))
