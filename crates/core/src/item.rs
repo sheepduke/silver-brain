@@ -10,6 +10,9 @@ pub use core_item::CoreItem;
 mod item_property;
 pub use item_property::ItemProperty;
 
+mod item_reference_id;
+pub use item_reference_id::ItemReferenceId;
+
 mod item_reference;
 pub use item_reference::ItemReference;
 
@@ -20,3 +23,6 @@ pub use item_service::{
 
 mod item_link_service;
 pub use item_link_service::ItemLinkService;
+
+mod item_reference_service;
+pub use item_reference_service::ItemReferenceService;

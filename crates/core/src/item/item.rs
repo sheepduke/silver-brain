@@ -31,19 +31,3 @@ pub struct Item {
     #[builder(default, setter(strip_option))]
     pub update_time: Option<OffsetDateTime>,
 }
-
-impl Item {
-    pub fn new(id: impl Into<ItemId>, name: impl Into<String>) -> Self {
-        Self {
-            id: id.into(),
-            name: name.into(),
-            content_type: None,
-            content: None,
-            parents: None,
-            children: None,
-            properties: None,
-            create_time: None,
-            update_time: None,
-        }
-    }
-}

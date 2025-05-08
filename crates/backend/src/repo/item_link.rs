@@ -1,4 +1,4 @@
-use sqlx::{Acquire, Execute, Executor, Row, Sqlite, query, sqlite::SqliteRow};
+use sqlx::{Acquire, Executor, Row, Sqlite, query, sqlite::SqliteRow};
 
 use silver_brain_core::*;
 use time::OffsetDateTime;
@@ -104,9 +104,10 @@ pub(crate) async fn delete<'a>(
 
 fn to_core_item(row: SqliteRow) -> ServiceResponse<CoreItem> {
     let id: String = row.try_get("id").to_service_response()?;
+    let item_id: ItemId = id.parse()?;
 
     Ok(CoreItem {
-        id: ItemId::try_from(id)?,
+        id: item_id,
         name: row.try_get("name").to_service_response()?,
     })
 }

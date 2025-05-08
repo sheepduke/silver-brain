@@ -113,9 +113,10 @@ pub(crate) async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceR
 
 fn row_to_item(row: SqliteRow, options: &ItemLoadOptions) -> ServiceResponse<Item> {
     let id: String = row.try_get("id").to_service_response()?;
+    let item_id: ItemId = id.parse()?;
     let name: String = row.try_get("name").to_service_response()?;
 
-    let mut item = Item::new(ItemId::try_from(id)?, name);
+    let mut item = Item::builder().id(item_id).name(name).build();
 
     if options.load_content_type {
         item.content_type = row.try_get("content_type").to_service_response()?;

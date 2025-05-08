@@ -105,7 +105,7 @@ where
 
                     None => Err(ServiceError::InvalidArgument(format!(
                         "Invalid item id {}",
-                        item_id.as_str()
+                        &item_id
                     ))),
                 }
             })
@@ -127,7 +127,7 @@ where
         context: &RequestContext,
         request: UpsertItemPropertyRequest,
     ) -> ServiceResponse<()> {
-        let item_id = ItemId::try_from(request.item_id)?;
+        let item_id = request.item_id.parse()?;
         let property = ItemProperty {
             key: request.key,
             value: request.value,
@@ -182,7 +182,7 @@ mod tests {
             .build();
 
         let item_opt = item_service
-            .get_item(&context, item_id.as_str(), &load_options)
+            .get_item(&context, &item_id, &load_options)
             .await?;
 
         let expected = Item::builder()

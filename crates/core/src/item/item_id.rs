@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
+use derive_more::{AsRef, Deref, Display};
 use svix_ksuid::{Ksuid, KsuidLike};
 
 use crate::{ServiceError, util};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, AsRef, Deref, Display)]
 pub struct ItemId(String);
 
 #[allow(clippy::new_without_default)]
@@ -13,18 +14,6 @@ impl ItemId {
     pub fn new() -> Self {
         let ksuid = Ksuid::new(None, None);
         ItemId(format!("i_{}", ksuid))
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-
-    pub fn to_string(&self) -> String {
-        self.0.clone()
-    }
-
-    pub fn into_string(self) -> String {
-        self.0
     }
 }
 
@@ -42,31 +31,11 @@ impl FromStr for ItemId {
     }
 }
 
-impl TryFrom<String> for ItemId {
-    type Error = ServiceError;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        ItemId::from_str(value.as_str())
-    }
-}
-
-impl TryFrom<&str> for ItemId {
-    type Error = ServiceError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        ItemId::from_str(value)
-    }
-}
-
-impl From<ItemId> for String {
-    fn from(value: ItemId) -> Self {
-        value.0.to_string()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
+    use anyhow::Result;
 
     use super::*;
 
@@ -77,11 +46,12 @@ mod tests {
     }
 
     #[test]
-    fn test_from_str() {
+    fn test_from_str() -> Result<()> {
         let id = format!("i_{}", Ksuid::new(None, None));
-        let item_id = ItemId::from_str(&id).expect("from_str not working");
+        let item_id: ItemId = id.parse()?;
 
         assert_eq!(item_id.as_str(), id);
+        Ok(())
     }
 
     #[test]

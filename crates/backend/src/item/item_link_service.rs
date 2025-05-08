@@ -16,8 +16,8 @@ where
         parent: &str,
         child: &str,
     ) -> silver_brain_core::ServiceResponse<()> {
-        let parent = ItemId::from_str(parent)?;
-        let child = ItemId::from_str(child)?;
+        let parent = parent.parse()?;
+        let child = child.parse()?;
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {

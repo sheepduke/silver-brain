@@ -1,10 +1,12 @@
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use super::ItemId;
+use super::{ItemId, ItemReferenceId};
 
 #[derive(Debug, PartialEq, Eq, TypedBuilder)]
 pub struct ItemReference {
+    pub id: ItemReferenceId,
+
     pub source: ItemId,
 
     pub target: ItemId,

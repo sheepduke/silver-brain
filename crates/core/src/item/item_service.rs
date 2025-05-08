@@ -2,7 +2,7 @@ use typed_builder::TypedBuilder;
 
 use crate::{RequestContext, ServiceResponse};
 
-use super::{Item, ItemId, ItemProperty};
+use super::{Item, ItemId};
 
 pub trait ItemService {
     async fn get_item(

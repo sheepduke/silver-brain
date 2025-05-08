@@ -81,12 +81,14 @@ pub(crate) async fn update<'a>(
 }
 
 fn to_item_reference(row: SqliteRow) -> ServiceResponse<ItemReference> {
+    let id: String = row.try_get("id").to_service_response()?;
     let source: String = row.try_get("source").to_service_response()?;
     let target: String = row.try_get("target").to_service_response()?;
 
     Ok(ItemReference {
-        source: ItemId::try_from(source)?,
-        target: ItemId::try_from(target)?,
+        id: id.parse()?,
+        source: source.parse()?,
+        target: target.parse()?,
         annotation: row.try_get("annotation").to_service_response()?,
         create_time: row.try_get("create_time").to_service_response()?,
         update_time: row.try_get("update_time").to_service_response()?,
