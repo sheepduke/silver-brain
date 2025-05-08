@@ -1,5 +1,5 @@
 mod session;
-pub use session::{DatabaseConnector, InMemorySqliteConnector, SqliteStoreSession};
+pub use session::{DatabaseConnector, InMemorySqliteConnector, SqliteConnector};
 
 pub(crate) mod item;
 pub(crate) mod item_link;

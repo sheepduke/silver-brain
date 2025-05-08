@@ -1,9 +1,11 @@
+#![allow(async_fn_in_trait)]
+#![allow(clippy::module_inception)]
+
 mod util;
 
 mod error;
 pub use error::*;
 
-#[allow(async_fn_in_trait)]
 mod item;
 pub use item::*;
 
