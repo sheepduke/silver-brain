@@ -3,14 +3,17 @@
 // ============================================================
 
 use derive_more::{From, FromStr, Into};
+use typed_builder::TypedBuilder;
 
-#[derive(From, Into, FromStr)]
+#[derive(Debug, From, Into, FromStr)]
 pub struct RepoName(String);
 
 // ============================================================
 //  Request Context
 // ============================================================
 
+#[derive(Debug, TypedBuilder)]
 pub struct RequestContext {
+    #[builder(setter(into))]
     pub repo_name: RepoName,
 }

@@ -15,8 +15,8 @@ pub use item_reference::ItemReference;
 
 mod item_service;
 pub use item_service::{
-    CreateItemRequest, ItemLoadOptions, ItemService, UpdateItemRequest, UpsertPropertyRequest,
+    CreateItemRequest, ItemLoadOptions, ItemService, UpdateItemRequest, UpsertItemPropertyRequest,
 };
 
 mod item_link_service;
-pub use item_link_service::*;
+pub use item_link_service::ItemLinkService;

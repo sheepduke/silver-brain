@@ -23,7 +23,7 @@ pub(crate) async fn exists<'a>(
     Ok(count > 0)
 }
 
-pub(crate) async fn select<'a>(
+pub(crate) async fn get_all<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     item_id: &ItemId,
 ) -> ServiceResponse<Vec<ItemProperty>> {
@@ -43,14 +43,14 @@ pub(crate) async fn select<'a>(
 pub(crate) async fn insert<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     item_id: &ItemId,
-    ItemProperty { key, value }: ItemProperty,
+    property: &ItemProperty,
 ) -> ServiceResponse<()> {
     let sql = "insert into item_property values(?, ?, ?, ?, ?)";
     let time = OffsetDateTime::now_utc();
     let query = query(sql)
         .bind(item_id.as_str())
-        .bind(key)
-        .bind(value)
+        .bind(&property.key)
+        .bind(&property.value)
         .bind(time)
         .bind(time);
 
@@ -66,7 +66,7 @@ pub(crate) async fn insert<'a>(
 pub(crate) async fn update<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     item_id: &ItemId,
-    ItemProperty { key, value }: ItemProperty,
+    ItemProperty { key, value }: &ItemProperty,
 ) -> ServiceResponse<()> {
     let sql = "update item_property set value = ?, update_time = ? where item_id = ? and key = ?";
 
@@ -106,8 +106,5 @@ fn to_item_property(row: SqliteRow) -> ServiceResponse<ItemProperty> {
     let key: String = row.try_get("key").to_service_response()?;
     let value: String = row.try_get("value").to_service_response()?;
 
-    Ok(ItemProperty {
-        key: key,
-        value: value,
-    })
+    Ok(ItemProperty { key, value })
 }

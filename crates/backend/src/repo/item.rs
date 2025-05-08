@@ -9,23 +9,7 @@ use time::OffsetDateTime;
 
 use super::util;
 
-pub(crate) async fn exists<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    id: &'a ItemId,
-) -> ServiceResponse<bool> {
-    let sql = "select count(*) from item where id = ?";
-    let query = query(sql).bind(id.as_str());
-    let count: i32 = util::acquire(conn)
-        .await?
-        .fetch_one(query)
-        .await
-        .to_service_response()?
-        .get(0);
-
-    Ok(count > 0)
-}
-
-pub(crate) async fn select<'a>(
+pub(crate) async fn get<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     id: &'a ItemId,
     options: &'a ItemLoadOptions,
@@ -63,22 +47,19 @@ pub(crate) async fn select<'a>(
 
 pub(crate) async fn insert<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
-    id: &ItemId,
-    name: &str,
-    content_type: &str,
-    content: &str,
+    item: &Item,
 ) -> ServiceResponse<()> {
     let current_time = OffsetDateTime::now_utc();
 
     let mut conn = util::acquire(conn).await?;
 
     let query = query("insert into item values(?, ?, ?, ?, ?, ?)")
-        .bind(id.as_str())
-        .bind(name)
-        .bind(content_type)
-        .bind(content)
-        .bind(current_time)
-        .bind(current_time);
+        .bind(item.id.as_str())
+        .bind(item.name.as_str())
+        .bind(item.content_type.as_deref().unwrap_or(""))
+        .bind(item.content.as_deref().unwrap_or(""))
+        .bind(item.create_time.unwrap_or(current_time))
+        .bind(item.update_time.unwrap_or(current_time));
 
     conn.execute(query).await.context("Create item db error")?;
 
@@ -87,29 +68,26 @@ pub(crate) async fn insert<'a>(
 
 pub(crate) async fn update<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
-    id: &ItemId,
-    name: Option<&str>,
-    content_type: Option<&str>,
-    content: Option<&str>,
+    item: &Item,
 ) -> ServiceResponse<()> {
     let current_time = OffsetDateTime::now_utc();
 
     let mut builder = QueryBuilder::<Sqlite>::new("update item set update_time = ");
-    builder.push_bind(current_time);
 
-    if let Some(name) = name {
-        builder.push(", name = ").push_bind(name);
-    }
+    builder
+        .push_bind(item.update_time.unwrap_or(current_time))
+        .push(", name = ")
+        .push_bind(item.name.as_str());
 
-    if let Some(content_type) = content_type {
+    if let Some(content_type) = &item.content_type {
         builder.push(", content_type = ").push_bind(content_type);
     }
 
-    if let Some(content) = content {
+    if let Some(content) = &item.content {
         builder.push(", content = ").push_bind(content);
     }
 
-    builder.push(" where id = ").push_bind(id.as_str());
+    builder.push(" where id = ").push_bind(item.id.as_str());
 
     util::acquire(conn)
         .await?

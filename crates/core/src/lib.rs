@@ -13,4 +13,4 @@ pub mod search;
 pub use search::{CompareOperator, FilterQuery, SearchQuery, parse};
 
 pub mod service;
-pub use service::RequestContext;
+pub use service::{RepoName, RequestContext};

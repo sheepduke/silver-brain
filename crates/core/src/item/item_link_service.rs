@@ -4,22 +4,14 @@ pub trait ItemLinkService {
     async fn create_link(
         &self,
         context: &RequestContext,
-        request: &CreateItemLinkRequest,
+        parent: &str,
+        child: &str,
     ) -> ServiceResponse<()>;
 
     async fn delete_link(
         &self,
         context: &RequestContext,
-        request: &DeleteItemLinkRequest,
+        parent: &str,
+        child: &str,
     ) -> ServiceResponse<()>;
-}
-
-pub struct CreateItemLinkRequest {
-    pub parent: String,
-    pub child: String,
-}
-
-pub struct DeleteItemLinkRequest {
-    pub parent: String,
-    pub child: String,
 }

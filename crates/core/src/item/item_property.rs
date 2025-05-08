@@ -1,14 +1,10 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ItemProperty {
-    pub key: String,
-    pub value: String,
-}
+use typed_builder::TypedBuilder;
 
-impl ItemProperty {
-    pub fn new(key: impl Into<String>, value: impl Into<String>) -> Self {
-        Self {
-            key: key.into(),
-            value: value.into(),
-        }
-    }
+#[derive(Debug, Clone, PartialEq, Eq, TypedBuilder)]
+pub struct ItemProperty {
+    #[builder(setter(into))]
+    pub key: String,
+
+    #[builder(setter(into))]
+    pub value: String,
 }

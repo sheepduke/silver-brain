@@ -1,4 +1,4 @@
-use sqlx::{Acquire, Executor, Row, Sqlite, query, sqlite::SqliteRow};
+use sqlx::{Acquire, Execute, Executor, Row, Sqlite, query, sqlite::SqliteRow};
 
 use silver_brain_core::*;
 use time::OffsetDateTime;
@@ -14,6 +14,7 @@ pub(crate) async fn exists<'a>(
 ) -> ServiceResponse<bool> {
     let sql = "select count(*) from item_link where parent = ? and child = ?";
     let query = query(sql).bind(parent.as_str()).bind(child.as_str());
+
     let count: i32 = util::acquire(conn)
         .await?
         .fetch_one(query)
@@ -21,10 +22,12 @@ pub(crate) async fn exists<'a>(
         .to_service_response()?
         .get(0);
 
+    println!("Count = {}", count);
+
     Ok(count > 0)
 }
 
-pub(crate) async fn select_parents<'a>(
+pub(crate) async fn get_parents<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     child: &ItemId,
 ) -> ServiceResponse<Vec<CoreItem>> {
@@ -43,7 +46,7 @@ pub(crate) async fn select_parents<'a>(
         .collect()
 }
 
-pub(crate) async fn select_children<'a>(
+pub(crate) async fn get_children<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     parent: &ItemId,
 ) -> ServiceResponse<Vec<CoreItem>> {

@@ -2,7 +2,7 @@ use typed_builder::TypedBuilder;
 
 use crate::{RequestContext, ServiceResponse};
 
-use super::{Item, ItemId};
+use super::{Item, ItemId, ItemProperty};
 
 pub trait ItemService {
     async fn get_item(
@@ -15,24 +15,29 @@ pub trait ItemService {
     async fn create_item(
         &self,
         context: &RequestContext,
-        request: &CreateItemRequest,
+        request: CreateItemRequest,
     ) -> ServiceResponse<ItemId>;
 
     async fn update_item(
         &self,
         context: &RequestContext,
-        request: &UpdateItemRequest,
+        request: UpdateItemRequest,
     ) -> ServiceResponse<()>;
 
     async fn delete_item(&self, context: &RequestContext, id: &str) -> ServiceResponse<()>;
 
-    async fn upsert_property(
+    async fn upsert_item_property(
         &self,
         context: &RequestContext,
-        request: &UpsertPropertyRequest,
+        request: UpsertItemPropertyRequest,
     ) -> ServiceResponse<()>;
 
-    async fn delete_property(&self, context: &RequestContext, key: &str) -> ServiceResponse<()>;
+    async fn delete_item_property(
+        &self,
+        context: &RequestContext,
+        item_id: &str,
+        key: &str,
+    ) -> ServiceResponse<()>;
 }
 
 #[derive(Debug, TypedBuilder)]
@@ -40,11 +45,11 @@ pub struct CreateItemRequest {
     #[builder(setter(into))]
     pub name: String,
 
-    #[builder(setter(into))]
-    pub content_type: String,
+    #[builder(default, setter(into, strip_option))]
+    pub content_type: Option<String>,
 
-    #[builder(setter(into))]
-    pub content: String,
+    #[builder(default, setter(into, strip_option))]
+    pub content: Option<String>,
 }
 
 #[derive(Debug, TypedBuilder)]
@@ -62,9 +67,15 @@ pub struct UpdateItemRequest {
     pub content: Option<String>,
 }
 
-pub struct UpsertPropertyRequest {
+#[derive(Debug, TypedBuilder)]
+pub struct UpsertItemPropertyRequest {
+    #[builder(setter(into))]
     pub item_id: String,
+
+    #[builder(setter(into))]
     pub key: String,
+
+    #[builder(setter(into))]
     pub value: String,
 }
 
@@ -93,6 +104,10 @@ pub struct ItemLoadOptions {
 }
 
 impl ItemLoadOptions {
+    pub fn core() -> Self {
+        Self::builder().build()
+    }
+
     pub fn all() -> Self {
         Self {
             load_content_type: true,

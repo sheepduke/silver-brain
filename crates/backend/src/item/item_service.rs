@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use silver_brain_core::*;
+use time::OffsetDateTime;
 
 use crate::repo::{self, DatabaseConnector};
 
@@ -20,22 +21,22 @@ where
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                let item_opt = repo::item::select(&mut (*tx), &item_id, options).await?;
+                let item_opt = repo::item::get(&mut (*tx), &item_id, options).await?;
 
                 if let Some(mut item) = item_opt {
                     if options.load_parents {
                         item.parents =
-                            Some(repo::item_link::select_parents(&mut (*tx), &item.id).await?);
+                            Some(repo::item_link::get_parents(&mut (*tx), &item.id).await?);
                     }
 
                     if options.load_children {
                         item.children =
-                            Some(repo::item_link::select_children(&mut (*tx), &item.id).await?)
+                            Some(repo::item_link::get_children(&mut (*tx), &item.id).await?)
                     }
 
                     if options.load_properties {
                         item.properties =
-                            Some(repo::item_property::select(&mut (*tx), &item.id).await?)
+                            Some(repo::item_property::get_all(&mut (*tx), &item.id).await?)
                     }
 
                     Ok(Some(item))
@@ -49,49 +50,63 @@ where
     async fn create_item(
         &self,
         context: &RequestContext,
-        request: &CreateItemRequest,
+        request: CreateItemRequest,
     ) -> ServiceResponse<ItemId> {
-        let id = ItemId::new();
+        let current_time = OffsetDateTime::now_utc();
+
+        let item = Item::builder()
+            .id(ItemId::new())
+            .name(&request.name)
+            .content_type(request.content_type.unwrap_or_default())
+            .content(request.content.unwrap_or_default())
+            .create_time(current_time)
+            .update_time(current_time)
+            .build();
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                repo::item::insert(
-                    tx,
-                    &id,
-                    &request.name,
-                    &request.content_type,
-                    &request.content,
-                )
-                .await
+                repo::item::insert(tx, &item).await
             })
             .await?;
 
-        Ok(id)
+        Ok(item.id)
     }
 
     async fn update_item(
         &self,
         context: &RequestContext,
-        request: &UpdateItemRequest,
+        request: UpdateItemRequest,
     ) -> ServiceResponse<()> {
         let item_id = ItemId::from_str(&request.id)?;
 
         self.connector
             .with_transaction(&context.repo_name, async |tx| {
-                if repo::item::exists(&mut (*tx), &item_id).await? {
-                    repo::item::update(
-                        &mut (*tx),
-                        &item_id,
-                        request.name.as_deref(),
-                        request.content_type.as_deref(),
-                        request.content.as_deref(),
-                    )
-                    .await
-                } else {
-                    Err(ServiceError::InvalidArgument(format!(
+                let item_opt =
+                    repo::item::get(&mut (*tx), &item_id, &ItemLoadOptions::core()).await?;
+
+                match item_opt {
+                    Some(mut item) => {
+                        if let Some(name) = request.name.clone() {
+                            item.name = name;
+                        }
+
+                        if let Some(content_type) = request.content_type.clone() {
+                            item.content_type = Some(content_type);
+                        }
+
+                        if let Some(content) = request.content.clone() {
+                            item.content = Some(content);
+                        }
+
+                        item.update_time = Some(OffsetDateTime::now_utc());
+
+                        repo::item::update(&mut (*tx), &item).await
+                    }
+
+                    None => Err(ServiceError::InvalidArgument(format!(
                         "Invalid item id {}",
                         item_id.as_str()
-                    )))
+                    ))),
                 }
             })
             .await
@@ -107,16 +122,41 @@ where
             .await
     }
 
-    async fn upsert_property(
+    async fn upsert_item_property(
         &self,
-        _context: &RequestContext,
-        _urequest: &UpsertPropertyRequest,
+        context: &RequestContext,
+        request: UpsertItemPropertyRequest,
     ) -> ServiceResponse<()> {
-        todo!()
+        let item_id = ItemId::try_from(request.item_id)?;
+        let property = ItemProperty {
+            key: request.key,
+            value: request.value,
+        };
+
+        self.connector
+            .with_transaction(&context.repo_name, async |tx| {
+                if repo::item_property::exists(&mut (*tx), &item_id, &property.key).await? {
+                    repo::item_property::update(&mut (*tx), &item_id, &property).await
+                } else {
+                    repo::item_property::insert(&mut (*tx), &item_id, &property).await
+                }
+            })
+            .await
     }
 
-    async fn delete_property(&self, _context: &RequestContext, _key: &str) -> ServiceResponse<()> {
-        todo!()
+    async fn delete_item_property(
+        &self,
+        context: &RequestContext,
+        item_id: &str,
+        key: &str,
+    ) -> ServiceResponse<()> {
+        let item_id = ItemId::from_str(item_id)?;
+
+        self.connector
+            .with_transaction(&context.repo_name, async |tx| {
+                repo::item_property::delete(tx, &item_id, &key).await
+            })
+            .await
     }
 }
 
@@ -126,8 +166,8 @@ mod tests {
 
     use anyhow::Result;
     use silver_brain_core::{
-        CreateItemRequest, Item, ItemId, ItemLoadOptions, ItemService, RequestContext,
-        UpdateItemRequest,
+        CreateItemRequest, Item, ItemId, ItemLoadOptions, ItemProperty, ItemService,
+        RequestContext, UpdateItemRequest, UpsertItemPropertyRequest,
     };
 
     use crate::{SqlService, repo::InMemorySqliteConnector};
@@ -167,7 +207,7 @@ mod tests {
             .content("New content")
             .build();
 
-        item_service.update_item(&context, &request).await?;
+        item_service.update_item(&context, request).await?;
 
         let load_options = ItemLoadOptions::builder().load_content(true).build();
         let item = item_service
@@ -201,6 +241,71 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn upsert_item_property() -> Result<()> {
+        let (item_service, context, item_id) = create_all().await?;
+
+        let request = UpsertItemPropertyRequest::builder()
+            .item_id(item_id.to_string())
+            .key("key")
+            .value("value")
+            .build();
+
+        item_service.upsert_item_property(&context, request).await?;
+
+        let properties = item_service
+            .get_item(
+                &context,
+                item_id.as_str(),
+                &ItemLoadOptions::builder().load_properties(true).build(),
+            )
+            .await?
+            .unwrap()
+            .properties
+            .unwrap();
+
+        assert_eq!(properties.len(), 1);
+        assert_eq!(
+            properties.first().unwrap().to_owned(),
+            ItemProperty::builder().key("key").value("value").build()
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn delete_item_property() -> Result<()> {
+        let (item_service, context, item_id) = create_all().await?;
+
+        let request = UpsertItemPropertyRequest::builder()
+            .item_id(item_id.to_string())
+            .key("key")
+            .value("value")
+            .build();
+
+        item_service.upsert_item_property(&context, request).await?;
+
+        item_service
+            .delete_item_property(&context, item_id.as_str(), "key")
+            .await?;
+
+        let properties = item_service
+            .get_item(
+                &context,
+                item_id.as_str(),
+                &ItemLoadOptions::builder().load_properties(true).build(),
+            )
+            .await?
+            .unwrap()
+            .properties
+            .unwrap();
+
+        assert_eq!(properties.len(), 0);
+        assert!(properties.first().is_none());
+
+        Ok(())
+    }
+
     async fn create_all() -> Result<(impl ItemService, RequestContext, ItemId)> {
         let item_service = create_item_service()?;
         let context = create_request_context()?;
@@ -210,18 +315,18 @@ mod tests {
             .content("Hello")
             .build();
 
-        let item_id = item_service.create_item(&context, &request).await?;
+        let item_id = item_service.create_item(&context, request).await?;
 
         Ok((item_service, context, item_id))
     }
 
-    fn create_item_service() -> Result<impl ItemService> {
+    pub(crate) fn create_item_service() -> Result<impl ItemService> {
         let session = Arc::new(InMemorySqliteConnector::new()?);
 
         Ok(SqlService::new(session))
     }
 
-    fn create_request_context() -> Result<RequestContext> {
+    pub(crate) fn create_request_context() -> Result<RequestContext> {
         Ok(RequestContext {
             repo_name: "main".parse()?,
         })

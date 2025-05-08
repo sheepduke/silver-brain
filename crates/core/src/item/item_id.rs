@@ -18,6 +18,14 @@ impl ItemId {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub fn to_string(&self) -> String {
+        self.0.clone()
+    }
+
+    pub fn into_string(self) -> String {
+        self.0
+    }
 }
 
 impl FromStr for ItemId {
@@ -39,6 +47,14 @@ impl TryFrom<String> for ItemId {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         ItemId::from_str(value.as_str())
+    }
+}
+
+impl TryFrom<&str> for ItemId {
+    type Error = ServiceError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        ItemId::from_str(value)
     }
 }
 
