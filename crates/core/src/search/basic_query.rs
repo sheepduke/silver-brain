@@ -159,70 +159,85 @@ mod tests {
     }
 
     #[test]
-    fn test_basic_string() {
-        assert_eq!(basic_string("hello").unwrap(), ("", "hello".to_string()));
+    fn basic_string() {
+        assert_eq!(
+            super::basic_string("hello").unwrap(),
+            ("", "hello".to_string())
+        );
 
         assert_eq!(
-            basic_string("hello world").unwrap(),
+            super::basic_string("hello world").unwrap(),
             (" world", "hello".to_string())
         );
 
-        assert!(basic_string("!aa").is_err());
+        assert!(super::basic_string("!aa").is_err());
     }
 
     #[test]
-    fn test_quoted_string() {
+    fn quoted_string() {
         assert_eq!(
-            quoted_string(r#""hello, world""#).unwrap(),
+            super::quoted_string(r#""hello, world""#).unwrap(),
             ("", "hello, world".to_string())
         );
 
         assert_eq!(
-            quoted_string(r#""aa\\bb\"cc\"dd""#).unwrap(),
+            super::quoted_string(r#""aa\\bb\"cc\"dd""#).unwrap(),
             ("", r#"aa\bb"cc"dd"#.to_string())
         )
     }
 
     #[test]
-    fn test_any_string() {
-        assert_eq!(any_string("hello").unwrap(), ("", "hello".to_string()));
-
-        assert_eq!(any_string(r#""hello""#).unwrap(), ("", "hello".to_string()));
-    }
-
-    #[test]
-    fn test_compare_operator() {
-        assert_eq!(compare_operator(":").unwrap(), ("", CO::Filter));
-
-        assert_eq!(compare_operator("<=").unwrap(), ("", CO::LessEqual));
-
-        assert_eq!(compare_operator("<").unwrap(), ("", CO::LessThan));
-
-        assert_eq!(compare_operator("=").unwrap(), ("", CO::Equal));
-
-        assert_eq!(compare_operator("!=").unwrap(), ("", CO::NotEqual));
-
-        assert_eq!(compare_operator(">").unwrap(), ("", CO::GreaterThan));
-
-        assert_eq!(compare_operator(">=").unwrap(), ("", CO::GreaterEqual));
-    }
-
-    #[test]
-    fn test_keyword_query() {
-        assert_eq!(keyword_query("aaa"), Ok(("", SQ::keyword("aaa"))));
-
-        assert_eq!(keyword_query("aa bb"), Ok((" bb", SQ::keyword("aa"))));
-    }
-
-    #[test]
-    fn test_property_query() {
+    fn any_string() {
         assert_eq!(
-            property_query("$aa < bb"),
+            super::any_string("hello").unwrap(),
+            ("", "hello".to_string())
+        );
+
+        assert_eq!(
+            super::any_string(r#""hello""#).unwrap(),
+            ("", "hello".to_string())
+        );
+    }
+
+    #[test]
+    fn compare_operator() {
+        assert_eq!(super::compare_operator(":").unwrap(), ("", CO::Filter));
+
+        assert_eq!(super::compare_operator("<=").unwrap(), ("", CO::LessEqual));
+
+        assert_eq!(super::compare_operator("<").unwrap(), ("", CO::LessThan));
+
+        assert_eq!(super::compare_operator("=").unwrap(), ("", CO::Equal));
+
+        assert_eq!(super::compare_operator("!=").unwrap(), ("", CO::NotEqual));
+
+        assert_eq!(super::compare_operator(">").unwrap(), ("", CO::GreaterThan));
+
+        assert_eq!(
+            super::compare_operator(">=").unwrap(),
+            ("", CO::GreaterEqual)
+        );
+    }
+
+    #[test]
+    fn keyword_query() {
+        assert_eq!(super::keyword_query("aaa"), Ok(("", SQ::keyword("aaa"))));
+
+        assert_eq!(
+            super::keyword_query("aa bb"),
+            Ok((" bb", SQ::keyword("aa")))
+        );
+    }
+
+    #[test]
+    fn property_query() {
+        assert_eq!(
+            super::property_query("$aa < bb"),
             Ok(("", SQ::property("aa", CO::LessThan, "bb")))
         );
 
         assert_eq!(
-            property_query(r#"$aa  ~ "bb" "#),
+            super::property_query(r#"$aa  ~ "bb" "#),
             Ok((" ", SQ::property("aa", CO::Match, "bb")))
         );
     }

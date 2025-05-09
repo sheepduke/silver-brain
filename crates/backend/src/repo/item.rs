@@ -1,7 +1,6 @@
 use crate::repo::util::ToServiceResponse;
 use silver_brain_core::*;
 
-use anyhow::Context;
 use sqlx::{
     Acquire, Execute, Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query,
     sqlite::SqliteRow,
@@ -30,7 +29,7 @@ pub(crate) async fn get<'a>(
 
 pub(crate) async fn get_many<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
-    ids: &Vec<ItemId>,
+    ids: &[ItemId],
     options: &'a ItemLoadOptions,
 ) -> ServiceResponse<Vec<Item>> {
     if ids.is_empty() {

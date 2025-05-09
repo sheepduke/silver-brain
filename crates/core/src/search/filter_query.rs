@@ -26,6 +26,7 @@ pub enum FilterQuery {
         value: String,
     },
     HasProperty {
+        operator: CompareOperator,
         value: String,
     },
     ParentsCount {
@@ -55,6 +56,7 @@ fn filter_string_query(input: &str) -> IResult<&str, SearchQuery> {
                 )),
             ),
             tag_no_case("content"),
+            tag_no_case("has"),
         )),
         space0,
         compare_operator,
@@ -69,6 +71,7 @@ fn filter_string_query(input: &str) -> IResult<&str, SearchQuery> {
         "name" => SearchQuery::Filter(FilterQuery::Name { operator, value }),
         "content_type" => SearchQuery::Filter(FilterQuery::ContentType { operator, value }),
         "content" => SearchQuery::Filter(FilterQuery::Content { operator, value }),
+        "has" => SearchQuery::Filter(FilterQuery::HasProperty { operator, value }),
         _ => panic!("Unreachable variant"),
     };
 
@@ -110,33 +113,12 @@ fn filter_int_query(input: &str) -> IResult<&str, SearchQuery> {
     map(pattern, mapper).parse(input)
 }
 
-fn filter_has_property_query(input: &str) -> IResult<&str, SearchQuery> {
-    let pattern = (
-        tag_no_case("has"),
-        space0,
-        filter_operator,
-        space0,
-        any_string,
-    );
-
-    let mapper = |(_, _, _, _, value)| SearchQuery::Filter(FilterQuery::HasProperty { value });
-
-    map(pattern, mapper).parse(input)
-}
-
 pub fn filter_query(input: &str) -> IResult<&str, SearchQuery> {
-    alt((
-        filter_string_query,
-        filter_int_query,
-        filter_has_property_query,
-    ))
-    .parse(input)
+    alt((filter_string_query, filter_int_query)).parse(input)
 }
 
 #[cfg(test)]
 mod tests {
-    use nom::error::Error;
-
     use super::*;
 
     use FilterQuery as FQ;
@@ -164,8 +146,9 @@ mod tests {
             })
         }
 
-        pub fn has_property(value: impl Into<String>) -> SQ {
+        pub fn has_property(operator: CompareOperator, value: impl Into<String>) -> SQ {
             SQ::Filter(FQ::HasProperty {
+                operator,
                 value: value.into(),
             })
         }
@@ -180,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_name_query() {
+    fn filter_name_query() {
         assert_eq!(
             filter_query("name : \"value\""),
             Ok(("", FQ::name(CompareOperator::Filter, "value")))
@@ -198,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_content_type_query() {
+    fn filter_content_type_query() {
         assert_eq!(
             filter_query("content-type: value"),
             Ok(("", FQ::content_type(CompareOperator::Filter, "value")))
@@ -206,7 +189,7 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_parents_count_query() {
+    fn filter_parents_count_query() {
         assert_eq!(
             filter_query("parentsCOUNT >= 3"),
             Ok(("", FQ::parents_count(CompareOperator::GreaterEqual, 3)))
@@ -214,19 +197,10 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_has_property_query() {
+    fn filter_has_property_query() {
         assert_eq!(
             filter_query("has: value"),
-            Ok(("", FQ::has_property("value")))
+            Ok(("", FQ::has_property(CompareOperator::Filter, "value")))
         );
-
-        let result = filter_query("has = value");
-        assert!(matches!(
-            result,
-            Err(nom::Err::Error(Error {
-                input: "= value",
-                code: _
-            }))
-        ));
     }
 }

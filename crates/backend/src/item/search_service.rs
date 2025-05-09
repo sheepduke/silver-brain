@@ -124,7 +124,7 @@ fn build_property_query(
         .push_bind(key)
         .push(" and value ")
         .push(convert_compare_operator(operator))
-        .push_bind(value);
+        .push_bind(convert_string_value(value, operator));
 
     Ok(())
 }
@@ -139,9 +139,15 @@ fn build_filter_query(
 ) -> ServiceResponse<()> {
     match query {
         FilterQuery::Name { operator, value } => build_filter_name_query(builder, operator, value)?,
-        FilterQuery::ContentType { operator, value } => todo!(),
-        FilterQuery::Content { operator, value } => todo!(),
-        FilterQuery::HasProperty { value } => todo!(),
+        FilterQuery::ContentType { operator, value } => {
+            build_filter_content_type_query(builder, operator, value)?
+        }
+        FilterQuery::Content { operator, value } => {
+            build_filter_content_query(builder, operator, value)?
+        }
+        FilterQuery::HasProperty { operator, value } => {
+            build_has_property_query(builder, operator, value)?
+        }
         FilterQuery::ParentsCount { operator, value } => todo!(),
         FilterQuery::ChildrenCount { operator, value } => todo!(),
     }
@@ -162,16 +168,57 @@ fn build_filter_name_query(
     Ok(())
 }
 
-fn convert_compare_operator(operator: CompareOperator) -> &'static str {
-    match operator {
-        CompareOperator::LessThan => " < ",
-        CompareOperator::LessEqual => " <= ",
-        CompareOperator::Filter | CompareOperator::Match => " like ",
-        CompareOperator::Equal => " = ",
-        CompareOperator::NotEqual => " <> ",
-        CompareOperator::GreaterEqual => " >= ",
-        CompareOperator::GreaterThan => " > ",
-    }
+fn build_filter_content_type_query(
+    builder: &mut QueryBuilder<Sqlite>,
+    operator: CompareOperator,
+    value: String,
+) -> ServiceResponse<()> {
+    builder
+        .push("select id from item where content_type")
+        .push(convert_compare_operator(operator))
+        .push_bind(convert_string_value(value, operator));
+
+    Ok(())
+}
+
+fn build_filter_content_query(
+    builder: &mut QueryBuilder<Sqlite>,
+    operator: CompareOperator,
+    value: String,
+) -> ServiceResponse<()> {
+    builder
+        .push("select id from item where content")
+        .push(convert_compare_operator(operator))
+        .push_bind(convert_string_value(value, operator));
+
+    Ok(())
+}
+
+fn build_has_property_query(
+    builder: &mut QueryBuilder<Sqlite>,
+    operator: CompareOperator,
+    value: String,
+) -> ServiceResponse<()> {
+    builder
+        .push("select item_id from item_property where key")
+        .push(convert_compare_operator(operator))
+        .push_bind(convert_string_value(value, operator));
+
+    Ok(())
+}
+
+fn convert_compare_operator(operator: CompareOperator) -> String {
+    let str = match operator {
+        CompareOperator::LessThan => "<",
+        CompareOperator::LessEqual => "<=",
+        CompareOperator::Match | CompareOperator::Filter => "like",
+        CompareOperator::Equal => "=",
+        CompareOperator::NotEqual => "<>",
+        CompareOperator::GreaterEqual => ">=",
+        CompareOperator::GreaterThan => ">",
+    };
+
+    format!(" {} ", str)
 }
 
 fn convert_string_value(value: String, operator: CompareOperator) -> String {
@@ -196,22 +243,28 @@ mod tests {
     use crate::{InMemorySqliteConnector, SqlService};
 
     #[tokio::test]
-    async fn test() -> Result<()> {
+    async fn search_has() -> Result<()> {
+        assert_eq!(search("has: type").await?, vec!["Emacs", "Firefox", "Vim"]);
+        assert_eq!(search("has~T*").await?, vec!["Emacs", "Firefox", "Vim"]);
+        assert_eq!(search("has: xx").await?, Vec::<String>::new());
+        assert_eq!(search("!has: TYPE").await?, vec!["Software"]);
+
+        Ok(())
+    }
+
+    async fn search(search: &str) -> Result<Vec<String>> {
         let (service, context) = setup().await?;
-        let options = ItemLoadOptions::core();
 
-        let query = "name ~ *";
-        let items = service.search(&context, query, &options).await?;
+        let mut item_names: Vec<String> = service
+            .search(&context, search, &ItemLoadOptions::core())
+            .await?
+            .into_iter()
+            .map(|it| it.name)
+            .collect();
 
-        println!("=== Items ===");
+        item_names.sort();
 
-        for item in items {
-            println!("Item [{}]: {}", item.id, item.name);
-        }
-
-        println!("=== END ===");
-
-        panic!()
+        Ok(item_names)
     }
 
     async fn setup() -> Result<(impl SearchService, RequestContext)> {
@@ -219,14 +272,42 @@ mod tests {
         let repo_name: RepoName = "main".parse()?;
         let context = RequestContext::builder().repo_name(repo_name).build();
 
+        // Setup Software.
         let request = CreateItemRequest::builder().name("Software").build();
         service.create_item(&context, request).await?;
 
+        // Setup Emacs.
         let request = CreateItemRequest::builder().name("Emacs").build();
-        service.create_item(&context, request).await?;
+        let emacs_id = service.create_item(&context, request).await?;
 
+        let request = UpsertItemPropertyRequest::builder()
+            .item_id(emacs_id.as_str())
+            .key("type")
+            .value("editor")
+            .build();
+        service.upsert_item_property(&context, request).await?;
+
+        // Setup Vim.
         let request = CreateItemRequest::builder().name("Vim").build();
-        service.create_item(&context, request).await?;
+        let vim_id = service.create_item(&context, request).await?;
+
+        let request = UpsertItemPropertyRequest::builder()
+            .item_id(vim_id.as_str())
+            .key("type")
+            .value("editor")
+            .build();
+        service.upsert_item_property(&context, request).await?;
+
+        // Setup Firefox.
+        let request = CreateItemRequest::builder().name("Firefox").build();
+        let firefox_id = service.create_item(&context, request).await?;
+
+        let request = UpsertItemPropertyRequest::builder()
+            .item_id(firefox_id.as_str())
+            .key("type")
+            .value("browser")
+            .build();
+        service.upsert_item_property(&context, request).await?;
 
         Ok((service, context))
     }

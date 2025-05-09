@@ -47,13 +47,13 @@ mod tests {
     use super::ItemReferenceId;
 
     #[test]
-    fn test_new() {
+    fn new() {
         let reference_id = ItemReferenceId::new();
         assert!(reference_id.as_str().starts_with("r_"));
     }
 
     #[test]
-    fn test_from_str() -> Result<()> {
+    fn from_str() -> Result<()> {
         let id: String = format!("r_{}", Ksuid::new(None, None));
         let reference_id: ItemReferenceId = id.parse()?;
 
@@ -63,7 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_str_invalid() -> Result<()> {
+    fn from_str_invalid() -> Result<()> {
         let id = "invalid";
         let result = ItemReferenceId::from_str(id);
 

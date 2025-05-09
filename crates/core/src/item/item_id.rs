@@ -40,13 +40,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_new() {
+    fn new() {
         let item_id = ItemId::new();
         assert!(item_id.as_str().starts_with("i_"));
     }
 
     #[test]
-    fn test_from_str() -> Result<()> {
+    fn from_str() -> Result<()> {
         let id = format!("i_{}", Ksuid::new(None, None));
         let item_id: ItemId = id.parse()?;
 
@@ -55,7 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_str_invalid() {
+    fn from_str_invalid() {
         let id = "invalid";
         let result = ItemId::from_str(id);
 

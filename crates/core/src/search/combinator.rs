@@ -114,7 +114,7 @@ mod tests {
     use SearchQuery as SQ;
 
     #[test]
-    fn test_basic_combniation() {
+    fn basic_combniation() {
         assert_eq!(
             parse("aa !(bb ||  cc) && !dd ").unwrap(),
             SQ::And(vec![
@@ -126,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    fn test_all_combination() {
+    fn all_combination() {
         assert_eq!(
             parse("aa !name: bb $bb = cc").unwrap(),
             SQ::And(vec![
