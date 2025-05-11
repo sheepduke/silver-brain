@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    sync::RwLock,
-};
+use std::{collections::HashMap, path::PathBuf, sync::RwLock};
 
 use anyhow::Context;
 use silver_brain_core::{ServiceError, ServiceResponse, service::RepoName};
@@ -108,10 +104,9 @@ mod tests {
     use std::{
         env,
         fs::{self, File},
-        path::{Path, PathBuf},
     };
 
-    use anyhow::{Context, Result};
+    use anyhow::Result;
     use silver_brain_core::*;
     use svix_ksuid::{Ksuid, KsuidLike};
 

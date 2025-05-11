@@ -16,7 +16,7 @@ impl<C> SearchService for SqlService<C>
 where
     C: DatabaseConnector,
 {
-    async fn search(
+    async fn search_items(
         &self,
         context: &RequestContext,
         search: &str,
@@ -256,7 +256,7 @@ mod tests {
         let (service, context) = setup().await?;
 
         let mut item_names: Vec<String> = service
-            .search(&context, search, &ItemLoadOptions::core())
+            .search_items(&context, search, &ItemLoadOptions::core())
             .await?
             .into_iter()
             .map(|it| it.name)
