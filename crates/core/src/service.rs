@@ -2,10 +2,10 @@
 //  Repo Name
 // ============================================================
 
-use derive_more::{From, FromStr, Into};
+use derive_more::{Deref, From, FromStr, Into};
 use typed_builder::TypedBuilder;
 
-#[derive(Debug, From, Into, FromStr)]
+#[derive(Debug, From, Into, FromStr, Deref)]
 pub struct RepoName(String);
 
 // ============================================================

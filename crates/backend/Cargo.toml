@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+svix-ksuid = { workspace = true }
 sqlx = { workspace = true, features = [ "runtime-tokio", "sqlite", "time", "migrate" ] }
 time = { workspace = true }
 

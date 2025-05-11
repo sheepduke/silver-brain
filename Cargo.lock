@@ -1168,6 +1168,7 @@ dependencies = [
  "anyhow",
  "silver-brain-core",
  "sqlx",
+ "svix-ksuid",
  "time",
  "tokio",
 ]
