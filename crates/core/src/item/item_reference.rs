@@ -3,7 +3,7 @@ use typed_builder::TypedBuilder;
 
 use super::{ItemId, ItemReferenceId};
 
-#[derive(Debug, PartialEq, Eq, TypedBuilder)]
+#[derive(Clone, Debug, PartialEq, Eq, TypedBuilder)]
 pub struct ItemReference {
     pub id: ItemReferenceId,
 

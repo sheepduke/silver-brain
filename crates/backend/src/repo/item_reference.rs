@@ -3,7 +3,40 @@ use sqlx::{Acquire, Executor, Row, Sqlite, query, sqlite::SqliteRow};
 
 use super::util::{self, ToServiceResponse};
 
-pub(crate) async fn select_source<'a>(
+pub(crate) async fn get<'a>(
+    conn: impl Acquire<'a, Database = Sqlite>,
+    id: &ItemReferenceId,
+) -> ServiceResponse<Option<ItemReference>> {
+    let sql = "select * from item_reference where id = ?";
+    let query = query(sql).bind(id.as_str());
+
+    util::acquire(conn)
+        .await?
+        .fetch_optional(query)
+        .await
+        .to_service_response()?
+        .map(|it| to_item_reference(it))
+        .transpose()
+}
+
+pub(crate) async fn get_all<'a>(
+    conn: impl Acquire<'a, Database = Sqlite>,
+    item_id: &ItemId,
+) -> ServiceResponse<Vec<ItemReference>> {
+    let sql = "select * from item_reference where source = ? or target = ?";
+    let query = query(sql).bind(item_id.as_str()).bind(item_id.as_str());
+
+    util::acquire(conn)
+        .await?
+        .fetch_all(query)
+        .await
+        .to_service_response()?
+        .into_iter()
+        .map(to_item_reference)
+        .collect()
+}
+
+pub(crate) async fn get_source<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     source: &ItemId,
 ) -> ServiceResponse<Vec<ItemReference>> {
@@ -20,7 +53,7 @@ pub(crate) async fn select_source<'a>(
         .collect()
 }
 
-pub(crate) async fn select_target<'a>(
+pub(crate) async fn get_target<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     target: &ItemId,
 ) -> ServiceResponse<Vec<ItemReference>> {
@@ -41,8 +74,9 @@ pub(crate) async fn insert<'a>(
     conn: impl Acquire<'a, Database = Sqlite>,
     reference: &ItemReference,
 ) -> ServiceResponse<()> {
-    let sql = "insert into item_reference values(?, ?, ?, ?, ?)";
+    let sql = "insert into item_reference values(?, ?, ?, ?, ?, ?)";
     let query = query(sql)
+        .bind(reference.id.as_str())
         .bind(reference.source.as_str())
         .bind(reference.target.as_str())
         .bind(&reference.annotation)
@@ -70,6 +104,22 @@ pub(crate) async fn update<'a>(
         .bind(reference.update_time)
         .bind(reference.source.as_str())
         .bind(reference.target.as_str());
+
+    util::acquire(conn)
+        .await?
+        .execute(query)
+        .await
+        .to_service_response()?;
+
+    Ok(())
+}
+
+pub(crate) async fn delete<'a>(
+    conn: impl Acquire<'a, Database = Sqlite>,
+    id: &ItemReferenceId,
+) -> ServiceResponse<()> {
+    let sql = "delete from item_reference where id = ?";
+    let query = query(sql).bind(id.as_str());
 
     util::acquire(conn)
         .await?

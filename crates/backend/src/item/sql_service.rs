@@ -13,7 +13,7 @@ impl<C> SqlService<C>
 where
     C: DatabaseConnector,
 {
-    pub fn new(session: Arc<C>) -> Self {
-        Self { connector: session }
+    pub fn new(connector: Arc<C>) -> Self {
+        Self { connector }
     }
 }

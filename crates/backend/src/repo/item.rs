@@ -2,8 +2,7 @@ use crate::repo::util::ToServiceResponse;
 use silver_brain_core::*;
 
 use sqlx::{
-    Acquire, Execute, Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query,
-    sqlite::SqliteRow,
+    Acquire, Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow,
 };
 use time::OffsetDateTime;
 
@@ -65,9 +64,6 @@ pub(crate) async fn get_ids<'a>(
     builder: &mut QueryBuilder<'a, Sqlite>,
 ) -> ServiceResponse<Vec<ItemId>> {
     let query = builder.build();
-
-    println!("SQL: ");
-    println!("{:?}", query.sql());
 
     util::acquire(conn)
         .await?

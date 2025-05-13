@@ -28,4 +28,6 @@ mod item_link_service;
 pub use item_link_service::ItemLinkService;
 
 mod item_reference_service;
-pub use item_reference_service::ItemReferenceService;
+pub use item_reference_service::{
+    CreateItemReferenceRequest, ItemReferenceService, UpdateItemReferenceRequest,
+};

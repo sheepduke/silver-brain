@@ -5,7 +5,7 @@ use svix_ksuid::{Ksuid, KsuidLike};
 
 use crate::{ServiceError, util};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, AsRef, Deref, Display)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, AsRef, Deref, Display)]
 pub struct ItemReferenceId(String);
 
 #[allow(clippy::new_without_default)]

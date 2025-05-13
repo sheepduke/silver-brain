@@ -1,7 +1,7 @@
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use super::{CoreItem, ItemId, ItemProperty};
+use super::{CoreItem, ItemId, ItemProperty, ItemReference};
 
 #[derive(Clone, Debug, TypedBuilder, PartialEq, Eq)]
 pub struct Item {
@@ -17,13 +17,16 @@ pub struct Item {
     pub content: Option<String>,
 
     #[builder(default, setter(strip_option))]
+    pub properties: Option<Vec<ItemProperty>>,
+
+    #[builder(default, setter(strip_option))]
     pub parents: Option<Vec<CoreItem>>,
 
     #[builder(default, setter(strip_option))]
     pub children: Option<Vec<CoreItem>>,
 
     #[builder(default, setter(strip_option))]
-    pub properties: Option<Vec<ItemProperty>>,
+    pub references: Option<Vec<ItemReference>>,
 
     #[builder(default, setter(strip_option))]
     pub create_time: Option<OffsetDateTime>,

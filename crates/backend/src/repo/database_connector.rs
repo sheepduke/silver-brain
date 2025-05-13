@@ -36,7 +36,7 @@ impl SqliteConnector {
     }
 
     async fn get_or_create_pool(&self, repo_name: &RepoName) -> ServiceResponse<SqlitePool> {
-        let pools = self.pools.read().map_err(|err| {
+        let pools = self.pools.read().map_err(|_| {
             ServiceError::Internal("Failed to acquire database read lock".to_string())
         })?;
 

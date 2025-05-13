@@ -24,6 +24,11 @@ where
                 let item_opt = repo::item::get(&mut *tx, &item_id, options).await?;
 
                 if let Some(mut item) = item_opt {
+                    if options.load_properties {
+                        item.properties =
+                            Some(repo::item_property::get_all(&mut *tx, &item.id).await?)
+                    }
+
                     if options.load_parents {
                         item.parents =
                             Some(repo::item_link::get_parents(&mut *tx, &item.id).await?);
@@ -32,11 +37,6 @@ where
                     if options.load_children {
                         item.children =
                             Some(repo::item_link::get_children(&mut *tx, &item.id).await?)
-                    }
-
-                    if options.load_properties {
-                        item.properties =
-                            Some(repo::item_property::get_all(&mut *tx, &item.id).await?)
                     }
 
                     Ok(Some(item))
