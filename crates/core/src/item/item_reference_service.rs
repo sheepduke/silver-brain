@@ -3,31 +3,35 @@ use typed_builder::TypedBuilder;
 use crate::*;
 
 pub trait ItemReferenceService {
-    async fn get_source_references(
+    fn get_source_references(
         &self,
         context: &RequestContext,
         source: &str,
-    ) -> ServiceResponse<Vec<ItemReference>>;
+    ) -> impl Future<Output = ServiceResponse<Vec<ItemReference>>> + Send;
 
-    async fn get_target_references(
+    fn get_target_references(
         &self,
         context: &RequestContext,
         target: &str,
-    ) -> ServiceResponse<Vec<ItemReference>>;
+    ) -> impl Future<Output = ServiceResponse<Vec<ItemReference>>> + Send;
 
-    async fn create_reference(
+    fn create_reference(
         &self,
         context: &RequestContext,
         request: CreateItemReferenceRequest,
-    ) -> ServiceResponse<ItemReferenceId>;
+    ) -> impl Future<Output = ServiceResponse<ItemReferenceId>> + Send;
 
-    async fn update_reference(
+    fn update_reference(
         &self,
         context: &RequestContext,
         request: UpdateItemReferenceRequest,
-    ) -> ServiceResponse<()>;
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
-    async fn delete_reference(&self, context: &RequestContext, id: &str) -> ServiceResponse<()>;
+    fn delete_reference(
+        &self,
+        context: &RequestContext,
+        id: &str,
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 }
 
 #[derive(Debug, TypedBuilder)]

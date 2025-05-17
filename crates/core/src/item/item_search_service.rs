@@ -2,11 +2,11 @@ use crate::*;
 
 use super::ItemLoadOptions;
 
-pub trait SearchService {
-    async fn search_items(
+pub trait ItemSearchService {
+    fn search_items(
         &self,
         context: &RequestContext,
         search: &str,
         options: &ItemLoadOptions,
-    ) -> ServiceResponse<Vec<Item>>;
+    ) -> impl Future<Output = ServiceResponse<Vec<Item>>> + Send;
 }

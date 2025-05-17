@@ -1,34 +1,27 @@
-use sqlx::{Acquire, Executor, Row, Sqlite, query, sqlite::SqliteRow};
+use sqlx::{Executor, Row, SqliteConnection, query, sqlite::SqliteRow};
 
 use silver_brain_core::*;
 use time::OffsetDateTime;
 
 use crate::repo::util::ToServiceResponse;
 
-use super::util;
-
-pub(crate) async fn exists<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    parent: &'a ItemId,
-    child: &'a ItemId,
+pub(crate) async fn exists(
+    conn: &mut SqliteConnection,
+    parent: &ItemId,
+    child: &ItemId,
 ) -> ServiceResponse<bool> {
     let sql = "select count(*) from item_link where parent = ? and child = ?";
     let query = query(sql).bind(parent.as_str()).bind(child.as_str());
 
-    let count: i32 = util::acquire(conn)
-        .await?
-        .fetch_one(query)
-        .await
-        .to_service_response()?
-        .get(0);
+    let count: i32 = conn.fetch_one(query).await.to_service_response()?.get(0);
 
     println!("Count = {}", count);
 
     Ok(count > 0)
 }
 
-pub(crate) async fn get_parents<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get_parents(
+    conn: &mut SqliteConnection,
     child: &ItemId,
 ) -> ServiceResponse<Vec<CoreItem>> {
     let sql =
@@ -36,9 +29,7 @@ pub(crate) async fn get_parents<'a>(
 
     let query = query(sql).bind(child.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
+    conn.fetch_all(query)
         .await
         .to_service_response()?
         .into_iter()
@@ -46,8 +37,8 @@ pub(crate) async fn get_parents<'a>(
         .collect()
 }
 
-pub(crate) async fn get_children<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get_children(
+    conn: &mut SqliteConnection,
     parent: &ItemId,
 ) -> ServiceResponse<Vec<CoreItem>> {
     let sql =
@@ -55,9 +46,7 @@ pub(crate) async fn get_children<'a>(
 
     let query = query(sql).bind(parent.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
+    conn.fetch_all(query)
         .await
         .to_service_response()?
         .into_iter()
@@ -65,8 +54,8 @@ pub(crate) async fn get_children<'a>(
         .collect()
 }
 
-pub(crate) async fn insert<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn insert(
+    conn: &mut SqliteConnection,
     parent: &ItemId,
     child: &ItemId,
 ) -> ServiceResponse<()> {
@@ -76,28 +65,20 @@ pub(crate) async fn insert<'a>(
         .bind(child.as_str())
         .bind(OffsetDateTime::now_utc());
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
 
-pub(crate) async fn delete<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn delete(
+    conn: &mut SqliteConnection,
     parent: &ItemId,
     child: &ItemId,
 ) -> ServiceResponse<()> {
     let sql = "delete from item_link where parent = ? and child = ?";
     let query = query(sql).bind(parent.as_str()).bind(child.as_str());
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }

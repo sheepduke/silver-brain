@@ -1,21 +1,32 @@
-use std::{collections::HashMap, path::PathBuf, sync::RwLock};
+use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::Context;
 use silver_brain_core::{ServiceError, ServiceResponse, service::RepoName};
-use sqlx::{Sqlite, SqlitePool, Transaction};
+use sqlx::{Sqlite, SqlitePool, Transaction, pool::PoolConnection};
+use tokio::sync::RwLock;
 
-use super::util::ToServiceResponse;
+use super::ToServiceResponse;
 
 // ============================================================
 //  DatabaseConnector
 // ============================================================
 
 pub trait DatabaseConnector {
-    async fn with_transaction<T>(
+    fn get_connection(
+        &self,
+        repo_name: &RepoName,
+    ) -> impl Future<Output = ServiceResponse<PoolConnection<Sqlite>>> + Send;
+
+    fn begin_transaction(
+        &self,
+        repo_name: &RepoName,
+    ) -> impl Future<Output = ServiceResponse<Transaction<'static, Sqlite>>> + Send;
+
+    fn with_transaction<T>(
         &self,
         repo_name: &RepoName,
         fun: impl AsyncFnOnce(&mut Transaction<Sqlite>) -> ServiceResponse<T>,
-    ) -> ServiceResponse<T>;
+    ) -> impl Future<Output = ServiceResponse<T>>;
 }
 
 // ============================================================
@@ -36,9 +47,7 @@ impl SqliteConnector {
     }
 
     async fn get_or_create_pool(&self, repo_name: &RepoName) -> ServiceResponse<SqlitePool> {
-        let pools = self.pools.read().map_err(|_| {
-            ServiceError::Internal("Failed to acquire database read lock".to_string())
-        })?;
+        let pools = self.pools.read().await;
 
         if pools.contains_key(repo_name.as_str()) {
             Ok(pools.get(repo_name.as_str()).unwrap().clone())
@@ -57,12 +66,7 @@ impl SqliteConnector {
 
             drop(pools);
 
-            let mut pools = self.pools.write().map_err(|err| {
-                ServiceError::Internal(format!(
-                    "Failed to acquire database write lock\n{}",
-                    err.to_string()
-                ))
-            })?;
+            let mut pools = self.pools.write().await;
 
             pools.insert(repo_name.to_string(), pool.clone());
 
@@ -86,6 +90,17 @@ impl SqliteConnector {
 }
 
 impl DatabaseConnector for SqliteConnector {
+    async fn get_connection(
+        &self,
+        repo_name: &RepoName,
+    ) -> ServiceResponse<PoolConnection<Sqlite>> {
+        self.get_or_create_pool(repo_name)
+            .await?
+            .acquire()
+            .await
+            .to_service_response()
+    }
+
     async fn with_transaction<T>(
         &self,
         repo_name: &RepoName,
@@ -96,6 +111,17 @@ impl DatabaseConnector for SqliteConnector {
         let mut transaction = pool.begin().await.to_service_response()?;
 
         fun(&mut transaction).await
+    }
+
+    async fn begin_transaction(
+        &self,
+        repo_name: &RepoName,
+    ) -> ServiceResponse<Transaction<'static, Sqlite>> {
+        self.get_or_create_pool(repo_name)
+            .await?
+            .begin()
+            .await
+            .to_service_response()
     }
 }
 
@@ -179,9 +205,34 @@ impl DatabaseConnector for InMemorySqliteConnector {
         let result = fun(&mut transaction).await;
 
         if result.is_ok() {
-            transaction.commit().await.context("Commit transaction")?;
+            transaction.commit().await.to_service_response()?;
+            Ok(result.unwrap())
+        } else {
+            todo!()
         }
+    }
 
-        result
+    async fn get_connection(
+        &self,
+        _repo_name: &RepoName,
+    ) -> ServiceResponse<PoolConnection<Sqlite>> {
+        sqlx::migrate!()
+            .run(&self.pool)
+            .await
+            .to_service_response()?;
+
+        self.pool.acquire().await.to_service_response()
+    }
+
+    async fn begin_transaction(
+        &self,
+        _repo_name: &RepoName,
+    ) -> ServiceResponse<Transaction<'static, Sqlite>> {
+        sqlx::migrate!()
+            .run(&self.pool)
+            .await
+            .to_service_response()?;
+
+        self.pool.begin().await.to_service_response()
     }
 }

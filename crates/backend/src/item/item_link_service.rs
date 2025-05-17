@@ -2,13 +2,16 @@ use std::str::FromStr;
 
 use silver_brain_core::*;
 
-use crate::{DatabaseConnector, repo};
+use crate::{
+    DatabaseConnector,
+    repo::{self, ToServiceResponse},
+};
 
 use super::SqlService;
 
 impl<C> ItemLinkService for SqlService<C>
 where
-    C: DatabaseConnector,
+    C: DatabaseConnector + Send + Sync,
 {
     async fn create_link(
         &self,
@@ -19,21 +22,20 @@ where
         let parent = parent.parse()?;
         let child = child.parse()?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                if repo::item_link::exists(&mut *tx, &parent, &child).await? {
-                    Ok(())
-                } else if repo::item_link::exists(&mut *tx, &child, &parent).await? {
-                    Err(ServiceError::InvalidArgument(format!(
-                        "`{}` is already a parent of `{}`",
-                        child.as_str(),
-                        parent.as_str()
-                    )))
-                } else {
-                    repo::item_link::insert(&mut *tx, &parent, &child).await
-                }
-            })
-            .await
+        let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
+
+        if repo::item_link::exists(&mut conn, &parent, &child).await? {
+            Ok(())
+        } else if repo::item_link::exists(&mut conn, &child, &parent).await? {
+            Err(ServiceError::InvalidArgument(format!(
+                "`{}` is already a parent of `{}`",
+                child.as_str(),
+                parent.as_str()
+            )))
+        } else {
+            repo::item_link::insert(&mut conn, &parent, &child).await?;
+            conn.commit().await.to_service_response()
+        }
     }
 
     async fn delete_link(
@@ -45,11 +47,9 @@ where
         let parent = ItemId::from_str(parent)?;
         let child = ItemId::from_str(child)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item_link::delete(tx, &parent, &child).await
-            })
-            .await
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item_link::delete(&mut conn, &parent, &child).await
     }
 }
 

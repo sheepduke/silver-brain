@@ -3,13 +3,13 @@ use std::str::FromStr;
 use silver_brain_core::*;
 use time::OffsetDateTime;
 
-use crate::repo::{self, DatabaseConnector};
+use crate::repo::{self, DatabaseConnector, ToServiceResponse};
 
 use super::SqlService;
 
 impl<C> ItemService for SqlService<C>
 where
-    C: DatabaseConnector,
+    C: DatabaseConnector + Send + Sync,
 {
     async fn get_item(
         &self,
@@ -19,32 +19,27 @@ where
     ) -> ServiceResponse<Option<Item>> {
         let item_id = ItemId::from_str(id)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                let item_opt = repo::item::get(&mut *tx, &item_id, options).await?;
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
 
-                if let Some(mut item) = item_opt {
-                    if options.load_properties {
-                        item.properties =
-                            Some(repo::item_property::get_all(&mut *tx, &item.id).await?)
-                    }
+        let item_opt = repo::item::get(&mut conn, &item_id, options).await?;
 
-                    if options.load_parents {
-                        item.parents =
-                            Some(repo::item_link::get_parents(&mut *tx, &item.id).await?);
-                    }
+        if let Some(mut item) = item_opt {
+            if options.load_properties {
+                item.properties = Some(repo::item_property::get_all(&mut conn, &item.id).await?)
+            }
 
-                    if options.load_children {
-                        item.children =
-                            Some(repo::item_link::get_children(&mut *tx, &item.id).await?)
-                    }
+            if options.load_parents {
+                item.parents = Some(repo::item_link::get_parents(&mut conn, &item.id).await?);
+            }
 
-                    Ok(Some(item))
-                } else {
-                    Ok(None)
-                }
-            })
-            .await
+            if options.load_children {
+                item.children = Some(repo::item_link::get_children(&mut conn, &item.id).await?)
+            }
+
+            Ok(Some(item))
+        } else {
+            Ok(None)
+        }
     }
 
     async fn create_item(
@@ -63,11 +58,9 @@ where
             .update_time(current_time)
             .build();
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item::insert(tx, &item).await
-            })
-            .await?;
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item::insert(&mut conn, &item).await?;
 
         Ok(item.id)
     }
@@ -79,47 +72,44 @@ where
     ) -> ServiceResponse<()> {
         let item_id = ItemId::from_str(&request.id)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                let item_opt =
-                    repo::item::get(&mut *tx, &item_id, &ItemLoadOptions::core()).await?;
+        let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
 
-                match item_opt {
-                    Some(mut item) => {
-                        if let Some(name) = request.name.clone() {
-                            item.name = name;
-                        }
+        let item_opt = repo::item::get(&mut conn, &item_id, &ItemLoadOptions::core()).await?;
 
-                        if let Some(content_type) = request.content_type.clone() {
-                            item.content_type = Some(content_type);
-                        }
-
-                        if let Some(content) = request.content.clone() {
-                            item.content = Some(content);
-                        }
-
-                        item.update_time = Some(OffsetDateTime::now_utc());
-
-                        repo::item::update(&mut *tx, &item).await
-                    }
-
-                    None => Err(ServiceError::InvalidArgument(format!(
-                        "Invalid item id {}",
-                        &item_id
-                    ))),
+        match item_opt {
+            Some(mut item) => {
+                if let Some(name) = request.name.clone() {
+                    item.name = name;
                 }
-            })
-            .await
+
+                if let Some(content_type) = request.content_type.clone() {
+                    item.content_type = Some(content_type);
+                }
+
+                if let Some(content) = request.content.clone() {
+                    item.content = Some(content);
+                }
+
+                item.update_time = Some(OffsetDateTime::now_utc());
+
+                repo::item::update(&mut conn, &item).await?;
+
+                conn.commit().await.to_service_response()
+            }
+
+            None => Err(ServiceError::InvalidArgument(format!(
+                "Invalid item id {}",
+                &item_id
+            ))),
+        }
     }
 
     async fn delete_item(&self, context: &RequestContext, id: &str) -> ServiceResponse<()> {
         let item_id = ItemId::from_str(id)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item::delete(tx, &item_id).await
-            })
-            .await
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item::delete(&mut conn, &item_id).await
     }
 
     async fn upsert_item_property(
@@ -133,15 +123,15 @@ where
             value: request.value,
         };
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                if repo::item_property::exists(&mut *tx, &item_id, &property.key).await? {
-                    repo::item_property::update(&mut *tx, &item_id, &property).await
-                } else {
-                    repo::item_property::insert(&mut *tx, &item_id, &property).await
-                }
-            })
-            .await
+        let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
+
+        if repo::item_property::exists(&mut conn, &item_id, &property.key).await? {
+            repo::item_property::update(&mut conn, &item_id, &property).await?;
+        } else {
+            repo::item_property::insert(&mut conn, &item_id, &property).await?;
+        }
+
+        conn.commit().await.to_service_response()
     }
 
     async fn delete_item_property(
@@ -152,11 +142,9 @@ where
     ) -> ServiceResponse<()> {
         let item_id = ItemId::from_str(item_id)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item_property::delete(tx, &item_id, &key).await
-            })
-            .await
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item_property::delete(&mut conn, &item_id, key).await
     }
 }
 

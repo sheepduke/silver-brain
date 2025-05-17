@@ -1,19 +1,5 @@
-// ============================================================
-//  Repo Name
-// ============================================================
+mod repo_name;
+pub use repo_name::RepoName;
 
-use derive_more::{Deref, From, FromStr, Into};
-use typed_builder::TypedBuilder;
-
-#[derive(Debug, From, Into, FromStr, Deref)]
-pub struct RepoName(String);
-
-// ============================================================
-//  Request Context
-// ============================================================
-
-#[derive(Debug, TypedBuilder)]
-pub struct RequestContext {
-    #[builder(setter(into))]
-    pub repo_name: RepoName,
-}
+mod request_context;
+pub use request_context::RequestContext;

@@ -1,11 +1,25 @@
 use std::str::FromStr;
 
 use derive_more::{AsRef, Deref, Display};
+use serde::{Deserialize, Serialize};
 use svix_ksuid::{Ksuid, KsuidLike};
 
 use crate::{ServiceError, util};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, AsRef, Deref, Display)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    AsRef,
+    Deref,
+    Display,
+    Serialize,
+    Deserialize,
+)]
 pub struct ItemId(String);
 
 #[allow(clippy::new_without_default)]
@@ -24,9 +38,9 @@ impl FromStr for ItemId {
         if s.starts_with("i_") {
             util::extract_ksuid(s)
                 .map(|_| ItemId(s.to_string()))
-                .ok_or(ServiceError::InvalidId(s.to_string()))
+                .ok_or(ServiceError::InvalidArgument(s.to_string()))
         } else {
-            Err(ServiceError::InvalidId(s.to_string()))
+            Err(ServiceError::InvalidArgument(s.to_string()))
         }
     }
 }
@@ -59,6 +73,6 @@ mod tests {
         let id = "invalid";
         let result = ItemId::from_str(id);
 
-        assert!(matches!(result, Err(ServiceError::InvalidId(_))));
+        assert!(matches!(result, Err(ServiceError::InvalidArgument(_))));
     }
 }

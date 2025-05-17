@@ -1,10 +1,9 @@
-#![allow(async_fn_in_trait)]
 #![allow(clippy::module_inception)]
 
 mod util;
 
 mod error;
-pub use error::*;
+pub use error::{ServiceError, ServiceResponse, ToServiceResponse};
 
 mod item;
 pub use item::*;

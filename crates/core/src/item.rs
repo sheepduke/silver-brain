@@ -21,8 +21,8 @@ pub use item_service::{
     CreateItemRequest, ItemLoadOptions, ItemService, UpdateItemRequest, UpsertItemPropertyRequest,
 };
 
-mod search_service;
-pub use search_service::SearchService;
+mod item_search_service;
+pub use item_search_service::ItemSearchService;
 
 mod item_link_service;
 pub use item_link_service::ItemLinkService;

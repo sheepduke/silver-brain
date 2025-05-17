@@ -1,51 +1,30 @@
 use silver_brain_core::*;
-use sqlx::{Acquire, Executor, Row, Sqlite, query, sqlite::SqliteRow};
+use sqlx::{Executor, Row, SqliteConnection, query, sqlite::SqliteRow};
 
-use super::util::{self, ToServiceResponse};
+use super::util::ToServiceResponse;
 
-pub(crate) async fn get<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get(
+    conn: &mut SqliteConnection,
     id: &ItemReferenceId,
 ) -> ServiceResponse<Option<ItemReference>> {
     let sql = "select * from item_reference where id = ?";
     let query = query(sql).bind(id.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_optional(query)
+    conn.fetch_optional(query)
         .await
         .to_service_response()?
-        .map(|it| to_item_reference(it))
+        .map(to_item_reference)
         .transpose()
 }
 
-pub(crate) async fn get_all<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    item_id: &ItemId,
-) -> ServiceResponse<Vec<ItemReference>> {
-    let sql = "select * from item_reference where source = ? or target = ?";
-    let query = query(sql).bind(item_id.as_str()).bind(item_id.as_str());
-
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
-        .await
-        .to_service_response()?
-        .into_iter()
-        .map(to_item_reference)
-        .collect()
-}
-
-pub(crate) async fn get_source<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get_source(
+    conn: &mut SqliteConnection,
     source: &ItemId,
 ) -> ServiceResponse<Vec<ItemReference>> {
     let sql = "select * from item_reference where source = ?";
     let query = query(sql).bind(source.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
+    conn.fetch_all(query)
         .await
         .to_service_response()?
         .into_iter()
@@ -53,16 +32,14 @@ pub(crate) async fn get_source<'a>(
         .collect()
 }
 
-pub(crate) async fn get_target<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get_target(
+    conn: &mut SqliteConnection,
     target: &ItemId,
 ) -> ServiceResponse<Vec<ItemReference>> {
     let sql = "select * from item_reference where target = ?";
     let query = query(sql).bind(target.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
+    conn.fetch_all(query)
         .await
         .to_service_response()?
         .into_iter()
@@ -70,8 +47,8 @@ pub(crate) async fn get_target<'a>(
         .collect()
 }
 
-pub(crate) async fn insert<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn insert(
+    conn: &mut SqliteConnection,
     reference: &ItemReference,
 ) -> ServiceResponse<()> {
     let sql = "insert into item_reference values(?, ?, ?, ?, ?, ?)";
@@ -83,17 +60,13 @@ pub(crate) async fn insert<'a>(
         .bind(reference.create_time)
         .bind(reference.update_time);
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
 
-pub(crate) async fn update<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn update(
+    conn: &mut SqliteConnection,
     reference: &ItemReference,
 ) -> ServiceResponse<()> {
     let sql =
@@ -105,27 +78,19 @@ pub(crate) async fn update<'a>(
         .bind(reference.source.as_str())
         .bind(reference.target.as_str());
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
 
-pub(crate) async fn delete<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn delete(
+    conn: &mut SqliteConnection,
     id: &ItemReferenceId,
 ) -> ServiceResponse<()> {
     let sql = "delete from item_reference where id = ?";
     let query = query(sql).bind(id.as_str());
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }

@@ -1,35 +1,29 @@
 use crate::repo::util::ToServiceResponse;
 use silver_brain_core::*;
 
-use sqlx::{
-    Acquire, Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow,
-};
+use sqlx::{Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow};
 use time::OffsetDateTime;
 
-use super::util;
-
-pub(crate) async fn get<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    id: &'a ItemId,
-    options: &'a ItemLoadOptions,
+pub(crate) async fn get(
+    conn: &mut SqliteConnection,
+    id: &ItemId,
+    options: &ItemLoadOptions,
 ) -> ServiceResponse<Option<Item>> {
     let mut builder = QueryBuilder::new("");
     build_select_query(&mut builder, options);
     builder.push(" where id = ").push_bind(id.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_optional(builder.build())
+    conn.fetch_optional(builder.build())
         .await
         .to_service_response()?
         .map(|it| row_to_item(it, options))
         .transpose()
 }
 
-pub(crate) async fn get_many<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get_many(
+    conn: &mut SqliteConnection,
     ids: &[ItemId],
-    options: &'a ItemLoadOptions,
+    options: &ItemLoadOptions,
 ) -> ServiceResponse<Vec<Item>> {
     if ids.is_empty() {
         Ok(Vec::new())
@@ -48,9 +42,7 @@ pub(crate) async fn get_many<'a>(
 
         builder.push(")");
 
-        util::acquire(conn)
-            .await?
-            .fetch_all(builder.build())
+        conn.fetch_all(builder.build())
             .await
             .to_service_response()?
             .into_iter()
@@ -59,15 +51,13 @@ pub(crate) async fn get_many<'a>(
     }
 }
 
-pub(crate) async fn get_ids<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    builder: &mut QueryBuilder<'a, Sqlite>,
+pub(crate) async fn get_ids(
+    conn: &mut SqliteConnection,
+    builder: &mut QueryBuilder<'_, Sqlite>,
 ) -> ServiceResponse<Vec<ItemId>> {
     let query = builder.build();
 
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
+    conn.fetch_all(query)
         .await
         .to_service_response()?
         .into_iter()
@@ -78,13 +68,8 @@ pub(crate) async fn get_ids<'a>(
         .collect()
 }
 
-pub(crate) async fn insert<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    item: &Item,
-) -> ServiceResponse<()> {
+pub(crate) async fn insert(conn: &mut SqliteConnection, item: &Item) -> ServiceResponse<()> {
     let current_time = OffsetDateTime::now_utc();
-
-    let mut conn = util::acquire(conn).await?;
 
     let query = query("insert into item values(?, ?, ?, ?, ?, ?)")
         .bind(item.id.as_str())
@@ -99,10 +84,7 @@ pub(crate) async fn insert<'a>(
     Ok(())
 }
 
-pub(crate) async fn update<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
-    item: &Item,
-) -> ServiceResponse<()> {
+pub(crate) async fn update(conn: &mut SqliteConnection, item: &Item) -> ServiceResponse<()> {
     let current_time = OffsetDateTime::now_utc();
 
     let mut builder = QueryBuilder::<Sqlite>::new("update item set update_time = ");
@@ -122,11 +104,7 @@ pub(crate) async fn update<'a>(
 
     builder.push(" where id = ").push_bind(item.id.as_str());
 
-    util::acquire(conn)
-        .await?
-        .execute(builder.build())
-        .await
-        .to_service_response()?;
+    conn.execute(builder.build()).await.to_service_response()?;
 
     Ok(())
 }
@@ -135,11 +113,7 @@ pub(crate) async fn delete(conn: &mut SqliteConnection, id: &ItemId) -> ServiceR
     let sql = "delete from item where id = ?";
     let query = query(sql).bind(id.as_str());
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }

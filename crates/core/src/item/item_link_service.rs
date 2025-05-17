@@ -1,17 +1,17 @@
 use crate::{RequestContext, ServiceResponse};
 
 pub trait ItemLinkService {
-    async fn create_link(
+    fn create_link(
         &self,
         context: &RequestContext,
         parent: &str,
         child: &str,
-    ) -> ServiceResponse<()>;
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
-    async fn delete_link(
+    fn delete_link(
         &self,
         context: &RequestContext,
         parent: &str,
         child: &str,
-    ) -> ServiceResponse<()>;
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 }

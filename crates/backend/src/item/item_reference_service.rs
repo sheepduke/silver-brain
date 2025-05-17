@@ -3,13 +3,16 @@ use std::str::FromStr;
 use silver_brain_core::*;
 use time::OffsetDateTime;
 
-use crate::{DatabaseConnector, repo};
+use crate::{
+    DatabaseConnector,
+    repo::{self, ToServiceResponse},
+};
 
 use super::SqlService;
 
 impl<C> ItemReferenceService for SqlService<C>
 where
-    C: DatabaseConnector,
+    C: DatabaseConnector + Send + Sync,
 {
     async fn get_source_references(
         &self,
@@ -18,11 +21,9 @@ where
     ) -> ServiceResponse<Vec<ItemReference>> {
         let source_id = ItemId::from_str(source)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item_reference::get_source(tx, &source_id).await
-            })
-            .await
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item_reference::get_source(&mut conn, &source_id).await
     }
 
     async fn get_target_references(
@@ -32,11 +33,9 @@ where
     ) -> ServiceResponse<Vec<ItemReference>> {
         let target_id = ItemId::from_str(target)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item_reference::get_target(tx, &target_id).await
-            })
-            .await
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item_reference::get_target(&mut conn, &target_id).await
     }
 
     async fn create_reference(
@@ -58,11 +57,9 @@ where
             .update_time(current_time)
             .build();
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item_reference::insert(tx, &reference).await
-            })
-            .await?;
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item_reference::insert(&mut conn, &reference).await?;
 
         Ok(reference.id)
     }
@@ -75,34 +72,31 @@ where
         let reference_id = ItemReferenceId::from_str(&request.id)?;
         let current_time = OffsetDateTime::now_utc();
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                let reference = repo::item_reference::get(&mut *tx, &reference_id).await?;
+        let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
 
-                match reference {
-                    Some(mut reference) => {
-                        if let Some(annotation) = request.annotation {
-                            reference.annotation = annotation;
-                        }
+        let reference = repo::item_reference::get(&mut conn, &reference_id).await?;
 
-                        reference.update_time = current_time;
-
-                        repo::item_reference::update(&mut *tx, &reference).await
-                    }
-                    None => Err(ServiceError::InvalidId("Not found".to_string())),
+        match reference {
+            Some(mut reference) => {
+                if let Some(annotation) = request.annotation {
+                    reference.annotation = annotation;
                 }
-            })
-            .await
+
+                reference.update_time = current_time;
+
+                repo::item_reference::update(&mut conn, &reference).await?;
+                conn.commit().await.to_service_response()
+            }
+            None => Err(ServiceError::InvalidArgument("Not found".to_string())),
+        }
     }
 
     async fn delete_reference(&self, context: &RequestContext, id: &str) -> ServiceResponse<()> {
         let reference_id = ItemReferenceId::from_str(id)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                repo::item_reference::delete(tx, &reference_id).await
-            })
-            .await
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+
+        repo::item_reference::delete(&mut conn, &reference_id).await
     }
 }
 
@@ -110,8 +104,8 @@ where
 mod tests {
     use anyhow::Result;
     use silver_brain_core::{
-        CreateItemReferenceRequest, ItemLoadOptions, ItemReferenceService, ItemService,
-        SearchService, UpdateItemReferenceRequest,
+        CreateItemReferenceRequest, ItemLoadOptions, ItemReferenceService, ItemSearchService,
+        UpdateItemReferenceRequest,
     };
 
     use crate::item::tests::setup;

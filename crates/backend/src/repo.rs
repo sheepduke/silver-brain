@@ -6,4 +6,5 @@ pub(crate) mod item_link;
 pub(crate) mod item_property;
 pub(crate) mod item_reference;
 
-pub(crate) mod util;
+mod util;
+pub(crate) use util::ToServiceResponse;

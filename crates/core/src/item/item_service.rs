@@ -5,39 +5,43 @@ use crate::{RequestContext, ServiceResponse};
 use super::{Item, ItemId};
 
 pub trait ItemService {
-    async fn get_item(
+    fn get_item(
         &self,
         context: &RequestContext,
         id: &str,
         options: &ItemLoadOptions,
-    ) -> ServiceResponse<Option<Item>>;
+    ) -> impl Future<Output = ServiceResponse<Option<Item>>> + Send;
 
-    async fn create_item(
+    fn create_item(
         &self,
         context: &RequestContext,
         request: CreateItemRequest,
-    ) -> ServiceResponse<ItemId>;
+    ) -> impl Future<Output = ServiceResponse<ItemId>> + Send;
 
-    async fn update_item(
+    fn update_item(
         &self,
         context: &RequestContext,
         request: UpdateItemRequest,
-    ) -> ServiceResponse<()>;
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
-    async fn delete_item(&self, context: &RequestContext, id: &str) -> ServiceResponse<()>;
+    fn delete_item(
+        &self,
+        context: &RequestContext,
+        id: &str,
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
-    async fn upsert_item_property(
+    fn upsert_item_property(
         &self,
         context: &RequestContext,
         request: UpsertItemPropertyRequest,
-    ) -> ServiceResponse<()>;
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
-    async fn delete_item_property(
+    fn delete_item_property(
         &self,
         context: &RequestContext,
         item_id: &str,
         key: &str,
-    ) -> ServiceResponse<()>;
+    ) -> impl Future<Output = ServiceResponse<()>> + Send;
 }
 
 #[derive(Debug, TypedBuilder)]

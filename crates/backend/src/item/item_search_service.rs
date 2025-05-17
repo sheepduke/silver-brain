@@ -12,9 +12,9 @@ use super::SqlService;
 //  Trait Impl
 // ============================================================
 
-impl<C> SearchService for SqlService<C>
+impl<C> ItemSearchService for SqlService<C>
 where
-    C: DatabaseConnector,
+    C: DatabaseConnector + Send + Sync,
 {
     async fn search_items(
         &self,
@@ -24,15 +24,13 @@ where
     ) -> ServiceResponse<Vec<Item>> {
         let query = search::parse(search)?;
 
-        self.connector
-            .with_transaction(&context.repo_name, async |tx| {
-                let mut builder = QueryBuilder::new("");
-                build_query(&mut builder, query)?;
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
 
-                let ids = repo::item::get_ids(&mut *tx, &mut builder).await?;
-                repo::item::get_many(&mut *tx, &ids, options).await
-            })
-            .await
+        let mut builder = QueryBuilder::new("");
+        build_query(&mut builder, query)?;
+
+        let ids = repo::item::get_ids(&mut conn, &mut builder).await?;
+        repo::item::get_many(&mut conn, &ids, options).await
     }
 }
 
@@ -133,6 +131,7 @@ fn build_property_query(
 //  Filter
 // ============================================================
 
+#[expect(unused)]
 fn build_filter_query(
     builder: &mut QueryBuilder<Sqlite>,
     query: FilterQuery,

@@ -1,11 +1,11 @@
 use silver_brain_core::*;
-use sqlx::{Acquire, Executor, Row, Sqlite, query, sqlite::SqliteRow};
+use sqlx::{Executor, Row, SqliteConnection, query, sqlite::SqliteRow};
 use time::OffsetDateTime;
 
-use super::util::{self, ToServiceResponse};
+use super::util::ToServiceResponse;
 
-pub(crate) async fn exists<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn exists(
+    conn: &mut SqliteConnection,
     item_id: &ItemId,
     key: &str,
 ) -> ServiceResponse<bool> {
@@ -13,26 +13,19 @@ pub(crate) async fn exists<'a>(
 
     let query = query(sql).bind(item_id.as_str()).bind(key);
 
-    let count: i32 = util::acquire(conn)
-        .await?
-        .fetch_one(query)
-        .await
-        .to_service_response()?
-        .get(0);
+    let count: i32 = conn.fetch_one(query).await.to_service_response()?.get(0);
 
     Ok(count > 0)
 }
 
-pub(crate) async fn get_all<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn get_all(
+    conn: &mut SqliteConnection,
     item_id: &ItemId,
 ) -> ServiceResponse<Vec<ItemProperty>> {
     let sql = "select * from item_property where item_id = ?";
     let query = query(sql).bind(item_id.as_str());
 
-    util::acquire(conn)
-        .await?
-        .fetch_all(query)
+    conn.fetch_all(query)
         .await
         .to_service_response()?
         .into_iter()
@@ -40,8 +33,8 @@ pub(crate) async fn get_all<'a>(
         .collect()
 }
 
-pub(crate) async fn insert<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn insert(
+    conn: &mut SqliteConnection,
     item_id: &ItemId,
     property: &ItemProperty,
 ) -> ServiceResponse<()> {
@@ -54,17 +47,13 @@ pub(crate) async fn insert<'a>(
         .bind(time)
         .bind(time);
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
 
-pub(crate) async fn update<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn update(
+    conn: &mut SqliteConnection,
     item_id: &ItemId,
     ItemProperty { key, value }: &ItemProperty,
 ) -> ServiceResponse<()> {
@@ -76,28 +65,20 @@ pub(crate) async fn update<'a>(
         .bind(item_id.as_str())
         .bind(key);
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
 
-pub(crate) async fn delete<'a>(
-    conn: impl Acquire<'a, Database = Sqlite>,
+pub(crate) async fn delete(
+    conn: &mut SqliteConnection,
     item_id: &ItemId,
     key: &str,
 ) -> ServiceResponse<()> {
     let sql = "delete from item_property where item_id = ? and key = ?";
     let query = query(sql).bind(item_id.as_str()).bind(key);
 
-    util::acquire(conn)
-        .await?
-        .execute(query)
-        .await
-        .to_service_response()?;
+    conn.execute(query).await.to_service_response()?;
 
     Ok(())
 }
