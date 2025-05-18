@@ -47,8 +47,10 @@ pub(crate) struct ErrorResponse {
 }
 
 impl ErrorResponse {
-    pub(crate) fn new(message: String) -> Self {
-        Self { message }
+    pub(crate) fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+        }
     }
 }
 

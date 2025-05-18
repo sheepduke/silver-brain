@@ -119,11 +119,11 @@ pub(crate) async fn get_items(
 
         // Invalid.
         (Some(_), Some(_)) => Err(HttpError::BadRequest(ErrorResponse::new(
-            "Both `ids` and `search` are specified".to_string(),
+            "Both `ids` and `search` are specified",
         ))),
 
         (None, None) => Err(HttpError::BadRequest(ErrorResponse::new(
-            "Neither `ids` or `search` is specified".to_string(),
+            "Neither `ids` or `search` is specified",
         ))),
     }
 }
