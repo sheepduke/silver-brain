@@ -5,6 +5,7 @@ use typed_builder::TypedBuilder;
 use super::{CoreItem, ItemId, ItemProperty, ItemReference};
 
 #[derive(Clone, Debug, TypedBuilder, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Item {
     pub id: ItemId,
 

@@ -14,13 +14,18 @@ pub async fn start_server(_config: HttpServerConfig) {
 
     let state = Arc::new(AppState::new(service));
 
-    let apis = Router::new()
+    let item_route = Router::new()
         .route("/items/{id}", get(route::get_item))
         .route("/items", get(route::get_items))
         .with_state(state.clone());
 
+    let reference_route = Router::new()
+        .route("/references", get(route::get_references))
+        .with_state(state.clone());
+
     let routes = Router::new()
-        .nest("/api/v2", apis)
+        .nest("/api/v2", item_route)
+        .nest("/api/v2", reference_route)
         .with_state(state.clone());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")

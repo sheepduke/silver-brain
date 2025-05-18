@@ -12,10 +12,6 @@ use crate::{app_state::AppState, route::util::HttpError};
 
 use super::util::{self, ErrorResponse, HttpResponse, ToRequestContext};
 
-pub(crate) async fn hello() -> &'static str {
-    "Hello, world"
-}
-
 // ============================================================
 //  Get Item
 // ============================================================
