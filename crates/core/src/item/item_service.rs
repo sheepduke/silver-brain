@@ -12,6 +12,13 @@ pub trait ItemService {
         options: &ItemLoadOptions,
     ) -> impl Future<Output = ServiceResponse<Option<Item>>> + Send;
 
+    fn get_items(
+        &self,
+        context: &RequestContext,
+        ids: &[&str],
+        options: &ItemLoadOptions,
+    ) -> impl Future<Output = ServiceResponse<Vec<Item>>> + Send;
+
     fn create_item(
         &self,
         context: &RequestContext,

@@ -47,7 +47,7 @@ pub(crate) struct ErrorResponse {
 }
 
 impl ErrorResponse {
-    fn new(message: String) -> Self {
+    pub(crate) fn new(message: String) -> Self {
         Self { message }
     }
 }
@@ -80,4 +80,16 @@ impl IntoResponse for HttpError {
             _ => todo!(),
         }
     }
+}
+
+// ============================================================
+//  Functions
+// ============================================================
+
+pub(crate) fn split_comma(s: &str) -> Vec<String> {
+    s.split(",")
+        .map(|it| it.trim())
+        .filter(|it| !it.is_empty())
+        .map(|it| it.to_owned())
+        .collect()
 }

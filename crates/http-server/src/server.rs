@@ -16,7 +16,7 @@ pub async fn start_server(_config: HttpServerConfig) {
 
     let apis = Router::new()
         .route("/items/{id}", get(route::get_item))
-        .route("/items", get(route::hello))
+        .route("/items", get(route::get_items))
         .with_state(state.clone());
 
     let routes = Router::new()

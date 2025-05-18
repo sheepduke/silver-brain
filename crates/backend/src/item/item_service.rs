@@ -18,9 +18,7 @@ where
         options: &ItemLoadOptions,
     ) -> ServiceResponse<Option<Item>> {
         let item_id = ItemId::from_str(id)?;
-
         let mut conn = self.connector.get_connection(&context.repo_name).await?;
-
         let item_opt = repo::item::get(&mut conn, &item_id, options).await?;
 
         if let Some(mut item) = item_opt {
@@ -40,6 +38,23 @@ where
         } else {
             Ok(None)
         }
+    }
+
+    async fn get_items(
+        &self,
+        context: &RequestContext,
+        ids: &[&str],
+        options: &ItemLoadOptions,
+    ) -> ServiceResponse<Vec<Item>> {
+        let item_ids: Vec<ItemId> = ids
+            .iter()
+            .map(|it| ItemId::from_str(it))
+            .collect::<Result<Vec<ItemId>, _>>()?;
+
+        let mut conn = self.connector.get_connection(&context.repo_name).await?;
+        let items = repo::item::get_many(&mut conn, &item_ids, options).await?;
+
+        Ok(items)
     }
 
     async fn create_item(
