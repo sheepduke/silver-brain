@@ -15,8 +15,6 @@ pub(crate) async fn exists(
 
     let count: i32 = conn.fetch_one(query).await.to_service_response()?.get(0);
 
-    println!("Count = {}", count);
-
     Ok(count > 0)
 }
 

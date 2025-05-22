@@ -62,8 +62,6 @@ pub(crate) async fn get_ids(
 ) -> ServiceResponse<Vec<ItemId>> {
     let query = builder.build();
 
-    println!("SQL: \n{}", query.sql());
-
     conn.fetch_all(query)
         .await
         .to_service_response()?
