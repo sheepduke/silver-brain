@@ -5,14 +5,23 @@ use axum::{
     routing::{delete, get, patch, post, put},
 };
 use silver_brain_backend::{SqlService, SqliteConnector};
+use typed_builder::TypedBuilder;
 
 use super::{app_state::AppState, route};
 
-pub struct HttpServerConfig {}
+#[derive(TypedBuilder)]
+pub struct HttpServerConfig {
+    #[builder(default = "localhost".to_string(), setter(into))]
+    host: String,
 
-pub async fn start_server(_config: HttpServerConfig) {
-    let root_path = PathBuf::from("/home/sheep/temp/test");
-    let connector = Arc::new(SqliteConnector::new(root_path));
+    #[builder(default = 8080)]
+    port: u32,
+
+    data_root: PathBuf,
+}
+
+pub async fn start_server(config: HttpServerConfig) {
+    let connector = Arc::new(SqliteConnector::new(config.data_root));
     let service = SqlService::new(connector);
 
     let state = Arc::new(AppState::new(service));
@@ -46,7 +55,7 @@ pub async fn start_server(_config: HttpServerConfig) {
         .nest("/api/v2/references", reference_route)
         .with_state(state.clone());
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
+    let listener = tokio::net::TcpListener::bind(format!("{}:{}", config.host, config.port))
         .await
         .unwrap();
 

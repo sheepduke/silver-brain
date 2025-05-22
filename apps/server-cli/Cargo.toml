@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+dirs = { workspace = true }
+tokio = { workspace = true, features = [ "full" ] }
+
+silver-brain-server = { path = "../../crates/server" }
+
