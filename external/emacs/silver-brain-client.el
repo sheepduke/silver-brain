@@ -89,14 +89,6 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;                             API                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(silver-brain--client-send-request "items/i_2sfigcb5W2P8d953i4kCdRMBbBy?select=content-type,content"
-                       :method :get)
-
-(silver-brain--client-send-request "items"
-                       :method :post
-                       :data '(("name" . "asdf")
-                               ("contentType" . "plain/text")))
-
 (defun silver-brain-client-create-item (name content-type)
   "Create an item with given NAME and CONTENT-TYPE.
 Return the ID of newly created item."
