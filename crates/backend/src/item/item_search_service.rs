@@ -58,7 +58,7 @@ fn build_and_query(
     queries: Vec<SearchQuery>,
 ) -> ServiceResponse<()> {
     if let Some((first, rest)) = queries.split_first() {
-        builder.push("(");
+        builder.push("select id from (");
         build_query(&mut (*builder), first.to_owned())?;
 
         for query in rest {
@@ -77,7 +77,7 @@ fn build_or_query(
     queries: Vec<SearchQuery>,
 ) -> ServiceResponse<()> {
     if let Some((first, rest)) = queries.split_first() {
-        builder.push("(");
+        builder.push("select id from (");
         build_query(&mut (*builder), first.to_owned())?;
 
         for query in rest {
@@ -245,6 +245,51 @@ mod tests {
         assert_eq!(search("has~T*").await?, vec!["Emacs", "Firefox", "Vim"]);
         assert_eq!(search("has: xx").await?, Vec::<String>::new());
         assert_eq!(search("!has: TYPE").await?, vec!["Software"]);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn search_and() -> Result<()> {
+        assert_eq!(search("em ma cs").await?, vec!["Emacs"]);
+        assert_eq!(search("(em ma) cs").await?, vec!["Emacs"]);
+        assert_eq!(search("em (ma cs)").await?, vec!["Emacs"]);
+        assert_eq!(search("(em) ma cs").await?, vec!["Emacs"]);
+        assert_eq!(search("em (ma) cs").await?, vec!["Emacs"]);
+        assert_eq!(search("em ma (cs)").await?, vec!["Emacs"]);
+        assert_eq!(search("(em ma cs)").await?, vec!["Emacs"]);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn search_or() -> Result<()> {
+        assert_eq!(search("em || cs").await?, vec!["Emacs"]);
+        assert_eq!(search("em || vi").await?, vec!["Emacs", "Vim"]);
+        assert_eq!(
+            search("em || vi || sof").await?,
+            vec!["Emacs", "Software", "Vim"]
+        );
+
+        assert_eq!(
+            search("(em || vi) || sof").await?,
+            vec!["Emacs", "Software", "Vim"]
+        );
+
+        assert_eq!(
+            search("em || (vi || sof)").await?,
+            vec!["Emacs", "Software", "Vim"]
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn search_logical() -> Result<()> {
+        assert_eq!(search("ft (sof || fox)").await?, vec!["Software"]);
+        assert_eq!(search("m (emacs || vim)").await?, vec!["Emacs", "Vim"]);
+        assert_eq!(search("!em (emacs || vim)").await?, vec!["Vim"]);
+        assert_eq!(search("em !(emacs || vim)").await?, Vec::<&str>::new());
 
         Ok(())
     }
