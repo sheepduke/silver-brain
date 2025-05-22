@@ -1,6 +1,6 @@
 use silver_brain_backend::{SqlService, SqliteConnector};
 
-pub struct AppState {
+pub(crate) struct AppState {
     pub service: SqlService<SqliteConnector>,
 }
 

@@ -6,7 +6,7 @@ use axum::{
 };
 use silver_brain_backend::{SqlService, SqliteConnector};
 
-use crate::{app_state::AppState, route};
+use super::{app_state::AppState, route};
 
 pub struct HttpServerConfig {}
 
