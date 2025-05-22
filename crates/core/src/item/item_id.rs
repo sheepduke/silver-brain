@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use derive_more::{AsRef, Deref, Display};
+use derive_more::{AsRef, Deref, Display, Into};
 use serde::{Deserialize, Serialize};
 use svix_ksuid::{Ksuid, KsuidLike};
 
@@ -14,6 +14,7 @@ use crate::{ServiceError, util};
     PartialOrd,
     Ord,
     Hash,
+    Into,
     AsRef,
     Deref,
     Display,

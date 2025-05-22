@@ -1,6 +1,9 @@
 use std::{path::PathBuf, sync::Arc};
 
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    routing::{delete, get, patch, post},
+};
 use silver_brain_backend::{SqlService, SqliteConnector};
 
 use crate::{app_state::AppState, route};
@@ -15,8 +18,11 @@ pub async fn start_server(_config: HttpServerConfig) {
     let state = Arc::new(AppState::new(service));
 
     let item_route = Router::new()
-        .route("/items/{id}", get(route::get_item))
         .route("/items", get(route::get_items))
+        .route("/items", post(route::create_item))
+        .route("/items/{id}", get(route::get_item))
+        .route("/items/{id}", patch(route::update_item))
+        .route("/items/{id}", delete(route::delete_item))
         .with_state(state.clone());
 
     let reference_route = Router::new()

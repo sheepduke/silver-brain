@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
 use crate::{RequestContext, ServiceResponse};
@@ -28,6 +29,7 @@ pub trait ItemService {
     fn update_item(
         &self,
         context: &RequestContext,
+        id: &str,
         request: UpdateItemRequest,
     ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
@@ -51,7 +53,7 @@ pub trait ItemService {
     ) -> impl Future<Output = ServiceResponse<()>> + Send;
 }
 
-#[derive(Debug, TypedBuilder)]
+#[derive(Debug, TypedBuilder, Deserialize)]
 pub struct CreateItemRequest {
     #[builder(setter(into))]
     pub name: String,
@@ -63,11 +65,8 @@ pub struct CreateItemRequest {
     pub content: Option<String>,
 }
 
-#[derive(Debug, TypedBuilder)]
+#[derive(Debug, TypedBuilder, Deserialize)]
 pub struct UpdateItemRequest {
-    #[builder(setter(into))]
-    pub id: String,
-
     #[builder(default, setter(into, strip_option))]
     pub name: Option<String>,
 

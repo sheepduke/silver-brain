@@ -83,9 +83,10 @@ where
     async fn update_item(
         &self,
         context: &RequestContext,
+        id: &str,
         request: UpdateItemRequest,
     ) -> ServiceResponse<()> {
-        let item_id = ItemId::from_str(&request.id)?;
+        let item_id = ItemId::from_str(&id)?;
 
         let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
 
@@ -93,15 +94,15 @@ where
 
         match item_opt {
             Some(mut item) => {
-                if let Some(name) = request.name.clone() {
+                if let Some(name) = request.name {
                     item.name = name;
                 }
 
-                if let Some(content_type) = request.content_type.clone() {
+                if let Some(content_type) = request.content_type {
                     item.content_type = Some(content_type);
                 }
 
-                if let Some(content) = request.content.clone() {
+                if let Some(content) = request.content {
                     item.content = Some(content);
                 }
 

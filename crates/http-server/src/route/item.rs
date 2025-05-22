@@ -8,7 +8,10 @@ use axum::{
     http::HeaderMap,
 };
 
-use crate::{app_state::AppState, route::util::HttpError};
+use crate::{
+    app_state::AppState,
+    route::util::{HttpError, IdOnly},
+};
 
 use super::util::{self, ErrorResponse, HttpResponse, ToRequestContext};
 
@@ -36,6 +39,40 @@ pub(crate) async fn get_item(
         Some(item) => Ok(Json(item)),
         None => Err(HttpError::NotFound),
     }
+}
+
+pub(crate) async fn create_item(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(request): Json<CreateItemRequest>,
+) -> HttpResponse<Json<IdOnly>> {
+    let context = headers.to_request_context().await?;
+    let item_id = state.service.create_item(&context, request).await?;
+
+    Ok(Json(IdOnly::from(item_id.to_string())))
+}
+
+pub(crate) async fn update_item(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(request): Json<UpdateItemRequest>,
+) -> HttpResponse<()> {
+    let context = headers.to_request_context().await?;
+    state.service.update_item(&context, &id, request).await?;
+
+    Ok(())
+}
+
+pub(crate) async fn delete_item(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> HttpResponse<()> {
+    let context = headers.to_request_context().await?;
+    state.service.delete_item(&context, &id).await?;
+
+    Ok(())
 }
 
 fn parse_item_load_options(input: &Option<&str>) -> ServiceResponse<ItemLoadOptions> {

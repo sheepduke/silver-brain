@@ -25,7 +25,8 @@
 
 (cl-defun silver-brain--client-send-request (uri &key (method :get) data)
   "Send HTTP request to URI with Database header set. Return the response buffer."
-  (let ((url-request-extra-headers `(("X-SB-Store" . ,silver-brain-store-name)))
+  (let ((url-request-extra-headers `(("X-SB-Repo" . ,silver-brain-store-name)
+                                     ("Content-Type" . "application/json")))
         (url-request-method (cl-case method
                               (:get "GET")
                               (:post "POST")
@@ -33,6 +34,7 @@
                               (:patch "PATCH")
                               (:delete "DELETE")))
         (url-request-data (and data (encode-coding-string (json-encode data) 'utf-8))))
+
     (let ((buffer (url-retrieve-synchronously (format "http://localhost:%d/api/v2/%s"
                                                       silver-brain-server-port
                                                       uri))))
@@ -87,6 +89,14 @@ OBJECT-TYPE and KEY-TYPE is set to JSON-KEY-TYPE and JSON-ARRAY-TYPE."
 ;;;;                             API                              ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(silver-brain--client-send-request "items/i_2sfigcb5W2P8d953i4kCdRMBbBy?select=content-type,content"
+                       :method :get)
+
+(silver-brain--client-send-request "items"
+                       :method :post
+                       :data '(("name" . "asdf")
+                               ("contentType" . "plain/text")))
+
 (defun silver-brain-client-create-item (name content-type)
   "Create an item with given NAME and CONTENT-TYPE.
 Return the ID of newly created item."
@@ -106,7 +116,7 @@ Return the ID of newly created item."
                         (url-hexify-string search-string))))
 
 (cl-defun silver-brain-client-update-item (id &key name content-type content)
-  (let ((data '()))
+  (let ((data '(("id" . id))))
     (when name
       (push (cons "name" name) data))
     (when content-type

@@ -6,9 +6,19 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use serde::Serialize;
+use derive_more::From;
+use serde::{Deserialize, Serialize};
 
 use silver_brain_core::*;
+
+// ============================================================
+//  IdOnly
+// ============================================================
+
+#[derive(Serialize, From)]
+pub(crate) struct IdOnly {
+    pub id: String,
+}
 
 // ============================================================
 //  ToRequestContext
