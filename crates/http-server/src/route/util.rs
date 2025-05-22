@@ -6,16 +6,16 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use derive_more::From;
-use serde::{Deserialize, Serialize};
+use derive_more::{From, FromStr};
 
+use serde::Serialize;
 use silver_brain_core::*;
 
 // ============================================================
 //  IdOnly
 // ============================================================
 
-#[derive(Serialize, From)]
+#[derive(From, FromStr, Serialize)]
 pub(crate) struct IdOnly {
     pub id: String,
 }
@@ -77,6 +77,7 @@ impl From<ServiceError> for HttpError {
         match value {
             ServiceError::InvalidArgument(message) => Self::BadRequest(ErrorResponse::new(message)),
             ServiceError::Conflict(message) => Self::Conflict(ErrorResponse::new(message)),
+            ServiceError::DataCorrupted(message) => Self::Internal(ErrorResponse::new(message)),
             ServiceError::Internal(error) => Self::Internal(ErrorResponse::new(error.to_string())),
         }
     }
@@ -92,8 +93,6 @@ impl IntoResponse for HttpError {
             Self::Internal(error) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(error)).into_response()
             }
-
-            _ => todo!(),
         }
     }
 }

@@ -86,7 +86,7 @@ where
         id: &str,
         request: UpdateItemRequest,
     ) -> ServiceResponse<()> {
-        let item_id = ItemId::from_str(&id)?;
+        let item_id = ItemId::from_str(id)?;
 
         let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
 

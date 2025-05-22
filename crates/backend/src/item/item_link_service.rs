@@ -24,7 +24,7 @@ where
 
         let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
 
-        if (parent == child) {
+        if parent == child {
             Err(ServiceError::Conflict(
                 "Cannot create a loop link".to_string(),
             ))
@@ -59,7 +59,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use anyhow::{Context, Result};
+    use anyhow::Result;
     use silver_brain_core::*;
     use std::{str::FromStr, sync::Arc};
 

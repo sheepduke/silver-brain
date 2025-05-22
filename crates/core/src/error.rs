@@ -8,6 +8,9 @@ pub enum ServiceError {
     #[error("Conflict: {0}")]
     Conflict(String),
 
+    #[error("Persisted data is corrupted: {0}")]
+    DataCorrupted(String),
+
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

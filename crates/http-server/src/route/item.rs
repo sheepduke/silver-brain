@@ -62,7 +62,7 @@ pub(crate) async fn get_items(
         (None, Some(search)) => {
             let items = state
                 .service
-                .search_items(&context, &search, &load_options)
+                .search_items(&context, search, &load_options)
                 .await?;
 
             Ok(Json(items))

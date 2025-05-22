@@ -9,6 +9,7 @@ pub(crate) mod tests {
     use crate::{InMemorySqliteConnector, SqlService};
 
     #[derive(TypedBuilder)]
+    #[expect(dead_code)]
     pub(crate) struct ItemIds {
         #[builder(setter(into))]
         pub software: String,

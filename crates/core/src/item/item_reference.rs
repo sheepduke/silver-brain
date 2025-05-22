@@ -2,16 +2,16 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use typed_builder::TypedBuilder;
 
-use super::{ItemId, ItemReferenceId};
+use super::{CoreItem, ItemReferenceId};
 
 #[derive(Clone, Debug, PartialEq, Eq, TypedBuilder, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ItemReference {
     pub id: ItemReferenceId,
 
-    pub source: ItemId,
+    pub source: CoreItem,
 
-    pub target: ItemId,
+    pub target: CoreItem,
 
     #[builder(setter(into))]
     pub annotation: String,

@@ -25,6 +25,7 @@ pub trait ItemReferenceService {
     fn update_reference(
         &self,
         context: &RequestContext,
+        id: &str,
         request: UpdateItemReferenceRequest,
     ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
@@ -51,9 +52,6 @@ pub struct CreateItemReferenceRequest {
 #[derive(Debug, TypedBuilder, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateItemReferenceRequest {
-    #[builder(setter(into))]
-    pub id: String,
-
     #[builder(setter(into))]
     pub annotation: Option<String>,
 }

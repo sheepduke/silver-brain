@@ -50,8 +50,8 @@ where
 
         let reference = ItemReference::builder()
             .id(reference_id)
-            .source(source_id)
-            .target(target_id)
+            .source(CoreItem::builder().id(source_id).name("").build())
+            .target(CoreItem::builder().id(target_id).name("").build())
             .annotation(request.annotation)
             .create_time(current_time)
             .update_time(current_time)
@@ -67,9 +67,10 @@ where
     async fn update_reference(
         &self,
         context: &RequestContext,
+        id: &str,
         request: UpdateItemReferenceRequest,
     ) -> ServiceResponse<()> {
-        let reference_id = ItemReferenceId::from_str(&request.id)?;
+        let reference_id = ItemReferenceId::from_str(id)?;
         let current_time = OffsetDateTime::now_utc();
 
         let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
@@ -104,8 +105,7 @@ where
 mod tests {
     use anyhow::Result;
     use silver_brain_core::{
-        CreateItemReferenceRequest, ItemLoadOptions, ItemReferenceService, ItemSearchService,
-        UpdateItemReferenceRequest,
+        CreateItemReferenceRequest, ItemReferenceService, UpdateItemReferenceRequest,
     };
 
     use crate::item::util::tests::setup;
@@ -113,7 +113,6 @@ mod tests {
     #[tokio::test]
     async fn crud() -> Result<()> {
         let (service, context, ids) = setup().await?;
-        let load_options = ItemLoadOptions::all();
 
         // Create reference and get it.
         let request = CreateItemReferenceRequest::builder()
@@ -130,8 +129,8 @@ mod tests {
 
         assert_eq!(reference.id, reference_id);
         assert_eq!(reference.annotation, "Is a");
-        assert_eq!(reference.source.as_str(), &ids.emacs);
-        assert_eq!(reference.target.as_str(), &ids.software);
+        assert_eq!(reference.source.id.as_str(), &ids.emacs);
+        assert_eq!(reference.target.id.as_str(), &ids.software);
 
         let references = service
             .get_target_references(&context, &ids.software)
@@ -141,16 +140,17 @@ mod tests {
 
         assert_eq!(reference.id, reference_id);
         assert_eq!(reference.annotation, "Is a");
-        assert_eq!(reference.source.as_str(), ids.emacs);
-        assert_eq!(reference.target.as_str(), ids.software);
+        assert_eq!(reference.source.id.as_str(), ids.emacs);
+        assert_eq!(reference.target.id.as_str(), ids.software);
 
         // Update reference and get it.
         let request = UpdateItemReferenceRequest::builder()
-            .id(reference_id.as_str())
             .annotation("New".to_string())
             .build();
 
-        service.update_reference(&context, request).await?;
+        service
+            .update_reference(&context, &reference_id, request)
+            .await?;
 
         let references = service.get_source_references(&context, &ids.emacs).await?;
 
@@ -158,8 +158,8 @@ mod tests {
 
         assert_eq!(reference.id, reference_id);
         assert_eq!(reference.annotation, "New");
-        assert_eq!(reference.source.as_str(), ids.emacs);
-        assert_eq!(reference.target.as_str(), ids.software);
+        assert_eq!(reference.source.id.as_str(), ids.emacs);
+        assert_eq!(reference.target.id.as_str(), ids.software);
 
         let references = service
             .get_target_references(&context, &ids.software)
@@ -169,8 +169,8 @@ mod tests {
 
         assert_eq!(reference.id, reference_id);
         assert_eq!(reference.annotation, "New");
-        assert_eq!(reference.source.as_str(), ids.emacs);
-        assert_eq!(reference.target.as_str(), ids.software);
+        assert_eq!(reference.source.id.as_str(), ids.emacs);
+        assert_eq!(reference.target.id.as_str(), ids.software);
 
         // Delete reference and get it.
         service

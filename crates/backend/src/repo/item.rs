@@ -1,7 +1,11 @@
+use std::str::FromStr;
+
 use crate::repo::util::ToServiceResponse;
 use silver_brain_core::*;
 
-use sqlx::{Executor, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow};
+use sqlx::{
+    Executor, FromRow, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow,
+};
 use time::OffsetDateTime;
 
 pub(crate) async fn get(
@@ -164,4 +168,19 @@ fn row_to_item(row: SqliteRow, options: &ItemLoadOptions) -> ServiceResponse<Ite
     }
 
     Ok(item)
+}
+
+#[derive(Debug, FromRow)]
+pub(crate) struct CoreItemRow {
+    pub id: String,
+    pub name: String,
+}
+
+impl From<CoreItemRow> for CoreItem {
+    fn from(value: CoreItemRow) -> Self {
+        Self::builder()
+            .id(ItemId::from_str(&value.id).unwrap())
+            .name(value.name)
+            .build()
+    }
 }
