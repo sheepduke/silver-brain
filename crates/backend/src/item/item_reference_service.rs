@@ -108,59 +108,41 @@ mod tests {
         UpdateItemReferenceRequest,
     };
 
-    use crate::item::tests::setup;
+    use crate::item::util::tests::setup;
 
     #[tokio::test]
     async fn crud() -> Result<()> {
-        let (service, context) = setup().await?;
+        let (service, context, ids) = setup().await?;
         let load_options = ItemLoadOptions::all();
-
-        let software_id = service
-            .search_items(&context, "software", &load_options)
-            .await?
-            .first()
-            .unwrap()
-            .id
-            .clone();
-
-        let emacs_id = service
-            .search_items(&context, "emacs", &load_options)
-            .await?
-            .first()
-            .unwrap()
-            .id
-            .clone();
 
         // Create reference and get it.
         let request = CreateItemReferenceRequest::builder()
-            .source(emacs_id.as_str())
-            .target(software_id.as_str())
+            .source(&ids.emacs)
+            .target(&ids.software)
             .annotation("Is a")
             .build();
 
         let reference_id = service.create_reference(&context, request).await?;
 
+        let references = service.get_source_references(&context, &ids.emacs).await?;
+
+        let reference = references.first().unwrap();
+
+        assert_eq!(reference.id, reference_id);
+        assert_eq!(reference.annotation, "Is a");
+        assert_eq!(reference.source.as_str(), &ids.emacs);
+        assert_eq!(reference.target.as_str(), &ids.software);
+
         let references = service
-            .get_source_references(&context, emacs_id.as_str())
+            .get_target_references(&context, &ids.software)
             .await?;
 
         let reference = references.first().unwrap();
 
         assert_eq!(reference.id, reference_id);
         assert_eq!(reference.annotation, "Is a");
-        assert_eq!(reference.source, emacs_id);
-        assert_eq!(reference.target, software_id);
-
-        let references = service
-            .get_target_references(&context, &software_id)
-            .await?;
-
-        let reference = references.first().unwrap();
-
-        assert_eq!(reference.id, reference_id);
-        assert_eq!(reference.annotation, "Is a");
-        assert_eq!(reference.source, emacs_id);
-        assert_eq!(reference.target, software_id);
+        assert_eq!(reference.source.as_str(), ids.emacs);
+        assert_eq!(reference.target.as_str(), ids.software);
 
         // Update reference and get it.
         let request = UpdateItemReferenceRequest::builder()
@@ -170,39 +152,37 @@ mod tests {
 
         service.update_reference(&context, request).await?;
 
+        let references = service.get_source_references(&context, &ids.emacs).await?;
+
+        let reference = references.first().unwrap();
+
+        assert_eq!(reference.id, reference_id);
+        assert_eq!(reference.annotation, "New");
+        assert_eq!(reference.source.as_str(), ids.emacs);
+        assert_eq!(reference.target.as_str(), ids.software);
+
         let references = service
-            .get_source_references(&context, emacs_id.as_str())
+            .get_target_references(&context, &ids.software)
             .await?;
 
         let reference = references.first().unwrap();
 
         assert_eq!(reference.id, reference_id);
         assert_eq!(reference.annotation, "New");
-        assert_eq!(reference.source, emacs_id);
-        assert_eq!(reference.target, software_id);
-
-        let references = service
-            .get_target_references(&context, &software_id)
-            .await?;
-
-        let reference = references.first().unwrap();
-
-        assert_eq!(reference.id, reference_id);
-        assert_eq!(reference.annotation, "New");
-        assert_eq!(reference.source, emacs_id);
-        assert_eq!(reference.target, software_id);
+        assert_eq!(reference.source.as_str(), ids.emacs);
+        assert_eq!(reference.target.as_str(), ids.software);
 
         // Delete reference and get it.
         service
             .delete_reference(&context, reference_id.as_str())
             .await?;
 
-        let references = service.get_source_references(&context, &emacs_id).await?;
+        let references = service.get_source_references(&context, &ids.emacs).await?;
 
         assert!(references.is_empty());
 
         let references = service
-            .get_target_references(&context, &software_id)
+            .get_target_references(&context, &ids.software)
             .await?;
 
         assert!(references.is_empty());

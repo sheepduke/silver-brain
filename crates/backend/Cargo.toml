@@ -11,3 +11,6 @@ time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 
 silver-brain-core = { path = "../core" }
+
+[dev-dependencies]
+typed-builder = { workspace = true }

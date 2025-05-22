@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
 use crate::*;
@@ -34,7 +35,8 @@ pub trait ItemReferenceService {
     ) -> impl Future<Output = ServiceResponse<()>> + Send;
 }
 
-#[derive(Debug, TypedBuilder)]
+#[derive(Debug, TypedBuilder, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateItemReferenceRequest {
     #[builder(setter(into))]
     pub source: String,
@@ -46,7 +48,8 @@ pub struct CreateItemReferenceRequest {
     pub annotation: String,
 }
 
-#[derive(Debug, TypedBuilder)]
+#[derive(Debug, TypedBuilder, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateItemReferenceRequest {
     #[builder(setter(into))]
     pub id: String,

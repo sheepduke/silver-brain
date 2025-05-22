@@ -42,6 +42,7 @@ pub trait ItemService {
     fn upsert_item_property(
         &self,
         context: &RequestContext,
+        item_id: &str,
         request: UpsertItemPropertyRequest,
     ) -> impl Future<Output = ServiceResponse<()>> + Send;
 
@@ -54,6 +55,7 @@ pub trait ItemService {
 }
 
 #[derive(Debug, TypedBuilder, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateItemRequest {
     #[builder(setter(into))]
     pub name: String,
@@ -66,6 +68,7 @@ pub struct CreateItemRequest {
 }
 
 #[derive(Debug, TypedBuilder, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateItemRequest {
     #[builder(default, setter(into, strip_option))]
     pub name: Option<String>,
@@ -77,11 +80,9 @@ pub struct UpdateItemRequest {
     pub content: Option<String>,
 }
 
-#[derive(Debug, TypedBuilder)]
+#[derive(Debug, TypedBuilder, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpsertItemPropertyRequest {
-    #[builder(setter(into))]
-    pub item_id: String,
-
     #[builder(setter(into))]
     pub key: String,
 

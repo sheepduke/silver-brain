@@ -24,10 +24,14 @@ where
 
         let mut conn = self.connector.begin_transaction(&context.repo_name).await?;
 
-        if repo::item_link::exists(&mut conn, &parent, &child).await? {
+        if (parent == child) {
+            Err(ServiceError::Conflict(
+                "Cannot create a loop link".to_string(),
+            ))
+        } else if repo::item_link::exists(&mut conn, &parent, &child).await? {
             Ok(())
         } else if repo::item_link::exists(&mut conn, &child, &parent).await? {
-            Err(ServiceError::InvalidArgument(format!(
+            Err(ServiceError::Conflict(format!(
                 "`{}` is already a parent of `{}`",
                 child.as_str(),
                 parent.as_str()
@@ -55,11 +59,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
+    use anyhow::{Context, Result};
     use silver_brain_core::*;
     use std::{str::FromStr, sync::Arc};
 
-    use crate::{InMemorySqliteConnector, SqlService};
+    use crate::{InMemorySqliteConnector, SqlService, item::util::tests::setup};
 
     #[tokio::test]
     async fn create_and_delete_link() -> Result<()> {
@@ -157,6 +161,17 @@ mod tests {
             .unwrap();
 
         assert_eq!(child.parents.unwrap().len(), 0);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn create_link_self_loop() -> Result<()> {
+        let (service, context, ids) = setup().await?;
+
+        let result = service.create_link(&context, &ids.emacs, &ids.emacs).await;
+
+        assert!(matches!(result, Err(ServiceError::Conflict(_))));
 
         Ok(())
     }

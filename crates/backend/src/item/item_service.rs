@@ -131,9 +131,10 @@ where
     async fn upsert_item_property(
         &self,
         context: &RequestContext,
+        item_id: &str,
         request: UpsertItemPropertyRequest,
     ) -> ServiceResponse<()> {
-        let item_id = request.item_id.parse()?;
+        let item_id = item_id.parse()?;
         let property = ItemProperty {
             key: request.key,
             value: request.value,
@@ -204,12 +205,11 @@ mod tests {
         let (service, context, item_id) = create_all().await?;
 
         let request = UpdateItemRequest::builder()
-            .id(item_id.as_str())
             .name("Test 2")
             .content("New content")
             .build();
 
-        service.update_item(&context, request).await?;
+        service.update_item(&context, &item_id, request).await?;
 
         let load_options = ItemLoadOptions::builder().load_content(true).build();
         let item = service
@@ -248,12 +248,13 @@ mod tests {
         let (service, context, item_id) = create_all().await?;
 
         let request = UpsertItemPropertyRequest::builder()
-            .item_id(item_id.to_string())
             .key("key")
             .value("value")
             .build();
 
-        service.upsert_item_property(&context, request).await?;
+        service
+            .upsert_item_property(&context, &item_id, request)
+            .await?;
 
         let properties = service
             .get_item(
@@ -280,12 +281,13 @@ mod tests {
         let (service, context, item_id) = create_all().await?;
 
         let request = UpsertItemPropertyRequest::builder()
-            .item_id(item_id.to_string())
             .key("key")
             .value("value")
             .build();
 
-        service.upsert_item_property(&context, request).await?;
+        service
+            .upsert_item_property(&context, &item_id, request)
+            .await?;
 
         service
             .delete_item_property(&context, item_id.as_str(), "key")

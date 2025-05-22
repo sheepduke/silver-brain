@@ -5,7 +5,7 @@ use std::sync::Arc;
 use axum::{
     Json, debug_handler,
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
 };
 
 use crate::{
@@ -16,7 +16,7 @@ use crate::{
 use super::util::{self, ErrorResponse, HttpResponse, ToRequestContext};
 
 // ============================================================
-//  Get Item
+//  Item
 // ============================================================
 
 #[derive(Deserialize)]
@@ -24,7 +24,6 @@ pub(crate) struct GetItemQuery {
     pub select: Option<String>,
 }
 
-#[debug_handler]
 pub(crate) async fn get_item(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -40,78 +39,6 @@ pub(crate) async fn get_item(
         None => Err(HttpError::NotFound),
     }
 }
-
-pub(crate) async fn create_item(
-    State(state): State<Arc<AppState>>,
-    headers: HeaderMap,
-    Json(request): Json<CreateItemRequest>,
-) -> HttpResponse<Json<IdOnly>> {
-    let context = headers.to_request_context().await?;
-    let item_id = state.service.create_item(&context, request).await?;
-
-    Ok(Json(IdOnly::from(item_id.to_string())))
-}
-
-pub(crate) async fn update_item(
-    State(state): State<Arc<AppState>>,
-    headers: HeaderMap,
-    Path(id): Path<String>,
-    Json(request): Json<UpdateItemRequest>,
-) -> HttpResponse<()> {
-    let context = headers.to_request_context().await?;
-    state.service.update_item(&context, &id, request).await?;
-
-    Ok(())
-}
-
-pub(crate) async fn delete_item(
-    State(state): State<Arc<AppState>>,
-    headers: HeaderMap,
-    Path(id): Path<String>,
-) -> HttpResponse<()> {
-    let context = headers.to_request_context().await?;
-    state.service.delete_item(&context, &id).await?;
-
-    Ok(())
-}
-
-fn parse_item_load_options(input: &Option<&str>) -> ServiceResponse<ItemLoadOptions> {
-    match input {
-        Some(select) => {
-            let props = util::split_comma(select);
-
-            let mut options = ItemLoadOptions::core();
-
-            for prop in props {
-                match prop.as_str() {
-                    "content_type" | "content-type" | "contentType" => {
-                        options.load_content_type = true
-                    }
-                    "content" => options.load_content = true,
-                    "create-time" | "create_time" | "createTime" => options.load_create_time = true,
-                    "update-time" | "update_time" | "updateTime" => options.load_update_time = true,
-                    "properties" => options.load_properties = true,
-                    "parents" => options.load_parents = true,
-                    "children" => options.load_children = true,
-                    "all" => options = ItemLoadOptions::all(),
-                    _ => {
-                        return Err(ServiceError::InvalidArgument(format!(
-                            "Invalid select property `{}`",
-                            prop
-                        )));
-                    }
-                }
-            }
-
-            Ok(options)
-        }
-        None => Ok(ItemLoadOptions::core()),
-    }
-}
-
-// ============================================================
-//  Get Items
-// ============================================================
 
 #[derive(Deserialize)]
 pub(crate) struct GetItemsQuery {
@@ -163,4 +90,160 @@ pub(crate) async fn get_items(
             "Neither `ids` or `search` is specified",
         ))),
     }
+}
+
+pub(crate) async fn create_item(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(request): Json<CreateItemRequest>,
+) -> HttpResponse<(StatusCode, Json<IdOnly>)> {
+    let context = headers.to_request_context().await?;
+    let item_id = state.service.create_item(&context, request).await?;
+    let id_only = IdOnly::from(item_id.to_string());
+
+    Ok((StatusCode::CREATED, Json(id_only)))
+}
+
+pub(crate) async fn update_item(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(request): Json<UpdateItemRequest>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+    state.service.update_item(&context, &id, request).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub(crate) async fn delete_item(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+    state.service.delete_item(&context, &id).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+fn parse_item_load_options(input: &Option<&str>) -> ServiceResponse<ItemLoadOptions> {
+    match input {
+        Some(select) => {
+            let props = util::split_comma(select);
+
+            let mut options = ItemLoadOptions::core();
+
+            for prop in props {
+                match prop.as_str() {
+                    "content_type" | "content-type" | "contentType" => {
+                        options.load_content_type = true
+                    }
+                    "content" => options.load_content = true,
+                    "create-time" | "create_time" | "createTime" => options.load_create_time = true,
+                    "update-time" | "update_time" | "updateTime" => options.load_update_time = true,
+                    "properties" => options.load_properties = true,
+                    "parents" => options.load_parents = true,
+                    "children" => options.load_children = true,
+                    "all" => options = ItemLoadOptions::all(),
+                    _ => {
+                        return Err(ServiceError::InvalidArgument(format!(
+                            "Invalid select property `{}`",
+                            prop
+                        )));
+                    }
+                }
+            }
+
+            Ok(options)
+        }
+        None => Ok(ItemLoadOptions::core()),
+    }
+}
+
+// ============================================================
+//  Item Property
+// ============================================================
+
+#[debug_handler]
+pub(crate) async fn upsert_item_property(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+    Json(request): Json<UpsertItemPropertyRequest>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+    state
+        .service
+        .upsert_item_property(&context, &id, request)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub(crate) async fn delete_item_property(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path((id, key)): Path<(String, String)>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+
+    state
+        .service
+        .delete_item_property(&context, &id, &key)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ============================================================
+//  Item Link
+// ============================================================
+
+pub(crate) async fn create_parent(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path((id, parent)): Path<(String, String)>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+
+    state.service.create_link(&context, &parent, &id).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub(crate) async fn create_child(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path((id, child)): Path<(String, String)>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+
+    state.service.create_link(&context, &id, &child).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub(crate) async fn delete_parent(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path((id, parent)): Path<(String, String)>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+
+    state.service.delete_link(&context, &parent, &id).await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub(crate) async fn delete_child(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Path((id, child)): Path<(String, String)>,
+) -> HttpResponse<StatusCode> {
+    let context = headers.to_request_context().await?;
+
+    state.service.delete_link(&context, &id, &child).await?;
+
+    Ok(StatusCode::NO_CONTENT)
 }

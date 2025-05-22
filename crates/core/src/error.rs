@@ -5,6 +5,9 @@ pub enum ServiceError {
     #[error("Invalid argument: {0}")]
     InvalidArgument(String),
 
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

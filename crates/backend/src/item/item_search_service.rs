@@ -237,7 +237,7 @@ mod tests {
     use anyhow::Result;
     use silver_brain_core::*;
 
-    use crate::item::tests::setup;
+    use crate::item::util::tests::setup;
 
     #[tokio::test]
     async fn search_has() -> Result<()> {
@@ -250,7 +250,7 @@ mod tests {
     }
 
     async fn search(search: &str) -> Result<Vec<String>> {
-        let (service, context) = setup().await?;
+        let (service, context, _) = setup().await?;
 
         let mut item_names: Vec<String> = service
             .search_items(&context, search, &ItemLoadOptions::core())

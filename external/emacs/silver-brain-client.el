@@ -137,7 +137,7 @@ Return the ID of newly created item."
   (silver-brain--client-delete (format "items/%s/properties/%s" id (url-hexify-string key))))
 
 (defun silver-brain-client-add-child (id child-id)
-  (silver-brain--client-post-no-response (format "items/%s/children/%s" id child-id)))
+  (silver-brain--client-put (format "items/%s/children/%s" id child-id) nil))
 
 (defun silver-brain-client-delete-child (id child-id)
   (silver-brain--client-delete (format "items/%s/children/%s" id child-id)))

@@ -76,6 +76,7 @@ impl From<ServiceError> for HttpError {
     fn from(value: ServiceError) -> Self {
         match value {
             ServiceError::InvalidArgument(message) => Self::BadRequest(ErrorResponse::new(message)),
+            ServiceError::Conflict(message) => Self::Conflict(ErrorResponse::new(message)),
             ServiceError::Internal(error) => Self::Internal(ErrorResponse::new(error.to_string())),
         }
     }
@@ -86,9 +87,12 @@ impl IntoResponse for HttpError {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND.into_response(),
             Self::BadRequest(error) => (StatusCode::BAD_REQUEST, Json(error)).into_response(),
+            Self::Conflict(error) => (StatusCode::CONFLICT, Json(error)).into_response(),
+
             Self::Internal(error) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(error)).into_response()
             }
+
             _ => todo!(),
         }
     }
