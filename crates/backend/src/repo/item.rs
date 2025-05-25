@@ -4,8 +4,7 @@ use crate::repo::util::ToServiceResponse;
 use silver_brain_core::*;
 
 use sqlx::{
-    Execute, Executor, FromRow, QueryBuilder, Row, Sqlite, SqliteConnection, query,
-    sqlite::SqliteRow,
+    Executor, FromRow, QueryBuilder, Row, Sqlite, SqliteConnection, query, sqlite::SqliteRow,
 };
 use time::OffsetDateTime;
 

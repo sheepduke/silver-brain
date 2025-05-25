@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { workspace = true, features = [ "backtrace" ]}
-derive_more = { workspace = true, features = [ "full" ] }
-nom = { workspace = true }
-svix-ksuid = { workspace = true }
-serde = { workspace = true, features = [ "serde_derive" ] }
-serde_json = { workspace = true }
-thiserror = { workspace = true }
-time = { workspace = true, features = ["parsing", "formatting", "serde"] }
-typed-builder = { workspace = true }
+anyhow.workspace = true
+derive_more.workspace = true
+nom.workspace = true
+svix-ksuid.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
+typed-builder.workspace = true

@@ -4,15 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = { workspace = true, features = ["macros"] }
-derive_more = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
-typed-builder = { workspace = true }
+axum.workspace = true
+derive_more.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+typed-builder.workspace = true
 
 silver-brain-core = { path = "../core" }
 silver-brain-backend = { path = "../backend" }
-
-[dev-dependencies]
-tokio = { workspace = true, features = ["full"] }
