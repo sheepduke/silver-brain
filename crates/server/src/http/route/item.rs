@@ -1,9 +1,10 @@
 use serde::Deserialize;
 use silver_brain_core::*;
 use std::sync::Arc;
+use tracing::instrument;
 
 use axum::{
-    Json, debug_handler,
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
 };
@@ -19,11 +20,12 @@ use super::util::{self, ErrorResponse, HttpResponse, ToRequestContext};
 //  Item
 // ============================================================
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct GetItemQuery {
     pub select: Option<String>,
 }
 
+#[instrument]
 pub(crate) async fn get_item(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -40,7 +42,7 @@ pub(crate) async fn get_item(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct GetItemsQuery {
     pub ids: Option<String>,
 
@@ -49,6 +51,7 @@ pub(crate) struct GetItemsQuery {
     pub select: Option<String>,
 }
 
+#[instrument]
 pub(crate) async fn get_items(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -92,6 +95,7 @@ pub(crate) async fn get_items(
     }
 }
 
+#[instrument]
 pub(crate) async fn create_item(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -104,6 +108,7 @@ pub(crate) async fn create_item(
     Ok((StatusCode::CREATED, Json(id_only)))
 }
 
+#[instrument]
 pub(crate) async fn update_item(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -116,6 +121,7 @@ pub(crate) async fn update_item(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 pub(crate) async fn delete_item(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -165,7 +171,7 @@ fn parse_item_load_options(input: &Option<&str>) -> ServiceResponse<ItemLoadOpti
 //  Item Property
 // ============================================================
 
-#[debug_handler]
+#[instrument]
 pub(crate) async fn upsert_item_property(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -181,6 +187,7 @@ pub(crate) async fn upsert_item_property(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 pub(crate) async fn delete_item_property(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -200,6 +207,7 @@ pub(crate) async fn delete_item_property(
 //  Item Link
 // ============================================================
 
+#[instrument]
 pub(crate) async fn create_parent(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -212,6 +220,7 @@ pub(crate) async fn create_parent(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 pub(crate) async fn create_child(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -224,6 +233,7 @@ pub(crate) async fn create_child(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 pub(crate) async fn delete_parent(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -236,6 +246,7 @@ pub(crate) async fn delete_parent(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 pub(crate) async fn delete_child(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,

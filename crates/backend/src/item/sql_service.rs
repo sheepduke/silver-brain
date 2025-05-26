@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::DatabaseConnector;
 
+#[derive(Debug)]
 pub struct SqlService<C>
 where
     C: DatabaseConnector,

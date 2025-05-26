@@ -8,6 +8,7 @@ anyhow.workspace = true
 clap.workspace = true
 dirs.workspace = true
 tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 silver-brain-server = { path = "../../crates/server" }
-

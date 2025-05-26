@@ -26,6 +26,10 @@ svix-ksuid = "0.8.0"
 # Time.
 time = { version = "0.3.41", features = ["parsing", "formatting", "serde"] }
 
+# Logging.
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+
 # File system.
 dirs = "6.0.0"
 

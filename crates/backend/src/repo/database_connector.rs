@@ -33,6 +33,7 @@ pub trait DatabaseConnector {
 //  SqliteConnector
 // ============================================================
 
+#[derive(Debug)]
 pub struct SqliteConnector {
     root_path: PathBuf,
     pools: RwLock<HashMap<String, SqlitePool>>,

@@ -11,16 +11,18 @@ use axum::{
 };
 use serde::Deserialize;
 use silver_brain_core::*;
+use tracing::instrument;
 
 use super::super::app_state::AppState;
 use super::util::{ErrorResponse, HttpError, HttpResponse, IdOnly, ToRequestContext};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct GetReferencesQuery {
     source: Option<String>,
     target: Option<String>,
 }
 
+#[instrument]
 pub(crate) async fn get_references(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -61,6 +63,7 @@ pub(crate) async fn get_references(
     }
 }
 
+#[instrument]
 pub(crate) async fn create_reference(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -73,6 +76,7 @@ pub(crate) async fn create_reference(
     Ok((StatusCode::CREATED, Json(id_only)))
 }
 
+#[instrument]
 pub(crate) async fn update_reference(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -88,6 +92,7 @@ pub(crate) async fn update_reference(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[instrument]
 pub(crate) async fn delete_reference(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,

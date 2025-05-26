@@ -1,5 +1,6 @@
 use silver_brain_backend::{SqlService, SqliteConnector};
 
+#[derive(Debug)]
 pub(crate) struct AppState {
     pub service: SqlService<SqliteConnector>,
 }
