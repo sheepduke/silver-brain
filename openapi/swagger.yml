@@ -1,0 +1,520 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Silver Brain
+  description: Silver Brain server
+
+servers:
+  - url: http://{host}/api/v2
+    description: API endpoint
+    variables:
+      host:
+        description: The host (and port) of the service endpoint.
+        default: "localhost:8080"
+
+paths:
+
+  # ============================================================
+  #  Items
+  # ============================================================
+
+  /items:
+    # Get or search items.
+    get:
+      tags:
+        - Item
+      summary: Search items.
+      description: Get or search items. Only one of the query parameters `ids` and `search` can be provided at the same time.
+      parameters:
+        - name: ids
+          in: query
+          description: The ids of items to query. Multiple values can be 
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: The search string.
+          schema:
+            type: string
+        - $ref: "#/components/parameters/select"
+      responses:
+        "200":
+          description: A list of `Item` objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+    # Create an item.
+    post:
+      tags:
+        - Item
+      summary: Create an item.
+      description: Create a new item.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                contentType:
+                  type: string
+                content:
+                  type: string
+      responses:
+        "201":
+          $ref: "#/components/responses/created"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+  # ============================================================
+  #  Item
+  # ============================================================
+
+  /items/{id}:
+    # Get an item.
+    get:
+      tags:
+        - Item
+      summary: Query an item by its ID.
+      description: Query an item by its ID.
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/select"
+      responses:
+        "200":
+          description: A JSON object of item.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+        "404":
+          $ref: "#/components/responses/not_found"
+
+    # Update an item.
+    patch:
+      tags:
+        - Item
+      summary: Update an item.
+      description: Update an item.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                contentType:
+                  type: string
+                content:
+                  type: string
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+          description: Invalid item id or request body
+
+    # Delete an item.
+    delete:
+      tags:
+        - Item
+      summary: Delete an item.
+      description: Delete an item by its ID.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+  # ============================================================
+  #  Item Properties
+  # ============================================================
+
+  /items/{id}/properties:
+    # Upsert a property.
+    put:
+      tags:
+        - Item Property
+      summary: Upsert a property of an item.
+      description: Upsert a property of an item.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - key
+                - value
+              properties:
+                key:
+                  type: string
+                value:
+                  type: string
+      responses:
+        "201":
+          $ref: "#/components/responses/created"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+    # Delete a property.
+  /items/{id}/properties/{key}:
+    delete:
+      tags:
+        - Item Property
+      summary: Delete a property of an item.
+      description: Delete a property of an item.
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - name: key
+          in: path
+          description: The key of property.
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+  # ============================================================
+  #  Item Links
+  # ============================================================
+
+  /items/{id}/parents/{parent}:
+    # Create a parent.
+    put:
+      tags:
+        - Item Link
+      summary: Create a link between 2 items.
+      description: Create a link between 2 items. `parent` will be a parent of `id`.
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/parent"
+      responses:
+        "201":
+          $ref: "#/components/responses/created"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+        "409":
+          description: |
+            The link cannot be created. For example, the `parent` is already a child of `id`.
+
+    # Delete a parent.
+    delete:
+      tags:
+        - Item Link
+      summary: Delete a parent.
+      description: Delete a parent.
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/parent"
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+    # Create a child.
+  /items/{id}/children/{child}:
+    # Create a child.
+    put:
+      tags:
+        - Item Link
+      summary: Create a link between 2 items.
+      description: Create a link between 2 items. `child` will be a child of `id`.
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/child"
+      responses:
+        "201":
+          $ref: "#/components/responses/created"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+        "409":
+          description: |
+            The link cannot be created. For example, the `child` is already a child of `id`.
+
+    # Delete a child.
+    delete:
+      tags:
+        - Item Link
+      summary: Delete a child.
+      description: Delete a child.
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/child"
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+  # ============================================================
+  #  Item Reference
+  # ============================================================
+
+  /references:
+    # Get references.
+    get:
+      tags:
+        - Item Reference
+      summary: Get references.
+      description: Get references from/to an item.
+      parameters:
+        - name: source
+          in: query
+          description: The source item id of references.
+          schema:
+            type: string
+        - name: target
+          in: query
+          description: The target item id of references.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A list of `ItemReference` objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItemReference"
+        "400":
+          description: Any item id provided is invalid.
+
+
+    # Create a reference.
+    post:
+      tags:
+        - Item Reference
+      summary: Create an reference.
+      description: Create a new reference.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - source
+                - target
+                - annotation
+              properties:
+                source:
+                  type: string
+                target:
+                  type: string
+                annotation:
+                  type: string
+      responses:
+        "201":
+          $ref: "#/components/responses/created"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+  /references/{id}:
+    # Get a reference.
+    get:
+      tags:
+        - Item Reference
+      summary: Query an reference by its ID.
+      description: Query an reference by its ID.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: A JSON object of item.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemReference"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+        "404":
+          $ref: "#/components/responses/not_found"
+
+    # Update a reference.
+    patch:
+      tags:
+        - Item Reference
+      summary: Update a reference.
+      description: Update a reference.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                annotation:
+                  type: string
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+    # Delete a reference.
+    delete:
+      tags:
+        - Item Reference
+      summary: Delete a reference.
+      description: Delete a reference by its ID.
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          $ref: "#/components/responses/no_content"
+        "400":
+          $ref: "#/components/responses/invalid_request"
+
+
+components:
+
+  # ============================================================
+  #  Components / Schemas
+  # ============================================================
+
+  schemas:
+    # Item
+    Item:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        contentType:
+          type: string
+        content:
+          type: string
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoreItem"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoreItem"
+        createTime:
+          type: string
+        updateTime:
+          type: string
+
+    # CoreItem
+    CoreItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    # ItemReference
+    ItemReference:
+      type: object
+      required:
+        - id
+        - source
+        - target
+        - annotation
+        - createTime
+        - updateTime
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        annotation:
+          type: string
+        createTime:
+          type: string
+        updateTime:
+          type: string
+
+  # ============================================================
+  #  Components / Responses
+  # ============================================================
+
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+
+    parent:
+      name: parent
+      in: path
+      required: true
+
+    child:
+      name: child
+      in: path
+      required: true
+      
+    select:
+      name: select
+      in: query
+      description: |
+        Select properties to query. Case insensitive. Potential values:
+          - content
+          - contentType, content-type, content_type
+          - properties
+          - parents
+          - children
+          - createTime, create-time, create_time
+          - updateTime, update-time, udpate_time
+          
+          Multiple values can be splitted by commas. For example: `content,parents`.
+      schema:
+        type: string
+
+  # ============================================================
+  #  Components / Responses
+  # ============================================================
+
+  responses:
+    created:
+      description: Resource created.
+
+    no_content:
+      description: Operation done.
+
+    invalid_request:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+    not_found:
+      description: Resource not found.
