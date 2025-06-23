@@ -24,11 +24,25 @@
 
   (setq tablist-operations-function #'silver-brain--list-operations)
 
-  (define-key silver-brain-list-mode-map (kbd "l") #'silver-brain-list-research)
+  (define-key silver-brain-list-mode-map (kbd "r") #'silver-brain-list-research)
   (define-key silver-brain-list-mode-map (kbd "o") #'silver-brain-search-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "c") #'silver-brain-create-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "g") #'tablist-revert)
-  (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh))
+  (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh)
+
+  (when (featurep 'evil)
+    (evil-define-key '(motion normal) silver-brain-list-mode-map (kbd "RET") 'tablist-find-entry)))
+
+(transient-define-prefix silver-brain-list-menu ()
+  [["Refresh"
+    ("g" "Refresh" tablist-revert)
+    ("G" "Research" silver-brain-list-refresh)]
+
+   ["Operation"
+    ("r" "Search & list" silver-brain-list-research)
+    ("o" "Search & open" silver-brain-search-and-open-item)
+    ("n" "Create & open" silver-brain-create-and-open-item)]
+  ])
 
 (defun silver-brain-list-items (&optional search-string)
   "Search items with given search string and display them in a buffer."
