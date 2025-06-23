@@ -8,6 +8,7 @@
 (require 'silver-brain-util)
 (require 'silver-brain-item)
 (require 'silver-brain-item-content)
+(require 'transient)
 
 ;; ============================================================
 ;;  Buffer Variables

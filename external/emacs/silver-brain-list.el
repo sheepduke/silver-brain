@@ -9,6 +9,7 @@
 (require 'silver-brain-item)
 (require 'silver-brain-item-buffer)
 (require 'silver-brain-item-content)
+(require 'transient)
 
 (defvar-local silver-brain-list-items nil
   "The list of items as search results.")
