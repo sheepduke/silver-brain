@@ -47,62 +47,7 @@
         (define-key keymap (kbd "t") #'silver-brain-item-update-content-type)
         (define-key keymap (kbd "d") #'silver-brain-item-delete)
 
-        ;; Hydra.
-        (define-key keymap (kbd "SPC") 'silver-brain-item-hydra/body)
-        (define-key keymap (kbd "p") 'silver-brain-item-property-hydra/body)
-        (define-key keymap (kbd "a") #'silver-brain-item-attachment-hydra/body)
-        (define-key keymap (kbd "l") 'silver-brain-item-link-hydra/body)
-        (define-key keymap (kbd "r") 'silver-brain-item-reference-hydra/body)
-
         keymap))
-
-(pretty-hydra-define silver-brain-item-hydra (:color blue)
-  ("Buffer"
-   (("k" #'silver-brain-item-buffer-kill "kill")
-    ("g" #'silver-brain-item-buffer-refresh "refresh")
-    ("o" #'silver-brain-search-and-open-item "open"))
-
-   "Quick Open"
-   (("H" #'silver-brain-open-previous-item "previous")
-    ("L" #'silver-brain-open-next-item "next")
-    ("P" #'silver-brain-item-open-parent "parent")
-    ("C" #'silver-brain-item-open-child "child"))
-
-   "Item"
-   (("c" #'silver-brain-create-and-open-item "create")
-    ("n" #'silver-brain-item-rename "rename")
-    ("u" #'silver-brain-item-update-content-type "update content type")
-    ("d" #'silver-brain-item-delete "delete"))
-
-   "More"
-   (("p" #'silver-brain-item-property-hydra/body "property")
-    ("a" #'silver-brain-item-attachment-hydra/body "attachment")
-    ("l" #'silver-brain-item-link-hydra/body "link")
-    ("r" #'silver-brain-item-reference-hydra/body "reference"))))
-
-(pretty-hydra-define silver-brain-item-property-hydra (:color blue)
-  ("Property"
-   (("u" #'silver-brain-item-upsert-property "upsert")
-    ("d" #'silver-brain-item-delete-property "delete"))))
-
-(pretty-hydra-define silver-brain-item-attachment-hydra (:color blue)
-  ("Attachment"
-   (("c" nil "create")
-    ("r" nil "rename")
-    ("d" nil "delete"))))
-
-(pretty-hydra-define silver-brain-item-link-hydra (:color blue)
-  ("Link"
-   (("p" #'silver-brain-item-add-parent "add parent")
-    ("c" #'silver-brain-item-add-child "add child")
-    ("d" #'silver-brain-item-delete-link "delete"))))
-
-(pretty-hydra-define silver-brain-item-reference-hydra (:color blue)
-  ("Reference"
-   (("o" #'silver-brain-item-create-outbound-reference "create outbound")
-    ("i" #'silver-brain-item-create-inbound-reference "create inbound")
-    ("r" #'silver-brain-item-rename-reference "rename")
-    ("d" #'silver-brain-item-delete-reference "delete"))))
 
 (define-derived-mode silver-brain-item-mode special-mode "SB/Item"
   "Major mode for Silver Brain item."

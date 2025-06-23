@@ -2,7 +2,6 @@
 
 (require 'tablist)
 (require 'seq)
-(require 'major-mode-hydra)
 
 (require 'silver-brain-client)
 (require 'silver-brain-prop)
@@ -25,41 +24,11 @@
 
   (setq tablist-operations-function #'silver-brain--list-operations)
 
-  (define-key silver-brain-list-mode-map (kbd "<SPC>") #'major-mode-hydra)
   (define-key silver-brain-list-mode-map (kbd "l") #'silver-brain-list-research)
   (define-key silver-brain-list-mode-map (kbd "o") #'silver-brain-search-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "c") #'silver-brain-create-and-open-item)
   (define-key silver-brain-list-mode-map (kbd "g") #'tablist-revert)
   (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh))
-
-(major-mode-hydra-define silver-brain-list-mode ()
-  ("List"
-   (("l" #'silver-brain-list-research "re-search")
-    ("g" #'silver-brain-list-refresh "refresh")
-    ("q" #'tablist-quit "quit"))
-
-   "Item"
-   (("o" #'silver-brain-search-and-open-item "search")
-    ("c" #'silver-brain-create-and-open-item "create"))
-   
-   "Row"
-   (("s" #'tablist-sort "sort")
-    ("k" #'tablist-do-kill-lines "hide"))
-
-   "Column"
-   (("<" #'tablist-shrink-column "shrink column")
-    (">" #'tablist-enlarge-column "enlarge column"))
-
-   "Mark"
-   (("m" #'tablist-mark-forward "mark")
-    ("u" #'tablist-unmark-forward "unmark")
-    ("U" #'tablist-unmark-all-marks "unmark all")
-    ("t" #'tablist-toggle-marks "toggle")
-    ("d" #'tablist-flag-forward "mark as delete"))
-
-   "Manipulation"
-   (("D" #'tablist-do-delete "delete")
-    ("x" #'tablist-do-flagged-delete "delete flagged"))))
 
 (defun silver-brain-list-items (&optional search-string)
   "Search items with given search string and display them in a buffer."
