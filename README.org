@@ -1,221 +1,53 @@
 * Silver-Brain
 
-** Notice
+A concept map based personal knowledge system.
 
-I have been using it for a year or so and have been re-thinking of this software for some time. I would like to re-design it and make it more useful for general purpose (and surely for myself).
-
-1.4.4 is the last stable version of existing functionality.
-
-Next release will be a re-implementation of whole software, versioned starting from 2.0.0.
+Key features:
+- Backend implemented in Rust. Fast, reliable and easy to deploy.
+- C/S architecture makes it easy to implement any front-end UI.
+- SQLite based storage makes it convenient to backup and/or sync among multiple machines.
+- Emacs UI with hydra based interaction system and corresponding hotkeys.
+- Supports Org, Markdown and any formats that your Emacs supports.
 
 ** Overview
 
 *** Prologue
 
-Back to the time when I was preparing the final examinations as a bachelor
-student. I wrote down all the concepts to a big white paper in a structured
-way in order to review what I have learned. I draw lines between concepts and
-labeled the relationship. For each concept, I wrote some text describing it
-(usually the paper was too small for large trunk of text).
+Back to the time when I was a student, when final examination came, I would write down all the concepts on an A4 paper and draw lines among them. I used this method for years to help myself organize what I have learned during a term and get prepared for the exams. After becoming a professional engineer, I also often feel the need to note about "how to hack this" or "how to configure that". I need a place to record all these knowledge, for myself.
 
-After Emacs and its decent Org Mode became best partner for my electronic
-life, I always wanted a software that helps me record everything in a
-structured way, like described above.
+I recall I started to use it since 2014 (and started to upload my Emacs configuration to [[https://github.com/sheepduke/emacs-config][emacs-config]] repo since 2017). Org Mode was a natural choice for me. Having been using it for quite some years, I found with pity that the underlying storage of Org Mode, i.e. unstructured data on hard disks, has many limitations when:
 
-I found [[https://github.com/Kungsgeten/org-brain][org-brain]]. I used it for some time, but there were some drawbacks that
-made me stop using it:
-- [[https://github.com/Kungsgeten/org-brain/issues/127][Issue #127]] is a very important reason. Not being able to use rich-text in it
-  really made me sad. (This issue has been fixed now.)
-- Although it is doable via ~org-brain-rename-file~, but the inconsistency
-  between file name and concept name made me uncomfortable, really.
-- I was concerned about the performance of plain text when the number of
-  concepts grow too large.
+1. Creating cross links or references among multiple entries.
 
-*** Introduction
+   Well, technically you could, but:
+   - When using human readable names as file names, it is not easy to rename a file without breaking all the references.
+   - When using UUID names as file names, it is not easy to tell the content from the file name and/or reference it from elsewhere.
+     
+2. Searching for an entry.
 
-Silver Brain is a [[https://www.thebrain.com/][Brain]] like software and is directly inspired by
-[[https://github.com/Kungsgeten/org-brain][org-brain]]. It helps you build your very own personal knowledge center.
+   You may use agenda, but then you have to put multiple files into the agenda list. Alternatively, you can just grep everything but that is too bare-bone. Either way, it is not easy to search complex scenarios.
 
-It has the following features:
+3. Analyzing the entries with a program.
 
-- Edit concepts using Emacs Org Mode (or probably other major modes in
-  future).
-- Maintain the relationship between concepts, including paternity and
-  friendship.
+   A Org Mode file is simply a plain text file with its own format, which is not programming friendly. You can, for sure, write Emacs Lisp code to achieve this but IMHO using Emacs Lisp does not make much sense unless hacking Emacs itself.
 
-The following technical decisions were made:
+I also investigated other Org based solutions including org-brain and more, but did not yet find one that checks all the boxes.
 
-- Concepts are stored in a single SQLite file. Easy to maintain and
-  synchronize.
-- Separation between back-end and front-end. This makes it possible to develop
-  another UI. The directory ~web-ui/~ contains a proof-of-concept
-  demonstration.
-- Back-end code was written in Common Lisp (a bless or a curse).
+Please do not get me wrong. I still use Emacs (and the Org Mode) every day, but using plain files to manage a personal knowledge base does not really scale well.
 
-*** Screenshots
+Being inspired by [[https://www.thebrain.com/][TheBrain]], I developed this software.
 
-[[screenshots/concept.jpg]]
+*** Getting Started
+
+1. Install =Cargo= and build the project by running =cargo build --release= in the root directory. The output executable file will be put under =target/release/server-cli=.
+2. Install the =emacs/= directory to your Emacs load path.
+3. Run =server-cli= to start the server. Pass =--help= argument to see more information.
+4. Run =silver-brain-list-items= to search and list items.
 
 *** Change Log
 
 Please refer to [[./CHANGELOG.org][CHANGELOG.org]].
 
-** Usage
+** Basic Concepts
 
-*** Installation
-
-**** External Dependencies
-
-Make sure ~SQLite 3~ is installed on your system.
-
-**** Add silver-brain System to ASDF Path
-
-It is essential for the following installation process. And it is a good idea
-if you would like to load silver-brain using ASDF during manual installation.
-
-- When using Roswell, you may simply create a symbolic link of ~silver-brain~
-directory in =~/.roswell/local-projects/= directory.
-
-- Otherwise, you need to add the path of Silver Brain to
-  ~asdf:*central-registry*~.
-
-**** Using Installation Script
-
-An installation script is provided for the sake of quick installation. Before
-running it, you need to put Silver Brain project under a directory that your
-local ASDF can find, i.e. ~(ql:quickload :silver-brain)~ does work.
-
-#+BEGIN_SRC sh
-cd /path/to/silver-brain/
-./install.sh
-#+END_SRC
-
-It mainly does the following things:
-1. Build back-end server using Roswell.
-2. Install the generated binary to =~/.roswell/bin/= directory.
-3. Copy Emacs Lisp files to =~/.silver-brain/= directory.
-
-You may need to add =~/.roswell/bin/= to your ~PATH~ in order to use
-~silver-brain~ anywhere.
-
-**** Installing Manually
-
-***** Installing Back-End Server
-
-****** Roswell Way
-
-It is highly recommended to use Roswell to build and install Lisp systems for
-its simplicity.
-
-#+BEGIN_SRC sh
-cd /path/to/silver-brain/backend/
-ros build silver-brain.ros
-#+END_SRC
-
-****** Legacy Way
-
-It is a little bit complicated not to use Roswell. You may load Silver Brain
-into an image and dump it.
-
-See [[https://lispcookbook.github.io/cl-cookbook/scripting.html][The Common Lisp Cookbook]] for more details.
-
-***** Installing Emacs UI Code
-
-Copy the ~emacs/~ directory to somewhere Emacs can find.
-
-**** Configuration
-
-The server uses ~5000~ as the port. Currently this cannot be changed unless
-modifying the source code.
-
-For Emacs UI to work, the following snippet needs to be added into the Emacs
-configuration file:
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'load-path "~/.silver-brain/emacs/")
-(use-package silver-brain
-  :init
-  ;; The port of back-end server. Does NOT affect server side.
-  (setq silver-brain-server-port 5000)
-
-  :bind
-  ("C-c b" . silver-brain))
-#+END_SRC
-
-*** Manual
-
-**** Concepts
-
-The core concept of Silver Brain is /concept/. A concept a node in your
-knowledge network. It contains title, content etc.
-
-Concepts are connected via /relations/. A concept can be either parent, child
-or friend of another one. You may think of parent/child as a single
-directional link, while friend is a bi-directional link.
-
-Practically, parent/child can be used to connect concepts with logical
-precedence, e.g. ~Editor~ and ~Emacs~. And friend can be used to connect
-concepts with slightly weak relations, e.g. ~Emacs~ and ~Vim~, hopefully ;-)
-
-**** Software
-
-The back-end server accepts ~-h~ or ~--help~ argument. Please refer to the
-help.
-
-For Emacs side, the command ~silver-brain~ is the entry point of the software.
-
-The following is a list of commands defined for ~silver-brain-mode~:
-
-|--------------------------------+---------+----------------------------------|
-| Command                        | Binding | Description                      |
-|--------------------------------+---------+----------------------------------|
-| silver-brain-refresh           | g       | Refresh current concept          |
-| silver-brain-new-concept       | n       | Create a new concept             |
-| silver-brain-rename            | r       | Rename current concept           |
-| silver-brain-save              | s       | Save changes of current concept  |
-| silver-brain                   | o       | Open a new concept               |
-| silver-brain-new-window        | O       | Open a new concept in new window |
-| silver-brain-delete            | d       | Delete current concept           |
-| silver-brain-add-parent        | p       | Add a parent of current concept  |
-| silver-brain-add-child         | c       | Add a child of current concept   |
-| silver-brain-add-friend        | f       | Add a friend of current concept  |
-| silver-brain-remove-relation   | R       | Remove a relational concept      |
-| silver-brain-kill-concept      | q       | Kill the concept window          |
-| silver-brain-kill-all-concepts | Q       | Kill all the concept windows     |
-|--------------------------------+---------+----------------------------------|
-
-*** Implementation
-
-Silver Brain was designed as a traditional Web application that back-end and
-front-end code communicates via HTTP requests. The concepts and relations are
-stored in a local SQLite file.
-
-The ~web-ui~ directory contains browser UI code written using Vuetify.
-
-** Known Issues
-
-*** The Software Needs to Be Restarted If DB file is Changed Externally
-
-If you use a synchronization software, such as Syncthing, you may need to
-restart the software after the DB file got synchronized.
-
-This is because the database needs to be re-connected while the current
-version of Silver Brain cannot handle it well.
-
-*** The Newly Updated Content is Not Shown
-
-If you run ~silver-brain-refresh~ after some modification and says ~yes~ to
-save the new contents, you may notice that the content buffer reverts to the
-original state.
-
-The solution is simply refreshing the buffer again.
-
-This is because when ~silver-brain-save~ is triggered, the modifications are
-not transferred to the server, thus the first ~silver-brain-refresh~ command
-will receive the old content.
-
-*** Silver Brain Fails to Start After Quicklisp Update
-
-Because Mito and Clack ~quickload~ its dependencies at run-time dynamically,
-the dependency packages cannot be built into the image. So after upgrading
-Quicklisp dist, you need to re-build the Roswell binary.
+** User Manual
