@@ -11,38 +11,49 @@
 (require 'silver-brain-item-content)
 (require 'transient)
 
+;; ============================================================
+;;  Buffer Variables
+;; ============================================================
+
 (defvar-local silver-brain-list-items nil
   "The list of items as search results.")
 
 (defvar-local silver-brain-list-search-string nil
   "The search string.")
 
+;; ============================================================
+;;  Mode & Keymap
+;; ============================================================
+
+(defvar silver-brain-list-mode-map nil)
+(setq silver-brain-list-mode-map
+      (let ((keymap (make-sparse-keymap)))
+        (define-key keymap (kbd "g") 'silver-brain-list-refresh)
+        (define-key keymap (kbd "r") 'silver-brain-list-research)
+        (define-key keymap (kbd "o") 'silver-brain-search-and-open-item)
+        (define-key keymap (kbd "c") 'silver-brain-create-and-open-item)
+        (define-key keymap (kbd "SPC") 'silver-brain-list-menu)
+
+        keymap))
+
 (define-derived-mode silver-brain-list-mode tablist-mode "SB/List"
+  :keymap silver-brain-list-mode-map
+
   (setq tabulated-list-format
         [("ID" 27 t)
          ("Name" 40 t)])
   (tabulated-list-init-header)
 
-  (setq tablist-operations-function #'silver-brain--list-operations)
-
-  (define-key silver-brain-list-mode-map (kbd "r") #'silver-brain-list-research)
-  (define-key silver-brain-list-mode-map (kbd "o") #'silver-brain-search-and-open-item)
-  (define-key silver-brain-list-mode-map (kbd "c") #'silver-brain-create-and-open-item)
-  (define-key silver-brain-list-mode-map (kbd "g") #'tablist-revert)
-  (define-key silver-brain-list-mode-map (kbd "G") #'silver-brain-list-refresh)
-
-  (when (featurep 'evil)
-    (evil-define-key '(motion normal) silver-brain-list-mode-map (kbd "RET") 'tablist-find-entry)))
+  (setq tablist-operations-function #'silver-brain--list-operations))
 
 (transient-define-prefix silver-brain-list-menu ()
   [["Refresh"
-    ("g" "Refresh" tablist-revert)
-    ("G" "Research" silver-brain-list-refresh)]
+    ("g" "Refresh" silver-brain-list-refresh)
+    ("r" "Research" silver-brain-list-research)]
 
    ["Operation"
-    ("r" "Search & list" silver-brain-list-research)
     ("o" "Search & open" silver-brain-search-and-open-item)
-    ("n" "Create & open" silver-brain-create-and-open-item)]
+    ("c" "Create & open" silver-brain-create-and-open-item)]
   ])
 
 (defun silver-brain-list-items (&optional search-string)

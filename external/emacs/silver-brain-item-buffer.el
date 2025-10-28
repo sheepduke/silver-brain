@@ -30,9 +30,40 @@
 (defvar silver-brain-item-mode-map nil)
 (setq silver-brain-item-mode-map
       (let ((keymap (make-sparse-keymap)))
-        ;; Buffer.
-        (define-key keymap (kbd "q") #'silver-brain-item-buffer-quit)
-        (define-key keymap (kbd "o") #'silver-brain-search-and-open-item)
+        ;; Menu
+        (define-key keymap (kbd "SPC") 'silver-brain-item-menu)
+
+        ;; Buffer
+        (define-key keymap (kbd "g") 'silver-brain-item-buffer-refresh)
+        (define-key keymap (kbd "q") 'silver-brain-item-buffer-quit)
+        (define-key keymap (kbd "o") 'silver-brain-search-and-open-item)
+        (define-key keymap (kbd "c") 'silver-brain-create-and-open-item)
+        (define-key keymap (kbd "e") 'silver-brain-item-edit-content)
+
+        ;; Item
+        (define-key keymap (kbd "n") 'silver-brain-item-rename)
+        (define-key keymap (kbd "t") 'silver-brain-item-update-content-type)
+        (define-key keymap (kbd "d") 'silver-brain-item-delete)
+
+        ;; Quick jump
+        (define-key keymap (kbd "H") 'silver-brain-open-previous-item)
+        (define-key keymap (kbd "L") 'silver-brain-open-next-item)
+        (define-key keymap (kbd "P") 'silver-brain-item-open-parent)
+        (define-key keymap (kbd "C") 'silver-brain-item-open-child)
+        
+        ;; Property
+        (define-key keymap (kbd "p u") 'silver-brain-item-upsert-property)
+        (define-key keymap (kbd "p d") 'silver-brain-item-delete-property)
+
+        ;; Link
+        (define-key keymap (kbd "l p") 'silver-brain-item-add-parent)
+        (define-key keymap (kbd "l c") 'silver-brain-item-add-child)
+        (define-key keymap (kbd "l d") 'silver-brain-item-delete-link)
+
+        ;; Reference
+        (define-key keymap (kbd "r o") 'silver-brain-item-create-outbound-reference)
+        (define-key keymap (kbd "r i") 'silver-brain-item-create-inbound-reference)
+        (define-key keymap (kbd "r d") 'silver-brain-item-delete-reference)
 
         keymap))
 
@@ -41,11 +72,11 @@
     ("g" "Refresh" silver-brain-item-buffer-refresh)
     ("q" "Quit" silver-brain-item-buffer-quit)
     ("o" "Open" silver-brain-search-and-open-item)
-    ("n" "New" silver-brain-create-and-open-item)
+    ("c" "New" silver-brain-create-and-open-item)
     ("e" "Edit content" silver-brain-item-edit-content)]
 
    ["Item"
-    ("r" "Rename" silver-brain-item-rename)
+    ("n" "Rename" silver-brain-item-rename)
     ("t" "Change content type" silver-brain-item-update-content-type)
     ("d" "Delete" silver-brain-item-delete)]
 
@@ -58,7 +89,7 @@
    ["Sub menus"
     ("p" "Property" silver-brain-item-property-menu)
     ("l" "Link" silver-brain-item-link-menu)
-    ("f" "Reference" silver-brain-item-reference-menu)]])
+    ("r" "Reference" silver-brain-item-reference-menu)]])
 
 (transient-define-prefix silver-brain-item-property-menu ()
   [["Property"
