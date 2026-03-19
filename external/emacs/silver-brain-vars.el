@@ -46,6 +46,7 @@ By default it creates a window to the right."
 
 (defcustom silver-brain-content-mode-alist '(("*/org" . org-mode)
                                  ("*/markdown" . markdown-mode)
+                                 ("*/restclient" . restclient-mode)
                                  ("*" . fundamental-mode))
   "The alist of mapping between item's content type and major
 mode used to open it."
@@ -57,7 +58,7 @@ mode used to open it."
   :type 'string
   :group 'silver-brain)
 
-(defcustom silver-brain-default-content-type "text/org"
+(defcustom silver-brain-default-content-type "text/markdown"
   "The default content type for item."
   :type 'string
   :group 'silver-brain)
